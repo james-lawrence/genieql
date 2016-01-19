@@ -1,4 +1,3 @@
-```bash
 [jatone@jambli genieql]$ gilo-shim $PWD/bin/sqlmap --package=bitbucket.org/jatone/sso --type=Identity --table=identity lowersnakecase
 2016/01/17 20:19:23 Package bitbucket.org/jatone/sso
 2016/01/17 20:19:23 Type Identity
@@ -57,4 +56,3 @@ fields:
   aliases:
   - UPDATED
   - IDENTITY_UPDATED
- ```
