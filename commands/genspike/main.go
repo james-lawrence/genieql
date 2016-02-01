@@ -3,16 +3,57 @@ package main
 import (
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
-	"go/printer"
 	"go/token"
 	"log"
 	"os"
+	"strings"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+// data stored in qlgenie.conf - dialect, default alias strategy, map definition directory,
+// default for including table prefix aliases, database connection information.
+// qlgenie bootstrap psql://host:port/example?username=x&password=y -> creates example.qlgenie.
+// qlgenie bootstrap --ouput="someothername.qlgenie" psql://host:port/example?username=x&password=y -> creates someothername.qlgenie
+// step 1) define your mappings, will be placed in a yaml definition file, only 1 allowed per type/table pairing.
+// TODO: automatically determine natural key from database schema.
+// natural-key defaults to "id"
+// qlgenie map --config="example.glgenie" --include-table-prefix-aliases=false --natural-key="composite,column,names" {Package}.{Type} {TableName} snakecase lowercase
+// qlgenie map display --config="example.qlgenie" {Package}.{Type} {TableName} // displays file location, and contents to stdout as yml.
+// step 2) autogenerate your crud functions SELECT, UPDATE, DELETE using the natural-key defined by the Package.Type and Table pairing.
+// go:generate qlgenie generate crud {Package}.{Type} {TableName}
+// step 3) build a scanner for a custom query.
+// go:generate qlgenie scanner fromfile --name="MyScanner" --package="github.com/jatone/project" --output="my_scanner" {query_file} github.com/jatone/project.TypeA github.com/jatone/project.TypeB
+// go:generate qlgenie scanner fromconstant --name="MyScanner" --package="github.com/jatone/project" --output="my_scanner" {package}.{name} github.com/jatone/project.TypeA github.com/jatone/project.TypeB
 func main() {
-	// printspike()
-	genspike()
+	var packageName string
+	var outputFilename string
+	var scannerName string
+	var types []string
+
+	app := kingpin.New("qlscanner", "qlscanner generates scanner methods for the provided types and query")
+	app.Flag("package", "name of the package the scanner is to be placed").Required().StringVar(&packageName)
+	app.Flag("output", "output file for the scanner type").Default("").StringVar(&outputFilename)
+	app.Flag("name", "name of the scanner type to create").Required().StringVar(&scannerName)
+	app.Arg("types", "types that will be filled in by the scanner").StringsVar(&types)
+
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	log.Println("Package", packageName)
+	log.Println("outputfile", outputFilename)
+	log.Println("scanner name", scannerName)
+	log.Println("types", types)
+	log.Println("len(types)", len(types))
+	for _, s := range types {
+		p, t := extractPackageType(s)
+		log.Printf("Package: %s, Type: %s\n", p, t)
+	}
+
+	// printspike("example2.go")
+	// fmt.Println()
+	genspike(scannerName, columnMap)
 	fmt.Println()
 	parseExpr("*sso.Identity")
 	parseExpr("sso.Identity")
@@ -20,9 +61,9 @@ func main() {
 	parseExpr("time.Time")
 }
 
-func printspike() {
+func printspike(filename string) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "example2.go", nil, 0)
+	f, err := parser.ParseFile(fset, filename, nil, 0)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -40,8 +81,81 @@ func parseExpr(s string) {
 	log.Printf("%#v\n", r)
 }
 
-func genspike() {
+func extractPackageType(s string) (string, string) {
+	i := strings.LastIndex(s, ".")
+	return s[:i], s[i+1:]
+}
+
+type Destination struct {
+	Package    string
+	Ident      string
+	ColumnMaps []ColumnMap
+}
+
+type ColumnMap struct {
+	Column     *ast.Ident
+	Type       ast.Expr
+	Assignment ast.Expr
+}
+
+func genspike(name string, mapping []ColumnMap) {
 	fset := token.NewFileSet()
+
+	var scannerTypeDecl = &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			&ast.TypeSpec{
+				Name: &ast.Ident{
+					Name: name,
+					Obj: &ast.Object{
+						Kind: ast.Typ,
+						Name: name,
+					},
+				},
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{
+						List: []*ast.Field{
+							&ast.Field{
+								Names: []*ast.Ident{
+									&ast.Ident{
+										Name: "err",
+										Obj: &ast.Object{
+											Kind: ast.Var,
+											Name: "err",
+										},
+									},
+								},
+								Type: &ast.Ident{
+									Name: "error",
+								},
+							},
+							&ast.Field{
+								Names: []*ast.Ident{
+									&ast.Ident{
+										Name: "rows",
+										Obj: &ast.Object{
+											Kind: ast.Var,
+											Name: "rows",
+										},
+									},
+								},
+								Type: &ast.StarExpr{
+									X: &ast.SelectorExpr{
+										X: &ast.Ident{
+											Name: "sql",
+										},
+										Sel: &ast.Ident{
+											Name: "Rows",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
 	var funcDecl = &ast.FuncDecl{
 		Recv: &ast.FieldList{
@@ -57,7 +171,7 @@ func genspike() {
 						},
 					},
 					Type: &ast.Ident{
-						Name: "identityScanner",
+						Name: name,
 					},
 				},
 			},
@@ -77,18 +191,22 @@ func genspike() {
 	funcDecl.Type.Params.List = FuncParams(SExpr(ssoIdentity))
 	funcDecl.Type.Results.List = FuncResults(&ast.Ident{Name: "error"})
 	funcDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		DeclarationStatements(scanColumns, scanColumnTypes)...,
+		errorCheckStatement,
 	).Append(
-		ScanStatement(AsUnaryExpr(IdentToExpr(scanColumns)...)...),
+		DeclarationStatements(mapping...)...,
 	).Append(
-		scannerAssignmentStatements...,
+		ScanStatement(AsUnaryExpr(ColumnToExpr(mapping)...)...),
+	).Append(
+		AssignmentStatements(mapping)...,
+	).Append(
+		scannerReturnStatement,
 	).BlockStmt
 
-	config := printer.Config{
-		Mode: printer.TabIndent,
+	if err := format.Node(os.Stdout, fset, scannerTypeDecl); err != nil {
+		log.Fatalln(err)
 	}
-
-	if err := config.Fprint(os.Stdout, fset, funcDecl); err != nil {
+	fmt.Printf("\n\n")
+	if err := format.Node(os.Stdout, fset, funcDecl); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -106,7 +224,6 @@ func FuncParams(parameters ...ast.Expr) []*ast.Field {
 	result := make([]*ast.Field, 0, len(parameters))
 
 	for i, expr := range parameters {
-		fmt.Println("Expression position", expr.Pos())
 		paramName := fmt.Sprintf("arg%d", i)
 		param := &ast.Field{
 			Names: []*ast.Ident{
@@ -162,346 +279,16 @@ func (t BlockStmtBuilder) Prepend(statements ...ast.Stmt) BlockStmtBuilder {
 	return t
 }
 
-var scannerbody = &ast.BlockStmt{
-	List: []ast.Stmt{
-		&ast.IfStmt{
-			Cond: &ast.BinaryExpr{
-				X: &ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "t",
-					},
-					Sel: &ast.Ident{
-						Name: "err",
-					},
-				},
-				Op: token.NEQ,
-				Y: &ast.Ident{
-					Name: "nil",
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.SelectorExpr{
-								X: &ast.Ident{
-									Name: "t",
-								},
-								Sel: &ast.Ident{
-									Name: "err",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		&ast.DeclStmt{
-			Decl: &ast.GenDecl{
-				Tok: token.VAR,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names: []*ast.Ident{
-							&ast.Ident{
-								Name: "c0",
-								Obj: &ast.Object{
-									Kind: ast.Var,
-									Name: "c0",
-									Data: 0,
-								},
-							},
-						},
-						Type: &ast.SelectorExpr{
-							X: &ast.Ident{
-								Name: "time",
-							},
-							Sel: &ast.Ident{
-								Name: "Time",
-							},
-						},
-					},
-				},
-			},
-		},
-		&ast.DeclStmt{
-			Decl: &ast.GenDecl{
-				Tok: token.VAR,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names: []*ast.Ident{
-							&ast.Ident{
-								Name: "c1",
-								Obj: &ast.Object{
-									Kind: ast.Var,
-									Name: "c1",
-									Data: 0,
-								},
-							},
-						},
-						Type: &ast.Ident{
-							Name: "string",
-						},
-					},
-				},
-			},
-		},
-		&ast.DeclStmt{
-			Decl: &ast.GenDecl{
-				Tok: token.VAR,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names: []*ast.Ident{
-							&ast.Ident{
-								Name: "c2",
-								Obj: &ast.Object{
-									Kind: ast.Var,
-									Name: "c2",
-									Data: 0,
-								},
-							},
-						},
-						Type: &ast.Ident{
-							Name: "string",
-						},
-					},
-				},
-			},
-		},
-		&ast.IfStmt{
-			Init: &ast.AssignStmt{
-				Lhs: []ast.Expr{
-					&ast.Ident{
-						Name: "err",
-						Obj: &ast.Object{
-							Kind: ast.Var,
-							Name: "err",
-						},
-					},
-				},
-				Tok: token.ASSIGN,
-				Rhs: []ast.Expr{
-					&ast.CallExpr{
-						Fun: &ast.SelectorExpr{
-							X: &ast.SelectorExpr{
-								X: &ast.Ident{
-									Name: "t",
-								},
-								Sel: &ast.Ident{
-									Name: "rows",
-								},
-							},
-							Sel: &ast.Ident{
-								Name: "Scan",
-							},
-						},
-						Args: []ast.Expr{
-							&ast.UnaryExpr{
-								Op: token.AND,
-								X: &ast.Ident{
-									Name: "c0",
-								},
-							},
-							&ast.UnaryExpr{
-								Op: token.AND,
-								X: &ast.Ident{
-									Name: "c1",
-								},
-							},
-							&ast.UnaryExpr{
-								Op: token.AND,
-								X: &ast.Ident{
-									Name: "c2",
-								},
-							},
-						},
-					},
-				},
-			},
-			Cond: &ast.BinaryExpr{
-				X: &ast.Ident{
-					Name: "err",
-				},
-				Op: token.NEQ,
-				Y: &ast.Ident{
-					Name: "nil",
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.Ident{
-								Name: "err",
-							},
-						},
-					},
-				},
-			},
-		},
-		&ast.AssignStmt{
-			Lhs: []ast.Expr{
-				&ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "arg0",
-					},
-					Sel: &ast.Ident{
-						Name: "Created",
-					},
-				},
-			},
-			Tok: token.EQL,
-			Rhs: []ast.Expr{
-				&ast.Ident{
-					Name: "c0",
-				},
-			},
-		},
-		&ast.AssignStmt{
-			Lhs: []ast.Expr{
-				&ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "arg0",
-					},
-					Sel: &ast.Ident{
-						Name: "Email",
-					},
-				},
-			},
-			Tok: token.EQL,
-			Rhs: []ast.Expr{
-				&ast.Ident{
-					Name: "c1",
-				},
-			},
-		},
-		&ast.AssignStmt{
-			Lhs: []ast.Expr{
-				&ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "arg0",
-					},
-					Sel: &ast.Ident{
-						Name: "ID",
-					},
-				},
-			},
-			Tok: token.EQL,
-			Rhs: []ast.Expr{
-				&ast.Ident{
-					Name: "c2",
-				},
-			},
-		},
-		&ast.ReturnStmt{
-			Results: []ast.Expr{
-				&ast.CallExpr{
-					Fun: &ast.SelectorExpr{
-						X: &ast.SelectorExpr{
-							X: &ast.Ident{
-								Name: "t",
-							},
-							Sel: &ast.Ident{
-								Name: "rows",
-							},
-						},
-						Sel: &ast.Ident{
-							Name: "Err",
-						},
-					},
-				},
-			},
-		},
-	},
-}
-
-var scannerDeclarationStatements = []ast.Stmt{
-	&ast.DeclStmt{
-		Decl: &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: "c0",
-							Obj: &ast.Object{
-								Kind: ast.Var,
-								Name: "c0",
-								Data: 0,
-							},
-						},
-					},
-					Type: &ast.SelectorExpr{
-						X: &ast.Ident{
-							Name: "time",
-						},
-						Sel: &ast.Ident{
-							Name: "Time",
-						},
-					},
-				},
-			},
-		},
-	},
-	&ast.DeclStmt{
-		Decl: &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: "c1",
-							Obj: &ast.Object{
-								Kind: ast.Var,
-								Name: "c1",
-								Data: 0,
-							},
-						},
-					},
-					Type: &ast.Ident{
-						Name: "string",
-					},
-				},
-			},
-		},
-	},
-	&ast.DeclStmt{
-		Decl: &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: "c2",
-							Obj: &ast.Object{
-								Kind: ast.Var,
-								Name: "c2",
-								Data: 0,
-							},
-						},
-					},
-					Type: &ast.Ident{
-						Name: "string",
-					},
-				},
-			},
-		},
-	},
-}
-
-func DeclarationStatements(columns []*ast.Ident, types []ast.Expr) []ast.Stmt {
-	if len(columns) != len(types) {
-		panic("columns must match the number of types")
-	}
-
-	results := make([]ast.Stmt, 0, len(columns))
-	for i := range columns {
-		results = append(results, DeclarationStatement(columns[i], types[i]))
+func DeclarationStatements(maps ...ColumnMap) []ast.Stmt {
+	results := make([]ast.Stmt, 0, len(maps))
+	for _, m := range maps {
+		results = append(results, DeclarationStatement(m))
 	}
 
 	return results
 }
 
-func DeclarationStatement(column *ast.Ident, typ ast.Expr) ast.Stmt {
+func DeclarationStatement(m ColumnMap) ast.Stmt {
 	return &ast.DeclStmt{
 		Decl: &ast.GenDecl{
 			Tok: token.VAR,
@@ -509,14 +296,14 @@ func DeclarationStatement(column *ast.Ident, typ ast.Expr) ast.Stmt {
 				&ast.ValueSpec{
 					Names: []*ast.Ident{
 						&ast.Ident{
-							Name: column.Name,
+							Name: m.Column.Name,
 							Obj: &ast.Object{
 								Kind: ast.Var,
-								Name: column.Name,
+								Name: m.Column.Name,
 							},
 						},
 					},
-					Type: typ,
+					Type: m.Type,
 				},
 			},
 		},
@@ -591,96 +378,85 @@ func AsUnaryExpr(expressions ...ast.Expr) []ast.Expr {
 	return results
 }
 
-func IdentToExpr(idents []*ast.Ident) []ast.Expr {
-	result := make([]ast.Expr, 0, len(idents))
-	for _, ident := range idents {
-		result = append(result, ident)
+func ColumnToExpr(columns []ColumnMap) []ast.Expr {
+	result := make([]ast.Expr, 0, len(columns))
+	for _, m := range columns {
+		result = append(result, m.Column)
 	}
 
 	return result
 }
 
-var scanColumns = []*ast.Ident{
-	&ast.Ident{
-		Name: "c0",
-	},
-	&ast.Ident{
-		Name: "c1",
-	},
-	&ast.Ident{
-		Name: "c2",
-	},
+func AssignmentStatements(columns []ColumnMap) []ast.Stmt {
+	result := make([]ast.Stmt, 0, len(columns))
+
+	for _, m := range columns {
+		assignmentStmt := &ast.AssignStmt{
+			Lhs: []ast.Expr{
+				m.Assignment,
+			},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{
+				m.Column,
+			},
+		}
+		result = append(result, assignmentStmt)
+	}
+
+	return result
 }
 
-var scanColumnTypes = []ast.Expr{
-	&ast.SelectorExpr{
-		X: &ast.Ident{
-			Name: "time",
+var columnMap = []ColumnMap{
+	{
+		Column: &ast.Ident{
+			Name: "c0",
 		},
-		Sel: &ast.Ident{
-			Name: "Time",
-		},
-	},
-	&ast.Ident{
-		Name: "string",
-	},
-	&ast.Ident{
-		Name: "string",
-	},
-}
-
-var scannerAssignmentStatements = []ast.Stmt{
-	&ast.AssignStmt{
-		Lhs: []ast.Expr{
-			&ast.SelectorExpr{
-				X: &ast.Ident{
-					Name: "arg0",
-				},
-				Sel: &ast.Ident{
-					Name: "Created",
-				},
+		Type: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "time",
+			},
+			Sel: &ast.Ident{
+				Name: "Time",
 			},
 		},
-		Tok: token.EQL,
-		Rhs: []ast.Expr{
-			&ast.Ident{
-				Name: "c0",
+		Assignment: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "arg0",
+			},
+			Sel: &ast.Ident{
+				Name: "Created",
 			},
 		},
 	},
-	&ast.AssignStmt{
-		Lhs: []ast.Expr{
-			&ast.SelectorExpr{
-				X: &ast.Ident{
-					Name: "arg0",
-				},
-				Sel: &ast.Ident{
-					Name: "Email",
-				},
-			},
+	{
+		Column: &ast.Ident{
+			Name: "c1",
 		},
-		Tok: token.EQL,
-		Rhs: []ast.Expr{
-			&ast.Ident{
-				Name: "c1",
+		Type: &ast.Ident{
+			Name: "string",
+		},
+		Assignment: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "arg0",
+			},
+			Sel: &ast.Ident{
+				Name: "Email",
 			},
 		},
 	},
-	&ast.AssignStmt{
-		Lhs: []ast.Expr{
-			&ast.SelectorExpr{
-				X: &ast.Ident{
-					Name: "arg0",
-				},
-				Sel: &ast.Ident{
-					Name: "ID",
-				},
-			},
+	{
+		Column: &ast.Ident{
+			Name: "c2",
 		},
-		Tok: token.EQL,
-		Rhs: []ast.Expr{
-			&ast.Ident{
-				Name: "c2",
+		Type: &ast.Ident{
+			Name: "string",
+		},
+		Assignment: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "arg0",
+			},
+			Sel: &ast.Ident{
+				Name: "ID",
 			},
 		},
 	},
@@ -700,6 +476,39 @@ var scannerReturnStatement = &ast.ReturnStmt{
 				},
 				Sel: &ast.Ident{
 					Name: "Err",
+				},
+			},
+		},
+	},
+}
+
+var errorCheckStatement = &ast.IfStmt{
+	Cond: &ast.BinaryExpr{
+		X: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "t",
+			},
+			Sel: &ast.Ident{
+				Name: "err",
+			},
+		},
+		Op: token.NEQ,
+		Y: &ast.Ident{
+			Name: "nil",
+		},
+	},
+	Body: &ast.BlockStmt{
+		List: []ast.Stmt{
+			&ast.ReturnStmt{
+				Results: []ast.Expr{
+					&ast.SelectorExpr{
+						X: &ast.Ident{
+							Name: "t",
+						},
+						Sel: &ast.Ident{
+							Name: "err",
+						},
+					},
 				},
 			},
 		},
