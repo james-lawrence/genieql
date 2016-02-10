@@ -36,9 +36,9 @@ func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return mapCmd
 }
 
-func (t mapper) toMapper() genieql.Mapper {
+func (t mapper) toMapper() genieql.MappingConfig {
 	pkg, typ := extractPackageType(t.packageType)
-	return genieql.Mapper{
+	return genieql.MappingConfig{
 		Package:              pkg,
 		Type:                 typ,
 		Table:                t.table,

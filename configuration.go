@@ -3,7 +3,6 @@ package genieql
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -75,12 +74,12 @@ func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
 	if val, ok := queryParams["password"]; ok {
 		password = val[0]
 	}
-	log.Println("username:", username, "password:", password)
+
 	return Configuration{
 		Dialect:  uri.Scheme,
 		Host:     host,
 		Port:     port,
-		Database: uri.Path,
+		Database: strings.Trim(uri.Path, "/"),
 		Username: username,
 		Password: password,
 	}, nil

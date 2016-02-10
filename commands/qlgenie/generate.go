@@ -70,7 +70,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 
 	typeDecl := decls[0]
 
-	mer := genieql.MapperV2{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder("snakecase", "lowercase")}}
+	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder("snakecase", "lowercase")}}
 	fields := genieql.ExtractFields(typeDecl.Specs[0]).List
 
 	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, columns...)
