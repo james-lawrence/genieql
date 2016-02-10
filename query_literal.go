@@ -6,6 +6,8 @@ import (
 	"go/token"
 )
 
+// QueryLiteral creates a const with the given name for the provided
+// query.
 func QueryLiteral(name, query string) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok: token.CONST,
@@ -23,7 +25,7 @@ func QueryLiteral(name, query string) *ast.GenDecl {
 				Values: []ast.Expr{
 					&ast.BasicLit{
 						Kind:  token.STRING,
-						Value: fmt.Sprintf("`%s`", query), //"`SELECT * FROM blah`"
+						Value: fmt.Sprintf("`%s`", query),
 					},
 				},
 			},
