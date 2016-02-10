@@ -1,7 +1,6 @@
 package genieql
 
 import (
-	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -10,50 +9,6 @@ import (
 	"os"
 	"path/filepath"
 )
-
-type imports struct {
-	decl *ast.GenDecl
-}
-
-func (t imports) Imports(imports ...string) imports {
-	for _, imp := range imports {
-		t.decl.Specs = append(t.decl.Specs, &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: fmt.Sprintf(`"%s"`, imp),
-			},
-		})
-	}
-
-	return t
-}
-
-func (t imports) NamedImport(name, path string) imports {
-	t.decl.Specs = append(t.decl.Specs, &ast.ImportSpec{
-		Name: &ast.Ident{Name: name},
-		Path: &ast.BasicLit{
-			Kind:  token.STRING,
-			Value: fmt.Sprintf(`"%s"`, path),
-		},
-	})
-
-	return t
-}
-
-func (t imports) Decl() *ast.GenDecl {
-	return t.decl
-}
-
-func NewImports() imports {
-	return imports{
-		decl: &ast.GenDecl{
-			Tok:    token.IMPORT,
-			Lparen: 1,
-			Specs:  []ast.Spec{},
-			Rparen: 1,
-		},
-	}
-}
 
 func LocatePackage(pkgName string) ([]*ast.Package, error) {
 	fset := token.NewFileSet()
@@ -114,5 +69,22 @@ func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl
 func FilterType(typeName string) ast.Filter {
 	return func(in string) bool {
 		return typeName == in
+	}
+}
+
+func QualifiedIdent(pkg, typ string) *ast.SelectorExpr {
+	return &ast.SelectorExpr{
+		X: &ast.Ident{
+			Name: pkg,
+		},
+		Sel: &ast.Ident{
+			Name: typ,
+		},
+	}
+}
+
+func Ident(name string) *ast.Ident {
+	return &ast.Ident{
+		Name: name,
 	}
 }

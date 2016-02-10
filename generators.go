@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"io"
 
+	"github.com/serenize/snaker"
+
 	"bitbucket.org/jatone/genieql/internal/postgresql"
 )
 
@@ -49,7 +51,7 @@ func (t crudWriter) Write(dialect CrudGenerator, fset *token.FileSet) error {
 	fmt.Fprintf(t.out, "\n")
 
 	for i, column := range t.columns {
-		constName := fmt.Sprintf("%sFindBy%s", t.prefix, column)
+		constName := fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column))
 		query := dialect.SelectQuery(t.table, t.columns[i:i+1])
 		if err := format.Node(t.out, fset, QueryLiteral(constName, query)); err != nil {
 			return err
@@ -57,14 +59,14 @@ func (t crudWriter) Write(dialect CrudGenerator, fset *token.FileSet) error {
 		fmt.Fprintf(t.out, "\n")
 	}
 
-	constName = fmt.Sprintf("%sUpdate", t.prefix)
+	constName = fmt.Sprintf("%sUpdateByID", t.prefix)
 	query = dialect.UpdateQuery(t.table, t.columns, t.naturalkey)
 	if err := format.Node(t.out, fset, QueryLiteral(constName, query)); err != nil {
 		return err
 	}
 	fmt.Fprintf(t.out, "\n")
 
-	constName = fmt.Sprintf("%sDelete", t.prefix)
+	constName = fmt.Sprintf("%sDeleteByID", t.prefix)
 	query = dialect.DeleteQuery(t.table, t.naturalkey)
 	if err := format.Node(t.out, fset, QueryLiteral(constName, query)); err != nil {
 		return err
