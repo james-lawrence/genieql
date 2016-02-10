@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -9,6 +8,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"bitbucket.org/jatone/genieql"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -51,14 +52,16 @@ func main() {
 		log.Printf("Package: %s, Type: %s\n", p, t)
 	}
 
+	// printspike("example1.go")
 	// printspike("example2.go")
+	printspike("example3.go")
 	// fmt.Println()
-	genspike(scannerName, columnMap)
-	fmt.Println()
-	parseExpr("*sso.Identity")
-	parseExpr("sso.Identity")
-	parseExpr("t.rows.Scan()")
-	parseExpr("time.Time")
+	// genspike(scannerName, columnMap)
+	// fmt.Println()
+	// parseExpr("*sso.Identity")
+	// parseExpr("sso.Identity")
+	// parseExpr("t.rows.Scan()")
+	// parseExpr("time.Time")
 }
 
 func printspike(filename string) {
@@ -89,124 +92,15 @@ func extractPackageType(s string) (string, string) {
 type Destination struct {
 	Package    string
 	Ident      string
-	ColumnMaps []ColumnMap
+	ColumnMaps []genieql.ColumnMap
 }
 
-type ColumnMap struct {
-	Column     *ast.Ident
-	Type       ast.Expr
-	Assignment ast.Expr
-}
-
-func genspike(name string, mapping []ColumnMap) {
+func genspike(name string, mapping []genieql.ColumnMap) {
 	fset := token.NewFileSet()
 
-	var scannerTypeDecl = &ast.GenDecl{
-		Tok: token.TYPE,
-		Specs: []ast.Spec{
-			&ast.TypeSpec{
-				Name: &ast.Ident{
-					Name: name,
-					Obj: &ast.Object{
-						Kind: ast.Typ,
-						Name: name,
-					},
-				},
-				Type: &ast.StructType{
-					Fields: &ast.FieldList{
-						List: []*ast.Field{
-							&ast.Field{
-								Names: []*ast.Ident{
-									&ast.Ident{
-										Name: "err",
-										Obj: &ast.Object{
-											Kind: ast.Var,
-											Name: "err",
-										},
-									},
-								},
-								Type: &ast.Ident{
-									Name: "error",
-								},
-							},
-							&ast.Field{
-								Names: []*ast.Ident{
-									&ast.Ident{
-										Name: "rows",
-										Obj: &ast.Object{
-											Kind: ast.Var,
-											Name: "rows",
-										},
-									},
-								},
-								Type: &ast.StarExpr{
-									X: &ast.SelectorExpr{
-										X: &ast.Ident{
-											Name: "sql",
-										},
-										Sel: &ast.Ident{
-											Name: "Rows",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	scanner := genieql.Scanner{Name: name}.Build(mapping, ssoIdentity)
 
-	var funcDecl = &ast.FuncDecl{
-		Recv: &ast.FieldList{
-			List: []*ast.Field{
-				&ast.Field{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: "t",
-							Obj: &ast.Object{
-								Kind: ast.Var,
-								Name: "t",
-							},
-						},
-					},
-					Type: &ast.Ident{
-						Name: name,
-					},
-				},
-			},
-		},
-		Name: &ast.Ident{
-			Name: "Scan",
-		},
-		Type: &ast.FuncType{
-			Params:  &ast.FieldList{},
-			Results: &ast.FieldList{},
-		}, // scan-function-ast.go
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{},
-		}, // scannerbody
-	}
-
-	funcDecl.Type.Params.List = FuncParams(SExpr(ssoIdentity))
-	funcDecl.Type.Results.List = FuncResults(&ast.Ident{Name: "error"})
-	funcDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		errorCheckStatement,
-	).Append(
-		DeclarationStatements(mapping...)...,
-	).Append(
-		ScanStatement(AsUnaryExpr(ColumnToExpr(mapping)...)...),
-	).Append(
-		AssignmentStatements(mapping)...,
-	).Append(
-		scannerReturnStatement,
-	).BlockStmt
-
-	if err := format.Node(os.Stdout, fset, scannerTypeDecl); err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Printf("\n\n")
-	if err := format.Node(os.Stdout, fset, funcDecl); err != nil {
+	if err := format.Node(os.Stdout, fset, scanner); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -220,193 +114,7 @@ var ssoIdentity = &ast.SelectorExpr{
 	},
 }
 
-func FuncParams(parameters ...ast.Expr) []*ast.Field {
-	result := make([]*ast.Field, 0, len(parameters))
-
-	for i, expr := range parameters {
-		paramName := fmt.Sprintf("arg%d", i)
-		param := &ast.Field{
-			Names: []*ast.Ident{
-				&ast.Ident{
-					Name: paramName,
-					Obj: &ast.Object{
-						Kind: ast.Var,
-						Name: paramName,
-					},
-				},
-			},
-			Type: expr,
-		}
-
-		result = append(result, param)
-	}
-
-	return result
-}
-
-func FuncResults(parameters ...ast.Expr) []*ast.Field {
-	result := make([]*ast.Field, 0, len(parameters))
-
-	for _, expr := range parameters {
-		param := &ast.Field{
-			Names: []*ast.Ident{},
-			Type:  expr,
-		}
-
-		result = append(result, param)
-	}
-
-	return result
-}
-
-func SExpr(selector *ast.SelectorExpr) ast.Expr {
-	return &ast.StarExpr{
-		X: selector,
-	}
-}
-
-type BlockStmtBuilder struct {
-	*ast.BlockStmt
-}
-
-func (t BlockStmtBuilder) Append(statements ...ast.Stmt) BlockStmtBuilder {
-	t.List = append(t.List, statements...)
-	return t
-}
-
-func (t BlockStmtBuilder) Prepend(statements ...ast.Stmt) BlockStmtBuilder {
-	t.List = append(statements, t.List...)
-	return t
-}
-
-func DeclarationStatements(maps ...ColumnMap) []ast.Stmt {
-	results := make([]ast.Stmt, 0, len(maps))
-	for _, m := range maps {
-		results = append(results, DeclarationStatement(m))
-	}
-
-	return results
-}
-
-func DeclarationStatement(m ColumnMap) ast.Stmt {
-	return &ast.DeclStmt{
-		Decl: &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: m.Column.Name,
-							Obj: &ast.Object{
-								Kind: ast.Var,
-								Name: m.Column.Name,
-							},
-						},
-					},
-					Type: m.Type,
-				},
-			},
-		},
-	}
-}
-
-func ScanStatement(columns ...ast.Expr) ast.Stmt {
-	return &ast.IfStmt{
-		Init: &ast.AssignStmt{
-			Lhs: []ast.Expr{
-				&ast.Ident{
-					Name: "err",
-					Obj: &ast.Object{
-						Kind: ast.Var,
-						Name: "err",
-					},
-				},
-			},
-			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{
-				&ast.CallExpr{
-					Fun: &ast.SelectorExpr{
-						X: &ast.SelectorExpr{
-							X: &ast.Ident{
-								Name: "t",
-							},
-							Sel: &ast.Ident{
-								Name: "rows",
-							},
-						},
-						Sel: &ast.Ident{
-							Name: "Scan",
-						},
-					},
-					Args: columns,
-				},
-			},
-		},
-		Cond: &ast.BinaryExpr{
-			X: &ast.Ident{
-				Name: "err",
-			},
-			Op: token.NEQ,
-			Y: &ast.Ident{
-				Name: "nil",
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.Ident{
-							Name: "err",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func AsUnaryExpr(expressions ...ast.Expr) []ast.Expr {
-	results := make([]ast.Expr, 0, len(expressions))
-	for _, expr := range expressions {
-		unary := &ast.UnaryExpr{
-			Op: token.AND,
-			X:  expr,
-		}
-		results = append(results, unary)
-	}
-
-	return results
-}
-
-func ColumnToExpr(columns []ColumnMap) []ast.Expr {
-	result := make([]ast.Expr, 0, len(columns))
-	for _, m := range columns {
-		result = append(result, m.Column)
-	}
-
-	return result
-}
-
-func AssignmentStatements(columns []ColumnMap) []ast.Stmt {
-	result := make([]ast.Stmt, 0, len(columns))
-
-	for _, m := range columns {
-		assignmentStmt := &ast.AssignStmt{
-			Lhs: []ast.Expr{
-				m.Assignment,
-			},
-			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{
-				m.Column,
-			},
-		}
-		result = append(result, assignmentStmt)
-	}
-
-	return result
-}
-
-var columnMap = []ColumnMap{
+var columnMap = []genieql.ColumnMap{
 	{
 		Column: &ast.Ident{
 			Name: "c0",
@@ -457,59 +165,6 @@ var columnMap = []ColumnMap{
 			},
 			Sel: &ast.Ident{
 				Name: "ID",
-			},
-		},
-	},
-}
-
-var scannerReturnStatement = &ast.ReturnStmt{
-	Results: []ast.Expr{
-		&ast.CallExpr{
-			Fun: &ast.SelectorExpr{
-				X: &ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "t",
-					},
-					Sel: &ast.Ident{
-						Name: "rows",
-					},
-				},
-				Sel: &ast.Ident{
-					Name: "Err",
-				},
-			},
-		},
-	},
-}
-
-var errorCheckStatement = &ast.IfStmt{
-	Cond: &ast.BinaryExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "t",
-			},
-			Sel: &ast.Ident{
-				Name: "err",
-			},
-		},
-		Op: token.NEQ,
-		Y: &ast.Ident{
-			Name: "nil",
-		},
-	},
-	Body: &ast.BlockStmt{
-		List: []ast.Stmt{
-			&ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.SelectorExpr{
-						X: &ast.Ident{
-							Name: "t",
-						},
-						Sel: &ast.Ident{
-							Name: "err",
-						},
-					},
-				},
 			},
 		},
 	},

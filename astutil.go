@@ -1,0 +1,118 @@
+package genieql
+
+import (
+	"fmt"
+	"go/ast"
+	"go/build"
+	"go/parser"
+	"go/token"
+	"log"
+	"os"
+	"path/filepath"
+)
+
+type imports struct {
+	decl *ast.GenDecl
+}
+
+func (t imports) Imports(imports ...string) imports {
+	for _, imp := range imports {
+		t.decl.Specs = append(t.decl.Specs, &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: fmt.Sprintf(`"%s"`, imp),
+			},
+		})
+	}
+
+	return t
+}
+
+func (t imports) NamedImport(name, path string) imports {
+	t.decl.Specs = append(t.decl.Specs, &ast.ImportSpec{
+		Name: &ast.Ident{Name: name},
+		Path: &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: fmt.Sprintf(`"%s"`, path),
+		},
+	})
+
+	return t
+}
+
+func (t imports) Decl() *ast.GenDecl {
+	return t.decl
+}
+
+func NewImports() imports {
+	return imports{
+		decl: &ast.GenDecl{
+			Tok:    token.IMPORT,
+			Lparen: 1,
+			Specs:  []ast.Spec{},
+			Rparen: 1,
+		},
+	}
+}
+
+func LocatePackage(pkgName string) ([]*ast.Package, error) {
+	fset := token.NewFileSet()
+	packages := []*ast.Package{}
+
+	for _, srcDir := range build.Default.SrcDirs() {
+		directory := filepath.Join(srcDir, pkgName)
+		log.Println("Importing", directory)
+		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
+		if err != nil {
+			return packages, err
+		}
+
+		pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		if err != nil {
+			return packages, err
+		}
+
+		for _, astPkg := range pkgs {
+			packages = append(packages, astPkg)
+		}
+	}
+
+	return packages, nil
+}
+
+func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
+	list = &ast.FieldList{}
+	ast.Inspect(decl, func(n ast.Node) bool {
+		if fields, ok := n.(*ast.FieldList); ok {
+			list = fields
+			return false
+		}
+		return true
+	})
+	return
+}
+
+func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl {
+	results := []*ast.GenDecl{}
+	for _, pkg := range packageSet {
+		ast.Inspect(pkg, func(n ast.Node) bool {
+			decl, ok := n.(*ast.GenDecl)
+			if ok && ast.FilterDecl(decl, f) {
+				results = append(results, decl)
+			}
+
+			return true
+		})
+	}
+	return results
+}
+
+func FilterType(typeName string) ast.Filter {
+	return func(in string) bool {
+		return typeName == in
+	}
+}

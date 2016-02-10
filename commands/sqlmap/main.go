@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/parser"
 	"go/token"
 	"log"
 	"os"
-	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 
@@ -42,10 +39,11 @@ func (t typeDeclaration2) Aliases(aliasers ...genieql.Aliaser) ([]genieql.Field,
 }
 
 type typeDeclaration struct {
-	GenDecl *ast.GenDecl
-	Package *ast.Package
+	TypeSpec ast.Spec
+	Package  *ast.Package
 }
 
+// gilo-shim sqlmap --package="bitbucket.org/jatone/sso" --type="Identity" --table="identity"
 func main() {
 	var packageName string
 	var typeName string
@@ -69,32 +67,12 @@ func main() {
 	log.Println("Custom Aliases", customAliases)
 
 	fset := token.NewFileSet()
-	packages := []*ast.Package{}
-
-	for _, srcDir := range build.Default.SrcDirs() {
-		directory := filepath.Join(srcDir, packageName)
-		// todo debug.
-		// log.Println("Importing", directory)
-		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
-		if err != nil {
-			log.Fatalln("Default.ImportDir", err)
-		}
-
-		pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
-		if os.IsNotExist(err) {
-			continue
-		}
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		for _, astPkg := range pkgs {
-			packages = append(packages, astPkg)
-		}
+	packages, err := genieql.LocatePackage(packageName)
+	if err != nil {
+		log.Fatalln("failed to locate package", err)
 	}
 
-	decls := FilterDeclarations(filterType(typeName), packages...)
+	decls := FilterDeclarations(genieql.FilterType(typeName), packages...)
 
 	switch len(decls) {
 	case 1:
@@ -105,10 +83,14 @@ func main() {
 		log.Fatalln("Ambiguous type, located multiple matches", decls)
 	}
 
+	if err := ast.Print(fset, decls[0].TypeSpec); err != nil {
+		log.Fatalln(err)
+	}
+
 	typeDecl := typeDeclaration2{
 		TypeIdent:   typeName,
 		PackageName: decls[0].Package.Name,
-		Fields:      ExtractFields(decls[0].GenDecl),
+		Fields:      genieql.ExtractFields(decls[0].TypeSpec),
 	}
 
 	aliaser := genieql.AliaserBuilder(strategyArray...)
@@ -166,17 +148,6 @@ func ASTFieldToGenieqlField(field *ast.Field, aliasers ...genieql.Aliaser) (resu
 	return result, nil
 }
 
-func ExtractFields(decl *ast.GenDecl) (list *ast.FieldList) {
-	ast.Inspect(decl, func(n ast.Node) bool {
-		if fields, ok := n.(*ast.FieldList); ok {
-			list = fields
-			return false
-		}
-		return true
-	})
-	return
-}
-
 // FilterDeclarations filter out any type declarations that do not match the filter.
 func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []typeDeclaration {
 	results := []typeDeclaration{}
@@ -184,16 +155,10 @@ func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []typeDeclarat
 		ast.Inspect(pkg, func(n ast.Node) bool {
 			decl, ok := n.(*ast.GenDecl)
 			if ok && ast.FilterDecl(decl, f) {
-				results = append(results, typeDeclaration{Package: pkg, GenDecl: decl})
+				results = append(results, typeDeclaration{Package: pkg, TypeSpec: decl.Specs[0]})
 			}
 			return true
 		})
 	}
 	return results
-}
-
-func filterType(typeName string) ast.Filter {
-	return func(in string) bool {
-		return typeName == in
-	}
 }
