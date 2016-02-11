@@ -18,6 +18,8 @@ import (
 	"golang.org/x/tools/imports"
 )
 
+// New builds a generator that generates a CRUD scanner and associated
+// queries.
 func New(c genieql.Configuration, m genieql.MappingConfig) genieql.Generator {
 	return generator{
 		Configuration: c,

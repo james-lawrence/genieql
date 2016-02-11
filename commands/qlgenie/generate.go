@@ -61,12 +61,26 @@ type generate struct {
 func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	cmd := app.Command("generate", "generate sql queries")
 	crud := cmd.Command("crud", "generate crud queries (INSERT, SELECT, UPDATE, DELETE)").Action(t.crud.Execute)
-	crud.Flag("config", "name of configuration file to use").Default("default.config").StringVar(&t.crud.configName)
-	crud.Flag("output", "path of output file").Default("").StringVar(&t.crud.output)
-	crud.Arg("package.Type", "package prefixed structure we want to build the scanner/query for").Required().
-		StringVar(&t.crud.packageType)
-	crud.Arg("table", "table you want to build the queries for").Required().
-		StringVar(&t.crud.table)
+
+	crud.Flag(
+		"config",
+		"name of configuration file to use",
+	).Default("default.config").StringVar(&t.crud.configName)
+
+	crud.Flag(
+		"output",
+		"path of output file",
+	).Default("").StringVar(&t.crud.output)
+
+	crud.Arg(
+		"package.Type",
+		"package prefixed structure we want to build the scanner/query for",
+	).Required().StringVar(&t.crud.packageType)
+
+	crud.Arg(
+		"table",
+		"table you want to build the queries for",
+	).Required().StringVar(&t.crud.table)
 
 	return cmd
 }
