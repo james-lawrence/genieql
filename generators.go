@@ -13,6 +13,10 @@ import (
 
 var PostgresqlCRUDGen = postgresql.CRUD{}
 
+type Generator interface {
+	Generate() (io.Reader, error)
+}
+
 type CrudWriter interface {
 	Write(dialect CrudGenerator, fset *token.FileSet) error
 }

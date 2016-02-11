@@ -34,12 +34,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	log.Printf("genieql configuration %#v\n", configuration)
 	log.Printf("genieql mapping %#v\n", mappingConfig)
 
-	g := crud.CRUD{
-		Configuration: configuration,
-		MappingConfig: mappingConfig,
-	}
-
-	result, err := g.Generate()
+	result, err := crud.New(configuration, mappingConfig).Generate()
 	if err != nil {
 		log.Fatalln(err)
 	}

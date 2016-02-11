@@ -18,12 +18,19 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-type CRUD struct {
+func New(c genieql.Configuration, m genieql.MappingConfig) genieql.Generator {
+	return generator{
+		Configuration: c,
+		MappingConfig: m,
+	}
+}
+
+type generator struct {
 	genieql.Configuration
 	genieql.MappingConfig
 }
 
-func (t CRUD) Generate() (io.Reader, error) {
+func (t generator) Generate() (io.Reader, error) {
 	var err error
 	var db *sql.DB
 	var columns []string
