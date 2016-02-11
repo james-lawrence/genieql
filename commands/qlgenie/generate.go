@@ -39,12 +39,13 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	var dst io.Writer = os.Stdout
+	var dst io.WriteCloser = os.Stdout
 	if len(t.output) > 0 {
 		dst, err = os.OpenFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
 		if err != nil {
 			log.Fatalln(err)
 		}
+		defer dst.Close()
 	}
 
 	if _, err := io.Copy(dst, result); err != nil {
