@@ -32,6 +32,14 @@ func WriteMapper(root string, configuration Configuration, m MappingConfig) erro
 	return ioutil.WriteFile(path, d, 0666)
 }
 
+func ReadMapper(root, pkg, typ, table string, configuration Configuration, m *MappingConfig) error {
+	raw, err := ioutil.ReadFile(filepath.Join(root, configuration.Database, pkg, typ, table))
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(raw, m)
+}
+
 func Map(configFile string, m MappingConfig) error {
 	var config Configuration
 

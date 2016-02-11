@@ -13,16 +13,17 @@ import (
 )
 
 type Configuration struct {
-	Dialect  string
-	Host     string
-	Port     int
-	Database string
-	Username string
-	Password string
+	Dialect       string
+	ConnectionURL string
+	Host          string
+	Port          int
+	Database      string
+	Username      string
+	Password      string
 }
 
 func Bootstrap(path string, uri *url.URL) error {
-	if err := os.MkdirAll(path, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
@@ -31,7 +32,7 @@ func Bootstrap(path string, uri *url.URL) error {
 		return err
 	}
 
-	return WriteConfiguration(filepath.Join(path, fmt.Sprintf("%s.%s", config.Database, "config")), config)
+	return WriteConfiguration(path, config)
 }
 
 func WriteConfiguration(path string, configuration Configuration) error {
@@ -52,8 +53,7 @@ func ReadConfiguration(path string, config *Configuration) error {
 }
 
 func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
-	var username, password string
-
+	var password string
 	splits := strings.Split(uri.Host, ":")
 	if len(splits) != 2 {
 		return Configuration{}, fmt.Errorf("invalid host/port combination")
@@ -66,21 +66,15 @@ func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
 		return Configuration{}, err
 	}
 
-	queryParams := uri.Query()
-	if val, ok := queryParams["username"]; ok {
-		username = val[0]
-	}
-
-	if val, ok := queryParams["password"]; ok {
-		password = val[0]
-	}
+	password, _ = uri.User.Password()
 
 	return Configuration{
-		Dialect:  uri.Scheme,
-		Host:     host,
-		Port:     port,
-		Database: strings.Trim(uri.Path, "/"),
-		Username: username,
-		Password: password,
+		ConnectionURL: uri.String(),
+		Dialect:       uri.Scheme,
+		Host:          host,
+		Port:          port,
+		Database:      strings.Trim(uri.Path, "/"),
+		Username:      uri.User.Username(),
+		Password:      password,
 	}, nil
 }

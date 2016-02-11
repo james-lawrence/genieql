@@ -3,8 +3,14 @@ package genieql
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"sort"
 )
+
+func ConnectDB(config Configuration) (*sql.DB, error) {
+	log.Printf("connection %s\n", config.ConnectionURL)
+	return sql.Open(config.Dialect, config.ConnectionURL)
+}
 
 // ExtractColumns executes a query and extracts the resulting set of columns from
 // the database.

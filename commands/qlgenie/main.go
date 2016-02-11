@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
-
-	"bitbucket.org/jatone/genieql"
 )
 
 func main() {
@@ -25,7 +23,7 @@ func main() {
 
 	switch cmd {
 	case bootstrapCmd.FullCommand():
-		if err := genieql.Bootstrap(bootstrap.outputfilepath, bootstrap.dburi); err != nil {
+		if err := bootstrap.Bootstrap(); err != nil {
 			log.Fatalln(err)
 		}
 	case mapCmd.FullCommand():

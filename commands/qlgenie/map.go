@@ -7,10 +7,10 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-// qlgenie map --config="example.glgenie" --include-table-prefix-aliases=false --natural-key="composite,column,names" {Package}.{Type} {TableName} snakecase lowercase
+// qlgenie map --config="example.glgenie" --include-table-prefix-aliases=false --natural-key="composite" --natural-key="column" --natural-key="names" {Package}.{Type} {TableName} snakecase lowercase
+// qlgenie map --natural-key="id" --natural-key="email" {package}.{type} {table} snakecase lowercase
 // qlgenie map display --config="example.qlgenie" {Package}.{Type} {TableName} // displays file location, and contents to stdout as yml.
 type mapper struct {
-	configDirectory      string
 	configuration        string
 	packageType          string
 	table                string
@@ -20,10 +20,8 @@ type mapper struct {
 }
 
 func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
-	t.configDirectory = configurationDirectory()
-
 	mapCmd := app.Command("map", "define mapping configuration for a particular type/table combination")
-	mapCmd.Flag("config", "configuration to use").Required().StringVar(&t.configuration)
+	mapCmd.Flag("config", "configuration to use").Default("default.config").StringVar(&t.configuration)
 	mapCmd.Flag("include-table-prefix-aliases", "generate additional aliases with the table name prefixed i.e.) my_column -> my_table_my_column").
 		Default("true").BoolVar(&t.includeTablePrefixes)
 	mapCmd.Flag("natural-key", "natural key for this mapping, this is deprecated will be able to automatically determine in later versions").
@@ -49,5 +47,5 @@ func (t mapper) toMapper() genieql.MappingConfig {
 }
 
 func (t mapper) Map() error {
-	return genieql.Map(filepath.Join(t.configDirectory, t.configuration), t.toMapper())
+	return genieql.Map(filepath.Join(configurationDirectory(), t.configuration), t.toMapper())
 }

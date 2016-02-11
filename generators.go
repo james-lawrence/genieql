@@ -6,9 +6,9 @@ import (
 	"go/token"
 	"io"
 
-	"github.com/serenize/snaker"
-
 	"bitbucket.org/jatone/genieql/internal/postgresql"
+
+	"github.com/serenize/snaker"
 )
 
 var PostgresqlCRUDGen = postgresql.CRUD{}
