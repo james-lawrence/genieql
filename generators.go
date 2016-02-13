@@ -23,9 +23,9 @@ type CrudWriter interface {
 
 type CrudGenerator interface {
 	InsertQuery(table string, columns []string) string
-	SelectQuery(table string, predicates []string) string
+	SelectQuery(table string, columns, predicates []string) string
 	UpdateQuery(table string, columns, predicates []string) string
-	DeleteQuery(table string, predicates []string) string
+	DeleteQuery(table string, columns, predicates []string) string
 }
 
 func NewCRUDWriter(out io.Writer, prefix, table string, naturalkey []string, columns []string) CrudWriter {
@@ -56,7 +56,7 @@ func (t crudWriter) Write(dialect CrudGenerator, fset *token.FileSet) error {
 
 	for i, column := range t.columns {
 		constName := fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column))
-		query := dialect.SelectQuery(t.table, t.columns[i:i+1])
+		query := dialect.SelectQuery(t.table, t.columns, t.columns[i:i+1])
 		if err := format.Node(t.out, fset, QueryLiteral(constName, query)); err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (t crudWriter) Write(dialect CrudGenerator, fset *token.FileSet) error {
 	fmt.Fprintf(t.out, "\n")
 
 	constName = fmt.Sprintf("%sDeleteByID", t.prefix)
-	query = dialect.DeleteQuery(t.table, t.naturalkey)
+	query = dialect.DeleteQuery(t.table, t.columns, t.naturalkey)
 	if err := format.Node(t.out, fset, QueryLiteral(constName, query)); err != nil {
 		return err
 	}

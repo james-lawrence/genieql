@@ -93,10 +93,12 @@ func (t generator) Generate() (io.Reader, error) {
 	errName := fmt.Sprintf("err%sCrudScanner", t.MappingConfig.Type)
 	scannerName := fmt.Sprintf("%sCrudScanner", strings.ToLower(t.MappingConfig.Type))
 	interfaceName := fmt.Sprintf("%sCrudScanner", t.MappingConfig.Type)
+	newScannerFuncName := fmt.Sprintf("New%s", interfaceName)
 	scanner := genieql.Scanner{
-		InterfaceName: interfaceName,
-		Name:          scannerName,
-		ErrName:       errName,
+		InterfaceName:      interfaceName,
+		Name:               scannerName,
+		ErrName:            errName,
+		NewScannerFuncName: newScannerFuncName,
 	}.Build(columnMap, genieql.Ident(t.MappingConfig.Type))
 	crud := genieql.NewCRUDWriter(
 		buffer,

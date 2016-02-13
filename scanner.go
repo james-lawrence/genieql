@@ -13,9 +13,10 @@ type ColumnMap struct {
 }
 
 type Scanner struct {
-	InterfaceName string
-	ErrName       string
-	Name          string
+	InterfaceName      string
+	ErrName            string
+	Name               string
+	NewScannerFuncName string
 }
 
 func (t Scanner) ErrScannerDecl() *ast.GenDecl {
@@ -119,12 +120,12 @@ func (t Scanner) ScanDecl(recvType *ast.Ident) *ast.FuncDecl {
 }
 
 func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
-
 	var errScannerDecl = t.ErrScannerDecl()
 	var errScannerFuncDecl = t.ScanDecl(Ident(t.ErrName))
 	var scannerDecl = t.ScannerDecl()
 	var scannerFuncDecl = t.ScanDecl(Ident(t.Name))
 
+	var newScannerFunc = NewScannerFunc(Ident(t.NewScannerFuncName), Ident(t.ErrName), Ident(t.Name))
 	scannerParams := FuncParams(SExpr(arg))
 	scannerResults := FuncResults(&ast.Ident{Name: "error"})
 	scannerInterfaceDecl := ScannerInterfaceDecl(t.InterfaceName, scannerParams, scannerResults)
@@ -150,7 +151,7 @@ func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
 		returnErrorStatement,
 	).BlockStmt
 
-	return []ast.Decl{scannerInterfaceDecl, scannerDecl, scannerFuncDecl, errScannerDecl, errScannerFuncDecl}
+	return []ast.Decl{newScannerFunc, scannerInterfaceDecl, scannerDecl, scannerFuncDecl, errScannerDecl, errScannerFuncDecl}
 }
 
 type BlockStmtBuilder struct {
@@ -440,6 +441,99 @@ func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
 									},
 									Results: &ast.FieldList{
 										List: results,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func NewScannerFunc(name, errScanner, scanner *ast.Ident) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		Name: name,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Names: []*ast.Ident{
+							&ast.Ident{
+								Name: "r",
+							},
+						},
+						Type: &ast.StarExpr{
+							X: &ast.SelectorExpr{
+								X: &ast.Ident{
+									Name: "sql",
+								},
+								Sel: &ast.Ident{
+									Name: "Rows",
+								},
+							},
+						},
+					},
+					&ast.Field{
+						Names: []*ast.Ident{
+							&ast.Ident{
+								Name: "err",
+							},
+						},
+						Type: &ast.Ident{
+							Name: "error",
+						},
+					},
+				},
+			},
+			Results: &ast.FieldList{},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.IfStmt{
+					Cond: &ast.BinaryExpr{
+						X: &ast.Ident{
+							Name: "err",
+						},
+						Op: token.NEQ,
+						Y: &ast.Ident{
+							Name: "nil",
+						},
+					},
+					Body: &ast.BlockStmt{
+						List: []ast.Stmt{
+							&ast.ReturnStmt{
+								Results: []ast.Expr{
+									&ast.CompositeLit{
+										Type: errScanner,
+										Elts: []ast.Expr{
+											&ast.KeyValueExpr{
+												Key: &ast.Ident{
+													Name: "err",
+												},
+												Value: &ast.Ident{
+													Name: "err",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CompositeLit{
+							Type: scanner,
+							Elts: []ast.Expr{
+								&ast.KeyValueExpr{
+									Key: &ast.Ident{
+										Name: "rows",
+									},
+									Value: &ast.Ident{
+										Name: "rows",
 									},
 								},
 							},

@@ -53,9 +53,6 @@ func main() {
 		log.Printf("Package: %s, Type: %s\n", p, t)
 	}
 
-	printspike("example1.go")
-	// printspike("example2.go")
-	// printspike("example3.go")
 	// fmt.Println()
 	// genspike(scannerName, columnMap)
 	// fmt.Println()
@@ -63,17 +60,6 @@ func main() {
 	// parseExpr("sso.Identity")
 	// parseExpr("t.rows.Scan()")
 	// parseExpr("time.Time")
-}
-
-func printspike(filename string) {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filename, nil, 0)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	ast.Print(fset, f)
 }
 
 func parseExpr(s string) {
@@ -101,10 +87,12 @@ func genspike(name string, mapping []genieql.ColumnMap) {
 	errName := fmt.Sprintf("err%sScanner", name)
 	scannerName := fmt.Sprintf("%sScanner", strings.ToLower(name))
 	interfaceName := fmt.Sprintf("%sScanner", name)
+	newScannerFuncName := fmt.Sprintf("New%s", interfaceName)
 	scanner := genieql.Scanner{
-		Name:          scannerName,
-		InterfaceName: interfaceName,
-		ErrName:       errName,
+		InterfaceName:      interfaceName,
+		Name:               scannerName,
+		ErrName:            errName,
+		NewScannerFuncName: newScannerFuncName,
 	}.Build(mapping, ssoIdentity)
 
 	if err := format.Node(os.Stdout, fset, scanner); err != nil {
