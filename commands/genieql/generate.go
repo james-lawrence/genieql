@@ -23,11 +23,12 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	var configuration genieql.Configuration
 	var mappingConfig genieql.MappingConfig
 	pkgName, typName := extractPackageType(t.packageType)
-	if err := genieql.ReadConfiguration(filepath.Join(".genieql", t.configName), &configuration); err != nil {
+
+	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
 		return err
 	}
 
-	if err := genieql.ReadMapper(".genieql", pkgName, typName, t.table, configuration, &mappingConfig); err != nil {
+	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.table, configuration, &mappingConfig); err != nil {
 		return err
 	}
 

@@ -89,7 +89,15 @@ func (t generator) Generate() (io.Reader, error) {
 	file := &ast.File{
 		Name: genieql.Ident("sso"),
 	}
-	scanner := genieql.Scanner{Name: "CrudScanner"}.Build(columnMap, genieql.Ident(t.MappingConfig.Type))
+
+	errName := fmt.Sprintf("err%sCrudScanner", t.MappingConfig.Type)
+	scannerName := fmt.Sprintf("%sCrudScanner", strings.ToLower(t.MappingConfig.Type))
+	interfaceName := fmt.Sprintf("%sCrudScanner", t.MappingConfig.Type)
+	scanner := genieql.Scanner{
+		InterfaceName: interfaceName,
+		Name:          scannerName,
+		ErrName:       errName,
+	}.Build(columnMap, genieql.Ident(t.MappingConfig.Type))
 	crud := genieql.NewCRUDWriter(
 		buffer,
 		t.MappingConfig.Type,
@@ -119,7 +127,7 @@ func (t generator) Generate() (io.Reader, error) {
 		log.Println("crud", err)
 		return nil, err
 	}
-
+	log.Println("Raw:", string(buffer.Bytes()))
 	raw, err := imports.Process("", buffer.Bytes(), nil)
 	if err != nil {
 		log.Println("imports", err)

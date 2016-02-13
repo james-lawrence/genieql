@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -9,9 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/jatone/genieql"
-
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"bitbucket.org/jatone/genieql"
 )
 
 // data stored in qlgenie.conf - dialect, default alias strategy, map definition directory,
@@ -52,9 +53,9 @@ func main() {
 		log.Printf("Package: %s, Type: %s\n", p, t)
 	}
 
-	// printspike("example1.go")
+	printspike("example1.go")
 	// printspike("example2.go")
-	printspike("example3.go")
+	// printspike("example3.go")
 	// fmt.Println()
 	// genspike(scannerName, columnMap)
 	// fmt.Println()
@@ -97,8 +98,14 @@ type Destination struct {
 
 func genspike(name string, mapping []genieql.ColumnMap) {
 	fset := token.NewFileSet()
-
-	scanner := genieql.Scanner{Name: name}.Build(mapping, ssoIdentity)
+	errName := fmt.Sprintf("err%sScanner", name)
+	scannerName := fmt.Sprintf("%sScanner", strings.ToLower(name))
+	interfaceName := fmt.Sprintf("%sScanner", name)
+	scanner := genieql.Scanner{
+		Name:          scannerName,
+		InterfaceName: interfaceName,
+		ErrName:       errName,
+	}.Build(mapping, ssoIdentity)
 
 	if err := format.Node(os.Stdout, fset, scanner); err != nil {
 		log.Fatalln(err)

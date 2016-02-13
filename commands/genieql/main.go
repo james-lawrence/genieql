@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	bootstrap := &bootstrap{}
 	mapper := &mapper{}
 	generator := &generate{crud: &generateCrud{}}
@@ -39,9 +40,16 @@ func extractPackageType(s string) (string, string) {
 }
 
 func configurationDirectory() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln(err)
+	var err error
+	var defaultPath string
+	paths := filepath.SplitList(os.Getenv("GOPATH"))
+	if len(paths) == 0 {
+		if defaultPath, err = os.Getwd(); err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		defaultPath = paths[0]
 	}
-	return filepath.Join(wd, ".genieql")
+
+	return filepath.Join(defaultPath, ".genieql")
 }

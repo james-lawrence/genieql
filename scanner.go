@@ -13,21 +13,17 @@ type ColumnMap struct {
 }
 
 type Scanner struct {
-	Name string
+	InterfaceName string
+	ErrName       string
+	Name          string
 }
 
-func (t Scanner) nameIdent() *ast.Ident {
-	return &ast.Ident{
-		Name: t.Name,
-	}
-}
-
-func (t Scanner) TypeDecl() *ast.GenDecl {
+func (t Scanner) ErrScannerDecl() *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok: token.TYPE,
 		Specs: []ast.Spec{
 			&ast.TypeSpec{
-				Name: t.nameIdent(),
+				Name: Ident(t.ErrName),
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
 						List: []*ast.Field{
@@ -45,6 +41,23 @@ func (t Scanner) TypeDecl() *ast.GenDecl {
 									Name: "error",
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (t Scanner) ScannerDecl() *ast.GenDecl {
+	return &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			&ast.TypeSpec{
+				Name: Ident(t.Name),
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{
+						List: []*ast.Field{
 							&ast.Field{
 								Names: []*ast.Ident{
 									&ast.Ident{
@@ -74,7 +87,7 @@ func (t Scanner) TypeDecl() *ast.GenDecl {
 	}
 }
 
-func (t Scanner) ScanDecl() *ast.FuncDecl {
+func (t Scanner) ScanDecl(recvType *ast.Ident) *ast.FuncDecl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
@@ -88,7 +101,7 @@ func (t Scanner) ScanDecl() *ast.FuncDecl {
 							},
 						},
 					},
-					Type: t.nameIdent(),
+					Type: recvType,
 				},
 			},
 		},
@@ -106,13 +119,20 @@ func (t Scanner) ScanDecl() *ast.FuncDecl {
 }
 
 func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
-	var typeDecl = t.TypeDecl()
-	var funcDecl = t.ScanDecl()
 
-	funcDecl.Type.Params.List = FuncParams(SExpr(arg))
-	funcDecl.Type.Results.List = FuncResults(&ast.Ident{Name: "error"})
-	funcDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		errorCheckStatement,
+	var errScannerDecl = t.ErrScannerDecl()
+	var errScannerFuncDecl = t.ScanDecl(Ident(t.ErrName))
+	var scannerDecl = t.ScannerDecl()
+	var scannerFuncDecl = t.ScanDecl(Ident(t.Name))
+
+	scannerParams := FuncParams(SExpr(arg))
+	scannerResults := FuncResults(&ast.Ident{Name: "error"})
+	scannerInterfaceDecl := ScannerInterfaceDecl(t.InterfaceName, scannerParams, scannerResults)
+
+	scannerFuncDecl.Type.Params.List = scannerParams
+	scannerFuncDecl.Type.Results.List = scannerResults
+	scannerFuncDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
+		nextCheckStatement,
 	).Append(
 		DeclarationStatements(columnMaps...)...,
 	).Append(
@@ -123,7 +143,14 @@ func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
 		scannerReturnStatement,
 	).BlockStmt
 
-	return []ast.Decl{typeDecl, funcDecl}
+	errScannerFuncDecl.Type.Params.List = scannerParams
+	errScannerFuncDecl.Type.Results.List = scannerResults
+
+	errScannerFuncDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
+		returnErrorStatement,
+	).BlockStmt
+
+	return []ast.Decl{scannerInterfaceDecl, scannerDecl, scannerFuncDecl, errScannerDecl, errScannerFuncDecl}
 }
 
 type BlockStmtBuilder struct {
@@ -312,19 +339,23 @@ func AssignmentStatements(columns []ColumnMap) []ast.Stmt {
 	return result
 }
 
-var errorCheckStatement = &ast.IfStmt{
-	Cond: &ast.BinaryExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "t",
+var nextCheckStatement = &ast.IfStmt{
+	Cond: &ast.UnaryExpr{
+		Op: token.NOT,
+		X: &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X: &ast.SelectorExpr{
+					X: &ast.Ident{
+						Name: "t",
+					},
+					Sel: &ast.Ident{
+						Name: "rows",
+					},
+				},
+				Sel: &ast.Ident{
+					Name: "Next",
+				},
 			},
-			Sel: &ast.Ident{
-				Name: "err",
-			},
-		},
-		Op: token.NEQ,
-		Y: &ast.Ident{
-			Name: "nil",
 		},
 	},
 	Body: &ast.BlockStmt{
@@ -333,13 +364,26 @@ var errorCheckStatement = &ast.IfStmt{
 				Results: []ast.Expr{
 					&ast.SelectorExpr{
 						X: &ast.Ident{
-							Name: "t",
+							Name: "io",
 						},
 						Sel: &ast.Ident{
-							Name: "err",
+							Name: "EOF",
 						},
 					},
 				},
+			},
+		},
+	},
+}
+
+var returnErrorStatement = &ast.ReturnStmt{
+	Results: []ast.Expr{
+		&ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "t",
+			},
+			Sel: &ast.Ident{
+				Name: "err",
 			},
 		},
 	},
@@ -363,4 +407,46 @@ var scannerReturnStatement = &ast.ReturnStmt{
 			},
 		},
 	},
+}
+
+func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
+	return &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			&ast.TypeSpec{
+				Name: &ast.Ident{
+					Name: name,
+					Obj: &ast.Object{
+						Kind: ast.Typ,
+						Name: name,
+					},
+				},
+				Type: &ast.InterfaceType{
+					Methods: &ast.FieldList{
+						List: []*ast.Field{
+							&ast.Field{
+								Names: []*ast.Ident{
+									&ast.Ident{
+										Name: "Scan",
+										Obj: &ast.Object{
+											Kind: ast.Fun,
+											Name: "Scan",
+										},
+									},
+								},
+								Type: &ast.FuncType{
+									Params: &ast.FieldList{
+										List: params,
+									},
+									Results: &ast.FieldList{
+										List: results,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
