@@ -1,71 +1,97 @@
-#SQLGENIE Specification
-##configuration
-SQLGENIEDIR defaults to $GOPATH/.sqlgenie
+# genieql
+sql query and code generation program.
+its purpose is to generate as much of the
+boilerplate code for interacting with database/sql
+as possible. without putting any runtime dependencies into
+your codebase.
 
-## SQLGenie command
-sqlgenie provide the initialization of the database details for validation/warnings.
-```bash
-sqlgenie initialize --dialect=postgres --username=xxx --password=yyy --dial=zzz
+# is it production ready?
+its very much in alpha code, it only supports
+postgresql currently, no test coverage on the code.
+mainly getting it out early to solicite feedback on the api
+of the code that gets generated and feature requests.
+
+as a result you should expect the api to change/break until around 1.0.
+
+# documentation
+release notes, FAQ, and roadmap documentation
+can be found in the documentation directory.
+
+## genieql commands
+- bootstrap - saves database information to a file for other commands.
+- map - writes a configuration file describing how to map a structure to a database column.
+- generate - used to generate scanners and queries.
+
+## example usage
+```go
+package mypackage
+//go:generate genieql map --natural-key=id github.com/mypackage.MyType my_table
+//go:generate genieql generate crud --output=mytype_crud_gen.go github.com/mypackage.MyType my_table
 ```
 
-## SQLMap command
-sqlmap builds mappings of tables to structures for use by other commands.
-output is stored in $SQLGENIEDIR/maps. sqlmap will provide subcommands for
-common transformations such as snakecase and downcase, it will also provide an
-escape hatch by allowing a hand tailored mapping.
+## genieql bootstrap command
+```text
+usage: qlgenie bootstrap [<flags>] <uri>
+
+build a instance of qlgenie
+
+Flags:
+  --help  Show context-sensitive help (also try --help-long and --help-man).
+  --output-directory="/home/james-lawrence/development/guardian/.genieql/default.config"  
+          directory to place the configuration file
+
+Args:
+  <uri>  uri for the database qlgenie will work with
+```
 ```bash
-# definitions:
-## unmapped column: a column that appears in the code but not the database.
-# custom mapping example, emits warnings for unmapped columns.
-sqlmap --package=github.com/soandso/project --type=A --table=A --alias="Value1=dbcol1" --alias="Value2=dbcol2"
-# lowersnakecase example) will convert structure fields to snakecase then lowercase
-sqlmap --package=github.com/soandso/project --type=A --table=A --alias="FieldName1=dbcol1" snakecase lowercase
-# uppersnakecase example) will convert structure fields to snakecase then uppercase
-sqlmap --package=github.com/soandso/project --type=A --table=A --alias="FieldName1=dbcol1" snakecase uppercase
-# lowercase example) will convert structure fields to lowercase.
-sqlmap --package=github.com/soandso/project --type=A --table=A --alias="FieldName1=dbcol1" lowercase
-# uppercase example) will convert structure fields to uppercase.
-sqlmap --package=github.com/soandso/project --type=A --table=A --alias="FieldName1=dbcol1" uppercase
+genieql bootstrap postgres://username@localhost:5432/databasename?sslmode=disable
+```
+```yml
+# generates this file at $GOPATH/.genieql/default.config
+dialect: postgres
+connectionurl: postgres://jatone@localhost:5432/sso?sslmode=disable
+host: localhost
+port: 5432
+database: databasename
+username: username
+password: ""
+```
+## genieql map command
+```text
+usage: qlgenie map [<flags>] <package.type> <table> [<transformations>...]
+
+define mapping configuration for a particular type/table combination
+
+Flags:
+  --help                     Show context-sensitive help (also try --help-long and --help-man).
+  --config="default.config"  configuration to use
+  --include-table-prefix-aliases  
+                             generate additional aliases with the table name prefixed i.e.) my_column -> my_table_my_column
+  --natural-key=id ...       natural key for this mapping, this is deprecated will be able to automatically determine in later versions
+
+Args:
+  <package.type>       location of type to work with github.com/soandso/package.MyType
+  <table>              table that we are mapping
+  [<transformations>]  transformations (in left to right order) to apply to structure fields to map them to column names
+```
+```bash
+genieql map --natural-key=id github.com/soandso/project.MyType MyTable snakecase lowercase
+genieql map --natural-key=col1, --natural-key=col2  github.com/soandso/project.MyType MyTable snakecase lowercase
 ```
 
-## SQLScanner command
-A scanner converts a row into a struct.
-sqlscanner will use the generated map files to build Scanners that
-read rows provided from sql queries and inserts them into structures.
-It requires that the structures being populated have been mapped, see sqlmap.
-it will error if no mapping exists.
-```bash
-# will create a basic scanner for the provided type. basic scanner is a direct 1 to 1, table to struct
-# scanner.
-sqlscanner basic --package github.com/jatone/project --type=A
+## genieql generate command
+```text
+usage: qlgenie generate <command> [<args> ...]
 
-# merge will create a scanner for fields from multiple type maps.
-# will fill in a type like type MergedType struct {A,B}, requires there
-# is a unique alias for each field in all involved structures.
-sqlscanner merge github.com/jatone/project.A github.com/jatone/project.B
+generate sql queries
 
-# onetomany will handle n+1 queries.
-# type OneToMany struct{A,[]B,[]C}
-sqlscanner onetomany
+Flags:
+  --help  Show context-sensitive help (also try --help-long and --help-man).
+
+Subcommands:
+  generate crud [<flags>] <package.Type> <table>
+    generate crud queries (INSERT, SELECT, UPDATE, DELETE)
 ```
-
-## SQLGen command
-sqlgen will generate common query patterns for the DB.
 ```bash
-# crud pattern will generate common SELECT * FROM X WHERE col = ?
-# will do each type individually.
-# uses sqlscanner merge semantics for result scanning.
-sqlgen crud github.com/jatone/project.A github.com/jatone/project.B
-
-# join pattern will generate common SELECT A.*, B.*, C.* FROM A JOIN B ON A.id = B.a_id, C ON A.id = C.a_id
-# uses sqlscanner merge semantics for result scanning.
-sqlgen join github.com/jatone/project.A.id github.com/jatone/project.B.a_id github.com/jatone/project.C.a_id
-
-# chainjoin pattern will generate common SELECT A.*, B.*, C.* FROM A JOIN B ON A.id = B.a_id, C ON B.id = C.b_id
-# uses sqlscanner merge semantics for result scanning.
-sqlgen chainjoin github.com/jatone/project.A.id github.com/jatone/project.B.a_id github.com/jatone/project.C.b_id
-
-# onetomany handle the n+1 queries.
-# uses sqlscanner onetomany semantics for result scanning.
-sqlgen onetomany github.com/jatone/project.A github.com/jatone/project.B github.com/jatone/project.C
+genieql generate crud --output=mytype_crud_gen.go github.com/soandso/project.Type table
 ```
