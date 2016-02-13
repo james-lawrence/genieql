@@ -47,7 +47,7 @@ Args:
 genieql bootstrap postgres://username@localhost:5432/databasename?sslmode=disable
 ```
 ```yml
-# generates this file at $GOPATH/.genieql/default.config
+// generates this file at $GOPATH/.genieql/default.config
 dialect: postgres
 connectionurl: postgres://jatone@localhost:5432/sso?sslmode=disable
 host: localhost
