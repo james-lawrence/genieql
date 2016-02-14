@@ -125,7 +125,7 @@ func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
 	var scannerDecl = t.ScannerDecl()
 	var scannerFuncDecl = t.ScanDecl(Ident(t.Name))
 
-	var newScannerFunc = NewScannerFunc(Ident(t.NewScannerFuncName), Ident(t.ErrName), Ident(t.Name))
+	var newScannerFunc = NewScannerFunc(Ident(t.NewScannerFuncName), Ident(t.InterfaceName), Ident(t.ErrName), Ident(t.Name))
 	scannerParams := FuncParams(SExpr(arg))
 	scannerResults := FuncResults(&ast.Ident{Name: "error"})
 	scannerInterfaceDecl := ScannerInterfaceDecl(t.InterfaceName, scannerParams, scannerResults)
@@ -452,7 +452,7 @@ func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
 	}
 }
 
-func NewScannerFunc(name, errScanner, scanner *ast.Ident) *ast.FuncDecl {
+func NewScannerFunc(name, interfaceScanner, errScanner, scanner *ast.Ident) *ast.FuncDecl {
 	return &ast.FuncDecl{
 		Name: name,
 		Type: &ast.FuncType{
@@ -487,7 +487,13 @@ func NewScannerFunc(name, errScanner, scanner *ast.Ident) *ast.FuncDecl {
 					},
 				},
 			},
-			Results: &ast.FieldList{},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Type: interfaceScanner,
+					},
+				},
+			},
 		},
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{
