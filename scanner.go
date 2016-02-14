@@ -461,7 +461,7 @@ func NewScannerFunc(name, interfaceScanner, errScanner, scanner *ast.Ident) *ast
 					&ast.Field{
 						Names: []*ast.Ident{
 							&ast.Ident{
-								Name: "r",
+								Name: "rows",
 							},
 						},
 						Type: &ast.StarExpr{
