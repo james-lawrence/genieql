@@ -49,7 +49,7 @@ func (t generator) Generate() (io.Reader, error) {
 	}
 
 	decls := genieql.FilterDeclarations(genieql.FilterType(t.MappingConfig.Type), packages...)
-
+	pkgs := genieql.FilterPackages(genieql.FilterType(t.MappingConfig.Type), packages...)
 	q, err := sqlutil.LookupColumnQuery(t.Configuration.Dialect, t.Table)
 	if err != nil {
 		log.Println("failure looking up column query", err)
@@ -75,6 +75,7 @@ func (t generator) Generate() (io.Reader, error) {
 	}
 
 	typeDecl := decls[0]
+	pkg := pkgs[0]
 
 	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
 	fields := genieql.ExtractFields(typeDecl.Specs[0]).List
@@ -87,12 +88,13 @@ func (t generator) Generate() (io.Reader, error) {
 	}
 
 	file := &ast.File{
-		Name: genieql.Ident("sso"),
+		Name: genieql.Ident(pkg.Name),
 	}
 
-	errName := fmt.Sprintf("err%sCrudScanner", t.MappingConfig.Type)
-	scannerName := fmt.Sprintf("%sCrudScanner", strings.ToLower(t.MappingConfig.Type))
-	interfaceName := fmt.Sprintf("%sCrudScanner", t.MappingConfig.Type)
+	typ := strings.Title(t.MappingConfig.Type)
+	errName := fmt.Sprintf("err%sCrudScanner", typ)
+	scannerName := fmt.Sprintf("%sCrudScanner", strings.ToLower(typ))
+	interfaceName := fmt.Sprintf("%sCrudScanner", typ)
 	newScannerFuncName := fmt.Sprintf("New%s", interfaceName)
 	scanner := genieql.Scanner{
 		InterfaceName:      interfaceName,

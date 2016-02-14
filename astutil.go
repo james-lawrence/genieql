@@ -66,6 +66,21 @@ func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl
 	return results
 }
 
+func FilterPackages(f ast.Filter, packageSet ...*ast.Package) []*ast.Package {
+	results := []*ast.Package{}
+	for _, pkg := range packageSet {
+		ast.Inspect(pkg, func(n ast.Node) bool {
+			decl, ok := n.(*ast.GenDecl)
+			if ok && ast.FilterDecl(decl, f) {
+				results = append(results, pkg)
+			}
+
+			return true
+		})
+	}
+	return results
+}
+
 func FilterType(typeName string) ast.Filter {
 	return func(in string) bool {
 		return typeName == in
