@@ -153,7 +153,7 @@ func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
 	var scannerResults = FuncResults(&ast.Ident{Name: "error"})
 	var errScannerDecl = t.ErrScannerDecl()
 	var errScannerFuncDecl = t.ScanDecl(Ident(t.ErrName))
-	var errScannerCloseFuncDecl = t.CloseDecl(Ident(t.ErrName), scannerCloseStatement.BlockStmt)
+	var errScannerCloseFuncDecl = t.CloseDecl(Ident(t.ErrName), BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnNilStatement).BlockStmt)
 	errScannerFuncDecl.Type.Params.List = scannerParams
 	errScannerFuncDecl.Type.Results.List = scannerResults
 
@@ -447,6 +447,12 @@ var scannerReturnStatement = &ast.ReturnStmt{
 				},
 			},
 		},
+	},
+}
+
+var returnNilStatement = &ast.ReturnStmt{
+	Results: []ast.Expr{
+		&ast.Ident{Name: "nil"},
 	},
 }
 
