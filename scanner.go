@@ -522,10 +522,6 @@ func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
 								Names: []*ast.Ident{
 									&ast.Ident{
 										Name: "Scan",
-										Obj: &ast.Object{
-											Kind: ast.Fun,
-											Name: "Scan",
-										},
 									},
 								},
 								Type: &ast.FuncType{
@@ -541,16 +537,9 @@ func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
 								Names: []*ast.Ident{
 									&ast.Ident{
 										Name: "Close",
-										// Obj: &ast.Object{
-										// 	Kind: ast.Fun,
-										// 	Name: "Scan",
-										// },
 									},
 								},
 								Type: &ast.FuncType{
-									// Params: &ast.FieldList{
-									// 	List: params,
-									// },
 									Results: &ast.FieldList{
 										List: FuncResults(&ast.Ident{Name: "error"}),
 									},
