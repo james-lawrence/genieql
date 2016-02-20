@@ -119,15 +119,53 @@ func (t Scanner) ScanDecl(recvType *ast.Ident) *ast.FuncDecl {
 	}
 }
 
+func (t Scanner) CloseDecl(recvType *ast.Ident, body *ast.BlockStmt) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				&ast.Field{
+					Names: []*ast.Ident{
+						&ast.Ident{
+							Name: "t",
+							Obj: &ast.Object{
+								Kind: ast.Var,
+								Name: "t",
+							},
+						},
+					},
+					Type: recvType,
+				},
+			},
+		},
+		Name: &ast.Ident{
+			Name: "Close",
+		},
+		Type: &ast.FuncType{
+			Params:  &ast.FieldList{},
+			Results: &ast.FieldList{List: FuncResults(&ast.Ident{Name: "error"})},
+		},
+		Body: body,
+	}
+}
+
 func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
+	var scannerParams = FuncParams(SExpr(arg))
+	var scannerResults = FuncResults(&ast.Ident{Name: "error"})
 	var errScannerDecl = t.ErrScannerDecl()
 	var errScannerFuncDecl = t.ScanDecl(Ident(t.ErrName))
+	var errScannerCloseFuncDecl = t.CloseDecl(Ident(t.ErrName), scannerCloseStatement.BlockStmt)
+	errScannerFuncDecl.Type.Params.List = scannerParams
+	errScannerFuncDecl.Type.Results.List = scannerResults
+
+	errScannerFuncDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
+		returnErrorStatement,
+	).BlockStmt
+
 	var scannerDecl = t.ScannerDecl()
 	var scannerFuncDecl = t.ScanDecl(Ident(t.Name))
+	var scannerCloseFuncDecl = t.CloseDecl(Ident(t.Name), scannerCloseStatement.BlockStmt)
 
 	var newScannerFunc = NewScannerFunc(Ident(t.NewScannerFuncName), Ident(t.InterfaceName), Ident(t.ErrName), Ident(t.Name))
-	scannerParams := FuncParams(SExpr(arg))
-	scannerResults := FuncResults(&ast.Ident{Name: "error"})
 	scannerInterfaceDecl := ScannerInterfaceDecl(t.InterfaceName, scannerParams, scannerResults)
 
 	scannerFuncDecl.Type.Params.List = scannerParams
@@ -144,14 +182,16 @@ func (t Scanner) Build(columnMaps []ColumnMap, arg ast.Expr) []ast.Decl {
 		scannerReturnStatement,
 	).BlockStmt
 
-	errScannerFuncDecl.Type.Params.List = scannerParams
-	errScannerFuncDecl.Type.Results.List = scannerResults
-
-	errScannerFuncDecl.Body = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		returnErrorStatement,
-	).BlockStmt
-
-	return []ast.Decl{newScannerFunc, scannerInterfaceDecl, scannerDecl, scannerFuncDecl, errScannerDecl, errScannerFuncDecl}
+	return []ast.Decl{
+		newScannerFunc,
+		scannerInterfaceDecl,
+		scannerDecl,
+		scannerFuncDecl,
+		scannerCloseFuncDecl,
+		errScannerDecl,
+		errScannerFuncDecl,
+		errScannerCloseFuncDecl,
+	}
 }
 
 type BlockStmtBuilder struct {
@@ -409,6 +449,53 @@ var scannerReturnStatement = &ast.ReturnStmt{
 		},
 	},
 }
+
+var scannerCloseStatement = BlockStmtBuilder{&ast.BlockStmt{}}.Append(
+	&ast.IfStmt{
+		Cond: &ast.BinaryExpr{
+			X: &ast.SelectorExpr{
+				X: &ast.Ident{
+					Name: "t",
+				},
+				Sel: &ast.Ident{
+					Name: "rows",
+				},
+			},
+			Op: token.EQL,
+			Y: &ast.Ident{
+				Name: "nil",
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.Ident{Name: "nil"},
+					},
+				},
+			},
+		},
+	},
+	&ast.ReturnStmt{
+		Results: []ast.Expr{
+			&ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X: &ast.SelectorExpr{
+						X: &ast.Ident{
+							Name: "t",
+						},
+						Sel: &ast.Ident{
+							Name: "rows",
+						},
+					},
+					Sel: &ast.Ident{
+						Name: "Close",
+					},
+				},
+			},
+		},
+	},
+)
 
 func ScannerInterfaceDecl(name string, params, results []*ast.Field) ast.Decl {
 	return &ast.GenDecl{

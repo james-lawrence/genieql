@@ -16,7 +16,6 @@ func LocatePackage(pkgName string) ([]*ast.Package, error) {
 
 	for _, srcDir := range build.Default.SrcDirs() {
 		directory := filepath.Join(srcDir, pkgName)
-		log.Println("Importing", directory)
 		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
 		if err != nil {
 			return packages, err
@@ -31,6 +30,7 @@ func LocatePackage(pkgName string) ([]*ast.Package, error) {
 			return packages, err
 		}
 
+		log.Println("Importing", directory)
 		for _, astPkg := range pkgs {
 			packages = append(packages, astPkg)
 		}

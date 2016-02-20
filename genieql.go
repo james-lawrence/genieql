@@ -1,25 +1,5 @@
 package genieql
 
-// func ConnectDB(config Configuration) (*sql.DB, error) {
-// 	dbconf := struct {
-// 		Driver         string
-// 		User           string
-// 		Name           string
-// 		SSLMode        string
-// 		Port           int
-// 		MaxConnections int
-// 	}{
-// 		Driver:         "postgres",
-// 		User:           "jatone",
-// 		Name:           "sso",
-// 		SSLMode:        "disable",
-// 		Port:           5432,
-// 		MaxConnections: 10,
-// 	}
-//
-// 	return sql.Open(dbconf.Driver, fmt.Sprintf("user=%s dbname=%s sslmode=%s port=%d", dbconf.User, dbconf.Name, dbconf.SSLMode, dbconf.Port))
-// }
-
 // Preface text inserted at the top of all generated files.
 const Preface = `
 
