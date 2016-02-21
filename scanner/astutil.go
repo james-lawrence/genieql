@@ -41,26 +41,27 @@ func interfaceDeclaration(name *ast.Ident, fields ...*ast.Field) ast.Decl {
 
 // utility function for creating a function bound to a specific type.
 func funcDecl(recvType, name *ast.Ident, params, results []*ast.Field, body *ast.BlockStmt) *ast.FuncDecl {
+	var recv *ast.FieldList
+	if recvType != nil {
+		recv = fieldList(typeDeclarationField("t", recvType))
+	}
 	return &ast.FuncDecl{
-		Recv: &ast.FieldList{
-			List: []*ast.Field{
-				&ast.Field{
-					Names: []*ast.Ident{
-						&ast.Ident{
-							Name: "t",
-						},
-					},
-					Type: recvType,
-				},
-			},
-		},
+		Recv: recv,
 		Name: name,
 		Type: &ast.FuncType{
-			Params:  &ast.FieldList{List: params},
-			Results: &ast.FieldList{List: results},
+			Params:  fieldList(params...),
+			Results: fieldList(results...),
 		},
 		Body: body,
 	}
+}
+
+func fieldList(fields ...*ast.Field) *ast.FieldList {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	return &ast.FieldList{List: fields}
 }
 
 func typeDeclarationField(name string, typ ast.Expr) *ast.Field {

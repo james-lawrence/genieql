@@ -24,7 +24,6 @@ type Generator struct {
 // Scanner - implementation of the genieql.ScannerGenerator interface.
 func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	var err error
-	var columns []string
 
 	packages, err := genieql.LocatePackage(t.MappingConfig.Package)
 	if err != nil {
@@ -41,7 +40,7 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
 	fields := genieql.ExtractFields(decl.Specs[0]).List
 
-	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, columns...)
+	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, t.Columns...)
 
 	if err != nil {
 		log.Println("failed to map columns", err)
@@ -68,6 +67,12 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 
 	p.FprintAST(dst, fset, file)
 	p.Fprintf(dst, genieql.Preface, strings.Join(os.Args[1:], " "))
+	p.FprintAST(dst, fset, NewScannerFunc{
+		InterfaceName:  interfaceName,
+		ScannerName:    scannerName,
+		ErrScannerName: errScannerName,
+	}.Build())
+	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, BuildScannerInterface(interfaceName, params...))
 	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, scanner.Generate(scannerName, params...))
@@ -81,9 +86,9 @@ type errorPrinter struct {
 	err error
 }
 
-func (t errorPrinter) FprintAST(dst io.Writer, fset *token.FileSet, scanner interface{}) {
+func (t errorPrinter) FprintAST(dst io.Writer, fset *token.FileSet, ast interface{}) {
 	if t.err == nil {
-		t.err = printer.Fprint(dst, fset, scanner)
+		t.err = printer.Fprint(dst, fset, ast)
 	}
 }
 

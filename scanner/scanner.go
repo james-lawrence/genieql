@@ -1,7 +1,9 @@
 package scanner
 
 import (
+	"fmt"
 	"go/ast"
+	"go/token"
 )
 
 // BuildScannerInterface takes in a name and a set of parameters
@@ -25,6 +27,85 @@ func BuildScannerInterface(name string, scannerParams ...*ast.Field) ast.Decl {
 			&ast.FieldList{List: unnamedFields("error")}, // returns
 		),
 	)
+}
+
+// NewScannerFunc structure that builds the function to get a scanner
+// after executing a query.
+type NewScannerFunc struct {
+	InterfaceName  string
+	ScannerName    string
+	ErrScannerName string
+}
+
+// Build - generates a function declaration for building the scanner.
+func (t NewScannerFunc) Build() *ast.FuncDecl {
+	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
+	rowsParam := typeDeclarationField("rows", &ast.StarExpr{
+		X: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "sql",
+			},
+			Sel: &ast.Ident{
+				Name: "Rows",
+			},
+		},
+	})
+	errParam := typeDeclarationField("err", &ast.Ident{Name: "error"})
+	result := unnamedFields(t.InterfaceName)
+	body := &ast.BlockStmt{
+		List: []ast.Stmt{
+			&ast.IfStmt{
+				Cond: &ast.BinaryExpr{
+					X: &ast.Ident{
+						Name: "err",
+					},
+					Op: token.NEQ,
+					Y: &ast.Ident{
+						Name: "nil",
+					},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ReturnStmt{
+							Results: []ast.Expr{
+								&ast.CompositeLit{
+									Type: &ast.Ident{Name: t.ErrScannerName},
+									Elts: []ast.Expr{
+										&ast.KeyValueExpr{
+											Key: &ast.Ident{
+												Name: "err",
+											},
+											Value: &ast.Ident{
+												Name: "err",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			&ast.ReturnStmt{
+				Results: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.Ident{Name: t.ScannerName},
+						Elts: []ast.Expr{
+							&ast.KeyValueExpr{
+								Key: &ast.Ident{
+									Name: "rows",
+								},
+								Value: &ast.Ident{
+									Name: "rows",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	return funcDecl(nil, name, []*ast.Field{rowsParam, errParam}, result, body)
 }
 
 // Functions responsible for generating the functions
