@@ -78,6 +78,8 @@ func (t generator) Generate() (io.Reader, error) {
 		return nil, err
 	}
 
+	fmt.Fprintf(buffer, "\n\n")
+
 	if err := crud.Write(genieql.PostgresqlCRUDGen, fset); err != nil {
 		log.Println("crud", err)
 		return nil, err
