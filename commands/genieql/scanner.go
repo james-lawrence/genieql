@@ -1,12 +1,18 @@
 package main
 
 import (
+	"bytes"
+	"go/token"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/commands"
+	"bitbucket.org/jatone/genieql/scanner"
 )
 
 type queryLiteral struct {
@@ -19,18 +25,65 @@ type queryLiteral struct {
 }
 
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
-	log.Println("Executing query-literal")
 	var configuration genieql.Configuration
 	var mappingConfig genieql.MappingConfig
 	pkgName, typName := extractPackageType(t.packageType)
-	// pkgName, constName =
+	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
 
 	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
-		return err
+		log.Fatalln(err)
 	}
 
 	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mappingConfig); err != nil {
-		return err
+		log.Fatalln(err)
+	}
+
+	packages, err := genieql.LocatePackage(queryPkgName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	db, err := genieql.ConnectDB(configuration)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(queryConstName), packages...)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), decl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	columns, err := genieql.Columns(db, query)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	generator := scanner.Generator{
+		Configuration: configuration,
+		MappingConfig: mappingConfig,
+		Columns:       columns,
+		Name:          strings.Title(t.scannerName),
+	}
+
+	buffer := bytes.NewBuffer([]byte{})
+	fset := token.NewFileSet()
+
+	if err = generator.Scanner(buffer, fset); err != nil {
+		log.Fatalln(err)
+	}
+
+	reader, err := genieql.FormatOutput(buffer.Bytes())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, reader); err != nil {
+		log.Fatalln(err)
 	}
 
 	return nil

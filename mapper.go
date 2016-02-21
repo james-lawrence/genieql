@@ -14,7 +14,6 @@ type MappingConfig struct {
 	Package              string
 	Type                 string
 	IncludeTablePrefixes bool
-	NaturalKey           []string
 	Transformations      []string
 }
 

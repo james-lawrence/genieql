@@ -14,14 +14,16 @@ package main
 
 import "time"
 
-//go:generate genieql map --natural-key=id bitbucket.org/jatone/genieql/examples/scanners/query-literal.example snakecase lowercase
-//go:generate genieql generate crud --output=example_crud_gen.go bitbucket.org/jatone/genieql/examples/scanners/query-literal query_literal
+//go:generate genieql map bitbucket.org/jatone/genieql/examples/scanners/query-literal.example snakecase lowercase
+//go:generate genieql scanner query-literal --output=example_query_literal_gen.go CrudScanner bitbucket.org/jatone/genieql/examples/scanners/query-literal.example bitbucket.org/jatone/genieql/examples/scanners/query-literal.myQuery
 type example struct {
 	ID      int
 	Email   string
 	Created time.Time
 	Updated time.Time
 }
+
+const myQuery = `SELECT * FROM query_literal`
 
 func main() {
 

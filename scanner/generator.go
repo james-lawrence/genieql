@@ -32,23 +32,14 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 		return err
 	}
 
-	decls := genieql.FilterDeclarations(genieql.FilterType(t.MappingConfig.Type), packages...)
-	pkgs := genieql.FilterPackages(genieql.FilterType(t.MappingConfig.Type), packages...)
-
-	switch len(decls) {
-	case 1:
-	// happy case, fallthrough
-	case 0:
-		return fmt.Errorf("failed to locate: %s.%s", t.MappingConfig.Package, t.MappingConfig.Type)
-	default:
-		return fmt.Errorf("ambiguous type, located multiple matches: %v", decls)
+	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(t.MappingConfig.Type), packages...)
+	if err != nil {
+		return err
 	}
-
-	typeDecl := decls[0]
-	pkg := pkgs[0]
+	pkg := genieql.FilterPackages(genieql.FilterName(t.MappingConfig.Type), packages...)[0]
 
 	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
-	fields := genieql.ExtractFields(typeDecl.Specs[0]).List
+	fields := genieql.ExtractFields(decl.Specs[0]).List
 
 	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, columns...)
 

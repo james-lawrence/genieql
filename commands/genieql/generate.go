@@ -1,12 +1,12 @@
 package main
 
 import (
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -35,24 +35,14 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	log.Printf("genieql configuration %#v\n", configuration)
 	log.Printf("genieql mapping %#v\n", mappingConfig)
 
-	result, err := crud.New(configuration, mappingConfig, t.table).Generate()
+	reader, err := crud.New(configuration, mappingConfig, t.table).Generate()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	var dst io.WriteCloser = os.Stdout
-	if len(t.output) > 0 {
-		dst, err = os.OpenFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer dst.Close()
-	}
-
-	if _, err := io.Copy(dst, result); err != nil {
+	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, reader); err != nil {
 		log.Fatalln(err)
 	}
-
 	return nil
 }
 

@@ -14,7 +14,7 @@ func main() {
 	var files []string
 
 	app := kingpin.New("printspike", "prints ast of a file to stdout")
-	app.Arg("types", "types that will be filled in by the scanner").StringsVar(&files)
+	app.Arg("files", "the files to print").StringsVar(&files)
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	for _, s := range files {

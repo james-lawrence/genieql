@@ -2,8 +2,12 @@
 package genieql
 
 import (
+	"bytes"
+	"go/format"
 	"go/token"
 	"io"
+
+	"golang.org/x/tools/imports"
 )
 
 // Preface text inserted at the top of all generated files.
@@ -17,4 +21,17 @@ const Preface = `
 // ScannerGenerator interface for scanner generators.
 type ScannerGenerator interface {
 	Scanner(dst io.Writer, fset *token.FileSet) error
+}
+
+func FormatOutput(raw []byte) (io.Reader, error) {
+	var err error
+	if raw, err = imports.Process("", raw, nil); err != nil {
+		return bytes.NewReader(raw), err
+	}
+
+	if raw, err = format.Source(raw); err != nil {
+		return bytes.NewReader(raw), err
+	}
+
+	return bytes.NewReader(raw), err
 }

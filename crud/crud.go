@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"go/format"
 	"go/token"
 	"io"
 	"log"
@@ -13,7 +12,6 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/scanner"
 	"bitbucket.org/jatone/genieql/sqlutil"
-	"golang.org/x/tools/imports"
 )
 
 // New builds a generator that generates a CRUD scanner and associated
@@ -36,6 +34,8 @@ func (t generator) Generate() (io.Reader, error) {
 	var err error
 	var db *sql.DB
 	var columns []string
+	var naturalKey []string
+
 	buffer := bytes.NewBuffer([]byte{})
 
 	if db, err = genieql.ConnectDB(t.Configuration); err != nil {
@@ -48,11 +48,17 @@ func (t generator) Generate() (io.Reader, error) {
 		return nil, err
 	}
 
-	if columns, err = genieql.ExtractColumns(db, q); err != nil {
+	if columns, err = genieql.Columns(db, q); err != nil {
 		return nil, err
 	}
 
-	if err = genieql.AmbiguityCheck(columns...); err != nil {
+	primaryKeyQuery, err := sqlutil.LookupPrimaryKeyQuery(t.Configuration.Dialect, t.Table)
+	if err != nil {
+		log.Println("failure looking up primary key query", err)
+		return nil, err
+	}
+
+	if naturalKey, err = genieql.ExtractPrimaryKey(db, primaryKeyQuery); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +73,7 @@ func (t generator) Generate() (io.Reader, error) {
 		buffer,
 		t.MappingConfig.Type,
 		t.Table,
-		t.MappingConfig.NaturalKey,
+		naturalKey,
 		columns,
 	)
 
@@ -84,19 +90,6 @@ func (t generator) Generate() (io.Reader, error) {
 		log.Println("crud", err)
 		return nil, err
 	}
-	log.Println("Raw:", string(buffer.Bytes()))
 
-	raw, err := imports.Process("", buffer.Bytes(), nil)
-	if err != nil {
-		log.Println("imports", err)
-		return nil, err
-	}
-
-	raw, err = format.Source(raw)
-	if err != nil {
-		log.Println("format", err)
-		return nil, err
-	}
-
-	return bytes.NewReader(raw), err
+	return genieql.FormatOutput(buffer.Bytes())
 }

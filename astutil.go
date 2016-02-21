@@ -1,6 +1,7 @@
 package genieql
 
 import (
+	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func LocatePackage(pkgName string) ([]*ast.Package, error) {
@@ -51,6 +53,19 @@ func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
 	return
 }
 
+func FindUniqueDeclaration(f ast.Filter, packageSet ...*ast.Package) (*ast.GenDecl, error) {
+	found := FilterDeclarations(f, packageSet...)
+	x := len(found)
+	switch {
+	case x == 0:
+		return &ast.GenDecl{}, fmt.Errorf("no matching declarations found")
+	case x == 1:
+		return found[0], nil
+	default:
+		return &ast.GenDecl{}, fmt.Errorf("ambiguous declaration, expected a single match %#v", found)
+	}
+}
+
 func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl {
 	results := []*ast.GenDecl{}
 	for _, pkg := range packageSet {
@@ -81,25 +96,40 @@ func FilterPackages(f ast.Filter, packageSet ...*ast.Package) []*ast.Package {
 	return results
 }
 
-func FilterType(typeName string) ast.Filter {
+func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error) {
+	var valueSpec *ast.ValueSpec
+	ast.Inspect(decl, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.ValueSpec:
+			valueSpec = x
+			return false
+		case *ast.GenDecl:
+			if ast.FilterDecl(x, f) {
+				return true
+			}
+		default:
+			return false
+		}
+
+		return false
+	})
+
+	if valueSpec == nil {
+		return "", fmt.Errorf("basic literal value not found")
+	}
+
+	for idx, v := range valueSpec.Values {
+		basicLit, ok := v.(*ast.BasicLit)
+		if ok && basicLit.Kind == token.STRING && f(valueSpec.Names[idx].Name) {
+			return strings.Trim(basicLit.Value, "`"), nil
+		}
+	}
+
+	return "", fmt.Errorf("basic literal value not found")
+}
+
+func FilterName(name string) ast.Filter {
 	return func(in string) bool {
-		return typeName == in
-	}
-}
-
-func QualifiedIdent(pkg, typ string) *ast.SelectorExpr {
-	return &ast.SelectorExpr{
-		X: &ast.Ident{
-			Name: pkg,
-		},
-		Sel: &ast.Ident{
-			Name: typ,
-		},
-	}
-}
-
-func Ident(name string) *ast.Ident {
-	return &ast.Ident{
-		Name: name,
+		return name == in
 	}
 }
