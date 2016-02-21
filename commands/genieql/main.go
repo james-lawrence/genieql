@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -14,11 +15,13 @@ func main() {
 	bootstrap := &bootstrap{}
 	mapper := &mapper{}
 	generator := &generate{crud: &generateCrud{}}
+	scanner := &scanners{}
 
 	app := kingpin.New("qlgenie", "query language genie - a tool for interfacing with databases")
 	bootstrapCmd := bootstrap.configure(app)
 	mapCmd := mapper.configure(app)
 	generator.configure(app)
+	scanner.configure(app)
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 

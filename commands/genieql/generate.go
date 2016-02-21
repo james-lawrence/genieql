@@ -8,13 +8,13 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/crud"
-	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type generateCrud struct {
 	configName  string
 	packageType string
+	mapName     string
 	table       string
 	output      string
 }
@@ -28,14 +28,14 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.table, configuration, &mappingConfig); err != nil {
+	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mappingConfig); err != nil {
 		return err
 	}
 
 	log.Printf("genieql configuration %#v\n", configuration)
 	log.Printf("genieql mapping %#v\n", mappingConfig)
 
-	result, err := crud.New(configuration, mappingConfig).Generate()
+	result, err := crud.New(configuration, mappingConfig, t.table).Generate()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -68,6 +68,10 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 		"config",
 		"name of configuration file to use",
 	).Default("default.config").StringVar(&t.crud.configName)
+	crud.Flag(
+		"mapping",
+		"name of the map to use",
+	).Default("default").StringVar(&t.crud.mapName)
 
 	crud.Flag(
 		"output",

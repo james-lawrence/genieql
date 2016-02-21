@@ -4,32 +4,32 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"go/ast"
 	"go/format"
-	"go/printer"
 	"go/token"
 	"io"
 	"log"
-	"os"
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/scanner"
 	"bitbucket.org/jatone/genieql/sqlutil"
 	"golang.org/x/tools/imports"
 )
 
 // New builds a generator that generates a CRUD scanner and associated
 // queries.
-func New(c genieql.Configuration, m genieql.MappingConfig) genieql.Generator {
+func New(c genieql.Configuration, m genieql.MappingConfig, table string) genieql.Generator {
 	return generator{
 		Configuration: c,
 		MappingConfig: m,
+		Table:         table,
 	}
 }
 
 type generator struct {
 	genieql.Configuration
 	genieql.MappingConfig
+	Table string
 }
 
 func (t generator) Generate() (io.Reader, error) {
@@ -42,21 +42,12 @@ func (t generator) Generate() (io.Reader, error) {
 		return nil, err
 	}
 
-	packages, err := genieql.LocatePackage(t.MappingConfig.Package)
-	if err != nil {
-		log.Println("Failed to locate package", err)
-		return nil, err
-	}
-
-	decls := genieql.FilterDeclarations(genieql.FilterType(t.MappingConfig.Type), packages...)
-	pkgs := genieql.FilterPackages(genieql.FilterType(t.MappingConfig.Type), packages...)
 	q, err := sqlutil.LookupColumnQuery(t.Configuration.Dialect, t.Table)
 	if err != nil {
 		log.Println("failure looking up column query", err)
 		return nil, err
 	}
 
-	log.Println("column query", q)
 	if columns, err = genieql.ExtractColumns(db, q); err != nil {
 		return nil, err
 	}
@@ -65,73 +56,34 @@ func (t generator) Generate() (io.Reader, error) {
 		return nil, err
 	}
 
-	switch len(decls) {
-	case 1:
-	// happy case, fallthrough
-	case 0:
-		return nil, fmt.Errorf("failed to locate: %s.%s", t.MappingConfig.Package, t.MappingConfig.Type)
-	default:
-		return nil, fmt.Errorf("ambiguous type, located multiple matches: %v", decls)
+	generator := scanner.Generator{
+		Configuration: t.Configuration,
+		MappingConfig: t.MappingConfig,
+		Columns:       columns,
+		Name:          fmt.Sprintf("%sCrudScanner", strings.Title(t.MappingConfig.Type)),
 	}
 
-	typeDecl := decls[0]
-	pkg := pkgs[0]
-
-	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
-	fields := genieql.ExtractFields(typeDecl.Specs[0]).List
-
-	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, columns...)
-
-	if err != nil {
-		log.Println("failed to map columns", err)
-		return nil, err
-	}
-
-	file := &ast.File{
-		Name: genieql.Ident(pkg.Name),
-	}
-
-	typ := strings.Title(t.MappingConfig.Type)
-	errName := fmt.Sprintf("err%sCrudScanner", typ)
-	scannerName := fmt.Sprintf("%sCrudScanner", strings.ToLower(typ))
-	interfaceName := fmt.Sprintf("%sCrudScanner", typ)
-	newScannerFuncName := fmt.Sprintf("New%s", interfaceName)
-	scanner := genieql.Scanner{
-		InterfaceName:      interfaceName,
-		Name:               scannerName,
-		ErrName:            errName,
-		NewScannerFuncName: newScannerFuncName,
-	}.Build(columnMap, genieql.Ident(t.MappingConfig.Type))
 	crud := genieql.NewCRUDWriter(
 		buffer,
 		t.MappingConfig.Type,
-		t.MappingConfig.Table,
+		t.Table,
 		t.MappingConfig.NaturalKey,
 		columns,
 	)
 
 	fset := token.NewFileSet()
-	if err := printer.Fprint(buffer, fset, file); err != nil {
-		log.Println("package", err)
-		return nil, err
-	}
 
-	if _, err := fmt.Fprintf(buffer, genieql.Preface, strings.Join(os.Args[1:], " ")); err != nil {
-		log.Println("preface", err)
-		return nil, err
-	}
-
-	if err := printer.Fprint(buffer, fset, scanner); err != nil {
+	if err := generator.Scanner(buffer, fset); err != nil {
 		log.Println("scanner", err)
 		return nil, err
 	}
-	fmt.Fprintf(buffer, "\n\n")
 
 	if err := crud.Write(genieql.PostgresqlCRUDGen, fset); err != nil {
 		log.Println("crud", err)
 		return nil, err
 	}
 	log.Println("Raw:", string(buffer.Bytes()))
+
 	raw, err := imports.Process("", buffer.Bytes(), nil)
 	if err != nil {
 		log.Println("imports", err)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/url"
 	"path/filepath"
 
@@ -19,6 +20,7 @@ type bootstrap struct {
 }
 
 func (t bootstrap) Bootstrap() error {
+	log.Println("bootstraping", t.dburi)
 	return genieql.Bootstrap(t.outputfilepath, t.dburi)
 }
 

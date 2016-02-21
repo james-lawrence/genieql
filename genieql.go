@@ -1,4 +1,10 @@
+// Package genieql generates code to interact with a database.
 package genieql
+
+import (
+	"go/token"
+	"io"
+)
 
 // Preface text inserted at the top of all generated files.
 const Preface = `
@@ -7,3 +13,8 @@ const Preface = `
 // genieql %s
 
 `
+
+// ScannerGenerator interface for scanner generators.
+type ScannerGenerator interface {
+	Scanner(dst io.Writer, fset *token.FileSet) error
+}

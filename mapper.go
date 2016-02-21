@@ -13,41 +13,40 @@ import (
 type MappingConfig struct {
 	Package              string
 	Type                 string
-	Table                string
 	IncludeTablePrefixes bool
 	NaturalKey           []string
 	Transformations      []string
 }
 
-func WriteMapper(root string, configuration Configuration, m MappingConfig) error {
+func WriteMapper(root string, configuration Configuration, name string, m MappingConfig) error {
 	d, err := yaml.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	path := filepath.Join(root, configuration.Database, m.Package, m.Type, m.Table)
+	path := filepath.Join(root, configuration.Database, m.Package, m.Type, name)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(path, d, 0666)
 }
 
-func ReadMapper(root, pkg, typ, table string, configuration Configuration, m *MappingConfig) error {
-	raw, err := ioutil.ReadFile(filepath.Join(root, configuration.Database, pkg, typ, table))
+func ReadMapper(root, pkg, typ, name string, configuration Configuration, m *MappingConfig) error {
+	raw, err := ioutil.ReadFile(filepath.Join(root, configuration.Database, pkg, typ, name))
 	if err != nil {
 		return err
 	}
 	return yaml.Unmarshal(raw, m)
 }
 
-func Map(configFile string, m MappingConfig) error {
+func Map(configFile, name string, m MappingConfig) error {
 	var config Configuration
 
 	if err := ReadConfiguration(configFile, &config); err != nil {
 		return err
 	}
 
-	return WriteMapper(filepath.Dir(configFile), config, m)
+	return WriteMapper(filepath.Dir(configFile), config, name, m)
 }
 
 type Mapper struct {
