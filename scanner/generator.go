@@ -50,12 +50,26 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	scanner := scannerImplementation{
 		ColumnMaps: columnMap,
 	}
+	rowscanner := rowScannerImplementation{
+		ColumnMaps: columnMap,
+	}
 	errscanner := errorScannerImplementation{}
 
-	interfaceName := strings.Title(t.Name)
+	interfaceName := strings.Title(fmt.Sprintf("%sScanner", t.Name))
+	interfaceRowName := strings.Title(fmt.Sprintf("%sRowScanner", t.Name))
 	scannerName := strings.ToLower(interfaceName)
+	rowScannerName := fmt.Sprintf("row%s", interfaceName)
 	errScannerName := fmt.Sprintf("err%s", interfaceName)
-
+	scannerFunct := NewScannerFunc{
+		InterfaceName:  interfaceName,
+		ScannerName:    scannerName,
+		ErrScannerName: errScannerName,
+	}
+	rowScannerFunct := NewRowScannerFunc{
+		InterfaceName:  interfaceRowName,
+		ScannerName:    rowScannerName,
+		ErrScannerName: errScannerName,
+	}
 	p := errorPrinter{}
 	file := &ast.File{
 		Name: &ast.Ident{
@@ -67,15 +81,17 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 
 	p.FprintAST(dst, fset, file)
 	p.Fprintf(dst, genieql.Preface, strings.Join(os.Args[1:], " "))
-	p.FprintAST(dst, fset, NewScannerFunc{
-		InterfaceName:  interfaceName,
-		ScannerName:    scannerName,
-		ErrScannerName: errScannerName,
-	}.Build())
+	p.FprintAST(dst, fset, scannerFunct.Build())
 	p.Fprintf(dst, "\n\n")
-	p.FprintAST(dst, fset, BuildScannerInterface(interfaceName, params...))
+	p.FprintAST(dst, fset, rowScannerFunct.Build())
+	p.Fprintf(dst, "\n\n")
+	p.FprintAST(dst, fset, BuildRowsScannerInterface(interfaceName, params...))
+	p.Fprintf(dst, "\n\n")
+	p.FprintAST(dst, fset, BuildScannerInterface(interfaceRowName, params...))
 	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, scanner.Generate(scannerName, params...))
+	p.Fprintf(dst, "\n\n")
+	p.FprintAST(dst, fset, rowscanner.Generate(rowScannerName, params...))
 	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, errscanner.Generate(errScannerName, params...))
 

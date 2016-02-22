@@ -66,7 +66,7 @@ func (t generator) Generate() (io.Reader, error) {
 		Configuration: t.Configuration,
 		MappingConfig: t.MappingConfig,
 		Columns:       columns,
-		Name:          fmt.Sprintf("%sCrudScanner", strings.Title(t.MappingConfig.Type)),
+		Name:          fmt.Sprintf("%sCrud", strings.Title(t.MappingConfig.Type)),
 	}
 
 	crud := genieql.NewCRUDWriter(

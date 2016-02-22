@@ -16,6 +16,17 @@ func BuildScannerInterface(name string, scannerParams ...*ast.Field) ast.Decl {
 			&ast.FieldList{List: scannerParams},          // parameters
 			&ast.FieldList{List: unnamedFields("error")}, // returns
 		),
+	)
+}
+
+func BuildRowsScannerInterface(name string, scannerParams ...*ast.Field) ast.Decl {
+	return interfaceDeclaration(
+		&ast.Ident{Name: name},
+		funcDeclarationField(
+			&ast.Ident{Name: "Scan"},
+			&ast.FieldList{List: scannerParams},          // parameters
+			&ast.FieldList{List: unnamedFields("error")}, // returns
+		),
 		funcDeclarationField(
 			&ast.Ident{Name: "Close"},
 			nil, // no parameters
@@ -108,6 +119,49 @@ func (t NewScannerFunc) Build() *ast.FuncDecl {
 	return funcDecl(nil, name, []*ast.Field{rowsParam, errParam}, result, body)
 }
 
+type NewRowScannerFunc struct {
+	InterfaceName  string
+	ScannerName    string
+	ErrScannerName string
+}
+
+func (t NewRowScannerFunc) Build() *ast.FuncDecl {
+	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
+	rowsParam := typeDeclarationField("row", &ast.StarExpr{
+		X: &ast.SelectorExpr{
+			X: &ast.Ident{
+				Name: "sql",
+			},
+			Sel: &ast.Ident{
+				Name: "Row",
+			},
+		},
+	})
+	result := unnamedFields(t.InterfaceName)
+	body := &ast.BlockStmt{
+		List: []ast.Stmt{
+			&ast.ReturnStmt{
+				Results: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.Ident{Name: t.ScannerName},
+						Elts: []ast.Expr{
+							&ast.KeyValueExpr{
+								Key: &ast.Ident{
+									Name: "row",
+								},
+								Value: &ast.Ident{
+									Name: "row",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	return funcDecl(nil, name, []*ast.Field{rowsParam}, result, body)
+}
+
 // Functions responsible for generating the functions
 // associated with the scanner.
 type Functions struct {
@@ -118,29 +172,41 @@ type Functions struct {
 // parameters:
 // name - represents the type of the scanner that acts as the receiver for the function.
 func (t Functions) Generate(name string, scan, err, close *ast.BlockStmt) []ast.Decl {
-	scanFunc := funcDecl(
+	scanFunc := scanFunctionBuilder(name, t.Parameters, scan)
+
+	errFunc := errFuncBuilder(name, t.Parameters, err)
+
+	closeFunc := closeFuncBuilder(name, t.Parameters, close)
+
+	return []ast.Decl{scanFunc, errFunc, closeFunc}
+}
+
+func scanFunctionBuilder(name string, params []*ast.Field, body *ast.BlockStmt) ast.Decl {
+	return funcDecl(
 		&ast.Ident{Name: name},
 		&ast.Ident{Name: "Scan"},
-		t.Parameters,
+		params,
 		unnamedFields("error"),
-		scan,
+		body,
 	)
+}
 
-	errFunc := funcDecl(
+func errFuncBuilder(name string, params []*ast.Field, body *ast.BlockStmt) ast.Decl {
+	return funcDecl(
 		&ast.Ident{Name: name},
 		&ast.Ident{Name: "Err"},
 		nil, // no parameters
 		unnamedFields("error"),
-		err,
+		body,
 	)
+}
 
-	closeFunc := funcDecl(
+func closeFuncBuilder(name string, params []*ast.Field, body *ast.BlockStmt) ast.Decl {
+	return funcDecl(
 		&ast.Ident{Name: name},
 		&ast.Ident{Name: "Close"},
 		nil, // no parameters
 		unnamedFields("error"),
-		close,
+		body,
 	)
-
-	return []ast.Decl{scanFunc, errFunc, closeFunc}
 }
