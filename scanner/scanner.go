@@ -19,6 +19,8 @@ func BuildScannerInterface(name string, scannerParams ...*ast.Field) ast.Decl {
 	)
 }
 
+// BuildRowsScannerInterface takes in a name and a set of parameters
+// for the scan method, output a ast.Decl.
 func BuildRowsScannerInterface(name string, scannerParams ...*ast.Field) ast.Decl {
 	return interfaceDeclaration(
 		&ast.Ident{Name: name},
