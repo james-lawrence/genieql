@@ -39,7 +39,7 @@ func predicate(offset int, join string, predicates ...string) (string, int) {
 		clauses = append(clauses, fmt.Sprintf("%s = $%d", predicate, offset+idx))
 	}
 
-	return strings.Join(clauses, join), len(clauses)
+	return strings.Join(clauses, join), len(clauses) + 1
 }
 
 func placeholders(offset int, join string, columns ...string) (string, int) {
