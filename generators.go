@@ -6,7 +6,7 @@ import (
 )
 
 type Generator interface {
-	Generate() (io.Reader, error)
+	Generate(dst io.Writer, fset *token.FileSet) error
 }
 
 type CrudWriter interface {

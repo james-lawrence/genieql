@@ -5,7 +5,9 @@ import (
 	"go/ast"
 	"go/build"
 	"go/parser"
+	"go/printer"
 	"go/token"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -39,6 +41,23 @@ func LocatePackage(pkgName string) ([]*ast.Package, error) {
 	}
 
 	return packages, nil
+}
+
+func LocatePackage2(pkgName string) (*ast.Package, error) {
+	packages, err := LocatePackage(pkgName)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(packages) == 0 {
+		return nil, fmt.Errorf("package %s: not found", pkgName)
+	}
+
+	if len(packages) > 1 {
+		return nil, fmt.Errorf("package %s: ambiguous package, found %d packages", pkgName, len(packages))
+	}
+
+	return packages[0], nil
 }
 
 func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
@@ -132,4 +151,42 @@ func FilterName(name string) ast.Filter {
 	return func(in string) bool {
 		return name == in
 	}
+}
+
+type ASTPrinter struct {
+	err error
+}
+
+func (t ASTPrinter) FprintAST(dst io.Writer, fset *token.FileSet, ast interface{}) {
+	if t.err == nil {
+		t.err = printer.Fprint(dst, fset, ast)
+	}
+}
+
+func (t ASTPrinter) Fprintln(dst io.Writer, a ...interface{}) {
+	if t.err == nil {
+		_, t.err = fmt.Fprintln(dst, a...)
+	}
+}
+
+func (t ASTPrinter) Fprintf(dst io.Writer, format string, a ...interface{}) {
+	if t.err == nil {
+		_, t.err = fmt.Fprintf(dst, format, a...)
+	}
+}
+
+func (t ASTPrinter) Err() error {
+	return t.err
+}
+
+func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *ast.Package) error {
+	file := &ast.File{
+		Name: &ast.Ident{
+			Name: pkg.Name,
+		},
+	}
+
+	printer.FprintAST(dst, fset, file)
+
+	return printer.Err()
 }

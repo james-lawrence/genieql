@@ -7,10 +7,9 @@ import (
 
 // Insert generate an insert query.
 func Insert(table string, columns, defaulted []string) string {
-	p, offset := placeholders(1, columns...)
-	d, _ := defaults(offset, defaulted...)
-	values := strings.Join(append(p, d...), ",")
-	columnOrder := strings.Join(append(columns, defaulted...), ",")
+	p, _ := placeholders(1, selectPlaceholder(columns, defaulted))
+	values := strings.Join(p, ",")
+	columnOrder := strings.Join(columns, ",")
 	return fmt.Sprintf(insertTmpl, table, columnOrder, values, columnOrder)
 }
 
@@ -45,10 +44,10 @@ func predicate(offset int, predicates ...string) ([]string, int) {
 	return clauses, len(clauses) + 1
 }
 
-func placeholders(offset int, columns ...string) ([]string, int) {
+func placeholders(offset int, columns []placeholder) ([]string, int) {
 	clauses := make([]string, 0, len(columns))
-	for idx := range columns {
-		clauses = append(clauses, fmt.Sprintf("$%d", offset+idx))
+	for idx, column := range columns {
+		clauses = append(clauses, column.String(offset+idx))
 	}
 
 	return clauses, len(clauses)
@@ -61,6 +60,39 @@ func defaults(offset int, columns ...string) ([]string, int) {
 	}
 
 	return clauses, len(clauses) + 1
+}
+
+func selectPlaceholder(columns, defaults []string) []placeholder {
+	placeholders := make([]placeholder, 0, len(columns))
+	for _, column := range columns {
+		var placeholder placeholder = offsetPlaceholder{}
+		// todo turn into a set.
+		for _, cut := range defaults {
+			if cut == column {
+				placeholder = defaultPlaceholder{}
+				break
+			}
+		}
+		placeholders = append(placeholders, placeholder)
+	}
+
+	return placeholders
+}
+
+type placeholder interface {
+	String(offset int) string
+}
+
+type defaultPlaceholder struct{}
+
+func (t defaultPlaceholder) String(offset int) string {
+	return "DEFAULT"
+}
+
+type offsetPlaceholder struct{}
+
+func (t offsetPlaceholder) String(offset int) string {
+	return fmt.Sprintf("$%d", offset)
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"

@@ -2,7 +2,6 @@
 package genieql
 
 import (
-	"bytes"
 	"go/format"
 	"go/token"
 	"io"
@@ -18,20 +17,31 @@ const Preface = `
 
 `
 
+// TableDetails provides information about the table.
+type TableDetails struct {
+	Dialect    Dialect
+	Table      string
+	Naturalkey []string
+	Columns    []string
+}
+
 // ScannerGenerator interface for scanner generators.
 type ScannerGenerator interface {
 	Scanner(dst io.Writer, fset *token.FileSet) error
 }
 
-func FormatOutput(raw []byte) (io.Reader, error) {
+// FormatOutput formats and resolves imports for the raw bytes representing a go
+// source file and writes them into the dst.
+func FormatOutput(dst io.Writer, raw []byte) error {
 	var err error
 	if raw, err = imports.Process("", raw, nil); err != nil {
-		return bytes.NewReader(raw), err
+		return err
 	}
 
 	if raw, err = format.Source(raw); err != nil {
-		return bytes.NewReader(raw), err
+		return err
 	}
 
-	return bytes.NewReader(raw), err
+	_, err = dst.Write(raw)
+	return err
 }

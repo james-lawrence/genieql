@@ -17,7 +17,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	bootstrap := &bootstrap{}
 	mapper := &mapper{}
-	generator := &generate{crud: &generateCrud{}}
+	generator := &generate{}
 	scanner := &scanners{}
 
 	app := kingpin.New("qlgenie", "query language genie - a tool for interfacing with databases")

@@ -1,147 +1,103 @@
 package crud
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"go/format"
 	"go/token"
 	"io"
-	"log"
-	"strings"
 
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/scanner"
 )
 
 // New builds a generator that generates a CRUD scanner and associated
 // queries.
-func New(c genieql.Configuration, m genieql.MappingConfig, table string) genieql.Generator {
+func New(c genieql.Configuration, details genieql.TableDetails, pkg, prefix string) genieql.Generator {
 	return generator{
 		Configuration: c,
-		MappingConfig: m,
-		Table:         table,
+		TableDetails:  details,
+		Package:       pkg,
+		Prefix:        prefix,
 	}
 }
 
 type generator struct {
 	genieql.Configuration
-	genieql.MappingConfig
-	Table string
+	genieql.TableDetails
+	Table   string
+	Package string
+	Prefix  string
 }
 
-func (t generator) Generate() (io.Reader, error) {
-	var err error
-	var db *sql.DB
-	var columns []string
-	var naturalKey []string
-
-	buffer := bytes.NewBuffer([]byte{})
-
-	if db, err = genieql.ConnectDB(t.Configuration); err != nil {
-		return nil, err
-	}
-
-	dialect, err := genieql.LookupDialect(t.Configuration.Dialect)
-	if err != nil {
-		log.Println("unknown dialect", t.Configuration.Dialect)
-		return nil, err
-	}
-
-	if columns, err = genieql.Columns(db, dialect.ColumnQuery(t.Table)); err != nil {
-		return nil, err
-	}
-
-	if naturalKey, err = genieql.ExtractPrimaryKey(db, dialect.PrimaryKeyQuery(t.Table)); err != nil {
-		return nil, err
-	}
-
-	generator := scanner.Generator{
-		Configuration: t.Configuration,
-		MappingConfig: t.MappingConfig,
-		Columns:       columns,
-		Name:          fmt.Sprintf("%sCrud", strings.Title(t.MappingConfig.Type)),
-	}
-
+func (t generator) Generate(dst io.Writer, fset *token.FileSet) error {
 	crud := NewCRUDWriter(
-		buffer,
-		dialect,
-		t.MappingConfig.Type,
-		t.Table,
-		naturalKey,
-		columns,
+		dst,
+		t.Prefix,
+		t.TableDetails,
 	)
 
-	fset := token.NewFileSet()
+	return crud.Write(fset)
+}
 
-	if err := generator.Scanner(buffer, fset); err != nil {
-		log.Println("scanner", err)
-		return nil, err
+// LoadInformation loads table information based on the configuration and
+// table name.
+func LoadInformation(configuration genieql.Configuration, table string) (genieql.TableDetails, error) {
+	var err error
+	var db *sql.DB
+	var dialect genieql.Dialect
+	var details genieql.TableDetails
+
+	if db, err = genieql.ConnectDB(configuration); err != nil {
+		return details, err
 	}
 
-	fmt.Fprintf(buffer, "\n\n")
-
-	if err := crud.Write(fset); err != nil {
-		log.Println("crud", err)
-		return nil, err
+	dialect, err = genieql.LookupDialect(configuration.Dialect)
+	if err != nil {
+		return details, err
 	}
 
-	return genieql.FormatOutput(buffer.Bytes())
+	details, err = genieql.LookupTableDetails(db, dialect, table)
+	return details, err
 }
 
 // NewCRUDWriter generates crud queries. implements the genieql.CrudWriter interface.
-func NewCRUDWriter(out io.Writer, dialect genieql.Dialect, prefix, table string, naturalkey []string, columns []string) genieql.CrudWriter {
+func NewCRUDWriter(out io.Writer, prefix string, details genieql.TableDetails) genieql.CrudWriter {
 	return crudWriter{
-		out:        out,
-		dialect:    dialect,
-		prefix:     prefix,
-		table:      table,
-		naturalkey: naturalkey,
-		columns:    columns,
+		out:     out,
+		prefix:  prefix,
+		details: details,
 	}
 }
 
 type crudWriter struct {
-	out        io.Writer
-	dialect    genieql.Dialect
-	prefix     string
-	table      string
-	naturalkey []string
-	columns    []string
+	out     io.Writer
+	prefix  string
+	details genieql.TableDetails
 }
 
 func (t crudWriter) Write(fset *token.FileSet) error {
 	constName := fmt.Sprintf("%sInsert", t.prefix)
-	query := t.dialect.Insert(t.table, t.columns, []string{})
-	if err := format.Node(t.out, fset, genieql.QueryLiteral(constName, query)); err != nil {
+	if err := Insert(t.details).Build(constName, []string{}).Generate(t.out, fset); err != nil {
 		return err
 	}
-	fmt.Fprintf(t.out, "\n")
 
-	for i, column := range t.columns {
-		constName := fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column))
-		query := t.dialect.Select(t.table, t.columns, t.columns[i:i+1])
-		if err := format.Node(t.out, fset, genieql.QueryLiteral(constName, query)); err != nil {
+	for i, column := range t.details.Columns {
+		constName = fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column))
+		if err := Select(t.details).Build(constName, t.details.Columns[i:i+1]).Generate(t.out, fset); err != nil {
 			return err
 		}
-		fmt.Fprintf(t.out, "\n")
 	}
 
 	constName = fmt.Sprintf("%sUpdateByID", t.prefix)
-	query = t.dialect.Update(t.table, t.columns, t.naturalkey)
-	if err := format.Node(t.out, fset, genieql.QueryLiteral(constName, query)); err != nil {
+	if err := Update(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
 		return err
 	}
-	fmt.Fprintf(t.out, "\n")
 
 	constName = fmt.Sprintf("%sDeleteByID", t.prefix)
-	query = t.dialect.Delete(t.table, t.columns, t.naturalkey)
-	if err := format.Node(t.out, fset, genieql.QueryLiteral(constName, query)); err != nil {
+	if err := Delete(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
 		return err
 	}
-	fmt.Fprintf(t.out, "\n")
 
 	return nil
 }

@@ -71,18 +71,18 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	}
 
 	buffer := bytes.NewBuffer([]byte{})
+	formatted := bytes.NewBuffer([]byte{})
 	fset := token.NewFileSet()
 
 	if err = generator.Scanner(buffer, fset); err != nil {
 		log.Fatalln(err)
 	}
 
-	reader, err := genieql.FormatOutput(buffer.Bytes())
-	if err != nil {
+	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
 		log.Fatalln(err)
 	}
 
-	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, reader); err != nil {
+	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, formatted); err != nil {
 		log.Fatalln(err)
 	}
 

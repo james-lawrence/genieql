@@ -3,7 +3,6 @@ package scanner
 import (
 	"fmt"
 	"go/ast"
-	"go/printer"
 	"go/token"
 	"io"
 	"log"
@@ -70,7 +69,7 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 		ScannerName:    rowScannerName,
 		ErrScannerName: errScannerName,
 	}
-	p := errorPrinter{}
+	p := genieql.ASTPrinter{}
 	file := &ast.File{
 		Name: &ast.Ident{
 			Name: pkg.Name,
@@ -96,30 +95,4 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	p.FprintAST(dst, fset, errscanner.Generate(errScannerName, params...))
 
 	return p.Err()
-}
-
-type errorPrinter struct {
-	err error
-}
-
-func (t errorPrinter) FprintAST(dst io.Writer, fset *token.FileSet, ast interface{}) {
-	if t.err == nil {
-		t.err = printer.Fprint(dst, fset, ast)
-	}
-}
-
-func (t errorPrinter) Fprintln(dst io.Writer, a ...interface{}) {
-	if t.err == nil {
-		_, t.err = fmt.Fprintln(dst, a...)
-	}
-}
-
-func (t errorPrinter) Fprintf(dst io.Writer, format string, a ...interface{}) {
-	if t.err == nil {
-		_, t.err = fmt.Fprintf(dst, format, a...)
-	}
-}
-
-func (t errorPrinter) Err() error {
-	return t.err
 }

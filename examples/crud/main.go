@@ -14,7 +14,7 @@ package main
 import "time"
 
 //go:generate genieql map bitbucket.org/jatone/genieql/examples/crud.example snakecase lowercase
-//go:generate genieql generate crud --output=example_crud_gen.go bitbucket.org/jatone/genieql/examples/crud.example crud
+//go:generate genieql generate crud --output=example_crud_queries_gen.go bitbucket.org/jatone/genieql/examples/crud.example crud
 type example struct {
 	ID      int
 	Email   string
