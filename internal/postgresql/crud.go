@@ -46,8 +46,11 @@ func predicate(offset int, predicates ...string) ([]string, int) {
 
 func placeholders(offset int, columns []placeholder) ([]string, int) {
 	clauses := make([]string, 0, len(columns))
-	for idx, column := range columns {
-		clauses = append(clauses, column.String(offset+idx))
+	idx := offset
+	for _, column := range columns {
+		var ph string
+		ph, idx = column.String(idx)
+		clauses = append(clauses, ph)
 	}
 
 	return clauses, len(clauses)
@@ -80,19 +83,19 @@ func selectPlaceholder(columns, defaults []string) []placeholder {
 }
 
 type placeholder interface {
-	String(offset int) string
+	String(offset int) (string, int)
 }
 
 type defaultPlaceholder struct{}
 
-func (t defaultPlaceholder) String(offset int) string {
-	return "DEFAULT"
+func (t defaultPlaceholder) String(offset int) (string, int) {
+	return "DEFAULT", offset
 }
 
 type offsetPlaceholder struct{}
 
-func (t offsetPlaceholder) String(offset int) string {
-	return fmt.Sprintf("$%d", offset)
+func (t offsetPlaceholder) String(offset int) (string, int) {
+	return fmt.Sprintf("$%d", offset), offset + 1
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"

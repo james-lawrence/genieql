@@ -1,7 +1,6 @@
 package crud
 
 import (
-	"database/sql"
 	"fmt"
 	"go/token"
 	"io"
@@ -38,27 +37,6 @@ func (t generator) Generate(dst io.Writer, fset *token.FileSet) error {
 	)
 
 	return crud.Write(fset)
-}
-
-// LoadInformation loads table information based on the configuration and
-// table name.
-func LoadInformation(configuration genieql.Configuration, table string) (genieql.TableDetails, error) {
-	var err error
-	var db *sql.DB
-	var dialect genieql.Dialect
-	var details genieql.TableDetails
-
-	if db, err = genieql.ConnectDB(configuration); err != nil {
-		return details, err
-	}
-
-	dialect, err = genieql.LookupDialect(configuration.Dialect)
-	if err != nil {
-		return details, err
-	}
-
-	details, err = genieql.LookupTableDetails(db, dialect, table)
-	return details, err
 }
 
 // NewCRUDWriter generates crud queries. implements the genieql.CrudWriter interface.

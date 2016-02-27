@@ -15,23 +15,20 @@ import (
 	"bitbucket.org/jatone/genieql/scanner"
 )
 
-type defaultScanner struct {
-	configName  string
-	packageType string
-	mapName     string
-	table       string
-	scannerName string
-	output      string
+type queryLiteral struct {
+	configName   string
+	packageType  string
+	mapName      string
+	queryLiteral string
+	scannerName  string
+	output       string
 }
 
-func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
+func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	var configuration genieql.Configuration
 	var mappingConfig genieql.MappingConfig
 	pkgName, typName := extractPackageType(t.packageType)
-
-	if t.scannerName == "" {
-		t.scannerName = typName
-	}
+	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
 
 	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
 		log.Fatalln(err)
@@ -41,12 +38,27 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	pkg, err := genieql.LocatePackage2(pkgName)
+	pkg, err := genieql.LocatePackage2(queryPkgName)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	details, err := genieql.LoadInformation(configuration, t.table)
+	db, err := genieql.ConnectDB(configuration)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(queryConstName), pkg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), decl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	columns, err := genieql.Columns(db, query)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -54,7 +66,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	generator := scanner.Generator{
 		Configuration: configuration,
 		MappingConfig: mappingConfig,
-		Columns:       details.Columns,
+		Columns:       columns,
 		Name:          strings.Title(t.scannerName),
 	}
 
@@ -82,17 +94,19 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	return nil
 }
 
-func (t *defaultScanner) configure(parent *kingpin.CmdClause) *kingpin.CmdClause {
-	scanner := parent.Command("default", "build the default scanner for the provided type/table").Action(t.Execute)
-	scanner.Flag("config", "name of configuration file to use").Default("default.config").
+func (t *queryLiteral) configure(parent *kingpin.CmdClause) *kingpin.CmdClause {
+	query := parent.Command("query-literal", "build a scanner for the provided type/query").Action(t.Execute)
+	query.Flag("config", "name of configuration file to use").Default("default.config").
 		StringVar(&t.configName)
-	scanner.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
-	scanner.Flag("output", "path of output file").Default("").StringVar(&t.output)
-	scanner.Flag("scanner-name", "name of the scanner, defaults to type name").Default("").StringVar(&t.scannerName)
-	scanner.Arg(
+	query.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
+	query.Flag("output", "path of output file").Default("").StringVar(&t.output)
+	query.Arg("scanner-name", "name of the scanner").Required().StringVar(&t.scannerName)
+	query.Arg(
 		"package.Type",
 		"package prefixed structure we want a scanner for",
 	).Required().StringVar(&t.packageType)
-	scanner.Arg("table", "name of the table to build the scanner for").Required().StringVar(&t.table)
-	return scanner
+
+	query.Arg("package.Query", "package prefixed constant we want to use the query").
+		Required().StringVar(&t.queryLiteral)
+	return query
 }

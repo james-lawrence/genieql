@@ -187,6 +187,6 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *a
 	}
 
 	printer.FprintAST(dst, fset, file)
-
+	printer.Fprintf(dst, Preface, strings.Join(os.Args[1:], " "))
 	return printer.Err()
 }

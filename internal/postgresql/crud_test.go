@@ -18,7 +18,8 @@ var _ = Describe("Crud", func() {
 			query    string
 		}{
 			{"MyTable1", []string{"col1", "col2", "col3"}, []string{}, "INSERT INTO MyTable1 (col1,col2,col3) VALUES ($1,$2,$3) RETURNING col1,col2,col3"},
-			{"MyTable2", []string{"col1", "col2", "col3"}, []string{"col4"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES ($1,$2,$3,DEFAULT) RETURNING col1,col2,col3,col4"},
+			{"MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col4"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES ($1,$2,$3,DEFAULT) RETURNING col1,col2,col3,col4"},
+			{"MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES (DEFAULT,$1,DEFAULT,$2) RETURNING col1,col2,col3,col4"},
 		}
 		It("should create insert queries", func() {
 			for _, tt := range insertQueryTable {

@@ -32,7 +32,7 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	details, err := crud.LoadInformation(configuration, t.table)
+	details, err := genieql.LoadInformation(configuration, t.table)
 	if err != nil {
 		log.Fatalln(err)
 	}

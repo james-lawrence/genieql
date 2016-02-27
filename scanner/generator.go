@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"io"
 	"log"
-	"os"
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
@@ -24,17 +23,15 @@ type Generator struct {
 func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	var err error
 
-	packages, err := genieql.LocatePackage(t.MappingConfig.Package)
+	pkg, err := genieql.LocatePackage2(t.MappingConfig.Package)
 	if err != nil {
-		log.Println("Failed to locate package", err)
 		return err
 	}
 
-	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(t.MappingConfig.Type), packages...)
+	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(t.MappingConfig.Type), pkg)
 	if err != nil {
 		return err
 	}
-	pkg := genieql.FilterPackages(genieql.FilterName(t.MappingConfig.Type), packages...)[0]
 
 	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
 	fields := genieql.ExtractFields(decl.Specs[0]).List
@@ -70,16 +67,9 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 		ErrScannerName: errScannerName,
 	}
 	p := genieql.ASTPrinter{}
-	file := &ast.File{
-		Name: &ast.Ident{
-			Name: pkg.Name,
-		},
-	}
 
 	params := []*ast.Field{typeDeclarationField("arg0", &ast.StarExpr{X: &ast.Ident{Name: t.MappingConfig.Type}})}
 
-	p.FprintAST(dst, fset, file)
-	p.Fprintf(dst, genieql.Preface, strings.Join(os.Args[1:], " "))
 	p.FprintAST(dst, fset, scannerFunct.Build())
 	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, rowScannerFunct.Build())
