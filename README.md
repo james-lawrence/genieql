@@ -7,10 +7,12 @@ your codebase.
 
 # is it production ready?
 its very much in alpha code, but it is in use on few production applications already.
-- it only supports postgresql currently.
-  - adding additional support is very straight forward, just implement the Dialect interface.
-  see the postgresql implementation as the example.
-- currently minimal test coverage.
+
+-it only supports postgresql currently.
+
+-adding additional support is very straight forward, just implement the Dialect interface. see the postgresql implementation as the example.
+
+-currently minimal test coverage.
 
 mainly getting it out early to solicite feedback on the api
 of the code that gets generated and feature requests.
