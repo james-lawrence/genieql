@@ -5,50 +5,62 @@ import (
 	"strings"
 )
 
-type CRUD struct{}
-
-func (t CRUD) InsertQuery(table string, columns []string) string {
-	p, _ := placeholders(1, ",", columns...)
-	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(insertTmpl, table, columnOrder, p, columnOrder)
+// Insert generate an insert query.
+func Insert(table string, columns, defaulted []string) string {
+	p, offset := placeholders(1, columns...)
+	d, _ := defaults(offset, defaulted...)
+	values := strings.Join(append(p, d...), ",")
+	columnOrder := strings.Join(append(columns, defaulted...), ",")
+	return fmt.Sprintf(insertTmpl, table, columnOrder, values, columnOrder)
 }
 
-func (t CRUD) SelectQuery(table string, columns, predicates []string) string {
-	clause, _ := predicate(1, " AND ", predicates...)
+// Select generate a select query.
+func Select(table string, columns, predicates []string) string {
+	clauses, _ := predicate(1, predicates...)
 	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(selectByFieldTmpl, columnOrder, table, clause)
+	return fmt.Sprintf(selectByFieldTmpl, columnOrder, table, strings.Join(clauses, " AND "))
 }
 
-func (t CRUD) UpdateQuery(table string, columns, predicates []string) string {
-	offset := 1
-	update, offset := predicate(offset, ", ", columns...)
-	clause, _ := predicate(offset, " AND ", predicates...)
+// Update generate an update query.
+func Update(table string, columns, predicates []string) string {
+	updates, offset := predicate(1, columns...)
+	clauses, _ := predicate(offset, predicates...)
 	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(updateTmpl, table, update, clause, columnOrder)
+	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "), columnOrder)
 }
 
-func (t CRUD) DeleteQuery(table string, columns, predicates []string) string {
-	clause, _ := predicate(1, " AND ", predicates...)
+// Delete generate a delete query.
+func Delete(table string, columns, predicates []string) string {
+	clauses, _ := predicate(1, predicates...)
 	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(deleteTmpl, table, clause, columnOrder)
+	return fmt.Sprintf(deleteTmpl, table, strings.Join(clauses, " AND "), columnOrder)
 }
 
-func predicate(offset int, join string, predicates ...string) (string, int) {
+func predicate(offset int, predicates ...string) ([]string, int) {
 	clauses := make([]string, 0, len(predicates))
 	for idx, predicate := range predicates {
 		clauses = append(clauses, fmt.Sprintf("%s = $%d", predicate, offset+idx))
 	}
 
-	return strings.Join(clauses, join), len(clauses) + 1
+	return clauses, len(clauses) + 1
 }
 
-func placeholders(offset int, join string, columns ...string) (string, int) {
+func placeholders(offset int, columns ...string) ([]string, int) {
 	clauses := make([]string, 0, len(columns))
 	for idx := range columns {
 		clauses = append(clauses, fmt.Sprintf("$%d", offset+idx))
 	}
 
-	return strings.Join(clauses, join), len(clauses)
+	return clauses, len(clauses)
+}
+
+func defaults(offset int, columns ...string) ([]string, int) {
+	clauses := make([]string, 0, len(columns))
+	for range columns {
+		clauses = append(clauses, "DEFAULT")
+	}
+
+	return clauses, len(clauses) + 1
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"

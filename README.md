@@ -6,11 +6,11 @@ as possible. without putting any runtime dependencies into
 your codebase.
 
 # is it production ready?
-its very much in alpha code.
+its very much in alpha code, but it is in use on few production applications already.
 - it only supports postgresql currently.
-  - adding additional support is very straight forward, only 1 small change is required in the core codebase
-  to support it.
-- no test coverage on the code.
+  - adding additional support is very straight forward, just implement the Dialect interface.
+  see the postgresql implementation as the example.
+- currently minimal test coverage.
 
 mainly getting it out early to solicite feedback on the api
 of the code that gets generated and feature requests.

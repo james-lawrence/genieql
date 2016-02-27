@@ -8,6 +8,9 @@ import (
 
 	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	// register the postgresql dialect
+	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 )
 
 func main() {
