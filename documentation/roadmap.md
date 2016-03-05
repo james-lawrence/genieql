@@ -4,7 +4,7 @@
 - use the database schema to determine the primary key columns for a table. (0.0.2)
 
 ## Upcoming
-these are listed in no particular order.
+### these are listed in no particular order.
 - be able to generate insert queries with DEFAULT values.
 - support pointer fields.
 - support writing the generated code into other packages, separate from where the type is located.
