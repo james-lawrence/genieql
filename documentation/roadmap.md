@@ -9,6 +9,7 @@ these are listed in no particular order.
 - support pointer fields.
 - support writing the generated code into other packages, separate from where the type is located.
 - support generating functions that execute particular queries and scan them into a structure.
+
 ```go
 func LookupMyType(db *sql.DB, id int, dst *MyType) error {
     scanner := NewSomeScanner(db.Query(SomeQueryConstant, id))
