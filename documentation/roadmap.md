@@ -2,10 +2,10 @@
 ## Done
 - support postgresql basic crud queries and scanner. (0.0.1)
 - use the database schema to determine the primary key columns for a table. (0.0.2)
+- be able to generate insert queries with DEFAULT values.
 
 ## Upcoming
 ### these are listed in no particular order.
-- be able to generate insert queries with DEFAULT values.
 - support pointer fields.
 - support writing the generated code into other packages, separate from where the type is located.
 - support generating functions that execute particular queries and scan them into a structure.
