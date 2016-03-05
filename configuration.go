@@ -12,6 +12,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ErrRequireHostAndPort currently require both host and port to be specified.
+var ErrRequireHostAndPort = fmt.Errorf("both host and port are required")
+
 type Configuration struct {
 	Dialect       string
 	ConnectionURL string
@@ -56,7 +59,7 @@ func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
 	var password string
 	splits := strings.Split(uri.Host, ":")
 	if len(splits) != 2 {
-		return Configuration{}, fmt.Errorf("invalid host/port combination")
+		return Configuration{}, ErrRequireHostAndPort
 	}
 
 	host, portString := splits[0], splits[1]

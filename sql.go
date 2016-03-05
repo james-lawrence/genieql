@@ -85,3 +85,25 @@ func AmbiguityCheck(columns ...string) error {
 
 	return nil
 }
+
+// LookupTableDetails determines the table details for the given dialect.
+func LookupTableDetails(db *sql.DB, dialect Dialect, table string) (TableDetails, error) {
+	var err error
+	var columns []string
+	var naturalKey []string
+
+	if columns, err = Columns(db, dialect.ColumnQuery(table)); err != nil {
+		return TableDetails{}, err
+	}
+
+	if naturalKey, err = ExtractPrimaryKey(db, dialect.PrimaryKeyQuery(table)); err != nil {
+		return TableDetails{}, err
+	}
+
+	return TableDetails{
+		Dialect:    dialect,
+		Table:      table,
+		Naturalkey: naturalKey,
+		Columns:    columns,
+	}, nil
+}
