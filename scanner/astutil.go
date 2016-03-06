@@ -3,7 +3,6 @@ package scanner
 import (
 	"go/ast"
 	"go/token"
-	// "io"
 )
 
 // utility function for declaring a structure.
