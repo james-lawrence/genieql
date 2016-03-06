@@ -155,6 +155,91 @@ var _ = Describe("Astutil", func() {
 			Expect(w.String()).To(Equal(fmt.Sprintf("package example\n%s", fmt.Sprintf(Preface, ""))))
 		})
 	})
+
+	Describe("ASTPrinter", func() {
+		Describe("FprintAST", func() {
+			It("should print the ast node into the buffer", func() {
+				pkg := &ast.File{
+					Name: &ast.Ident{
+						Name: "example",
+					},
+				}
+				p := ASTPrinter{}
+				fset := token.NewFileSet()
+				dst := bytes.NewBuffer([]byte{})
+				p.FprintAST(dst, fset, pkg)
+				Expect(p.Err()).ToNot(HaveOccurred())
+				Expect(dst.String()).To(Equal("package example\n"))
+			})
+		})
+
+		Describe("Fprintln", func() {
+			It("should print the provided elements into the buffer", func() {
+				p := ASTPrinter{}
+				dst := bytes.NewBuffer([]byte{})
+				p.Fprintln(dst, "Hello", "World")
+				Expect(p.Err()).ToNot(HaveOccurred())
+				Expect(dst.String()).To(Equal("Hello World\n"))
+			})
+		})
+
+		Describe("Fprintf", func() {
+			It("should print the formatted string into the buffer", func() {
+				p := ASTPrinter{}
+				dst := bytes.NewBuffer([]byte{})
+				p.Fprintf(dst, "Hello %s\n", "World")
+				Expect(p.Err()).ToNot(HaveOccurred())
+				Expect(dst.String()).To(Equal("Hello World\n"))
+			})
+		})
+
+		Describe("Err", func() {
+			It("should return the first error that occurred", func() {
+				p := ASTPrinter{}
+				w1 := errWriter{err: fmt.Errorf("boom1")}
+				w2 := errWriter{err: fmt.Errorf("boom2")}
+				p.Fprintln(w1, "Hello World 1")
+				p.Fprintln(w2, "Hello World 2")
+				Expect(p.Err()).To(MatchError("boom1"))
+			})
+		})
+	})
+
+	Describe("RetrieveBasicLiteralString", func() {
+		It("should locate the value of the basic literal", func() {
+			fset := token.NewFileSet()
+			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+			Expect(err).ToNot(HaveOccurred())
+			p := ast.Package{
+				Files: map[string]*ast.File{
+					"examples1.go": examples,
+				},
+			}
+
+			decl, err := FindUniqueDeclaration(FilterName("aConstant"), &p)
+			Expect(err).ToNot(HaveOccurred())
+			value, err := RetrieveBasicLiteralString(FilterName("aConstant"), decl)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(Equal("\"constant string\""))
+		})
+
+		It("should return an error when the literal cannot be found", func() {
+			fset := token.NewFileSet()
+			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+			Expect(err).ToNot(HaveOccurred())
+			p := ast.Package{
+				Files: map[string]*ast.File{
+					"examples1.go": examples,
+				},
+			}
+
+			decl, err := FindUniqueDeclaration(FilterName("aStruct"), &p)
+			Expect(err).ToNot(HaveOccurred())
+			value, err := RetrieveBasicLiteralString(FilterName("aStruct"), decl)
+			Expect(err).To(MatchError(ErrBasicLiteralNotFound))
+			Expect(value).To(Equal(""))
+		})
+	})
 })
 
 type errWriter struct {

@@ -28,6 +28,9 @@ var ErrDeclarationNotFound = fmt.Errorf("declaration not found")
 // locations.
 var ErrAmbiguousDeclaration = fmt.Errorf("ambiguous declaration, found multiple matches")
 
+// ErrBasicLiteralNotFound returned when the requested literal could not be located.
+var ErrBasicLiteralNotFound = fmt.Errorf("basic literal value not found")
+
 // LocatePackage finds a package by its name.
 func LocatePackage(pkgName string, context build.Context) (*ast.Package, error) {
 	packages, err := locatePackages(pkgName, context)
@@ -92,6 +95,8 @@ func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl
 	return results
 }
 
+// RetrieveBasicLiteralString searches the declarations for a literal string
+// that matches the provided filter.
 func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error) {
 	var valueSpec *ast.ValueSpec
 
@@ -101,18 +106,14 @@ func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error)
 			valueSpec = x
 			return false
 		case *ast.GenDecl:
-			if ast.FilterDecl(x, f) {
-				return true
-			}
+			return ast.FilterDecl(x, f)
 		default:
 			return false
 		}
-
-		return false
 	})
 
 	if valueSpec == nil {
-		return "", fmt.Errorf("basic literal value not found")
+		return "", ErrBasicLiteralNotFound
 	}
 
 	for idx, v := range valueSpec.Values {
@@ -122,9 +123,10 @@ func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error)
 		}
 	}
 
-	return "", fmt.Errorf("basic literal value not found")
+	return "", ErrBasicLiteralNotFound
 }
 
+// FilterName filter that matches the provided name by the name on a given node.
 func FilterName(name string) ast.Filter {
 	return func(in string) bool {
 		return name == in
@@ -182,7 +184,7 @@ func locatePackages(pkgName string, context build.Context) ([]*ast.Package, erro
 
 	for _, srcDir := range context.SrcDirs() {
 		directory := filepath.Join(srcDir, pkgName)
-		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
+		pkg, err := context.ImportDir(directory, build.FindOnly)
 		if err != nil {
 			return packages, err
 		}
