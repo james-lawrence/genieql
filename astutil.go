@@ -8,58 +8,46 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func LocatePackage(pkgName string) ([]*ast.Package, error) {
-	fset := token.NewFileSet()
-	packages := []*ast.Package{}
+// ErrPackageNotFound returned when the requested package cannot be located
+// within the given context.
+var ErrPackageNotFound = fmt.Errorf("package not found")
 
-	for _, srcDir := range build.Default.SrcDirs() {
-		directory := filepath.Join(srcDir, pkgName)
-		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
-		if err != nil {
-			return packages, err
-		}
+// ErrAmbiguousPackage returned when the requested package is located multiple
+// times within the given context.
+var ErrAmbiguousPackage = fmt.Errorf("ambiguous package, found multiple matches within the provided context")
 
-		pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
-		if os.IsNotExist(err) {
-			continue
-		}
+// ErrDeclarationNotFound returned when the requested declaration could not be located.
+var ErrDeclarationNotFound = fmt.Errorf("declaration not found")
 
-		if err != nil {
-			return packages, err
-		}
+// ErrAmbiguousDeclaration returned when the requested declaration was located in multiple
+// locations.
+var ErrAmbiguousDeclaration = fmt.Errorf("ambiguous declaration, found multiple matches")
 
-		log.Println("Importing", directory)
-		for _, astPkg := range pkgs {
-			packages = append(packages, astPkg)
-		}
-	}
-
-	return packages, nil
-}
-
-func LocatePackage2(pkgName string) (*ast.Package, error) {
-	packages, err := LocatePackage(pkgName)
+// LocatePackage finds a package by its name.
+func LocatePackage(pkgName string, context build.Context) (*ast.Package, error) {
+	packages, err := locatePackages(pkgName, context)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(packages) == 0 {
-		return nil, fmt.Errorf("package %s: not found", pkgName)
+		return nil, ErrPackageNotFound
 	}
 
 	if len(packages) > 1 {
-		return nil, fmt.Errorf("package %s: ambiguous package, found %d packages", pkgName, len(packages))
+		return nil, ErrAmbiguousPackage
 	}
 
 	return packages[0], nil
 }
 
+// ExtractFields walks the AST until it finds the first FieldList node.
+// returns that node, If no node is found returns an empty FieldList.
 func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
 	list = &ast.FieldList{}
 	ast.Inspect(decl, func(n ast.Node) bool {
@@ -72,19 +60,23 @@ func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
 	return
 }
 
+// FindUniqueDeclaration searches the provided packages for the unique declaration
+// that matches the ast.Filter.
 func FindUniqueDeclaration(f ast.Filter, packageSet ...*ast.Package) (*ast.GenDecl, error) {
 	found := FilterDeclarations(f, packageSet...)
 	x := len(found)
 	switch {
 	case x == 0:
-		return &ast.GenDecl{}, fmt.Errorf("no matching declarations found")
+		return &ast.GenDecl{}, ErrDeclarationNotFound
 	case x == 1:
 		return found[0], nil
 	default:
-		return &ast.GenDecl{}, fmt.Errorf("ambiguous declaration, expected a single match %#v", found)
+		return &ast.GenDecl{}, ErrAmbiguousDeclaration
 	}
 }
 
+// FilterDeclarations searches the provided packages for declarations that match
+// the provided ast.Filter.
 func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl {
 	results := []*ast.GenDecl{}
 	for _, pkg := range packageSet {
@@ -100,23 +92,9 @@ func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl
 	return results
 }
 
-func FilterPackages(f ast.Filter, packageSet ...*ast.Package) []*ast.Package {
-	results := []*ast.Package{}
-	for _, pkg := range packageSet {
-		ast.Inspect(pkg, func(n ast.Node) bool {
-			decl, ok := n.(*ast.GenDecl)
-			if ok && ast.FilterDecl(decl, f) {
-				results = append(results, pkg)
-			}
-
-			return true
-		})
-	}
-	return results
-}
-
 func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error) {
 	var valueSpec *ast.ValueSpec
+
 	ast.Inspect(decl, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.ValueSpec:
@@ -153,33 +131,40 @@ func FilterName(name string) ast.Filter {
 	}
 }
 
+// ASTPrinter convience printer that records the error that occurred.
+// for later inspection.
 type ASTPrinter struct {
 	err error
 }
 
-func (t ASTPrinter) FprintAST(dst io.Writer, fset *token.FileSet, ast interface{}) {
+// FprintAST prints the ast to the destination io.Writer.
+func (t *ASTPrinter) FprintAST(dst io.Writer, fset *token.FileSet, ast interface{}) {
 	if t.err == nil {
 		t.err = printer.Fprint(dst, fset, ast)
 	}
 }
 
-func (t ASTPrinter) Fprintln(dst io.Writer, a ...interface{}) {
+// Fprintln delegates to fmt.Fprintln, allowing for arbritrary text to be inlined.
+func (t *ASTPrinter) Fprintln(dst io.Writer, a ...interface{}) {
 	if t.err == nil {
 		_, t.err = fmt.Fprintln(dst, a...)
 	}
 }
 
-func (t ASTPrinter) Fprintf(dst io.Writer, format string, a ...interface{}) {
+// Fprintf delegates to fmt.Fprintf, allowing for arbritrary text to be inlined.
+func (t *ASTPrinter) Fprintf(dst io.Writer, format string, a ...interface{}) {
 	if t.err == nil {
 		_, t.err = fmt.Fprintf(dst, format, a...)
 	}
 }
 
-func (t ASTPrinter) Err() error {
+// Err returns the recorded error, if any.
+func (t *ASTPrinter) Err() error {
 	return t.err
 }
 
-func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *ast.Package) error {
+// PrintPackage inserts the package and a preface at into the ast.
+func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *ast.Package, args []string) error {
 	file := &ast.File{
 		Name: &ast.Ident{
 			Name: pkg.Name,
@@ -187,6 +172,34 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *a
 	}
 
 	printer.FprintAST(dst, fset, file)
-	printer.Fprintf(dst, Preface, strings.Join(os.Args[1:], " "))
+	printer.Fprintf(dst, Preface, strings.Join(args, " "))
 	return printer.Err()
+}
+
+func locatePackages(pkgName string, context build.Context) ([]*ast.Package, error) {
+	fset := token.NewFileSet()
+	packages := []*ast.Package{}
+
+	for _, srcDir := range context.SrcDirs() {
+		directory := filepath.Join(srcDir, pkgName)
+		pkg, err := build.Default.ImportDir(directory, build.FindOnly)
+		if err != nil {
+			return packages, err
+		}
+
+		pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		if err != nil {
+			return packages, err
+		}
+
+		for _, astPkg := range pkgs {
+			packages = append(packages, astPkg)
+		}
+	}
+
+	return packages, nil
 }

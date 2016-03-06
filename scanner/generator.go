@@ -3,6 +3,7 @@ package scanner
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/token"
 	"io"
 	"log"
@@ -23,7 +24,7 @@ type Generator struct {
 func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	var err error
 
-	pkg, err := genieql.LocatePackage2(t.MappingConfig.Package)
+	pkg, err := genieql.LocatePackage(t.MappingConfig.Package, build.Default)
 	if err != nil {
 		return err
 	}

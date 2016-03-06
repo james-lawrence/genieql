@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"go/build"
 	"go/token"
 	"log"
 	"os"
@@ -41,7 +42,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	pkg, err := genieql.LocatePackage2(pkgName)
+	pkg, err := genieql.LocatePackage(pkgName, build.Default)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -63,7 +64,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	formatted := bytes.NewBuffer([]byte{})
 	fset := token.NewFileSet()
 
-	if err := genieql.PrintPackage(printer, buffer, fset, pkg); err != nil {
+	if err := genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
 		log.Fatalln("PrintPackage failed:", err)
 	}
 
