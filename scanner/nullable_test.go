@@ -35,4 +35,25 @@ var _ = Describe("Nullable", func() {
 			}
 		})
 	})
+
+	Describe("LookupNullableType", func() {
+		typeTable := []struct {
+			input, expected string
+		}{
+			{"int", "sql.NullInt64"},
+			{"int32", "sql.NullInt64"},
+			{"int64", "sql.NullInt64"},
+			{"float", "sql.NullFloat64"},
+			{"float32", "sql.NullFloat64"},
+			{"float64", "sql.NullFloat64"},
+			{"bool", "sql.NullBool"},
+			{"string", "sql.NullString"},
+		}
+		It("should properly convert types to their Null Equivalents", func() {
+			for _, test := range typeTable {
+				result := LookupNullableType(mustParseExpr(test.input))
+				Expect(types.ExprString(result)).To(Equal(test.expected), test.input)
+			}
+		})
+	})
 })
