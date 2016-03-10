@@ -100,7 +100,8 @@ func (t rowScannerImplementation) scanArgs() []ast.Expr {
 func (t rowScannerImplementation) assignmentStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		results = append(results, assignmentStatement(m.Assignment, m.Column))
+		// results = append(results, assignmentStatement(m.Assignment, m.Column))
+		results = append(results, assignmentStatement(m.Assignment, m.Column, m.Type, DefaultNullableTypes))
 	}
 
 	return results

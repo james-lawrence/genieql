@@ -1,9 +1,21 @@
 package scanner
 
 import (
+	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/token"
+	"go/types"
 )
+
+func mustParseExpr(in string) ast.Expr {
+	expr, err := parser.ParseExpr(in)
+	if err != nil {
+		panic(err)
+	}
+
+	return expr
+}
 
 // utility function for declaring a structure.
 func structDeclaration(name *ast.Ident, fields ...*ast.Field) ast.Decl {
@@ -133,11 +145,35 @@ func localVariableStatement(name *ast.Ident, typ ast.Expr) ast.Stmt {
 	}
 }
 
-func assignmentStatement(lhs ast.Expr, rhs ast.Expr) *ast.AssignStmt {
+func nullableAssignmentStatement(valid, lhs, rhs ast.Expr) ast.Stmt {
+	return &ast.IfStmt{
+		Cond: valid,
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{
+						lhs,
+					},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{
+						rhs,
+					},
+				},
+			},
+		},
+	}
+}
+
+func assignmentStatement(to, from, typ ast.Expr, nullableTypes NullableType) ast.Stmt {
+	if ok, expr := nullableTypes(from, typ); ok {
+		valid := mustParseExpr(fmt.Sprintf("%s.Valid", types.ExprString(from)))
+		return nullableAssignmentStatement(valid, to, expr)
+	}
+
 	return &ast.AssignStmt{
-		Lhs: []ast.Expr{lhs},
+		Lhs: []ast.Expr{to},
 		Tok: token.ASSIGN,
-		Rhs: []ast.Expr{rhs},
+		Rhs: []ast.Expr{from},
 	}
 }
 
