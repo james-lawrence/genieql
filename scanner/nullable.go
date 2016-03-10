@@ -9,6 +9,9 @@ import (
 // NullableType interface for functions that resolve nullable types to their expression.
 type NullableType func(typ, from ast.Expr) (bool, ast.Expr)
 
+// LookupNullableType interface for functions that map type's to their nullable counter parts.
+type LookupNullableType func(typ ast.Expr) ast.Expr
+
 // DefaultNullableTypes returns true, if the provided type maps to one
 // of the database/sql builtin NullableTypes. It also returns the RHS of the assignment
 // expression. i.e.) if given an int32 field it'll return int32(c0.Int64) as the expression.
@@ -44,9 +47,9 @@ func DefaultNullableTypes(from, typ ast.Expr) (bool, ast.Expr) {
 	return expr != nil, expr
 }
 
-// LookupNullableType determine the nullable type if one is known.
+// DefaultLookupNullableType determine the nullable type if one is known.
 // if no nullable type is found it returns the expression.
-func LookupNullableType(typ ast.Expr) ast.Expr {
+func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
 	switch types.ExprString(typ) {
 	case "string":
 		return mustParseExpr("sql.NullString").(*ast.SelectorExpr)
