@@ -129,7 +129,7 @@ func callExpression(selector ast.Expr, name string, args ...ast.Expr) *ast.CallE
 	}
 }
 
-func localVariableStatement(name *ast.Ident, typ ast.Expr) ast.Stmt {
+func localVariableStatement(name *ast.Ident, typ ast.Expr, lookup LookupNullableType) ast.Stmt {
 	return &ast.DeclStmt{
 		Decl: &ast.GenDecl{
 			Tok: token.VAR,
@@ -138,7 +138,7 @@ func localVariableStatement(name *ast.Ident, typ ast.Expr) ast.Stmt {
 					Names: []*ast.Ident{
 						name,
 					},
-					Type: typ,
+					Type: lookup(typ),
 				},
 			},
 		},
@@ -165,6 +165,11 @@ func nullableAssignmentStatement(valid, lhs, rhs ast.Expr) ast.Stmt {
 }
 
 func assignmentStatement(to, from, typ ast.Expr, nullableTypes NullableType) ast.Stmt {
+	// if the type is a point make sure we deference the assignment.
+	if _, ok := typ.(*ast.StarExpr); ok {
+		to = &ast.StarExpr{X: to}
+	}
+
 	if ok, expr := nullableTypes(from, typ); ok {
 		valid := mustParseExpr(fmt.Sprintf("%s.Valid", types.ExprString(from)))
 		return nullableAssignmentStatement(valid, to, expr)

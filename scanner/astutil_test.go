@@ -21,8 +21,11 @@ var _ = Describe("Astutil", func() {
 			{"float", "if c0.Valid {\n\tmyVar = float(c0.Float64)\n}"},
 			{"float32", "if c0.Valid {\n\tmyVar = float32(c0.Float64)\n}"},
 			{"float64", "if c0.Valid {\n\tmyVar = c0.Float64\n}"},
+			{"*float64", "if c0.Valid {\n\t*myVar = c0.Float64\n}"},
 			{"bool", "if c0.Valid {\n\tmyVar = c0.Bool\n}"},
+			{"*bool", "if c0.Valid {\n\t*myVar = c0.Bool\n}"},
 			{"string", "if c0.Valid {\n\tmyVar = c0.String\n}"},
+			{"*string", "if c0.Valid {\n\t*myVar = c0.String\n}"},
 			{"time.Time", "myVar = c0"},
 		}
 

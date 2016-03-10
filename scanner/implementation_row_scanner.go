@@ -79,7 +79,7 @@ func (t rowScannerImplementation) Generate(name string, parameters ...*ast.Field
 func (t rowScannerImplementation) declarationStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		results = append(results, localVariableStatement(m.Column, m.Type))
+		results = append(results, localVariableStatement(m.Column, m.Type, DefaultLookupNullableType))
 	}
 
 	return results
@@ -100,7 +100,6 @@ func (t rowScannerImplementation) scanArgs() []ast.Expr {
 func (t rowScannerImplementation) assignmentStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		// results = append(results, assignmentStatement(m.Assignment, m.Column))
 		results = append(results, assignmentStatement(m.Assignment, m.Column, m.Type, DefaultNullableTypes))
 	}
 

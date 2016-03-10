@@ -23,6 +23,15 @@ var _ = Describe("Nullable", func() {
 			{"bool", true, "myVar.Bool"},
 			{"string", true, "myVar.String"},
 			{"time.Time", false, "(bad expr)"},
+			{"*int", true, "int(myVar.Int64)"},
+			{"*int32", true, "int32(myVar.Int64)"},
+			{"*int64", true, "myVar.Int64"},
+			{"*float", true, "float(myVar.Float64)"},
+			{"*float32", true, "float32(myVar.Float64)"},
+			{"*float64", true, "myVar.Float64"},
+			{"*bool", true, "myVar.Bool"},
+			{"*string", true, "myVar.String"},
+			{"*time.Time", false, "(bad expr)"},
 		}
 
 		It("should properly determine if the type is nullable and return the proper expression", func() {
@@ -49,6 +58,15 @@ var _ = Describe("Nullable", func() {
 			{"bool", "sql.NullBool"},
 			{"string", "sql.NullString"},
 			{"time.Time", "time.Time"},
+			{"*int", "sql.NullInt64"},
+			{"*int32", "sql.NullInt64"},
+			{"*int64", "sql.NullInt64"},
+			{"*float", "sql.NullFloat64"},
+			{"*float32", "sql.NullFloat64"},
+			{"*float64", "sql.NullFloat64"},
+			{"*bool", "sql.NullBool"},
+			{"*string", "sql.NullString"},
+			{"*time.Time", "time.Time"},
 		}
 		It("should properly convert types to their Null Equivalents", func() {
 			for _, test := range typeTable {

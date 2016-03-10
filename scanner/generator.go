@@ -36,7 +36,6 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 
 	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
 	fields := genieql.ExtractFields(decl.Specs[0]).List
-
 	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, t.Columns...)
 
 	if err != nil {

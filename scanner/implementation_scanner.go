@@ -112,7 +112,7 @@ func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) [
 func (t scannerImplementation) declarationStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		results = append(results, localVariableStatement(m.Column, m.Type))
+		results = append(results, localVariableStatement(m.Column, m.Type, DefaultLookupNullableType))
 	}
 
 	return results
