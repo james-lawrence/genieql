@@ -53,7 +53,6 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	}
 
 	generator := scanner.Generator{
-		Configuration: configuration,
 		MappingConfig: mappingConfig,
 		Columns:       details.Columns,
 		Name:          strings.Title(t.scannerName),

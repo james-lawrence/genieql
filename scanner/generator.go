@@ -14,7 +14,6 @@ import (
 
 // Generator builds a scanner.
 type Generator struct {
-	genieql.Configuration
 	genieql.MappingConfig
 	Columns []string
 	Name    string
@@ -56,6 +55,7 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	scannerName := strings.ToLower(interfaceName)
 	rowScannerName := fmt.Sprintf("row%s", interfaceName)
 	errScannerName := fmt.Sprintf("err%s", interfaceName)
+
 	scannerFunct := NewScannerFunc{
 		InterfaceName:  interfaceName,
 		ScannerName:    scannerName,
@@ -66,8 +66,8 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 		ScannerName:    rowScannerName,
 		ErrScannerName: errScannerName,
 	}
-	p := genieql.ASTPrinter{}
 
+	p := genieql.ASTPrinter{}
 	params := []*ast.Field{typeDeclarationField("arg0", &ast.StarExpr{X: &ast.Ident{Name: t.MappingConfig.Type}})}
 
 	p.FprintAST(dst, fset, scannerFunct.Build())

@@ -65,7 +65,6 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	}
 
 	generator := scanner.Generator{
-		Configuration: configuration,
 		MappingConfig: mappingConfig,
 		Columns:       columns,
 		Name:          strings.Title(t.scannerName),
