@@ -17,13 +17,12 @@ import (
 )
 
 type defaultScanner struct {
-	configName     string
-	packageType    string
-	mapName        string
-	table          string
-	scannerName    string
-	output         string
-	useTestPackage bool
+	configName  string
+	packageType string
+	mapName     string
+	table       string
+	scannerName string
+	output      string
 }
 
 func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
@@ -96,7 +95,6 @@ func (t *defaultScanner) configure(parent *kingpin.CmdClause) *kingpin.CmdClause
 	scanner.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
 	scanner.Flag("output", "path of output file").Default("").StringVar(&t.output)
 	scanner.Flag("scanner-name", "name of the scanner, defaults to type name").Default("").StringVar(&t.scannerName)
-	scanner.Flag("use-test-package", "").Default("false").BoolVar(&t.useTestPackage)
 	scanner.Arg(
 		"package.Type",
 		"package prefixed structure we want a scanner for",

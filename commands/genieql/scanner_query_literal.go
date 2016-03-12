@@ -17,13 +17,12 @@ import (
 )
 
 type queryLiteral struct {
-	configName     string
-	packageType    string
-	mapName        string
-	queryLiteral   string
-	scannerName    string
-	output         string
-	useTestPackage bool
+	configName   string
+	packageType  string
+	mapName      string
+	queryLiteral string
+	scannerName  string
+	output       string
 }
 
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
