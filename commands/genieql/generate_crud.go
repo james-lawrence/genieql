@@ -41,7 +41,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	formatted := bytes.NewBuffer([]byte{})
 	printer := genieql.ASTPrinter{}
 
-	pkg, err := genieql.LocatePackage(pkgName, build.Default)
+	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		return err
 	}

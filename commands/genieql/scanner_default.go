@@ -17,12 +17,13 @@ import (
 )
 
 type defaultScanner struct {
-	configName  string
-	packageType string
-	mapName     string
-	table       string
-	scannerName string
-	output      string
+	configName     string
+	packageType    string
+	mapName        string
+	table          string
+	scannerName    string
+	output         string
+	useTestPackage bool
 }
 
 func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
@@ -42,7 +43,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	pkg, err := genieql.LocatePackage(pkgName, build.Default)
+	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -52,8 +53,14 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
+	fields, err := mappingConfig.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	generator := scanner.Generator{
 		MappingConfig: mappingConfig,
+		Fields:        fields,
 		Columns:       details.Columns,
 		Name:          strings.Title(t.scannerName),
 	}
@@ -89,6 +96,7 @@ func (t *defaultScanner) configure(parent *kingpin.CmdClause) *kingpin.CmdClause
 	scanner.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
 	scanner.Flag("output", "path of output file").Default("").StringVar(&t.output)
 	scanner.Flag("scanner-name", "name of the scanner, defaults to type name").Default("").StringVar(&t.scannerName)
+	scanner.Flag("use-test-package", "").Default("false").BoolVar(&t.useTestPackage)
 	scanner.Arg(
 		"package.Type",
 		"package prefixed structure we want a scanner for",

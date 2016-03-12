@@ -31,11 +31,30 @@ var ErrAmbiguousDeclaration = fmt.Errorf("ambiguous declaration, found multiple 
 // ErrBasicLiteralNotFound returned when the requested literal could not be located.
 var ErrBasicLiteralNotFound = fmt.Errorf("basic literal value not found")
 
+// StrictPackageName only accepts packages that are an exact match.
+func StrictPackageName(name string) func(*ast.Package) bool {
+	return func(pkg *ast.Package) bool {
+		return pkg.Name == name
+	}
+}
+
 // LocatePackage finds a package by its name.
-func LocatePackage(pkgName string, context build.Context) (*ast.Package, error) {
+func LocatePackage(pkgName string, context build.Context, filter func(*ast.Package) bool) (*ast.Package, error) {
 	packages, err := locatePackages(pkgName, context)
 	if err != nil {
 		return nil, err
+	}
+
+	if filter != nil {
+		actual := make([]*ast.Package, 0, len(packages))
+
+		for _, pkg := range packages {
+			if filter(pkg) {
+				actual = append(actual, pkg)
+			}
+		}
+
+		packages = actual
 	}
 
 	if len(packages) == 0 {

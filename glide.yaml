@@ -7,3 +7,4 @@ import:
   - imports
 - package: gopkg.in/alecthomas/kingpin.v2
 - package: gopkg.in/yaml.v2
+- package: github.com/satori/go.uuid

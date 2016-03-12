@@ -3,6 +3,7 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,6 +16,24 @@ type MappingConfig struct {
 	Type                 string
 	IncludeTablePrefixes bool
 	Transformations      []string
+}
+
+func (t MappingConfig) Mapper() Mapper {
+	return Mapper{Aliasers: []Aliaser{AliaserBuilder(t.Transformations...)}}
+}
+
+func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Package) bool) ([]*ast.Field, error) {
+	pkg, err := LocatePackage(t.Package, context, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	decl, err := FindUniqueDeclaration(FilterName(t.Type), pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	return ExtractFields(decl.Specs[0]).List, nil
 }
 
 func WriteMapper(root string, configuration Configuration, name string, m MappingConfig) error {

@@ -17,10 +17,13 @@ type LookupNullableType func(typ ast.Expr) ast.Expr
 // expression. i.e.) if given an int32 field it'll return int32(c0.Int64) as the expression.
 func DefaultNullableTypes(from, typ ast.Expr) (bool, ast.Expr) {
 	var expr ast.Expr
-	// deference the base expression.
-	if x, ok := typ.(*ast.StarExpr); ok {
-		typ = x.X
+	// if its not a starexpr its not nullable
+	x, ok := typ.(*ast.StarExpr)
+	if !ok {
+		return false, typ
 	}
+
+	typ = x.X
 
 	typExprStr := types.ExprString(typ)
 	fromExprStr := types.ExprString(from)
@@ -54,13 +57,14 @@ func DefaultNullableTypes(from, typ ast.Expr) (bool, ast.Expr) {
 // DefaultLookupNullableType determine the nullable type if one is known.
 // if no nullable type is found it returns the expression.
 func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
-	// deference the base expression.
-	if x, ok := typ.(*ast.StarExpr); ok {
-		typ = x.X
+	// if its not a starexpr its not nullable
+	x, ok := typ.(*ast.StarExpr)
+	if !ok {
+		return typ
 	}
 
-	switch types.ExprString(typ) {
-	case "string", "*string":
+	switch types.ExprString(x.X) {
+	case "string":
 		return mustParseExpr("sql.NullString").(*ast.SelectorExpr)
 	case "int", "int32", "int64":
 		return mustParseExpr("sql.NullInt64").(*ast.SelectorExpr)

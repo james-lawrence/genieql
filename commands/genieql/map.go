@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -32,6 +33,7 @@ func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
 }
 
 func (t mapper) toMapper() genieql.MappingConfig {
+	log.Println("Package Type", t.packageType)
 	pkg, typ := extractPackageType(t.packageType)
 	return genieql.MappingConfig{
 		Package:              pkg,

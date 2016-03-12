@@ -7,7 +7,6 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	// "log"
 
 	. "bitbucket.org/jatone/genieql"
 
@@ -21,11 +20,11 @@ var _ = Describe("Astutil", func() {
 			var err error
 			var p *ast.Package
 
-			p, err = LocatePackage("go/build", build.Default)
+			p, err = LocatePackage("go/build", build.Default, StrictPackageName("build"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(p.Name).To(Equal("build"))
 
-			p, err = LocatePackage("does/not/exist", build.Default)
+			p, err = LocatePackage("does/not/exist", build.Default, StrictPackageName("exist"))
 			Expect(err).To(MatchError(ErrPackageNotFound))
 			Expect(p).To(BeNil())
 		})

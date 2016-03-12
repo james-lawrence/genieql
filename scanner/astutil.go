@@ -146,17 +146,27 @@ func localVariableStatement(name *ast.Ident, typ ast.Expr, lookup LookupNullable
 }
 
 func nullableAssignmentStatement(valid, lhs, rhs ast.Expr) ast.Stmt {
+	tmpVariable := &ast.Ident{Name: "tmp"}
 	return &ast.IfStmt{
 		Cond: valid,
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{
 				&ast.AssignStmt{
 					Lhs: []ast.Expr{
+						tmpVariable,
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						rhs,
+					},
+				},
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{
 						lhs,
 					},
 					Tok: token.ASSIGN,
 					Rhs: []ast.Expr{
-						rhs,
+						&ast.UnaryExpr{Op: token.AND, X: tmpVariable},
 					},
 				},
 			},
@@ -166,9 +176,9 @@ func nullableAssignmentStatement(valid, lhs, rhs ast.Expr) ast.Stmt {
 
 func assignmentStatement(to, from, typ ast.Expr, nullableTypes NullableType) ast.Stmt {
 	// if the type is a point make sure we deference the assignment.
-	if _, ok := typ.(*ast.StarExpr); ok {
-		to = &ast.StarExpr{X: to}
-	}
+	// if _, ok := typ.(*ast.StarExpr); ok {
+	// 	to = &ast.StarExpr{X: to}
+	// }
 
 	if ok, expr := nullableTypes(from, typ); ok {
 		valid := mustParseExpr(fmt.Sprintf("%s.Valid", types.ExprString(from)))

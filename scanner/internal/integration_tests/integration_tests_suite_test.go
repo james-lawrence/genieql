@@ -1,4 +1,4 @@
-package scanner_test
+package integration_tests_test
 
 import (
 	. "bitbucket.org/jatone/genieql/internal/sqlxtest"
@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-func TestScanner(t *testing.T) {
+func TestIntegrationTests(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Scanner Suite")
+	RunSpecs(t, "IntegrationTests Suite")
 }
 
 var TX *sql.Tx

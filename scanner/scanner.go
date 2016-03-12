@@ -29,6 +29,11 @@ func BuildRowsScannerInterface(name string, scannerParams ...*ast.Field) ast.Dec
 			&ast.FieldList{List: scannerParams},          // parameters
 			&ast.FieldList{List: unnamedFields("error")}, // returns
 		),
+		// funcDeclarationField(
+		// 	&ast.Ident{Name: "Next"},
+		// 	nil,
+		// 	&ast.FieldList{List: unnamedFields("bool")},
+		// ),
 		funcDeclarationField(
 			&ast.Ident{Name: "Close"},
 			nil, // no parameters
@@ -121,12 +126,15 @@ func (t NewScannerFunc) Build() *ast.FuncDecl {
 	return funcDecl(nil, name, []*ast.Field{rowsParam, errParam}, result, body)
 }
 
+// NewRowScannerFunc structure that builds the function to get a scanner after
+// executing a query row.
 type NewRowScannerFunc struct {
 	InterfaceName  string
 	ScannerName    string
 	ErrScannerName string
 }
 
+// Build - generates a function declaration for building the scanner.
 func (t NewRowScannerFunc) Build() *ast.FuncDecl {
 	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
 	rowsParam := typeDeclarationField("row", &ast.StarExpr{

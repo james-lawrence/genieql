@@ -1,0 +1,29 @@
+type Scanner struct {
+	rows *sql.Rows
+}
+
+func (t Scanner) Scan(arg0 *CustomType) error {
+	if !t.rows.Next() {
+		return io.EOF
+	}
+	var c1 bool
+	var c2 sql.NullBool
+	if err := t.rows.Scan(&c1, &c2); err != nil {
+		return err
+	}
+	arg0.Field1 = c1
+	if c2.Valid {
+		tmp := c2.Bool
+		arg0.Field1 = &tmp
+	}
+	return t.rows.Err()
+}
+func (t Scanner) Err() error {
+	return t.rows.Err()
+}
+func (t Scanner) Close() error {
+	if t.rows == nil {
+		return nil
+	}
+	return t.rows.Close()
+}

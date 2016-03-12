@@ -1,0 +1,5 @@
+type AScanner interface {
+	Scan(arg0 *AType) error
+	Close() error
+	Err() error
+}

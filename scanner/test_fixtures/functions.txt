@@ -1,0 +1,6 @@
+func (t Hello) Scan(arg0 *AType) error {
+}
+func (t Hello) Err() error {
+}
+func (t Hello) Close() error {
+}

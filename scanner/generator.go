@@ -3,7 +3,6 @@ package scanner
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
 	"go/token"
 	"io"
 	"log"
@@ -17,25 +16,16 @@ type Generator struct {
 	genieql.MappingConfig
 	Columns []string
 	Name    string
+	Fields  []*ast.Field
 }
 
 // Scanner - implementation of the genieql.ScannerGenerator interface.
 func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	var err error
 
-	pkg, err := genieql.LocatePackage(t.MappingConfig.Package, build.Default)
-	if err != nil {
-		return err
-	}
+	mapper := t.MappingConfig.Mapper()
 
-	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(t.MappingConfig.Type), pkg)
-	if err != nil {
-		return err
-	}
-
-	mer := genieql.Mapper{Aliasers: []genieql.Aliaser{genieql.AliaserBuilder(t.MappingConfig.Transformations...)}}
-	fields := genieql.ExtractFields(decl.Specs[0]).List
-	columnMap, err := mer.MapColumns(&ast.Ident{Name: "arg0"}, fields, t.Columns...)
+	columnMap, err := mapper.MapColumns(&ast.Ident{Name: "arg0"}, t.Fields, t.Columns...)
 
 	if err != nil {
 		log.Println("failed to map columns", err)

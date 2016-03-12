@@ -12,7 +12,7 @@ its very much in alpha code, but it is in use on few production applications alr
 
 -adding additional support is very straight forward, just implement the Dialect interface. see the postgresql implementation as the example.
 
--currently minimal test coverage.
+-test coverage is getting added.
 
 mainly getting it out early to solicite feedback on the api
 of the code that gets generated and feature requests.
@@ -30,9 +30,8 @@ everything else will be found in godoc.
 ## genieql commands
 - bootstrap - saves database information to a file for other commands.
 - map - writes a configuration file describing how to map a structure to a database column.
-- generate - used to generate scanners and queries.
-  - scanner part will go away in future release and moved entirely to the scanner cli
-- scanner - used to create scanners
+- generate - used to generate queries. main use case is to bootstrap a project quickly.
+- scanner - used to create scanners.
 ## example usage
 ```go
 package mypackage

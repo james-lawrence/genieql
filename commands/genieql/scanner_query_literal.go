@@ -17,12 +17,13 @@ import (
 )
 
 type queryLiteral struct {
-	configName   string
-	packageType  string
-	mapName      string
-	queryLiteral string
-	scannerName  string
-	output       string
+	configName     string
+	packageType    string
+	mapName        string
+	queryLiteral   string
+	scannerName    string
+	output         string
+	useTestPackage bool
 }
 
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
@@ -39,7 +40,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	pkg, err := genieql.LocatePackage(queryPkgName, build.Default)
+	pkg, err := genieql.LocatePackage(queryPkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}
