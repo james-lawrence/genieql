@@ -29,11 +29,11 @@ func BuildRowsScannerInterface(name string, scannerParams ...*ast.Field) ast.Dec
 			&ast.FieldList{List: scannerParams},          // parameters
 			&ast.FieldList{List: unnamedFields("error")}, // returns
 		),
-		// funcDeclarationField(
-		// 	&ast.Ident{Name: "Next"},
-		// 	nil,
-		// 	&ast.FieldList{List: unnamedFields("bool")},
-		// ),
+		funcDeclarationField(
+			&ast.Ident{Name: "Next"},
+			nil, // no parameters
+			&ast.FieldList{List: unnamedFields("bool")}, // returns
+		),
 		funcDeclarationField(
 			&ast.Ident{Name: "Close"},
 			nil, // no parameters
@@ -217,6 +217,16 @@ func closeFuncBuilder(name string, params []*ast.Field, body *ast.BlockStmt) ast
 		&ast.Ident{Name: "Close"},
 		nil, // no parameters
 		unnamedFields("error"),
+		body,
+	)
+}
+
+func nextFuncBuilder(name string, body *ast.BlockStmt) ast.Decl {
+	return funcDecl(
+		&ast.Ident{Name: name},
+		&ast.Ident{Name: "Next"},
+		nil, // no parameters
+		unnamedFields("bool"),
 		body,
 	)
 }

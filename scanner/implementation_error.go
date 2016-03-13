@@ -1,8 +1,6 @@
 package scanner
 
-import (
-	"go/ast"
-)
+import "go/ast"
 
 // implements the scanner interface. used by the NewScanner function when error
 // is not nil.
@@ -26,7 +24,10 @@ func (t errorScannerImplementation) Generate(name string, parameters ...*ast.Fie
 	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(errFieldSelector)).BlockStmt
 	errFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(errFieldSelector)).BlockStmt
 	closeFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(&ast.Ident{Name: "nil"})).BlockStmt
+	nextFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(&ast.Ident{Name: "false"})).BlockStmt
 
 	funcDecls := Functions{Parameters: parameters}.Generate(name, scanFuncBlock, errFuncBlock, closeFuncBlock)
+	funcDecls = append(funcDecls, nextFuncBuilder(name, nextFuncBlock))
+
 	return append([]ast.Decl{_struct}, funcDecls...)
 }

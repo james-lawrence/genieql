@@ -37,18 +37,6 @@ func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) [
 	)
 
 	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		&ast.IfStmt{
-			Cond: &ast.UnaryExpr{
-				Op: token.NOT,
-				X:  callExpression(rowsFieldSelector, "Next"),
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					returnStatement(&ast.SelectorExpr{X: &ast.Ident{Name: "io"}, Sel: &ast.Ident{Name: "EOF"}}),
-				},
-			},
-		},
-	).Append(
 		t.declarationStatements()...,
 	).Append(
 		&ast.IfStmt{
@@ -104,7 +92,13 @@ func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) [
 		returnStatement(callExpression(rowsFieldSelector, "Close")),
 	).BlockStmt
 
+	nextFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
+		returnStatement(callExpression(rowsFieldSelector, "Next")),
+	).BlockStmt
+
 	funcDecls := Functions{Parameters: parameters}.Generate(name, scanFuncBlock, errFuncBlock, closeFuncBlock)
+	funcDecls = append(funcDecls, nextFuncBuilder(name, nextFuncBlock))
+
 	return append([]ast.Decl{_struct}, funcDecls...)
 }
 
@@ -134,7 +128,6 @@ func (t scannerImplementation) assignmentStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
 		results = append(results, assignmentStatement(m.Assignment, m.Column, m.Type, DefaultNullableTypes))
-		// results = append(results, assignmentStatement(m.Assignment, m.Column))
 	}
 
 	return results
