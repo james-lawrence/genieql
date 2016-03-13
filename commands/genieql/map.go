@@ -4,8 +4,9 @@ import (
 	"log"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"bitbucket.org/jatone/genieql"
 )
 
 // qlgenie map --name="mymapping" --config="example.glgenie" --include-table-prefix-aliases=false {Package}.{Type} snakecase lowercase

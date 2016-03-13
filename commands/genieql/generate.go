@@ -1,8 +1,6 @@
 package main
 
-import (
-	"gopkg.in/alecthomas/kingpin.v2"
-)
+import "gopkg.in/alecthomas/kingpin.v2"
 
 type generate struct {
 }

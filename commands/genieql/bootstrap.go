@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
-
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"bitbucket.org/jatone/genieql"
 )
 
 // data stored in qlgenie.conf - dialect, default alias strategy, map definition directory,

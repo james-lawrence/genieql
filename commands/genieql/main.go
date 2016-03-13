@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	_ "github.com/lib/pq"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	_ "github.com/lib/pq"
 
 	// register the postgresql dialect
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
