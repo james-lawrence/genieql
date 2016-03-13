@@ -9,11 +9,12 @@ import (
 	"time"
 )
 
+var table = []Type1{
+	Type1{Field1: "Hello", Field3: false, Field5: 1},
+	Type1{Field1: "Hello", Field2: newString("World"), Field3: false, Field4: newBool(true), Field5: 1, Field6: newInt(2)},
+}
+
 var _ = Describe("Type1", func() {
-	table := []Type1{
-		Type1{Field1: "Hello", Field3: false, Field5: 1},
-		Type1{Field1: "Hello", Field2: newString("World"), Field3: false, Field4: newBool(true), Field5: 1, Field6: newInt(2)},
-	}
 	Describe("RowScanner", func() {
 		It("should be able to scan a result", func() {
 			for _, testEntry := range table {
