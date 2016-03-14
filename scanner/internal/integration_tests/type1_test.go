@@ -31,6 +31,7 @@ var _ = Describe("Type1", func() {
 			for _, testEntry := range table {
 				var found Type1
 				scanner := NewType1Scanner(TX.Query(Type1Insert, explode(testEntry)...))
+				Expect(scanner.Next()).To(BeTrue())
 				err := scanner.Scan(&found)
 				Expect(scanner.Close()).ToNot(HaveOccurred())
 				Expect(err).ToNot(HaveOccurred())

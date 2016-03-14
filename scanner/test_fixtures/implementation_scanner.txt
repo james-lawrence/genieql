@@ -3,9 +3,6 @@ type Scanner struct {
 }
 
 func (t Scanner) Scan(arg0 *CustomType) error {
-	if !t.rows.Next() {
-		return io.EOF
-	}
 	var c1 bool
 	var c2 sql.NullBool
 	if err := t.rows.Scan(&c1, &c2); err != nil {
@@ -26,4 +23,7 @@ func (t Scanner) Close() error {
 		return nil
 	}
 	return t.rows.Close()
+}
+func (t Scanner) Next() bool {
+	return t.rows.Next()
 }

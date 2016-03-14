@@ -11,3 +11,6 @@ func (t ErrorScanner) Err() error {
 func (t ErrorScanner) Close() error {
 	return nil
 }
+func (t ErrorScanner) Next() bool {
+	return false
+}
