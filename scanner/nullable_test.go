@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Nullable", func() {
 	Describe("DefaultNullableTypes", func() {
-		nullableTypes := []struct {
+		examples := []struct {
 			typ        string
 			nullable   bool
 			resultExpr string
@@ -31,16 +31,16 @@ var _ = Describe("Nullable", func() {
 			{"*float64", true, "myVar.Float64"},
 			{"*bool", true, "myVar.Bool"},
 			{"*string", true, "myVar.String"},
-			{"*time.Time", false, "(bad expr)"},
+			{"*time.Time", false, "*time.Time"},
 		}
 
 		It("should properly determine if the type is nullable and return the proper expression", func() {
-			for _, test := range nullableTypes {
-				typ := mustParseExpr(test.typ)
+			for _, example := range examples {
+				typ := mustParseExpr(example.typ)
 				myVar := mustParseExpr("myVar")
-				nullable, rhs := DefaultNullableTypes(myVar, typ)
-				Expect(nullable).To(Equal(test.nullable), test.typ)
-				Expect(types.ExprString(rhs)).To(Equal(test.resultExpr), test.typ)
+				rhs, nullable := DefaultNullableTypes(typ, myVar)
+				Expect(nullable).To(Equal(example.nullable), example.typ)
+				Expect(types.ExprString(rhs)).To(Equal(example.resultExpr), example.typ)
 			}
 		})
 	})

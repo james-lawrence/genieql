@@ -6,21 +6,17 @@ import (
 	"go/types"
 )
 
-// NullableType interface for functions that resolve nullable types to their expression.
-type NullableType func(typ, from ast.Expr) (bool, ast.Expr)
-
-// LookupNullableType interface for functions that map type's to their nullable counter parts.
-type LookupNullableType func(typ ast.Expr) ast.Expr
-
 // DefaultNullableTypes returns true, if the provided type maps to one
 // of the database/sql builtin NullableTypes. It also returns the RHS of the assignment
 // expression. i.e.) if given an int32 field it'll return int32(c0.Int64) as the expression.
-func DefaultNullableTypes(from, typ ast.Expr) (bool, ast.Expr) {
+func DefaultNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
 	var expr ast.Expr
+	ok := true
+
 	// if its not a starexpr its not nullable
 	x, ok := typ.(*ast.StarExpr)
 	if !ok {
-		return false, typ
+		return typ, false
 	}
 
 	typ = x.X
@@ -49,9 +45,11 @@ func DefaultNullableTypes(from, typ ast.Expr) (bool, ast.Expr) {
 		expr = typeToExpr("Float64")
 	case "bool":
 		expr = typeToExpr("Bool")
+	default:
+		expr, ok = x, false
 	}
 
-	return expr != nil, expr
+	return expr, ok
 }
 
 // DefaultLookupNullableType determine the nullable type if one is known.

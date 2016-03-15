@@ -68,6 +68,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		MappingConfig: mappingConfig,
 		Columns:       columns,
 		Name:          strings.Title(t.scannerName),
+		Driver:        genieql.MustLookupDriver(configuration.Driver),
 	}
 
 	printer := genieql.ASTPrinter{}

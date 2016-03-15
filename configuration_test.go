@@ -18,8 +18,9 @@ var _ = Describe("Configuration", func() {
 		It("should extract all fields from the URI", func() {
 			uri, err := url.Parse("postgres://soandso:password@localhost:5432/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			config, err := ConfigurationFromURI(uri)
+			config, err := ConfigurationFromURI("github.com/lib/pq", uri)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(config.Driver).To(Equal("github.com/lib/pq"))
 			Expect(config.Dialect).To(Equal("postgres"))
 			Expect(config.Database).To(Equal("databasename"))
 			Expect(config.Host).To(Equal("localhost"))
@@ -31,8 +32,9 @@ var _ = Describe("Configuration", func() {
 		It("should properly extract a URI without a password", func() {
 			uri, err := url.Parse("postgres://soandso@localhost:5432/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			config, err := ConfigurationFromURI(uri)
+			config, err := ConfigurationFromURI("github.com/lib/pq", uri)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(config.Driver).To(Equal("github.com/lib/pq"))
 			Expect(config.Dialect).To(Equal("postgres"))
 			Expect(config.Database).To(Equal("databasename"))
 			Expect(config.Host).To(Equal("localhost"))
@@ -44,14 +46,14 @@ var _ = Describe("Configuration", func() {
 		It("should error if port is missing", func() {
 			uri, err := url.Parse("postgres://soandso@localhost/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			_, err = ConfigurationFromURI(uri)
+			_, err = ConfigurationFromURI("github.com/lib/pq", uri)
 			Expect(err).To(MatchError(ErrRequireHostAndPort))
 		})
 
 		It("should error if port is invalid", func() {
 			uri, err := url.Parse("postgres://soandso@localhost:abc1/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			_, err = ConfigurationFromURI(uri)
+			_, err = ConfigurationFromURI("github.com/lib/pq", uri)
 			Expect(err.Error()).To(Equal("strconv.ParseInt: parsing \"abc1\": invalid syntax"))
 		})
 	})
@@ -75,7 +77,7 @@ var _ = Describe("Configuration", func() {
 		It("should be able to write and read a configuration", func() {
 			var readConfig Configuration
 			path := filepath.Join(tmpdir, "dummy.config")
-			config, err := ConfigurationFromURI(uri)
+			config, err := ConfigurationFromURI("github.com/lib/pq", uri)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(WriteConfiguration(path, config)).ToNot(HaveOccurred())
 
@@ -103,7 +105,7 @@ var _ = Describe("Configuration", func() {
 		It("should write the config to the specified location", func() {
 			path := filepath.Join(tmpdir, "dummy.config")
 
-			err := Bootstrap(path, uri)
+			err := Bootstrap(path, "github.com/lib/pq", uri)
 			Expect(err).ToNot(HaveOccurred())
 
 			raw, err := ioutil.ReadFile(path)
@@ -115,7 +117,7 @@ var _ = Describe("Configuration", func() {
 			Expect(os.Chmod(tmpdir, 0444)).ToNot(HaveOccurred())
 			path := filepath.Join(tmpdir, "dir", "dummy.config")
 
-			err := Bootstrap(path, uri)
+			err := Bootstrap(path, "github.com/lib/pq", uri)
 			Expect(err).To(MatchError(fmt.Sprintf("mkdir %s: permission denied", filepath.Dir(path))))
 		})
 
@@ -123,13 +125,14 @@ var _ = Describe("Configuration", func() {
 			path := filepath.Join(tmpdir, "dummy.config")
 			uri, err := url.Parse("postgres://soandso@localhost/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			err = Bootstrap(path, uri)
+			err = Bootstrap(path, "github.com/lib/pq", uri)
 			Expect(err).To(MatchError(ErrRequireHostAndPort))
 		})
 	})
 })
 
 const exampleBootstrapConfiguration = `dialect: postgres
+driver: github.com/lib/pq
 connectionurl: postgres://soandso:password@localhost:5432/databasename?sslmode=disable
 host: localhost
 port: 5432

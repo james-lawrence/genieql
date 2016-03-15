@@ -36,6 +36,7 @@ var _ = Describe("ImplementationScanner", func() {
 						Assignment: &ast.SelectorExpr{X: &ast.Ident{Name: "arg0"}, Sel: &ast.Ident{Name: "Field1"}},
 					},
 				},
+				Driver: genieql.NewDriver(DefaultNullableTypes, DefaultLookupNullableType),
 			}.Generate("Scanner", &ast.Field{
 				Names: []*ast.Ident{{Name: "arg0"}},
 				Type:  &ast.StarExpr{X: &ast.Ident{Name: "CustomType"}},

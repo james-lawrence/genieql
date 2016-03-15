@@ -12,6 +12,9 @@ import (
 
 	// register the postgresql dialect
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+
+	// register the drivers
+	_ "bitbucket.org/jatone/genieql/internal/drivers"
 )
 
 func main() {

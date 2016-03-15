@@ -14,6 +14,7 @@ import (
 // Generator builds a scanner.
 type Generator struct {
 	genieql.MappingConfig
+	genieql.Driver
 	Columns []string
 	Name    string
 	Fields  []*ast.Field
@@ -34,9 +35,11 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 
 	scanner := scannerImplementation{
 		ColumnMaps: columnMap,
+		Driver:     t.Driver,
 	}
 	rowscanner := rowScannerImplementation{
 		ColumnMaps: columnMap,
+		Driver:     t.Driver,
 	}
 	errscanner := errorScannerImplementation{}
 

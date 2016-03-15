@@ -6,6 +6,8 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+
+	"bitbucket.org/jatone/genieql"
 )
 
 func mustParseExpr(in string) ast.Expr {
@@ -129,7 +131,7 @@ func callExpression(selector ast.Expr, name string, args ...ast.Expr) *ast.CallE
 	}
 }
 
-func localVariableStatement(name *ast.Ident, typ ast.Expr, lookup LookupNullableType) ast.Stmt {
+func localVariableStatement(name *ast.Ident, typ ast.Expr, lookup genieql.LookupNullableType) ast.Stmt {
 	return &ast.DeclStmt{
 		Decl: &ast.GenDecl{
 			Tok: token.VAR,
@@ -138,7 +140,7 @@ func localVariableStatement(name *ast.Ident, typ ast.Expr, lookup LookupNullable
 					Names: []*ast.Ident{
 						name,
 					},
-					Type: lookup(typ),
+					Type: composeLookupNullableType(lookup, DefaultLookupNullableType)(typ),
 				},
 			},
 		},
@@ -174,8 +176,8 @@ func nullableAssignmentStatement(valid, lhs, rhs ast.Expr) ast.Stmt {
 	}
 }
 
-func assignmentStatement(to, from, typ ast.Expr, nullableTypes NullableType) ast.Stmt {
-	if ok, expr := nullableTypes(from, typ); ok {
+func assignmentStatement(to, from, typ ast.Expr, nullableTypes genieql.NullableType) ast.Stmt {
+	if expr, ok := composeNullableType(nullableTypes, DefaultNullableTypes)(typ, from); ok {
 		valid := mustParseExpr(fmt.Sprintf("%s.Valid", types.ExprString(from)))
 		return nullableAssignmentStatement(valid, to, expr)
 	}
@@ -184,6 +186,28 @@ func assignmentStatement(to, from, typ ast.Expr, nullableTypes NullableType) ast
 		Lhs: []ast.Expr{to},
 		Tok: token.ASSIGN,
 		Rhs: []ast.Expr{from},
+	}
+}
+
+func composeNullableType(nullableTypes ...genieql.NullableType) genieql.NullableType {
+	return func(typ, from ast.Expr) (ast.Expr, bool) {
+		for _, f := range nullableTypes {
+			if t, ok := f(typ, from); ok {
+				return t, true
+			}
+		}
+
+		return typ, false
+	}
+}
+
+func composeLookupNullableType(lookupNullableTypes ...genieql.LookupNullableType) genieql.LookupNullableType {
+	return func(typ ast.Expr) ast.Expr {
+		for _, f := range lookupNullableTypes {
+			typ = f(typ)
+		}
+
+		return typ
 	}
 }
 

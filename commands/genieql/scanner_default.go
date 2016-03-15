@@ -62,6 +62,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		Fields:        fields,
 		Columns:       details.Columns,
 		Name:          strings.Title(t.scannerName),
+		Driver:        genieql.MustLookupDriver(configuration.Driver),
 	}
 
 	printer := genieql.ASTPrinter{}
@@ -70,7 +71,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	fset := token.NewFileSet()
 
 	if err := genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
-		log.Fatalln("PrintPackage failed:", err)
+		log.Fatalln(err)
 	}
 
 	if err = generator.Scanner(buffer, fset); err != nil {

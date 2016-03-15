@@ -17,6 +17,7 @@ var ErrRequireHostAndPort = fmt.Errorf("both host and port are required")
 
 type Configuration struct {
 	Dialect       string
+	Driver        string
 	ConnectionURL string
 	Host          string
 	Port          int
@@ -25,12 +26,12 @@ type Configuration struct {
 	Password      string
 }
 
-func Bootstrap(path string, uri *url.URL) error {
+func Bootstrap(path, driver string, uri *url.URL) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
-	config, err := ConfigurationFromURI(uri)
+	config, err := ConfigurationFromURI("github.com/lib/pq", uri)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func ReadConfiguration(path string, config *Configuration) error {
 	return yaml.Unmarshal(raw, config)
 }
 
-func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
+func ConfigurationFromURI(driver string, uri *url.URL) (Configuration, error) {
 	var password string
 	splits := strings.Split(uri.Host, ":")
 	if len(splits) != 2 {
@@ -74,6 +75,7 @@ func ConfigurationFromURI(uri *url.URL) (Configuration, error) {
 	return Configuration{
 		ConnectionURL: uri.String(),
 		Dialect:       uri.Scheme,
+		Driver:        "github.com/lib/pq",
 		Host:          host,
 		Port:          port,
 		Database:      strings.Trim(uri.Path, "/"),
