@@ -3,6 +3,7 @@ package genieql
 
 import (
 	"database/sql"
+	"go/ast"
 	"go/format"
 	"go/token"
 	"io"
@@ -24,6 +25,20 @@ type TableDetails struct {
 	Table      string
 	Naturalkey []string
 	Columns    []string
+}
+
+func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser) TableDetails {
+	dup := t
+	dup.Columns = make([]string, 0, len(t.Columns))
+	for _, column := range t.Columns {
+		for _, field := range fields {
+			if _, matched, _ := MapFieldToColumn(&ast.Ident{Name: "ignored"}, column, 0, field, aliases...); matched {
+				dup.Columns = append(dup.Columns, column)
+			}
+		}
+	}
+
+	return dup
 }
 
 // ScannerGenerator interface for scanner generators.
@@ -65,5 +80,6 @@ func LoadInformation(configuration Configuration, table string) (TableDetails, e
 	}
 
 	details, err = LookupTableDetails(db, dialect, table)
+
 	return details, err
 }

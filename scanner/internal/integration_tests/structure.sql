@@ -7,5 +7,6 @@ CREATE TABLE IF NOT EXISTS type1 (
 	field5 int DEFAULT 0 NOT NULL,
 	field6 int,
 	field7 timestamp with time zone DEFAULT (now() at time zone 'utc') NOT NULL,
-	field8 timestamp with time zone
+	field8 timestamp with time zone,
+	unmappedField int DEFAULT 1 NOT NULL
 )

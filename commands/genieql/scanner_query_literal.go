@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
@@ -64,9 +64,15 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
+	fields, err := mappingConfig.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	generator := scanner.Generator{
 		MappingConfig: mappingConfig,
 		Columns:       columns,
+		Fields:        fields,
 		Name:          strings.Title(t.scannerName),
 		Driver:        genieql.MustLookupDriver(configuration.Driver),
 	}

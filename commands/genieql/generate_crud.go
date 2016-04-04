@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
@@ -25,9 +25,15 @@ type generateCrud struct {
 
 func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	var configuration genieql.Configuration
+	var mapping genieql.MappingConfig
+
 	pkgName, typName := extractPackageType(t.packageType)
 
 	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+		return err
+	}
+
+	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mapping); err != nil {
 		return err
 	}
 
@@ -35,7 +41,12 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
+	fields, err := mapping.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	if err != nil {
+		log.Println("type fields error")
+		log.Fatalln(err)
+	}
+	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
 	fset := token.NewFileSet()
 	buffer := bytes.NewBuffer([]byte{})
 	formatted := bytes.NewBuffer([]byte{})
