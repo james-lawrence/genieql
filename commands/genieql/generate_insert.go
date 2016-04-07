@@ -50,15 +50,15 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
+	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
 		log.Fatalln("PrintPackage failed:", err)
 	}
 
-	if err := crud.Insert(details).Build(constName, t.defaults).Generate(buffer, fset); err != nil {
+	if err = crud.Insert(details).Build(constName, t.defaults).Generate(buffer, fset); err != nil {
 		log.Fatalln("insert generation failed:", err)
 	}
 
-	if err := genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
 		log.Fatalln("format output failed:", err)
 	}
 

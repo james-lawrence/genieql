@@ -41,11 +41,13 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	fields, err := mapping.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Println("type fields error")
 		log.Fatalln(err)
 	}
+
 	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
 	fset := token.NewFileSet()
 	buffer := bytes.NewBuffer([]byte{})
@@ -57,15 +59,15 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
+	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
 		log.Fatalln("PrintPackage failed:", err)
 	}
 
-	if err := crud.New(configuration, details, pkgName, typName).Generate(buffer, fset); err != nil {
+	if err = crud.New(configuration, details, pkgName, typName).Generate(buffer, fset); err != nil {
 		log.Fatalln("crud generation failed:", err)
 	}
 
-	if err := genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
 		log.Fatalln("format output failed:", err)
 	}
 

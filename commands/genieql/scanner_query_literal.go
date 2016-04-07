@@ -82,7 +82,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	formatted := bytes.NewBuffer([]byte{})
 	fset := token.NewFileSet()
 
-	if err := genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
+	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
 		log.Fatalln("PrintPackage failed:", err)
 	}
 
