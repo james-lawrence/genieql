@@ -11,7 +11,7 @@ func (t RowScanner) Scan(arg0 *CustomType) error {
 	arg0.Field1 = c1
 	if c2.Valid {
 		tmp := c2.Bool
-		arg0.Field1 = &tmp
+		arg0.Field2 = &tmp
 	}
 	return nil
 }

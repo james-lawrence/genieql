@@ -80,5 +80,5 @@ var AliasStrategyUppercase Aliaser = AliaserFunc(strings.ToUpper)
 // AliasStrategySnakecase strategy for snake casing field names to match result fields.
 var AliasStrategySnakecase Aliaser = AliaserFunc(snaker.CamelToSnake)
 
-// AliasStrategySnakecase strategy for camel casing field names to match result fields.
+// AliasStrategyCamelcase strategy for camel casing field names to match result fields.
 var AliasStrategyCamelcase Aliaser = AliaserFunc(snaker.SnakeToCamel)

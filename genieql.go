@@ -27,6 +27,8 @@ type TableDetails struct {
 	Columns    []string
 }
 
+// OnlyMappedColumns filters out columns from the current TableDetails that do not
+// exist in the destination structure. Mainly used for generating queries.
 func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser) TableDetails {
 	dup := t
 	dup.Columns = make([]string, 0, len(t.Columns))

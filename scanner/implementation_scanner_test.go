@@ -26,14 +26,16 @@ var _ = Describe("ImplementationScanner", func() {
 			decl := scannerImplementation{
 				ColumnMaps: []genieql.ColumnMap{
 					genieql.ColumnMap{
-						Column:     &ast.Ident{Name: "c1"},
-						Type:       &ast.Ident{Name: "bool"},
-						Assignment: &ast.SelectorExpr{X: &ast.Ident{Name: "arg0"}, Sel: &ast.Ident{Name: "Field1"}},
+						ColumnName:   "column1",
+						ColumnOffset: 1,
+						FieldName:    "Field1",
+						Type:         &ast.Ident{Name: "bool"},
 					},
 					genieql.ColumnMap{
-						Column:     &ast.Ident{Name: "c2"},
-						Type:       &ast.StarExpr{X: &ast.Ident{Name: "bool"}},
-						Assignment: &ast.SelectorExpr{X: &ast.Ident{Name: "arg0"}, Sel: &ast.Ident{Name: "Field1"}},
+						ColumnName:   "column2",
+						ColumnOffset: 2,
+						FieldName:    "Field2",
+						Type:         &ast.StarExpr{X: &ast.Ident{Name: "bool"}},
 					},
 				},
 				Driver: genieql.NewDriver(DefaultNullableTypes, DefaultLookupNullableType),

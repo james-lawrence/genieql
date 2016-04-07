@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// MappingConfig TODO...
 type MappingConfig struct {
 	Package              string
 	Type                 string
@@ -18,10 +19,12 @@ type MappingConfig struct {
 	Transformations      []string
 }
 
+// Mapper TODO...
 func (t MappingConfig) Mapper() Mapper {
 	return Mapper{Aliasers: []Aliaser{AliaserBuilder(t.Transformations...)}}
 }
 
+// TypeFields TODO...
 func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Package) bool) ([]*ast.Field, error) {
 	pkg, err := LocatePackage(t.Package, context, filter)
 	if err != nil {
@@ -36,6 +39,7 @@ func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Packag
 	return ExtractFields(decl.Specs[0]).List, nil
 }
 
+// WriteMapper persists the structure -> result row mapping to disk.
 func WriteMapper(root string, configuration Configuration, name string, m MappingConfig) error {
 	d, err := yaml.Marshal(m)
 	if err != nil {
@@ -49,6 +53,7 @@ func WriteMapper(root string, configuration Configuration, name string, m Mappin
 	return ioutil.WriteFile(path, d, 0666)
 }
 
+// ReadMapper loads the structure -> result row mapping from disk.
 func ReadMapper(root, pkg, typ, name string, configuration Configuration, m *MappingConfig) error {
 	raw, err := ioutil.ReadFile(filepath.Join(root, configuration.Database, pkg, typ, name))
 	if err != nil {
@@ -57,6 +62,7 @@ func ReadMapper(root, pkg, typ, name string, configuration Configuration, m *Map
 	return yaml.Unmarshal(raw, m)
 }
 
+// Map TODO...
 func Map(configFile, name string, m MappingConfig) error {
 	var config Configuration
 
@@ -67,10 +73,12 @@ func Map(configFile, name string, m MappingConfig) error {
 	return WriteMapper(filepath.Dir(configFile), config, name, m)
 }
 
+// Mapper responsible for mapping a result row to a structure.
 type Mapper struct {
 	Aliasers []Aliaser
 }
 
+// MapColumns TODO...
 func (t Mapper) MapColumns(fields []*ast.Field, columns ...string) ([]ColumnMap, error) {
 	matches := make([]ColumnMap, 0, len(columns))
 	for idx, column := range columns {

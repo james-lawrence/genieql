@@ -3,7 +3,6 @@ package genieql_test
 import (
 	"fmt"
 	"go/ast"
-	"log"
 
 	. "bitbucket.org/jatone/genieql"
 
@@ -31,15 +30,17 @@ var _ = Describe("Mapper", func() {
 
 		It("should return a mapped column if the column matches the field and its aliases", func() {
 			for _, example := range examples {
-				mappedColumn, matchFound, err := MapFieldToColumn(example.arg, example.column, example.offset, example.field, example.Aliaser)
+				mappedColumn, matchFound, err := MapFieldToColumn(example.column, example.offset, example.field, example.Aliaser)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(matchFound).To(BeTrue())
+				Expect(mappedColumn.ColumnName).To(Equal(example.column))
+				Expect(mappedColumn.ColumnOffset).To(Equal(example.offset))
 				Expect(mappedColumn.Type).To(Equal(example.field.Type))
-				Expect(mappedColumn.Assignment).To(Equal(&ast.SelectorExpr{
+				Expect(mappedColumn.AssignmentExpr(example.arg)).To(Equal(&ast.SelectorExpr{
 					X:   example.arg,
 					Sel: example.field.Names[0],
 				}))
-				Expect(mappedColumn.Column).To(Equal(&ast.Ident{Name: fmt.Sprintf("c%d", example.offset)}))
+				Expect(mappedColumn.LocalVariableExpr()).To(Equal(&ast.Ident{Name: fmt.Sprintf("c%d", example.offset)}))
 			}
 		})
 	})
@@ -60,10 +61,13 @@ var _ = Describe("Mapper", func() {
 		}
 		It("should return mapped columns for the given fields", func() {
 			for _, example := range examples {
-				columnMaps, _, err := Mapper{Aliasers: []Aliaser{AliasStrategySnakecase}}.MapColumns(example.arg, example.fields, example.columns...)
+				columnMaps, err := Mapper{Aliasers: []Aliaser{AliasStrategySnakecase}}.MapColumns(example.fields, example.columns...)
 				Expect(err).ToNot(HaveOccurred())
-				for _, m := range columnMaps {
-					log.Println(m)
+				for idx, m := range columnMaps {
+					Expect(m.ColumnName).To(Equal(example.columns[idx]))
+					Expect(m.ColumnOffset).To(Equal(idx))
+					Expect(m.FieldName).To(Equal(example.fields[idx].Names[0].Name))
+					Expect(m.Type).To(Equal(example.fields[idx].Type))
 				}
 			}
 		})
