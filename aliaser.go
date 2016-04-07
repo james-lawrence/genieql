@@ -19,6 +19,7 @@ func (t AliaserFunc) Alias(name string) string {
 	return t(name)
 }
 
+// AliaserChain TODO ...
 func AliaserChain(aliasers ...Aliaser) Aliaser {
 	return AliaserFunc(func(name string) string {
 		for _, aliaser := range aliasers {
@@ -29,6 +30,7 @@ func AliaserChain(aliasers ...Aliaser) Aliaser {
 	})
 }
 
+// MultiAliaser TODO ...
 func MultiAliaser(name string, aliasers ...Aliaser) []string {
 	result := make([]string, 0, len(aliasers))
 	for _, aliaser := range aliasers {
@@ -69,20 +71,14 @@ func AliaserSelect(aliasername string) Aliaser {
 	}
 }
 
+// AliasStrategyLowercase strategy for lowercasing field names to match result fields.
 var AliasStrategyLowercase Aliaser = AliaserFunc(strings.ToLower)
+
+// AliasStrategyUppercase strategy for uppercasing field names to match result fields.
 var AliasStrategyUppercase Aliaser = AliaserFunc(strings.ToUpper)
+
+// AliasStrategySnakecase strategy for snake casing field names to match result fields.
 var AliasStrategySnakecase Aliaser = AliaserFunc(snaker.CamelToSnake)
+
+// AliasStrategySnakecase strategy for camel casing field names to match result fields.
 var AliasStrategyCamelcase Aliaser = AliaserFunc(snaker.SnakeToCamel)
-
-func AliasStrategyTablePrefix(table string, aliaser Aliaser) Aliaser {
-	return AliaserChain(
-		AddPrefix(table),
-		aliaser,
-	)
-}
-
-func AddPrefix(prefix string) Aliaser {
-	return AliaserFunc(func(name string) string {
-		return prefix + name
-	})
-}

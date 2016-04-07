@@ -32,7 +32,7 @@ func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser)
 	dup.Columns = make([]string, 0, len(t.Columns))
 	for _, column := range t.Columns {
 		for _, field := range fields {
-			if _, matched, _ := MapFieldToColumn(&ast.Ident{Name: "ignored"}, column, 0, field, aliases...); matched {
+			if _, matched, _ := MapFieldToColumn(column, 0, field, aliases...); matched {
 				dup.Columns = append(dup.Columns, column)
 			}
 		}

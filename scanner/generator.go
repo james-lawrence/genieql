@@ -26,7 +26,7 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 
 	mapper := t.MappingConfig.Mapper()
 
-	columnMap, err := mapper.MapColumns(&ast.Ident{Name: "arg0"}, t.Fields, t.Columns...)
+	columnMap, err := mapper.MapColumns(t.Fields, t.Columns...)
 
 	if err != nil {
 		log.Println("failed to map columns", err)

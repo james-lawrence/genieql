@@ -80,7 +80,7 @@ func (t rowScannerImplementation) Generate(name string, parameters ...*ast.Field
 func (t rowScannerImplementation) declarationStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		results = append(results, localVariableStatement(m.Column, m.Type, t.Driver.LookupNullableType))
+		results = append(results, localVariableStatement(m.LocalVariableExpr(), m.Type, t.Driver.LookupNullableType))
 	}
 
 	return results
@@ -91,7 +91,7 @@ func (t rowScannerImplementation) scanArgs() []ast.Expr {
 	for _, m := range t.ColumnMaps {
 		column := &ast.UnaryExpr{
 			Op: token.AND,
-			X:  m.Column,
+			X:  m.LocalVariableExpr(),
 		}
 		columns = append(columns, column)
 	}
@@ -101,7 +101,7 @@ func (t rowScannerImplementation) scanArgs() []ast.Expr {
 func (t rowScannerImplementation) assignmentStatements() []ast.Stmt {
 	results := make([]ast.Stmt, 0, len(t.ColumnMaps))
 	for _, m := range t.ColumnMaps {
-		results = append(results, assignmentStatement(m.Assignment, m.Column, m.Type, t.Driver.NullableType))
+		results = append(results, assignmentStatement(m.AssignmentExpr(&ast.Ident{Name: "arg0"}), m.LocalVariableExpr(), m.Type, t.Driver.NullableType))
 	}
 
 	return results
