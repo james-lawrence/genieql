@@ -86,12 +86,6 @@ func typeDeclarationField(name string, typ ast.Expr) *ast.Field {
 	}
 }
 
-func commentLine(comment string) *ast.Comment {
-	return &ast.Comment{
-		Text: comment,
-	}
-}
-
 func unnamedFields(types ...string) []*ast.Field {
 	results := make([]*ast.Field, 0, len(types))
 	for _, typ := range types {
@@ -211,15 +205,18 @@ func composeLookupNullableType(lookupNullableTypes ...genieql.LookupNullableType
 	}
 }
 
+// BlockStmtBuilder TODO...
 type BlockStmtBuilder struct {
 	*ast.BlockStmt
 }
 
+// Append TODO...
 func (t BlockStmtBuilder) Append(statements ...ast.Stmt) BlockStmtBuilder {
 	t.List = append(t.List, statements...)
 	return t
 }
 
+// Prepend TODO...
 func (t BlockStmtBuilder) Prepend(statements ...ast.Stmt) BlockStmtBuilder {
 	t.List = append(statements, t.List...)
 	return t

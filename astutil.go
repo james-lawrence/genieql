@@ -194,6 +194,17 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *a
 
 	printer.FprintAST(dst, fset, file)
 	printer.Fprintf(dst, Preface, strings.Join(args, " "))
+	// check if executed by go generate
+	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
+		printer.Fprintf(
+			dst,
+			"// invoked by go generate @ %s/%s line %s",
+			os.Getenv("GOPACKAGE"),
+			os.Getenv("GOFILE"),
+			os.Getenv("GOLINE"),
+		)
+	}
+	printer.Fprintf(dst, "\n\n")
 	return printer.Err()
 }
 

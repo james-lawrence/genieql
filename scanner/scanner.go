@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"strings"
+
+	"bitbucket.org/jatone/genieql"
 )
 
 // BuildScannerInterface takes in a name and a set of parameters
@@ -229,4 +232,13 @@ func nextFuncBuilder(name string, body *ast.BlockStmt) ast.Decl {
 		unnamedFields("bool"),
 		body,
 	)
+}
+
+func columnMapToQuery(columnMaps ...genieql.ColumnMap) string {
+	result := make([]string, 0, len(columnMaps))
+	for _, columnMap := range columnMaps {
+		result = append(result, columnMap.ColumnName)
+	}
+
+	return strings.Join(result, ",")
 }
