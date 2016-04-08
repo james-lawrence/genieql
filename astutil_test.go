@@ -151,7 +151,7 @@ var _ = Describe("Astutil", func() {
 			w := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
 			Expect(PrintPackage(p, w, fset, pkg, []string{})).ToNot(HaveOccurred())
-			Expect(w.String()).To(Equal(fmt.Sprintf("package example\n%s", fmt.Sprintf(Preface, ""))))
+			Expect(w.String()).To(Equal(fmt.Sprintf("package example\n%s\n\n", fmt.Sprintf(Preface, ""))))
 		})
 	})
 
