@@ -53,8 +53,8 @@ var _ = Describe("Crud", func() {
 			predicates []string
 			query      string
 		}{
-			{"MyTable1", []string{"col1", "col2", "col3"}, []string{"col1"}, "UPDATE MyTable1 SET (col1 = $1, col2 = $2, col3 = $3) WHERE col1 = $4 RETURNING col1,col2,col3"},
-			{"MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col2"}, "UPDATE MyTable2 SET (col1 = $1, col2 = $2, col3 = $3, col4 = $4) WHERE col1 = $5 AND col2 = $6 RETURNING col1,col2,col3,col4"},
+			{"MyTable1", []string{"col1", "col2", "col3"}, []string{"col1"}, "UPDATE MyTable1 SET col1 = $1, col2 = $2, col3 = $3 WHERE col1 = $4 RETURNING col1,col2,col3"},
+			{"MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col2"}, "UPDATE MyTable2 SET col1 = $1, col2 = $2, col3 = $3, col4 = $4 WHERE col1 = $5 AND col2 = $6 RETURNING col1,col2,col3,col4"},
 		}
 
 		It("should create update queries", func() {
