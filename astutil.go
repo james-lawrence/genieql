@@ -101,15 +101,20 @@ func FindUniqueDeclaration(f ast.Filter, packageSet ...*ast.Package) (*ast.GenDe
 // the provided ast.Filter.
 func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl {
 	results := []*ast.GenDecl{}
-	for _, pkg := range packageSet {
-		ast.Inspect(pkg, func(n ast.Node) bool {
-			decl, ok := n.(*ast.GenDecl)
-			if ok && ast.FilterDecl(decl, f) {
-				results = append(results, decl)
-			}
 
-			return true
-		})
+	for _, pkg := range packageSet {
+		// filter out all top level declarations
+		if !FilterPackage(pkg, f) {
+			continue
+		}
+
+		for _, file := range pkg.Files {
+			for _, decl := range file.Decls {
+				if gendecl, ok := decl.(*ast.GenDecl); ok {
+					results = append(results, gendecl)
+				}
+			}
+		}
 	}
 	return results
 }
@@ -143,6 +148,82 @@ func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error)
 	}
 
 	return "", ErrBasicLiteralNotFound
+}
+
+// FilterPackage - trims the ast for Go declarations in place by removing all names
+// that don't pass through the filter f. Ignores struct field and interface method names.
+func FilterPackage(pkg *ast.Package, f ast.Filter) bool {
+	hasDecls := false
+
+	for _, src := range pkg.Files {
+		if FilterFile(src, f) {
+			hasDecls = true
+		}
+	}
+
+	return hasDecls
+}
+
+// FilterFile - trims the ast for Go declaration in place by removing all names
+// that don't pass through the filter f. Ignores struct field and interface method names.
+func FilterFile(src *ast.File, f ast.Filter) bool {
+	j := 0
+	for _, d := range src.Decls {
+		if filterDecl(d, f) {
+			src.Decls[j] = d
+			j++
+		}
+	}
+	src.Decls = src.Decls[0:j]
+	return j > 0
+}
+
+func filterDecl(decl ast.Decl, f ast.Filter) bool {
+	switch d := decl.(type) {
+	case *ast.GenDecl:
+		d.Specs = filterSpecList(d.Specs, f)
+		return len(d.Specs) > 0
+	case *ast.FuncDecl:
+		return f(d.Name.Name)
+	}
+	return false
+}
+
+func filterIdentList(list []*ast.Ident, f ast.Filter) []*ast.Ident {
+	j := 0
+	for _, x := range list {
+		if f(x.Name) {
+			list[j] = x
+			j++
+		}
+	}
+	return list[0:j]
+}
+
+func filterSpec(spec ast.Spec, f ast.Filter) bool {
+	switch s := spec.(type) {
+	case *ast.ValueSpec:
+		s.Names = filterIdentList(s.Names, f)
+		if len(s.Names) > 0 {
+			return true
+		}
+	case *ast.TypeSpec:
+		if f(s.Name.Name) {
+			return true
+		}
+	}
+	return false
+}
+
+func filterSpecList(list []ast.Spec, f ast.Filter) []ast.Spec {
+	j := 0
+	for _, s := range list {
+		if filterSpec(s, f) {
+			list[j] = s
+			j++
+		}
+	}
+	return list[0:j]
 }
 
 // FilterName filter that matches the provided name by the name on a given node.

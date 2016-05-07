@@ -67,6 +67,24 @@ var _ = Describe("Astutil", func() {
 			typeSpec := decls[0].Specs[0].(*ast.TypeSpec)
 			Expect(typeSpec.Name.Name).To(Equal("aStruct"))
 		})
+
+		It("should be able to handle self referential types", func() {
+			fset := token.NewFileSet()
+			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+			Expect(err).ToNot(HaveOccurred())
+
+			p := ast.Package{
+				Files: map[string]*ast.File{
+					"examples.go": examples,
+				},
+			}
+
+			decls := FilterDeclarations(FilterName("selfReferential"), &p)
+			Expect(decls).To(HaveLen(1))
+			Expect(decls[0].Specs).To(HaveLen(1))
+			typeSpec := decls[0].Specs[0].(*ast.TypeSpec)
+			Expect(typeSpec.Name.Name).To(Equal("selfReferential"))
+		})
 	})
 
 	Describe("FindUniqueDeclaration", func() {
@@ -260,6 +278,21 @@ var examples = `package examples
 type aStruct struct {
 	Field1 int
 	Field2 bool
+}
+
+type bStruct struct {
+	// ensure there is a second declaration of aStruct.
+	aStruct
+}
+
+type cStruct struct {
+	Field1 int
+	Field2 int
+}
+
+type selfReferential struct {
+	Field1 int
+	*selfReferential
 }
 
 type emptyStruct struct{}
