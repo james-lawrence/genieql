@@ -100,5 +100,5 @@ func (t offsetPlaceholder) String(offset int) (string, int) {
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"
 const insertTmpl = "INSERT INTO %s (%s) VALUES (%s) RETURNING %s"
-const updateTmpl = "UPDATE %s SET (%s) WHERE %s RETURNING %s"
+const updateTmpl = "UPDATE %s SET %s WHERE %s RETURNING %s"
 const deleteTmpl = "DELETE FROM %s WHERE %s RETURNING %s"
