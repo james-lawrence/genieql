@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"bitbucket.org/jatone/genieql/astutil"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -33,9 +34,9 @@ var _ = Describe("Astutil", func() {
 			fset := token.NewFileSet()
 			for _, example := range examples {
 				buffer := bytes.NewBuffer([]byte{})
-				dst := mustParseExpr("myVar")
-				from := mustParseExpr("c0")
-				typ := mustParseExpr(example.input)
+				dst := astutil.Expr("myVar")
+				from := astutil.Expr("c0")
+				typ := astutil.Expr(example.input)
 				ifstmt := assignmentStatement(dst, from, typ, DefaultNullableTypes)
 				printer.Fprint(buffer, fset, ifstmt)
 				Expect(buffer.String()).To(Equal(example.expected), example.input)
@@ -71,8 +72,8 @@ var _ = Describe("Astutil", func() {
 
 		It("should return true if one of the provided functions returns true", func() {
 			for _, example := range examples {
-				typ := mustParseExpr(example.typ)
-				myVar := mustParseExpr("myVar")
+				typ := astutil.Expr(example.typ)
+				myVar := astutil.Expr("myVar")
 
 				rhs, nullable := composeNullableType(DefaultNullableTypes)(typ, myVar)
 
@@ -108,7 +109,7 @@ var _ = Describe("Astutil", func() {
 
 		It("should properly convert types to their Null Equivalents", func() {
 			for _, example := range examples {
-				typ := mustParseExpr(example.input)
+				typ := astutil.Expr(example.input)
 
 				rhs := composeLookupNullableType(DefaultLookupNullableType)(typ)
 

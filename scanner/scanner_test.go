@@ -28,8 +28,6 @@ var _ = Describe("Scanner", func() {
 
 			r := BuildScannerInterface("AScanner", f1)
 
-			buffer := bytes.NewBuffer([]byte{})
-			fset := token.NewFileSet()
 			Expect(printer.Fprint(buffer, fset, r)).ToNot(HaveOccurred())
 			Expect(buffer.String()).To(Equal(ReadString("test_fixtures/scanner_interface.txt")))
 		})

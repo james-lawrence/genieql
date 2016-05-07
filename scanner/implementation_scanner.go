@@ -5,6 +5,7 @@ import (
 	"go/token"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 )
 
 type scannerImplementation struct {
@@ -13,89 +14,51 @@ type scannerImplementation struct {
 }
 
 func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) []ast.Decl {
-	rowsFieldType := &ast.StarExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "sql",
-			},
-			Sel: &ast.Ident{
-				Name: "Rows",
-			},
-		},
-	}
-	rowsFieldSelector := &ast.SelectorExpr{
-		X: &ast.Ident{
-			Name: "t",
-		},
-		Sel: &ast.Ident{
-			Name: "rows",
-		},
-	}
+	rowsFieldType := astutil.Expr("*sql.Rows")
 
 	_struct := structDeclaration(
 		&ast.Ident{Name: name},
-		typeDeclarationField("rows", rowsFieldType),
+		typeDeclarationField(rowsFieldType, ast.NewIdent("rows")),
 	)
 
 	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
 		t.declarationStatements()...,
 	).Append(
-		&ast.IfStmt{
-			Init: &ast.AssignStmt{
-				Lhs: []ast.Expr{
-					&ast.Ident{
-						Name: "err",
-					},
-				},
-				Tok: token.DEFINE,
-				Rhs: []ast.Expr{
-					callExpression(rowsFieldSelector, "Scan", t.scanArgs()...),
-				},
-			},
-			Cond: &ast.BinaryExpr{
-				X: &ast.Ident{
-					Name: "err",
-				},
-				Op: token.NEQ,
-				Y: &ast.Ident{
-					Name: "nil",
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					returnStatement(&ast.Ident{Name: "err"}),
-				},
-			},
-		},
+		astutil.If(
+			astutil.Assign(
+				astutil.ExprList("err"),
+				token.DEFINE,
+				[]ast.Expr{astutil.CallExpr(astutil.Expr("t.rows.Scan"), t.scanArgs()...)},
+			),
+			astutil.Expr("err != nil"),
+			astutil.Block(
+				astutil.Return(astutil.ExprList("err")...),
+			),
+			nil,
+		),
 	).Append(
 		t.assignmentStatements()...,
 	).Append(
-		returnStatement(callExpression(rowsFieldSelector, "Err")),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Err"))),
 	).BlockStmt
 
-	errFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		returnStatement(callExpression(rowsFieldSelector, "Err")),
-	).BlockStmt
+	errFuncBlock := astutil.Block(
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Err"))),
+	)
 
-	closeFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		&ast.IfStmt{
-			Cond: &ast.BinaryExpr{
-				X:  rowsFieldSelector,
-				Op: token.EQL,
-				Y:  &ast.Ident{Name: "nil"},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					returnStatement(&ast.Ident{Name: "nil"}),
-				},
-			},
-		},
-		returnStatement(callExpression(rowsFieldSelector, "Close")),
-	).BlockStmt
+	closeFuncBlock := astutil.Block(
+		astutil.If(
+			nil,
+			astutil.Expr("t.rows == nil"),
+			astutil.Block(astutil.Return(astutil.Expr("nil"))),
+			nil,
+		),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Close"))),
+	)
 
-	nextFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
-		returnStatement(callExpression(rowsFieldSelector, "Next")),
-	).BlockStmt
+	nextFuncBlock := astutil.Block(
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Next"))),
+	)
 
 	funcDecls := Functions{Parameters: parameters}.Generate(name, scanFuncBlock, errFuncBlock, closeFuncBlock)
 	funcDecls = append(funcDecls, nextFuncBuilder(name, nextFuncBlock))

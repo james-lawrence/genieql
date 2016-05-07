@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+
+	"bitbucket.org/jatone/genieql/astutil"
 )
 
 // DefaultNullableTypes returns true, if the provided type maps to one
@@ -25,11 +27,11 @@ func DefaultNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
 	fromExprStr := types.ExprString(from)
 
 	castedTypeToExpr := func(selector string) ast.Expr {
-		return mustParseExpr(fmt.Sprintf("%s(%s.%s)", typExprStr, fromExprStr, selector))
+		return astutil.Expr(fmt.Sprintf("%s(%s.%s)", typExprStr, fromExprStr, selector))
 	}
 
 	typeToExpr := func(selector string) ast.Expr {
-		return mustParseExpr(fmt.Sprintf("%s.%s", fromExprStr, selector))
+		return astutil.Expr(fmt.Sprintf("%s.%s", fromExprStr, selector))
 	}
 
 	switch typExprStr {
@@ -63,13 +65,13 @@ func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
 
 	switch types.ExprString(x.X) {
 	case "string":
-		return mustParseExpr("sql.NullString").(*ast.SelectorExpr)
+		return astutil.Expr("sql.NullString").(*ast.SelectorExpr)
 	case "int", "int32", "int64":
-		return mustParseExpr("sql.NullInt64").(*ast.SelectorExpr)
+		return astutil.Expr("sql.NullInt64").(*ast.SelectorExpr)
 	case "float", "float32", "float64":
-		return mustParseExpr("sql.NullFloat64").(*ast.SelectorExpr)
+		return astutil.Expr("sql.NullFloat64").(*ast.SelectorExpr)
 	case "bool":
-		return mustParseExpr("sql.NullBool").(*ast.SelectorExpr)
+		return astutil.Expr("sql.NullBool").(*ast.SelectorExpr)
 	default:
 		return typ
 	}
