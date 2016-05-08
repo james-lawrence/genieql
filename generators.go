@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// Generator TODO...
+// Generator interface for the code generators.
 type Generator interface {
 	Generate(dst io.Writer, fset *token.FileSet) error
 }

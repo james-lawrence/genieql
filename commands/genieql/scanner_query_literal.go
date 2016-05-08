@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"go/build"
-	"go/token"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/scanner"
 )
 
@@ -64,40 +60,21 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.Generator{
+	generator := scanner.StaticScanner(scanner.Generator{
 		MappingConfig: mappingConfig,
 		Columns:       columns,
 		Fields:        fields,
 		Name:          strings.Title(t.scannerName),
 		Driver:        genieql.MustLookupDriver(configuration.Driver),
-	}
+	})
 
-	printer := genieql.ASTPrinter{}
-	buffer := bytes.NewBuffer([]byte{})
-	formatted := bytes.NewBuffer([]byte{})
-	fset := token.NewFileSet()
-
-	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
-		log.Fatalln("PrintPackage failed:", err)
-	}
-
-	if err = generator.Scanner(buffer, fset); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, formatted); err != nil {
-		log.Fatalln(err)
-	}
+	printScanner(t.output, generator, pkg)
 
 	return nil
 }
 
-func (t *queryLiteral) configure(parent *kingpin.CmdClause) *kingpin.CmdClause {
-	query := parent.Command("query-literal", "build a scanner for the provided type/query").Action(t.Execute)
+func (t *queryLiteral) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	query := cmd.Action(t.Execute)
 	query.Flag("config", "name of configuration file to use").Default("default.config").
 		StringVar(&t.configName)
 	query.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)

@@ -1,22 +1,18 @@
 package main
 
 import (
-	"bytes"
 	"go/build"
-	"go/token"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/scanner"
 )
 
-type defaultScanner struct {
+type staticScanner struct {
 	configName  string
 	packageType string
 	mapName     string
@@ -25,7 +21,7 @@ type defaultScanner struct {
 	output      string
 }
 
-func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
+func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 	var configuration genieql.Configuration
 	var mappingConfig genieql.MappingConfig
 	pkgName, typName := extractPackageType(t.packageType)
@@ -57,40 +53,21 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.Generator{
+	generator := scanner.StaticScanner(scanner.Generator{
 		MappingConfig: mappingConfig,
 		Fields:        fields,
 		Columns:       details.Columns,
 		Name:          strings.Title(t.scannerName),
 		Driver:        genieql.MustLookupDriver(configuration.Driver),
-	}
+	})
 
-	printer := genieql.ASTPrinter{}
-	buffer := bytes.NewBuffer([]byte{})
-	formatted := bytes.NewBuffer([]byte{})
-	fset := token.NewFileSet()
-
-	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = generator.Scanner(buffer, fset); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, formatted); err != nil {
-		log.Fatalln(err)
-	}
+	printScanner(t.output, generator, pkg)
 
 	return nil
 }
 
-func (t *defaultScanner) configure(parent *kingpin.CmdClause) *kingpin.CmdClause {
-	scanner := parent.Command("default", "build the default scanner for the provided type/table").Action(t.Execute)
+func (t *staticScanner) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	scanner := cmd.Action(t.Execute)
 	scanner.Flag("config", "name of configuration file to use").Default("default.config").
 		StringVar(&t.configName)
 	scanner.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
