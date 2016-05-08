@@ -49,12 +49,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	decl, err := genieql.FindUniqueDeclaration(genieql.FilterName(queryConstName), pkg)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), decl)
+	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkg)
 	if err != nil {
 		log.Fatalln(err)
 	}

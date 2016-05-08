@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 )
 
 // BuildScannerInterface takes in a name and a set of parameters
@@ -61,17 +62,8 @@ type NewScannerFunc struct {
 // Build - generates a function declaration for building the scanner.
 func (t NewScannerFunc) Build() *ast.FuncDecl {
 	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
-	rowsParam := typeDeclarationField("rows", &ast.StarExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "sql",
-			},
-			Sel: &ast.Ident{
-				Name: "Rows",
-			},
-		},
-	})
-	errParam := typeDeclarationField("err", &ast.Ident{Name: "error"})
+	rowsParam := typeDeclarationField(astutil.Expr("*sql.Rows"), ast.NewIdent("rows"))
+	errParam := typeDeclarationField(&ast.Ident{Name: "error"}, ast.NewIdent("err"))
 	result := unnamedFields(t.InterfaceName)
 	body := &ast.BlockStmt{
 		List: []ast.Stmt{
@@ -140,16 +132,7 @@ type NewRowScannerFunc struct {
 // Build - generates a function declaration for building the scanner.
 func (t NewRowScannerFunc) Build() *ast.FuncDecl {
 	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
-	rowsParam := typeDeclarationField("row", &ast.StarExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "sql",
-			},
-			Sel: &ast.Ident{
-				Name: "Row",
-			},
-		},
-	})
+	rowsParam := typeDeclarationField(astutil.Expr("*sql.Row"), ast.NewIdent("row"))
 	result := unnamedFields(t.InterfaceName)
 	body := &ast.BlockStmt{
 		List: []ast.Stmt{

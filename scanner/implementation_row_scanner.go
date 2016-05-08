@@ -5,6 +5,7 @@ import (
 	"go/token"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 )
 
 type rowScannerImplementation struct {
@@ -13,28 +14,11 @@ type rowScannerImplementation struct {
 }
 
 func (t rowScannerImplementation) Generate(name string, parameters ...*ast.Field) []ast.Decl {
-	rowFieldType := &ast.StarExpr{
-		X: &ast.SelectorExpr{
-			X: &ast.Ident{
-				Name: "sql",
-			},
-			Sel: &ast.Ident{
-				Name: "Row",
-			},
-		},
-	}
-	rowFieldSelector := &ast.SelectorExpr{
-		X: &ast.Ident{
-			Name: "t",
-		},
-		Sel: &ast.Ident{
-			Name: "row",
-		},
-	}
+	rowFieldType := astutil.Expr("*sql.Row")
 
 	_struct := structDeclaration(
 		&ast.Ident{Name: name},
-		typeDeclarationField("row", rowFieldType),
+		typeDeclarationField(rowFieldType, ast.NewIdent("row")),
 	)
 
 	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
@@ -49,7 +33,7 @@ func (t rowScannerImplementation) Generate(name string, parameters ...*ast.Field
 				},
 				Tok: token.DEFINE,
 				Rhs: []ast.Expr{
-					callExpression(rowFieldSelector, "Scan", t.scanArgs()...),
+					astutil.CallExpr(astutil.Expr("t.row.Scan"), t.scanArgs()...),
 				},
 			},
 			Cond: &ast.BinaryExpr{
@@ -63,14 +47,14 @@ func (t rowScannerImplementation) Generate(name string, parameters ...*ast.Field
 			},
 			Body: &ast.BlockStmt{
 				List: []ast.Stmt{
-					returnStatement(&ast.Ident{Name: "err"}),
+					astutil.Return(&ast.Ident{Name: "err"}),
 				},
 			},
 		},
 	).Append(
 		t.assignmentStatements()...,
 	).Append(
-		returnStatement(&ast.Ident{Name: "nil"}),
+		astutil.Return(&ast.Ident{Name: "nil"}),
 	).BlockStmt
 
 	return append([]ast.Decl{_struct}, scanFunctionBuilder(name, parameters, scanFuncBlock))

@@ -1,0 +1,52 @@
+type DynamicCustomTypeRowScanner struct {
+	*sql.Rows
+}
+
+func (t DynamicCustomTypeRowScanner) Scan(arg0 *CustomType) error {
+	var (
+		err	error
+		columns	[]string
+		dst	[]interface{}
+		c1	bool
+		c2	sql.NullBool
+	)
+	if columns, err = t.Rows.Columns(); err != nil {
+		return err
+	}
+	dst = make([]interface{}, 0, len(columns))
+	for _, column := range columns {
+		switch column {
+		case "column1":
+			dst = append(dst, &c1)
+		case "column2":
+			dst = append(dst, &c2)
+		}
+	}
+	if err := t.Rows.Scan(dst...); err != nil {
+		return err
+	}
+	for _, column := range columns {
+		switch column {
+		case "column1":
+			arg0.Field1 = c1
+		case "column2":
+			if c2.Valid {
+				tmp := c2.Bool
+				arg0.Field2 = &tmp
+			}
+		}
+	}
+	return t.Rows.Err()
+}
+func (t DynamicCustomTypeRowScanner) Err() error {
+	return t.Rows.Err()
+}
+func (t DynamicCustomTypeRowScanner) Close() error {
+	if t.Rows == nil {
+		return nil
+	}
+	return t.Rows.Close()
+}
+func (t DynamicCustomTypeRowScanner) Next() bool {
+	return t.Rows.Next()
+}

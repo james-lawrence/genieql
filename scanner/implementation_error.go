@@ -1,6 +1,10 @@
 package scanner
 
-import "go/ast"
+import (
+	"go/ast"
+
+	"bitbucket.org/jatone/genieql/astutil"
+)
 
 // implements the scanner interface. used by the NewScanner function when error
 // is not nil.
@@ -18,13 +22,13 @@ func (t errorScannerImplementation) Generate(name string, parameters ...*ast.Fie
 
 	_struct := structDeclaration(
 		&ast.Ident{Name: name},
-		typeDeclarationField("err", &ast.Ident{Name: "error"}),
+		typeDeclarationField(&ast.Ident{Name: "error"}, ast.NewIdent("err")),
 	)
 
-	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(errFieldSelector)).BlockStmt
-	errFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(errFieldSelector)).BlockStmt
-	closeFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(&ast.Ident{Name: "nil"})).BlockStmt
-	nextFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(returnStatement(&ast.Ident{Name: "false"})).BlockStmt
+	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(astutil.Return(errFieldSelector)).BlockStmt
+	errFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(astutil.Return(errFieldSelector)).BlockStmt
+	closeFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(astutil.Return(&ast.Ident{Name: "nil"})).BlockStmt
+	nextFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(astutil.Return(&ast.Ident{Name: "false"})).BlockStmt
 
 	funcDecls := Functions{Parameters: parameters}.Generate(name, scanFuncBlock, errFuncBlock, closeFuncBlock)
 	funcDecls = append(funcDecls, nextFuncBuilder(name, nextFuncBlock))

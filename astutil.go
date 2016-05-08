@@ -13,23 +13,29 @@ import (
 	"strings"
 )
 
+type errorString string
+
+func (t errorString) Error() string {
+	return string(t)
+}
+
 // ErrPackageNotFound returned when the requested package cannot be located
 // within the given context.
-var ErrPackageNotFound = fmt.Errorf("package not found")
+const ErrPackageNotFound = errorString("package not found")
 
 // ErrAmbiguousPackage returned when the requested package is located multiple
 // times within the given context.
-var ErrAmbiguousPackage = fmt.Errorf("ambiguous package, found multiple matches within the provided context")
+const ErrAmbiguousPackage = errorString("ambiguous package, found multiple matches within the provided context")
 
 // ErrDeclarationNotFound returned when the requested declaration could not be located.
-var ErrDeclarationNotFound = fmt.Errorf("declaration not found")
+const ErrDeclarationNotFound = errorString("declaration not found")
 
 // ErrAmbiguousDeclaration returned when the requested declaration was located in multiple
 // locations.
-var ErrAmbiguousDeclaration = fmt.Errorf("ambiguous declaration, found multiple matches")
+const ErrAmbiguousDeclaration = errorString("ambiguous declaration, found multiple matches")
 
 // ErrBasicLiteralNotFound returned when the requested literal could not be located.
-var ErrBasicLiteralNotFound = fmt.Errorf("basic literal value not found")
+const ErrBasicLiteralNotFound = errorString("basic literal value not found")
 
 // StrictPackageName only accepts packages that are an exact match.
 func StrictPackageName(name string) func(*ast.Package) bool {
@@ -82,148 +88,82 @@ func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
 	return
 }
 
-// FindUniqueDeclaration searches the provided packages for the unique declaration
+// FindUniqueType searches the provided packages for the unique declaration
 // that matches the ast.Filter.
-func FindUniqueDeclaration(f ast.Filter, packageSet ...*ast.Package) (*ast.GenDecl, error) {
-	found := FilterDeclarations(f, packageSet...)
+func FindUniqueType(f ast.Filter, packageSet ...*ast.Package) (*ast.TypeSpec, error) {
+	found := FilterType(f, packageSet...)
 	x := len(found)
 	switch {
 	case x == 0:
-		return &ast.GenDecl{}, ErrDeclarationNotFound
+		return &ast.TypeSpec{}, ErrDeclarationNotFound
 	case x == 1:
 		return found[0], nil
 	default:
-		return &ast.GenDecl{}, ErrAmbiguousDeclaration
+		return &ast.TypeSpec{}, ErrAmbiguousDeclaration
 	}
 }
 
-// FilterDeclarations searches the provided packages for declarations that match
+// FilterValue searches the provided packages for value specs that match
 // the provided ast.Filter.
-func FilterDeclarations(f ast.Filter, packageSet ...*ast.Package) []*ast.GenDecl {
-	results := []*ast.GenDecl{}
+func FilterValue(f ast.Filter, packageSet ...*ast.Package) []*ast.ValueSpec {
+	results := []*ast.ValueSpec{}
 
 	for _, pkg := range packageSet {
-		// filter out all top level declarations
-		if !FilterPackage(pkg, f) {
-			continue
-		}
-
-		for _, file := range pkg.Files {
-			for _, decl := range file.Decls {
-				if gendecl, ok := decl.(*ast.GenDecl); ok {
-					results = append(results, gendecl)
-				}
+		ast.Inspect(pkg, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.ValueSpec:
+				results = append(results, x)
+				return false
+			case *ast.GenDecl:
+				return ast.FilterDecl(x, f)
+			default:
+				return true
 			}
-		}
+		})
 	}
+
 	return results
+}
+
+// FilterType searches the provided packages for declarations that match
+// the provided ast.Filter.
+func FilterType(f ast.Filter, packageSet ...*ast.Package) []*ast.TypeSpec {
+	types := []*ast.TypeSpec{}
+
+	for _, pkg := range packageSet {
+		ast.Inspect(pkg, func(n ast.Node) bool {
+			typ, ok := n.(*ast.TypeSpec)
+			if ok && f(typ.Name.Name) {
+				types = append(types, typ)
+			}
+
+			return true
+		})
+	}
+
+	return types
 }
 
 // RetrieveBasicLiteralString searches the declarations for a literal string
 // that matches the provided filter.
-func RetrieveBasicLiteralString(f ast.Filter, decl *ast.GenDecl) (string, error) {
-	var valueSpec *ast.ValueSpec
-
-	ast.Inspect(decl, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.ValueSpec:
-			valueSpec = x
-			return false
-		case *ast.GenDecl:
-			return ast.FilterDecl(x, f)
-		default:
-			return false
+func RetrieveBasicLiteralString(f ast.Filter, packageSet ...*ast.Package) (string, error) {
+	valueSpecs := FilterValue(f, packageSet...)
+	switch len(valueSpecs) {
+	case 0:
+		// fallthrough
+	case 1:
+		valueSpec := valueSpecs[0]
+		for idx, v := range valueSpec.Values {
+			basicLit, ok := v.(*ast.BasicLit)
+			if ok && basicLit.Kind == token.STRING && f(valueSpec.Names[idx].Name) {
+				return strings.Trim(basicLit.Value, "`"), nil
+			}
 		}
-	})
-
-	if valueSpec == nil {
-		return "", ErrBasicLiteralNotFound
-	}
-
-	for idx, v := range valueSpec.Values {
-		basicLit, ok := v.(*ast.BasicLit)
-		if ok && basicLit.Kind == token.STRING && f(valueSpec.Names[idx].Name) {
-			return strings.Trim(basicLit.Value, "`"), nil
-		}
+	default:
+		return "", ErrAmbiguousDeclaration
 	}
 
 	return "", ErrBasicLiteralNotFound
-}
-
-// FilterPackage - trims the ast for Go declarations in place by removing all names
-// that don't pass through the filter f. Ignores struct field and interface method names.
-func FilterPackage(pkg *ast.Package, f ast.Filter) bool {
-	hasDecls := false
-
-	for _, src := range pkg.Files {
-		if FilterFile(src, f) {
-			hasDecls = true
-		}
-	}
-
-	return hasDecls
-}
-
-// FilterFile - trims the ast for Go declaration in place by removing all names
-// that don't pass through the filter f. Ignores struct field and interface method names.
-func FilterFile(src *ast.File, f ast.Filter) bool {
-	j := 0
-	for _, d := range src.Decls {
-		if filterDecl(d, f) {
-			src.Decls[j] = d
-			j++
-		}
-	}
-	src.Decls = src.Decls[0:j]
-	return j > 0
-}
-
-func filterDecl(decl ast.Decl, f ast.Filter) bool {
-	switch d := decl.(type) {
-	case *ast.GenDecl:
-		d.Specs = filterSpecList(d.Specs, f)
-		return len(d.Specs) > 0
-	case *ast.FuncDecl:
-		return f(d.Name.Name)
-	}
-	return false
-}
-
-func filterIdentList(list []*ast.Ident, f ast.Filter) []*ast.Ident {
-	j := 0
-	for _, x := range list {
-		if f(x.Name) {
-			list[j] = x
-			j++
-		}
-	}
-	return list[0:j]
-}
-
-func filterSpec(spec ast.Spec, f ast.Filter) bool {
-	switch s := spec.(type) {
-	case *ast.ValueSpec:
-		s.Names = filterIdentList(s.Names, f)
-		if len(s.Names) > 0 {
-			return true
-		}
-	case *ast.TypeSpec:
-		if f(s.Name.Name) {
-			return true
-		}
-	}
-	return false
-}
-
-func filterSpecList(list []ast.Spec, f ast.Filter) []ast.Spec {
-	j := 0
-	for _, s := range list {
-		if filterSpec(s, f) {
-			list[j] = s
-			j++
-		}
-	}
-	return list[0:j]
 }
 
 // FilterName filter that matches the provided name by the name on a given node.

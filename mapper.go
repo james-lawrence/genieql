@@ -31,12 +31,12 @@ func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Packag
 		return nil, err
 	}
 
-	decl, err := FindUniqueDeclaration(FilterName(t.Type), pkg)
+	typ, err := FindUniqueType(FilterName(t.Type), pkg)
 	if err != nil {
 		return nil, err
 	}
 
-	return ExtractFields(decl.Specs[0]).List, nil
+	return ExtractFields(typ).List, nil
 }
 
 // WriteMapper persists the structure -> result row mapping to disk.
@@ -87,7 +87,6 @@ func (t Mapper) MapColumns(fields []*ast.Field, columns ...string) ([]ColumnMap,
 			if err != nil {
 				return matches, err
 			}
-
 			if matched {
 				matches = append(matches, m)
 				break

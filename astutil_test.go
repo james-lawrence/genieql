@@ -25,7 +25,7 @@ var _ = Describe("Astutil", func() {
 			Expect(p.Name).To(Equal("build"))
 
 			p, err = LocatePackage("does/not/exist", build.Default, StrictPackageName("exist"))
-			Expect(err).To(MatchError(ErrPackageNotFound))
+			Expect(err).To(Equal(ErrPackageNotFound))
 			Expect(p).To(BeNil())
 		})
 	})
@@ -61,11 +61,9 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decls := FilterDeclarations(FilterName("aStruct"), &p)
-			Expect(decls).To(HaveLen(1))
-			Expect(decls[0].Specs).To(HaveLen(1))
-			typeSpec := decls[0].Specs[0].(*ast.TypeSpec)
-			Expect(typeSpec.Name.Name).To(Equal("aStruct"))
+			types := FilterType(FilterName("aStruct"), &p)
+			Expect(types).To(HaveLen(1))
+			Expect(types[0].Name.Name).To(Equal("aStruct"))
 		})
 
 		It("should be able to handle self referential types", func() {
@@ -79,11 +77,9 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decls := FilterDeclarations(FilterName("selfReferential"), &p)
-			Expect(decls).To(HaveLen(1))
-			Expect(decls[0].Specs).To(HaveLen(1))
-			typeSpec := decls[0].Specs[0].(*ast.TypeSpec)
-			Expect(typeSpec.Name.Name).To(Equal("selfReferential"))
+			types := FilterType(FilterName("selfReferential"), &p)
+			Expect(types).To(HaveLen(1))
+			Expect(types[0].Name.Name).To(Equal("selfReferential"))
 		})
 	})
 
@@ -99,11 +95,9 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decl, err := FindUniqueDeclaration(FilterName("aStruct"), &p)
+			typ, err := FindUniqueType(FilterName("aStruct"), &p)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(decl.Specs).To(HaveLen(1))
-			typeSpec := decl.Specs[0].(*ast.TypeSpec)
-			Expect(typeSpec.Name.Name).To(Equal("aStruct"))
+			Expect(typ.Name.Name).To(Equal("aStruct"))
 		})
 
 		It("should return an error if the declaration is ambiguous", func() {
@@ -118,9 +112,9 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decl, err := FindUniqueDeclaration(FilterName("aStruct"), &p)
-			Expect(err).To(MatchError(ErrAmbiguousDeclaration))
-			Expect(decl).To(Equal(&ast.GenDecl{}))
+			typ, err := FindUniqueType(FilterName("aStruct"), &p)
+			Expect(err).To(Equal(ErrAmbiguousDeclaration))
+			Expect(typ).To(Equal(&ast.TypeSpec{}))
 		})
 
 		It("should return an error if the declaration is not found", func() {
@@ -134,9 +128,9 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decl, err := FindUniqueDeclaration(FilterName("DoesNotExist"), &p)
-			Expect(err).To(MatchError(ErrDeclarationNotFound))
-			Expect(decl).To(Equal(&ast.GenDecl{}))
+			typ, err := FindUniqueType(FilterName("DoesNotExist"), &p)
+			Expect(err).To(Equal(ErrDeclarationNotFound))
+			Expect(typ).To(Equal(&ast.TypeSpec{}))
 		})
 	})
 
@@ -233,9 +227,7 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decl, err := FindUniqueDeclaration(FilterName("aConstant"), &p)
-			Expect(err).ToNot(HaveOccurred())
-			value, err := RetrieveBasicLiteralString(FilterName("aConstant"), decl)
+			value, err := RetrieveBasicLiteralString(FilterName("aConstant"), &p)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(value).To(Equal("\"constant string\""))
 		})
@@ -250,10 +242,8 @@ var _ = Describe("Astutil", func() {
 				},
 			}
 
-			decl, err := FindUniqueDeclaration(FilterName("aStruct"), &p)
-			Expect(err).ToNot(HaveOccurred())
-			value, err := RetrieveBasicLiteralString(FilterName("aStruct"), decl)
-			Expect(err).To(MatchError(ErrBasicLiteralNotFound))
+			value, err := RetrieveBasicLiteralString(FilterName("aStruct"), &p)
+			Expect(err).To(Equal(ErrBasicLiteralNotFound))
 			Expect(value).To(Equal(""))
 		})
 	})

@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"bitbucket.org/jatone/genieql/astutil"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -36,8 +37,8 @@ var _ = Describe("Nullable", func() {
 
 		It("should properly determine if the type is nullable and return the proper expression", func() {
 			for _, example := range examples {
-				typ := mustParseExpr(example.typ)
-				myVar := mustParseExpr("myVar")
+				typ := astutil.Expr(example.typ)
+				myVar := astutil.Expr("myVar")
 				rhs, nullable := DefaultNullableTypes(typ, myVar)
 				Expect(nullable).To(Equal(example.nullable), example.typ)
 				Expect(types.ExprString(rhs)).To(Equal(example.resultExpr), example.typ)
@@ -70,7 +71,7 @@ var _ = Describe("Nullable", func() {
 		}
 		It("should properly convert types to their Null Equivalents", func() {
 			for _, test := range typeTable {
-				result := DefaultLookupNullableType(mustParseExpr(test.input))
+				result := DefaultLookupNullableType(astutil.Expr(test.input))
 				Expect(types.ExprString(result)).To(Equal(test.expected), test.input)
 			}
 		})

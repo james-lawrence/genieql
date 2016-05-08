@@ -61,7 +61,7 @@ func (t Generator) Scanner(dst io.Writer, fset *token.FileSet) error {
 	}
 
 	p := genieql.ASTPrinter{}
-	params := []*ast.Field{typeDeclarationField("arg0", &ast.StarExpr{X: &ast.Ident{Name: t.MappingConfig.Type}})}
+	params := []*ast.Field{typeDeclarationField(&ast.StarExpr{X: &ast.Ident{Name: t.MappingConfig.Type}}, ast.NewIdent("arg0"))}
 
 	queryResultColumnsName := interfaceRowName + "Columns"
 	queryResultColumns := columnMapToQuery(columnMap...)
