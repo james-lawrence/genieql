@@ -106,7 +106,8 @@ func (t DynamicScanner) Generate(name string, parameters ...*ast.Field) []ast.De
 }
 
 func (t DynamicScanner) columnMapToVars() []ast.Spec {
-	specs := make([]ast.Spec, 0, len(t.ColumnMaps)+3)
+	specs := make([]ast.Spec, 0, len(t.ColumnMaps)+4)
+	specs = append(specs, astutil.ValueSpec(ast.NewIdent("sql.RawBytes"), ast.NewIdent("ignored")))
 	specs = append(specs, astutil.ValueSpec(ast.NewIdent("error"), ast.NewIdent("err")))
 	specs = append(
 		specs,
@@ -128,22 +129,32 @@ func (t DynamicScanner) columnMapToVars() []ast.Spec {
 	)
 
 	for _, m := range t.ColumnMaps {
-		specs = append(specs, astutil.ValueSpec(t.Driver.LookupNullableType(m.Type), m.LocalVariableExpr()))
+		lookup := composeLookupNullableType(t.Driver.LookupNullableType, DefaultLookupNullableType)
+		specs = append(specs, astutil.ValueSpec(lookup(m.Type), m.LocalVariableExpr()))
 	}
 
 	return specs
 }
 
 func (t DynamicScanner) explodingSwitch() *ast.BlockStmt {
-	body := &ast.BlockStmt{List: make([]ast.Stmt, 0, len(t.ColumnMaps))}
-	for _, m := range t.ColumnMaps {
-		assign := astutil.Assign(
-			astutil.ExprList("dst"),
-			token.ASSIGN,
-			[]ast.Expr{astutil.CallExpr(astutil.Expr("append"), astutil.Expr("dst"), &ast.UnaryExpr{Op: token.AND, X: m.LocalVariableExpr()})},
+	assignment := func(_case []ast.Expr, expr ...ast.Expr) ast.Stmt {
+		return astutil.CaseClause(
+			_case,
+			astutil.Assign(
+				astutil.ExprList("dst"),
+				token.ASSIGN,
+				[]ast.Expr{astutil.CallExpr(astutil.Expr("append"), expr...)},
+			),
 		)
-		body.List = append(body.List, astutil.CaseClause(astutil.ExprList("\""+m.ColumnName+"\""), assign))
 	}
+	body := &ast.BlockStmt{List: make([]ast.Stmt, 0, len(t.ColumnMaps))}
+
+	for _, m := range t.ColumnMaps {
+		assign := &ast.UnaryExpr{Op: token.AND, X: m.LocalVariableExpr()}
+		body.List = append(body.List, assignment(astutil.ExprList("\""+m.ColumnName+"\""), astutil.Expr("dst"), assign))
+	}
+
+	body.List = append(body.List, assignment(nil, astutil.Expr("dst"), astutil.Expr("&ignored")))
 	return body
 }
 
@@ -151,7 +162,12 @@ func (t DynamicScanner) assignmentSwitch(name string) *ast.BlockStmt {
 	body := &ast.BlockStmt{List: make([]ast.Stmt, 0, len(t.ColumnMaps))}
 	for _, m := range t.ColumnMaps {
 		assign := assignmentStatement(m.AssignmentExpr(astutil.Expr(name)), m.LocalVariableExpr(), m.Type, t.Driver.NullableType)
-		body.List = append(body.List, astutil.CaseClause(astutil.ExprList("\""+m.ColumnName+"\""), assign))
+		body.List = append(body.List,
+			astutil.CaseClause(
+				astutil.ExprList("\""+m.ColumnName+"\""),
+				assign,
+			),
+		)
 	}
 	return body
 }

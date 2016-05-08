@@ -1,4 +1,4 @@
-package integration_tests_test
+package examples_test
 
 import (
 	. "bitbucket.org/jatone/genieql/internal/sqlxtest"
@@ -11,7 +11,7 @@ import (
 
 func TestIntegrationTests(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "IntegrationTests Suite")
+	RunSpecs(t, "Exampels Suite")
 }
 
 var TX *sql.Tx
