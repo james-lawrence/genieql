@@ -35,27 +35,3 @@ everything else will be found in godoc.
 
 ## examples
 see the examples directory.
-
-## genieql bootstrap command
-```bash
-genieql bootstrap postgres://username@localhost:5432/databasename?sslmode=disable
-```
-```yml
-// generates this file at $GOPATH/.genieql/default.config
-dialect: postgres
-connectionurl: postgres://jatone@localhost:5432/sso?sslmode=disable
-host: localhost
-port: 5432
-database: databasename
-username: username
-password: ""
-```
-## genieql map command
-```bash
-qlgenie map github.com/soandso/project.MyType snakecase lowercase
-```
-
-## genieql generate command
-```bash
-genieql generate crud --output=mytype_crud_gen.go github.com/soandso/project.Type table
-```
