@@ -5,30 +5,22 @@ import (
 	"log"
 	"path/filepath"
 
-	"gopkg.in/alecthomas/kingpin.v2"
-
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/scanner"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-type staticScanner struct {
-	scanner scannerConfig
-	table   string
+type defaultScanner struct {
+	scanner       scannerConfig
+	table         string
+	interfaceOnly bool
 }
 
-func (t staticScanner) Options() []scannerOption {
-	return []scannerOption{
-		defaultScannerNameFormat("%sStaticScanner"),
-		defaultRowScannerNameFormat("%sStaticRowScanner"),
-		defaultInterfaceNameFormat("%sScanner"),
-		defaultInterfaceRowNameFormat("%sRowScanner"),
-		defaultErrScannerNameFormat("%sErrScanner"),
-	}
-}
-
-func (t *staticScanner) Execute(*kingpin.ParseContext) error {
-	var configuration genieql.Configuration
-	var mappingConfig genieql.MappingConfig
+func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
+	var (
+		configuration genieql.Configuration
+		mappingConfig genieql.MappingConfig
+	)
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 
@@ -55,13 +47,22 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.StaticScanner{
-		Generator: scanner.Generator{
-			MappingConfig: mappingConfig,
-			Fields:        fields,
-			Columns:       details.Columns,
-			Driver:        genieql.MustLookupDriver(configuration.Driver),
-		},
+	generator := scanner.Generator{
+		MappingConfig: mappingConfig,
+		Fields:        fields,
+		Columns:       details.Columns,
+		Driver:        genieql.MustLookupDriver(configuration.Driver),
+	}
+
+	interfaceGen := scanner.InterfaceScannerGenerator{
+		Generator:        generator,
+		InterfaceName:    t.scanner.interfaceName,
+		InterfaceRowName: t.scanner.interfaceRowName,
+		ErrScannerName:   t.scanner.errScannerName,
+	}
+
+	staticGen := scanner.StaticScanner{
+		Generator:        generator,
 		ScannerName:      t.scanner.scannerName,
 		RowScannerName:   t.scanner.scannerRowName,
 		InterfaceName:    t.scanner.interfaceName,
@@ -69,18 +70,27 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		ErrScannerName:   t.scanner.errScannerName,
 	}
 
-	printScanner(t.scanner.output, generator, pkg)
+	gen := genieql.MultiGenerate(interfaceGen, staticGen)
+	if t.interfaceOnly {
+		gen = interfaceGen
+	}
+	printScanner(t.scanner.output, gen, pkg)
 
 	return nil
 }
 
-func (t *staticScanner) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	(&t.scanner).configure(cmd, t.Options()...)
+func (t *defaultScanner) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	(&t.scanner).configure(
+		cmd,
+		staticScanner{}.Options()...,
+	)
 
+	cmd.Flag("interface-only", "only generate the interface").Default("false").BoolVar(&t.interfaceOnly)
 	cmd.Arg(
 		"package.Type",
 		"package prefixed structure we want a scanner for",
 	).Required().StringVar(&t.scanner.packageType)
 	cmd.Arg("table", "name of the table to build the scanner for").Required().StringVar(&t.table)
+
 	return cmd.Action(t.Execute)
 }

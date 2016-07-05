@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"go/ast"
 	"go/format"
-	"go/token"
 	"io"
 
 	"golang.org/x/tools/imports"
@@ -40,11 +39,6 @@ func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser)
 	}
 
 	return dup
-}
-
-// ScannerGenerator interface for scanner generators.
-type ScannerGenerator interface {
-	Scanner(dst io.Writer, fset *token.FileSet) error
 }
 
 // FormatOutput formats and resolves imports for the raw bytes representing a go

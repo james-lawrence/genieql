@@ -51,9 +51,9 @@ var _ = Describe("Scanner", func() {
 		Describe("Build", func() {
 			It("the new scanner function", func() {
 				newScannerFunc := NewScannerFunc{
-					InterfaceName:  "IScanner",
 					ScannerName:    "Scanner",
 					ErrScannerName: "ErrScanner",
+					InterfaceName:  "IScanner",
 				}.Build()
 
 				Expect(printer.Fprint(buffer, fset, newScannerFunc)).ToNot(HaveOccurred())
@@ -66,9 +66,9 @@ var _ = Describe("Scanner", func() {
 		Describe("Build", func() {
 			It("the new scanner function", func() {
 				newRowScannerFunc := NewRowScannerFunc{
-					InterfaceName:  "IRowScanner",
 					ScannerName:    "RowScanner",
 					ErrScannerName: "ErrRowScanner",
+					InterfaceName:  "IRowScanner",
 				}.Build()
 
 				Expect(printer.Fprint(buffer, fset, newRowScannerFunc)).ToNot(HaveOccurred())

@@ -45,8 +45,10 @@ func main() {
 }
 
 func extractPackageType(s string) (string, string) {
-	i := strings.LastIndex(s, ".")
-	return s[:i], s[i+1:]
+	if i := strings.LastIndex(s, "."); i > -1 {
+		return s[:i], s[i+1:]
+	}
+	return "", ""
 }
 
 func configurationDirectory() string {

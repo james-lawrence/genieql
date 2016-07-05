@@ -21,7 +21,7 @@ type mapper struct {
 }
 
 func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
-	mapCmd := app.Command("map", "define mapping configuration for a particular type/table combination")
+	mapCmd := app.Command("map", "define a mapping configuration for a particular type/table combination")
 	mapCmd.Flag("config", "configuration to use").Default("default.config").StringVar(&t.configuration)
 	mapCmd.Flag("include-table-prefix-aliases", "generate additional aliases with the table name prefixed i.e.) my_column -> my_table_my_column").
 		Default("true").BoolVar(&t.includeTablePrefixes)

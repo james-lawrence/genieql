@@ -4,7 +4,6 @@ import (
 	"go/build"
 	"log"
 	"path/filepath"
-	"strings"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -13,29 +12,25 @@ import (
 )
 
 type queryLiteral struct {
-	configName   string
-	packageType  string
-	mapName      string
+	scanner      scannerConfig
 	queryLiteral string
-	scannerName  string
-	output       string
 }
 
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	var configuration genieql.Configuration
 	var mappingConfig genieql.MappingConfig
-	pkgName, typName := extractPackageType(t.packageType)
+	pkgName, typName := extractPackageType(t.scanner.packageType)
 	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.scanner.configName), &configuration); err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mappingConfig); err != nil {
+	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.scanner.mapName, configuration, &mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
 
-	pkg, err := genieql.LocatePackage(queryPkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	pkg, err := genieql.LocatePackage(queryPkgName, build.Default, genieql.StrictPackageName(filepath.Base(queryPkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -60,32 +55,44 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.StaticScanner(scanner.Generator{
-		MappingConfig: mappingConfig,
-		Columns:       columns,
-		Fields:        fields,
-		Name:          strings.Title(t.scannerName),
-		Driver:        genieql.MustLookupDriver(configuration.Driver),
-	})
+	generator := scanner.StaticScanner{
+		Generator: scanner.Generator{
+			MappingConfig: mappingConfig,
+			Columns:       columns,
+			Fields:        fields,
+			Driver:        genieql.MustLookupDriver(configuration.Driver),
+		},
+		ScannerName:      t.scanner.scannerName,
+		RowScannerName:   t.scanner.scannerRowName,
+		InterfaceName:    t.scanner.interfaceName,
+		InterfaceRowName: t.scanner.interfaceRowName,
+		ErrScannerName:   t.scanner.errScannerName,
+	}
 
-	printScanner(t.output, generator, pkg)
+	printScanner(t.scanner.output, generator, pkg)
 
 	return nil
 }
 
 func (t *queryLiteral) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	query := cmd.Action(t.Execute)
-	query.Flag("config", "name of configuration file to use").Default("default.config").
-		StringVar(&t.configName)
-	query.Flag("mapping", "name of the map to use").Default("default").StringVar(&t.mapName)
-	query.Flag("output", "path of output file").Default("").StringVar(&t.output)
-	query.Arg("scanner-name", "name of the scanner").Required().StringVar(&t.scannerName)
-	query.Arg(
+	(&t.scanner).configure(cmd, t.Options()...)
+
+	cmd.Arg(
 		"package.Type",
 		"package prefixed structure we want a scanner for",
-	).Required().StringVar(&t.packageType)
-
-	query.Arg("package.Query", "package prefixed constant we want to use the query").
+	).Required().StringVar(&t.scanner.packageType)
+	cmd.Arg("package.Query", "package prefixed constant we want to use the query").
 		Required().StringVar(&t.queryLiteral)
-	return query
+
+	return cmd.Action(t.Execute)
+}
+
+func (t queryLiteral) Options() []scannerOption {
+	return []scannerOption{
+		defaultScannerNameFormat("%sQueryScanner"),
+		defaultRowScannerNameFormat("%sQueryRowScanner"),
+		defaultInterfaceNameFormat("%sScanner"),
+		defaultInterfaceRowNameFormat("%sRowScanner"),
+		defaultErrScannerNameFormat("%sErrScanner"),
+	}
 }

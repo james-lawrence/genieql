@@ -54,14 +54,14 @@ func BuildRowsScannerInterface(name string, scannerParams ...*ast.Field) ast.Dec
 // NewScannerFunc structure that builds the function to get a scanner
 // after executing a query.
 type NewScannerFunc struct {
-	InterfaceName  string
 	ScannerName    string
+	InterfaceName  string
 	ErrScannerName string
 }
 
 // Build - generates a function declaration for building the scanner.
 func (t NewScannerFunc) Build() *ast.FuncDecl {
-	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
+	name := ast.NewIdent(fmt.Sprintf("New%s", t.ScannerName))
 	rowsParam := typeDeclarationField(astutil.Expr("*sql.Rows"), ast.NewIdent("rows"))
 	errParam := typeDeclarationField(&ast.Ident{Name: "error"}, ast.NewIdent("err"))
 	result := unnamedFields(t.InterfaceName)
@@ -105,12 +105,8 @@ func (t NewScannerFunc) Build() *ast.FuncDecl {
 						Type: &ast.Ident{Name: t.ScannerName},
 						Elts: []ast.Expr{
 							&ast.KeyValueExpr{
-								Key: &ast.Ident{
-									Name: "rows",
-								},
-								Value: &ast.Ident{
-									Name: "rows",
-								},
+								Key:   ast.NewIdent("Rows"),
+								Value: ast.NewIdent("rows"),
 							},
 						},
 					},
@@ -124,14 +120,14 @@ func (t NewScannerFunc) Build() *ast.FuncDecl {
 // NewRowScannerFunc structure that builds the function to get a scanner after
 // executing a query row.
 type NewRowScannerFunc struct {
-	InterfaceName  string
 	ScannerName    string
+	InterfaceName  string
 	ErrScannerName string
 }
 
 // Build - generates a function declaration for building the scanner.
 func (t NewRowScannerFunc) Build() *ast.FuncDecl {
-	name := &ast.Ident{Name: fmt.Sprintf("New%s", t.InterfaceName)}
+	name := ast.NewIdent(fmt.Sprintf("New%s", t.ScannerName))
 	rowsParam := typeDeclarationField(astutil.Expr("*sql.Row"), ast.NewIdent("row"))
 	result := unnamedFields(t.InterfaceName)
 	body := &ast.BlockStmt{
@@ -142,12 +138,8 @@ func (t NewRowScannerFunc) Build() *ast.FuncDecl {
 						Type: &ast.Ident{Name: t.ScannerName},
 						Elts: []ast.Expr{
 							&ast.KeyValueExpr{
-								Key: &ast.Ident{
-									Name: "row",
-								},
-								Value: &ast.Ident{
-									Name: "row",
-								},
+								Key:   ast.NewIdent("row"),
+								Value: ast.NewIdent("row"),
 							},
 						},
 					},

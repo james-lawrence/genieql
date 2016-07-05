@@ -1,11 +1,11 @@
 type Scanner struct {
-	rows *sql.Rows
+	Rows *sql.Rows
 }
 
 func (t Scanner) Scan(arg0 *CustomType) error {
 	var c1 bool
 	var c2 sql.NullBool
-	if err := t.rows.Scan(&c1, &c2); err != nil {
+	if err := t.Rows.Scan(&c1, &c2); err != nil {
 		return err
 	}
 	arg0.Field1 = c1
@@ -13,17 +13,17 @@ func (t Scanner) Scan(arg0 *CustomType) error {
 		tmp := c2.Bool
 		arg0.Field2 = &tmp
 	}
-	return t.rows.Err()
+	return t.Rows.Err()
 }
 func (t Scanner) Err() error {
-	return t.rows.Err()
+	return t.Rows.Err()
 }
 func (t Scanner) Close() error {
-	if t.rows == nil {
+	if t.Rows == nil {
 		return nil
 	}
-	return t.rows.Close()
+	return t.Rows.Close()
 }
 func (t Scanner) Next() bool {
-	return t.rows.Next()
+	return t.Rows.Next()
 }

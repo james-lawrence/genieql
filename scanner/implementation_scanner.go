@@ -14,11 +14,11 @@ type scannerImplementation struct {
 }
 
 func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) []ast.Decl {
-	rowsFieldType := astutil.Expr("*sql.Rows")
-
 	_struct := structDeclaration(
-		&ast.Ident{Name: name},
-		typeDeclarationField(rowsFieldType, ast.NewIdent("rows")),
+		ast.NewIdent(name),
+		typeDeclarationField(
+			astutil.Expr("*sql.Rows"), ast.NewIdent("Rows"),
+		),
 	)
 
 	scanFuncBlock := BlockStmtBuilder{&ast.BlockStmt{}}.Append(
@@ -28,7 +28,7 @@ func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) [
 			astutil.Assign(
 				astutil.ExprList("err"),
 				token.DEFINE,
-				[]ast.Expr{astutil.CallExpr(astutil.Expr("t.rows.Scan"), t.scanArgs()...)},
+				[]ast.Expr{astutil.CallExpr(astutil.Expr("t.Rows.Scan"), t.scanArgs()...)},
 			),
 			astutil.Expr("err != nil"),
 			astutil.Block(
@@ -39,25 +39,25 @@ func (t scannerImplementation) Generate(name string, parameters ...*ast.Field) [
 	).Append(
 		t.assignmentStatements()...,
 	).Append(
-		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Err"))),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.Rows.Err"))),
 	).BlockStmt
 
 	errFuncBlock := astutil.Block(
-		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Err"))),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.Rows.Err"))),
 	)
 
 	closeFuncBlock := astutil.Block(
 		astutil.If(
 			nil,
-			astutil.Expr("t.rows == nil"),
+			astutil.Expr("t.Rows == nil"),
 			astutil.Block(astutil.Return(astutil.Expr("nil"))),
 			nil,
 		),
-		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Close"))),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.Rows.Close"))),
 	)
 
 	nextFuncBlock := astutil.Block(
-		astutil.Return(astutil.CallExpr(astutil.Expr("t.rows.Next"))),
+		astutil.Return(astutil.CallExpr(astutil.Expr("t.Rows.Next"))),
 	)
 
 	funcDecls := Functions{Parameters: parameters}.Generate(name, scanFuncBlock, errFuncBlock, closeFuncBlock)
