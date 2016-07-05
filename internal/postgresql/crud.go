@@ -41,7 +41,11 @@ func predicate(offset int, predicates ...string) ([]string, int) {
 		clauses = append(clauses, fmt.Sprintf("%s = $%d", predicate, offset+idx))
 	}
 
-	return clauses, len(clauses) + 1
+	if len(clauses) == 0 {
+		clauses = append(clauses, matchAllClause)
+	}
+
+	return clauses, len(predicates) + 1
 }
 
 func placeholders(offset int, columns []placeholder) ([]string, int) {
@@ -102,3 +106,4 @@ const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"
 const insertTmpl = "INSERT INTO %s (%s) VALUES (%s) RETURNING %s"
 const updateTmpl = "UPDATE %s SET %s WHERE %s RETURNING %s"
 const deleteTmpl = "DELETE FROM %s WHERE %s RETURNING %s"
+const matchAllClause = "'t'"

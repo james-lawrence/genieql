@@ -67,14 +67,16 @@ func (t crudWriter) Write(fset *token.FileSet) error {
 		}
 	}
 
-	constName = fmt.Sprintf("%sUpdateByID", t.prefix)
-	if err := Update(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
-		return err
-	}
+	if len(t.details.Naturalkey) > 0 {
+		constName = fmt.Sprintf("%sUpdateByID", t.prefix)
+		if err := Update(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
+			return err
+		}
 
-	constName = fmt.Sprintf("%sDeleteByID", t.prefix)
-	if err := Delete(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
-		return err
+		constName = fmt.Sprintf("%sDeleteByID", t.prefix)
+		if err := Delete(t.details).Build(constName, t.details.Naturalkey).Generate(t.out, fset); err != nil {
+			return err
+		}
 	}
 
 	return nil

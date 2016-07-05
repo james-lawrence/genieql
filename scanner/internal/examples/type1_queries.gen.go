@@ -13,5 +13,5 @@ const Type1FindByField5 = `SELECT field1,field2,field3,field4,field5,field6,fiel
 const Type1FindByField6 = `SELECT field1,field2,field3,field4,field5,field6,field7,field8 FROM type1 WHERE field6 = $1`
 const Type1FindByField7 = `SELECT field1,field2,field3,field4,field5,field6,field7,field8 FROM type1 WHERE field7 = $1`
 const Type1FindByField8 = `SELECT field1,field2,field3,field4,field5,field6,field7,field8 FROM type1 WHERE field8 = $1`
-const Type1UpdateByID = `UPDATE type1 SET field1 = $1, field2 = $2, field3 = $3, field4 = $4, field5 = $5, field6 = $6, field7 = $7, field8 = $8 WHERE  RETURNING field1,field2,field3,field4,field5,field6,field7,field8`
-const Type1DeleteByID = `DELETE FROM type1 WHERE  RETURNING field1,field2,field3,field4,field5,field6,field7,field8`
+const Type1UpdateByID = `UPDATE type1 SET field1 = $1, field2 = $2, field3 = $3, field4 = $4, field5 = $5, field6 = $6, field7 = $7, field8 = $8 WHERE 't' RETURNING field1,field2,field3,field4,field5,field6,field7,field8`
+const Type1DeleteByID = `DELETE FROM type1 WHERE 't' RETURNING field1,field2,field3,field4,field5,field6,field7,field8`
