@@ -32,12 +32,9 @@ everything else will be found in godoc.
 - map - writes a configuration file describing how to map a structure to a database column.
 - generate - used to generate queries. main use case is to bootstrap a project quickly.
 - scanner - used to create scanners.
-## example usage
-```go
-package mypackage
-//go:generate genieql map github.com/mypackage.MyType
-//go:generate genieql generate crud --output=mytype_crud_gen.go github.com/mypackage.MyType my_table
-```
+
+## examples
+see the examples directory.
 
 ## genieql bootstrap command
 ```bash
