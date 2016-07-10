@@ -84,6 +84,7 @@ func (t *generateCrud) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 		"config",
 		"name of configuration file to use",
 	).Default("default.config").StringVar(&t.configName)
+
 	crud.Flag(
 		"mapping",
 		"name of the map to use",

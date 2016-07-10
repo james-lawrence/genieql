@@ -22,14 +22,22 @@ type generateInsert struct {
 	packageType string
 	table       string
 	output      string
+	mapName     string
 	defaults    []string
 }
 
 func (t *generateInsert) Execute(*kingpin.ParseContext) error {
-	var configuration genieql.Configuration
+	var (
+		configuration genieql.Configuration
+		mapping       genieql.MappingConfig
+	)
 	pkgName, typName := extractPackageType(t.packageType)
 
 	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+		return err
+	}
+
+	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mapping); err != nil {
 		return err
 	}
 
@@ -38,8 +46,15 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
+	fields, err := mapping.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	if err != nil {
+		log.Println("type fields error")
+		log.Fatalln(err)
+	}
+
 	constName := fmt.Sprintf("%sInsert%s", typName, t.constSuffix)
 
+	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
 	fset := token.NewFileSet()
 	buffer := bytes.NewBuffer([]byte{})
 	formatted := bytes.NewBuffer([]byte{})
@@ -76,6 +91,11 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 		"config",
 		"name of configuration file to use",
 	).Default("default.config").StringVar(&t.configName)
+
+	insert.Flag(
+		"mapping",
+		"name of the map to use",
+	).Default("default").StringVar(&t.mapName)
 
 	insert.Flag(
 		"suffix",
