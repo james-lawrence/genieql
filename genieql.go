@@ -19,21 +19,33 @@ const Preface = `
 
 // TableDetails provides information about the table.
 type TableDetails struct {
-	Dialect    Dialect
-	Table      string
-	Naturalkey []string
-	Columns    []string
+	Dialect         Dialect
+	Table           string
+	Naturalkey      []string
+	Columns         []string
+	UnmappedColumns []string
 }
 
 // OnlyMappedColumns filters out columns from the current TableDetails that do not
 // exist in the destination structure. Mainly used for generating queries.
 func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser) TableDetails {
 	dup := t
+
+	if len(fields) == 0 {
+		dup.Columns = []string{}
+		dup.UnmappedColumns = append(dup.UnmappedColumns, t.Columns...)
+		return dup
+	}
+
 	dup.Columns = make([]string, 0, len(t.Columns))
+	dup.UnmappedColumns = make([]string, 0, len(t.Columns))
+
 	for _, column := range t.Columns {
 		for _, field := range fields {
 			if _, matched, _ := MapFieldToColumn(column, 0, field, aliases...); matched {
 				dup.Columns = append(dup.Columns, column)
+			} else {
+				dup.UnmappedColumns = append(dup.UnmappedColumns, column)
 			}
 		}
 	}
