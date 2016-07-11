@@ -7,68 +7,42 @@ import (
 	"sort"
 )
 
-// ConnectDB connects to a database based on the configuration.
-func ConnectDB(config Configuration) (*sql.DB, error) {
-	log.Printf("connection %s\n", config.ConnectionURL)
-	return sql.Open(config.Dialect, config.ConnectionURL)
+type ColumnInfo struct {
+	Name       string
+	Nullable   bool
+	PrimaryKey bool
+	Type       string
 }
 
-// Columns convience function, executes ExtractColumns followed by AmbiguityCheck.
-func Columns(db *sql.DB, query string, args ...interface{}) ([]string, error) {
+type ColumnInfoSet []ColumnInfo
+
+// ColumnNames returns the column names inside the ColumnInfoSet.
+func (t ColumnInfoSet) ColumnNames() []string {
 	var columns []string
-	var err error
-	if columns, err = ExtractColumns(db, query); err != nil {
-		return columns, err
+
+	for _, column := range t {
+		columns = append(columns, column.Name)
 	}
 
-	return columns, AmbiguityCheck(columns...)
-}
-
-// ExtractColumns executes a query and extracts the resulting set of columns from
-// the database.
-func ExtractColumns(db *sql.DB, query string, args ...interface{}) (columns []string, err error) {
-	var rows *sql.Rows
-	rows, err = db.Query(query, args...)
-	if err != nil {
-		return
-	}
-	defer rows.Close()
-
-	columns, err = rows.Columns()
-	return
-}
-
-// ExtractPrimaryKey executes the query to determine the primary keys of a table.
-func ExtractPrimaryKey(db *sql.DB, query string, args ...interface{}) ([]string, error) {
-	var rows *sql.Rows
-	var columns []string
-	var err error
-
-	rows, err = db.Query(query, args...)
-	if err != nil {
-		return columns, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var column string
-		if err := rows.Scan(&column); err != nil {
-			return columns, err
-		}
-		columns = append(columns, column)
-	}
-
-	return columns, nil
+	return columns
 }
 
 // AmbiguityCheck checks the provided columns for duplicated values.
-func AmbiguityCheck(columns ...string) error {
-	sort.Strings(columns)
+func (t ColumnInfoSet) AmbiguityCheck() error {
+	var (
+		columnNames []string
+	)
+
+	for _, column := range t {
+		columnNames = append(columnNames, column.Name)
+	}
+
+	sort.Strings(columnNames)
 
 	ambiguousColumns := []string{}
 
-	if len(columns) > 0 {
-		previous, tail := columns[0], columns[1:]
+	if len(columnNames) > 0 {
+		previous, tail := columnNames[0], columnNames[1:]
 		lastMatch := ""
 		for _, current := range tail {
 			if previous == current && lastMatch != current {
@@ -86,24 +60,36 @@ func AmbiguityCheck(columns ...string) error {
 	return nil
 }
 
+// ConnectDB connects to a database based on the configuration.
+func ConnectDB(config Configuration) (*sql.DB, error) {
+	log.Printf("connection %s\n", config.ConnectionURL)
+	return sql.Open(config.Dialect, config.ConnectionURL)
+}
+
 // LookupTableDetails determines the table details for the given dialect.
 func LookupTableDetails(db *sql.DB, dialect Dialect, table string) (TableDetails, error) {
-	var err error
-	var columns []string
-	var naturalKey []string
+	var (
+		err         error
+		columnNames []string
+		naturalKey  []string
+		columns     []ColumnInfo
+	)
 
-	if columns, err = Columns(db, dialect.ColumnQuery(table)); err != nil {
+	if columns, err = dialect.ColumnInformation(db, table); err != nil {
 		return TableDetails{}, err
 	}
 
-	if naturalKey, err = ExtractPrimaryKey(db, dialect.PrimaryKeyQuery(table)); err != nil {
-		return TableDetails{}, err
+	for _, column := range columns {
+		columnNames = append(columnNames, column.Name)
+		if column.PrimaryKey {
+			naturalKey = append(naturalKey, column.Name)
+		}
 	}
 
 	return TableDetails{
 		Dialect:    dialect,
 		Table:      table,
 		Naturalkey: naturalKey,
-		Columns:    columns,
+		Columns:    columnNames,
 	}, nil
 }

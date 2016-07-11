@@ -1,6 +1,7 @@
 package genieql
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -28,8 +29,8 @@ type Dialect interface {
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates []string) string
 	Delete(table string, columns, predicates []string) string
-	ColumnQuery(table string) string
-	PrimaryKeyQuery(table string) string
+	ColumnInformation(db *sql.DB, table string) ([]ColumnInfo, error)
+	ColumnInformationForQuery(db *sql.DB, query string) ([]ColumnInfo, error)
 }
 
 type dialectRegistry map[string]Dialect

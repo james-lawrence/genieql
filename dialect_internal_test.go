@@ -1,6 +1,8 @@
 package genieql
 
 import (
+	"database/sql"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -74,4 +76,12 @@ func (t testDialect) ColumnQuery(table string) string {
 
 func (t testDialect) PrimaryKeyQuery(table string) string {
 	return t.primarykeyq
+}
+
+func (t testDialect) ColumnInformation(db *sql.DB, table string) ([]ColumnInfo, error) {
+	return []ColumnInfo{}, nil
+}
+
+func (t testDialect) ColumnInformationForQuery(db *sql.DB, query string) ([]ColumnInfo, error) {
+	return []ColumnInfo{}, nil
 }

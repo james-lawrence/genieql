@@ -45,7 +45,12 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	columns, err := genieql.Columns(db, query)
+	dialect, err := genieql.LookupDialect(configuration.Dialect)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	columns, err := dialect.ColumnInformationForQuery(db, query)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -58,7 +63,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	generator := scanner.StaticScanner{
 		Generator: scanner.Generator{
 			MappingConfig: mappingConfig,
-			Columns:       columns,
+			Columns:       genieql.ColumnInfoSet(columns).ColumnNames(),
 			Fields:        fields,
 			Driver:        genieql.MustLookupDriver(configuration.Driver),
 		},

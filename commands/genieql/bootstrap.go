@@ -30,7 +30,8 @@ func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
 	bootstrap := app.Command("bootstrap", "build a instance of qlgenie")
 	bootstrap.Flag("output-directory", "directory to place the configuration file").Default(configurationDirectory()).StringVar(&t.outputfilepath)
 	bootstrap.Flag("output-file", "filename of the configuration directory").Default("default.config").StringVar(&t.outputfile)
-	bootstrap.Flag("driver", "name of the underlying driver for the database, usually the import url i.e.) github.com/lib/pq").Required().StringVar(&t.driver)
+	bootstrap.Flag("driver", "name of the underlying driver for the database, usually the import url").
+		Default("github.com/lib/pq").StringVar(&t.driver)
 	bootstrap.Arg("uri", "uri for the database qlgenie will work with").Required().URLVar(&t.dburi)
 
 	return bootstrap
