@@ -62,10 +62,10 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 
 	generator := scanner.StaticScanner{
 		Generator: scanner.Generator{
-			MappingConfig: mappingConfig,
-			Columns:       genieql.ColumnInfoSet(columns).ColumnNames(),
-			Fields:        fields,
-			Driver:        genieql.MustLookupDriver(configuration.Driver),
+			Mappings: []genieql.MappingConfig{mappingConfig},
+			Columns:  genieql.ColumnInfoSet(columns).ColumnNames(),
+			Fields:   fields,
+			Driver:   genieql.MustLookupDriver(configuration.Driver),
 		},
 		ScannerName:      t.scanner.scannerName,
 		RowScannerName:   t.scanner.scannerRowName,

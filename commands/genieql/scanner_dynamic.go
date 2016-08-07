@@ -56,10 +56,10 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 
 	generator := scanner.DynamicScannerGenerator{
 		Generator: scanner.Generator{
-			MappingConfig: mappingConfig,
-			Fields:        fields,
-			Columns:       details.Columns,
-			Driver:        genieql.MustLookupDriver(configuration.Driver),
+			Mappings: []genieql.MappingConfig{mappingConfig},
+			Fields:   fields,
+			Columns:  details.Columns,
+			Driver:   genieql.MustLookupDriver(configuration.Driver),
 		},
 		ScannerName:      t.scanner.scannerName,
 		InterfaceName:    t.scanner.interfaceName,

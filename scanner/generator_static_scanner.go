@@ -21,14 +21,11 @@ type StaticScanner struct {
 // Generate - implementation of the genieql.Generator interface.
 func (t StaticScanner) Generate(dst io.Writer, fset *token.FileSet) error {
 	var (
-		err error
+		err       error
+		columnMap []genieql.ColumnMap
 	)
 
-	mapper := t.MappingConfig.Mapper()
-
-	columnMap, err := mapper.MapColumns(t.Fields, t.Columns...)
-
-	if err != nil {
+	if columnMap, err = t.Generator.mapColumns(); err != nil {
 		log.Println("failed to map columns", err)
 		return err
 	}
@@ -37,6 +34,7 @@ func (t StaticScanner) Generate(dst io.Writer, fset *token.FileSet) error {
 		ColumnMaps: columnMap,
 		Driver:     t.Driver,
 	}
+
 	rowscanner := rowScannerImplementation{
 		ColumnMaps: columnMap,
 		Driver:     t.Driver,
@@ -66,9 +64,9 @@ func (t StaticScanner) Generate(dst io.Writer, fset *token.FileSet) error {
 	p.Fprintf(dst, "\n\n")
 	p.FprintAST(dst, fset, genieql.QueryLiteral(queryResultColumnsName, queryResultColumns))
 	p.Fprintf(dst, "\n\n")
-	p.FprintAST(dst, fset, scanner.Generate(t.ScannerName, params))
+	p.FprintAST(dst, fset, scanner.Generate(t.ScannerName, params...))
 	p.Fprintf(dst, "\n\n")
-	p.FprintAST(dst, fset, rowscanner.Generate(t.RowScannerName, params))
+	p.FprintAST(dst, fset, rowscanner.Generate(t.RowScannerName, params...))
 	p.Fprintf(dst, "\n\n")
 
 	return p.Err()

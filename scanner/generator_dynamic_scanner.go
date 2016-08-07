@@ -1,14 +1,11 @@
 package scanner
 
 import (
-	"fmt"
-	"go/ast"
 	"go/token"
 	"io"
 	"log"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
 )
 
 // DynamicScannerGenerator - generates a dynamic scanner.
@@ -24,19 +21,18 @@ type DynamicScannerGenerator struct {
 
 // Generate - implementation of the genieql.Generator interface.
 func (t DynamicScannerGenerator) Generate(dst io.Writer, fset *token.FileSet) error {
-	var err error
-	mapper := t.MappingConfig.Mapper()
-	columnMap, err := mapper.MapColumns(t.Fields, t.Columns...)
-	if err != nil {
+	var (
+		err       error
+		columnMap []genieql.ColumnMap
+	)
+	// mapper := t.Mappings[0].Mapper()
+	// columnMap, err := mapper.MapColumns(t.Fields, t.Columns...)
+	if columnMap, err = t.mapColumns(); err != nil {
 		log.Println("failed to map columns", err)
 		return err
 	}
 
 	p := genieql.ASTPrinter{}
-	arg0 := typeDeclarationField(
-		astutil.Expr(fmt.Sprintf("*%s", t.MappingConfig.Type)),
-		ast.NewIdent("arg0"),
-	)
 
 	scanner := DynamicScanner{
 		ColumnMaps: columnMap,
@@ -51,7 +47,7 @@ func (t DynamicScannerGenerator) Generate(dst io.Writer, fset *token.FileSet) er
 
 	p.FprintAST(dst, fset, scannerFunct.Build())
 	p.Fprintf(dst, "\n\n")
-	p.FprintAST(dst, fset, scanner.Generate(t.ScannerName, arg0))
+	p.FprintAST(dst, fset, scanner.Generate(t.ScannerName, t.params()...))
 
 	return p.Err()
 }

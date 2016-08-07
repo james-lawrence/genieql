@@ -30,12 +30,8 @@ func (t ColumnInfoSet) ColumnNames() []string {
 // AmbiguityCheck checks the provided columns for duplicated values.
 func (t ColumnInfoSet) AmbiguityCheck() error {
 	var (
-		columnNames []string
+		columnNames = t.ColumnNames()
 	)
-
-	for _, column := range t {
-		columnNames = append(columnNames, column.Name)
-	}
 
 	sort.Strings(columnNames)
 

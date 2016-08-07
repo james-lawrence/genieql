@@ -1,0 +1,65 @@
+type AccountsScanner func(bool, Type1)
+
+type AccountLookupByID func(id int) AccountsScanner
+type AccountLookupByName func(name string) AccountsScanner
+type AccountFindByProviderAfterDate func(pid int, after time.Time) AccountsScanner
+type AccountInsert(n ...Account) AccountsScanner
+
+type QueryExecer interface {
+	Exec(args ...interface{}) (sql.Result, error)
+	Query(args ...interface{}) (*sql.Rows, error)
+	QueryRow(args ...interface{}) *sql.Row
+}
+
+type FindAccountsScanner struct {
+	rows *sql.Rows
+	err  error
+}
+
+func (t FindAccountsScanner) Scan(arg0 *bool, arg1 *Type1) error {
+	if t.err != nil {
+		return t.err
+	}
+
+	//....
+
+	return nil
+}
+
+func (t FindAccountsScanner) Next() bool {
+	if t.err != nil {
+		return false
+	}
+
+	return t.rows.Next()
+}
+
+func (t FindAccountsScanner) Close() error {
+	if t.rows == nil {
+		return nil
+	}
+
+	return t.rows.Close()
+}
+
+func (t FindAccountsScanner) Err() error {
+	if t.err != nil {
+		return t.err
+	}
+
+	return t.rows.Err()
+}
+
+func NewFindAccountsScanner(query QueryExecer, a, b, c int, d, e, f string) FunctionScanner {
+	var (
+		r   *sql.Rows
+		err error
+	)
+
+	r, err = query.Query(a, b, c, d, e, f)
+
+	return FunctionScanner{
+		rows: r,
+		err:  err,
+	}
+}

@@ -48,10 +48,10 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	}
 
 	generator := scanner.Generator{
-		MappingConfig: mappingConfig,
-		Fields:        fields,
-		Columns:       details.Columns,
-		Driver:        genieql.MustLookupDriver(configuration.Driver),
+		Mappings: []genieql.MappingConfig{mappingConfig},
+		Fields:   fields,
+		Columns:  details.Columns,
+		Driver:   genieql.MustLookupDriver(configuration.Driver),
 	}
 
 	interfaceGen := scanner.InterfaceScannerGenerator{

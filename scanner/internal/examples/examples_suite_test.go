@@ -11,7 +11,7 @@ import (
 
 func TestIntegrationTests(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Exampels Suite")
+	RunSpecs(t, "Examples Suite")
 }
 
 var TX *sql.Tx
