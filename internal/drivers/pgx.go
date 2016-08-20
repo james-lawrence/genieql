@@ -8,13 +8,13 @@ import (
 	"bitbucket.org/jatone/genieql"
 )
 
-// implements the lib/pq driver https://github.com/lib/pq
+// implements the pgx postgresql driver github.com/jackc/pgx
 
 func init() {
-	genieql.RegisterDriver("github.com/lib/pq", genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
+	genieql.RegisterDriver("github.com/jackc/pgx", genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
 }
 
-func pqNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
+func pgxNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
 	var expr ast.Expr
 	ok := true
 
@@ -38,7 +38,7 @@ func pqNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
 	return expr, ok
 }
 
-func pqLookupNullableType(typ ast.Expr) ast.Expr {
+func pgxLookupNullableType(typ ast.Expr) ast.Expr {
 	// if its not a starexpr its not nullable
 	x, ok := typ.(*ast.StarExpr)
 	if !ok {

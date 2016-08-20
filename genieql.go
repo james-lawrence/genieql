@@ -2,7 +2,6 @@
 package genieql
 
 import (
-	"database/sql"
 	"go/ast"
 	"go/format"
 	"io"
@@ -73,21 +72,17 @@ func FormatOutput(dst io.Writer, raw []byte) error {
 // LoadInformation loads table information based on the configuration and
 // table name.
 func LoadInformation(configuration Configuration, table string) (TableDetails, error) {
-	var err error
-	var db *sql.DB
-	var dialect Dialect
-	var details TableDetails
+	var (
+		err     error
+		dialect Dialect
+		details TableDetails
+	)
 
-	if db, err = ConnectDB(configuration); err != nil {
+	if dialect, err = LookupDialect(configuration); err != nil {
 		return details, err
 	}
 
-	dialect, err = LookupDialect(configuration.Dialect)
-	if err != nil {
-		return details, err
-	}
-
-	details, err = LookupTableDetails(db, dialect, table)
+	details, err = LookupTableDetails(dialect, table)
 
 	return details, err
 }

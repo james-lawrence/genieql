@@ -16,7 +16,8 @@ type InterfaceScannerGenerator struct {
 }
 
 // Generate - implementation of the genieql.Generator interface.
-func (t InterfaceScannerGenerator) Generate(dst io.Writer, fset *token.FileSet) error {
+func (t InterfaceScannerGenerator) Generate(dst io.Writer) error {
+	fset := token.NewFileSet()
 	errscanner := errorScannerImplementation{}
 	params := t.Generator.params()
 	p := genieql.ASTPrinter{}

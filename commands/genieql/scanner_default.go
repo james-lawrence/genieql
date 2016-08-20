@@ -2,10 +2,13 @@ package main
 
 import (
 	"go/build"
+	"go/token"
 	"log"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/scanner"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -20,6 +23,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	var (
 		configuration genieql.Configuration
 		mappingConfig genieql.MappingConfig
+		fset          = token.NewFileSet()
 	)
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
@@ -74,7 +78,20 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	if t.interfaceOnly {
 		gen = interfaceGen
 	}
-	printScanner(t.scanner.output, gen, pkg)
+
+	hg := headerGenerator{
+		fset: fset,
+		pkg:  pkg,
+		args: os.Args[1:],
+	}
+
+	pg := printGenerator{
+		delegate: genieql.MultiGenerate(hg, gen),
+	}
+
+	if err = commands.WriteStdoutOrFile(pg, t.scanner.output, commands.DefaultWriteFlags); err != nil {
+		log.Fatalln(err)
+	}
 
 	return nil
 }

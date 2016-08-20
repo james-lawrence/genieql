@@ -19,12 +19,12 @@ type StaticScanner struct {
 }
 
 // Generate - implementation of the genieql.Generator interface.
-func (t StaticScanner) Generate(dst io.Writer, fset *token.FileSet) error {
+func (t StaticScanner) Generate(dst io.Writer) error {
 	var (
 		err       error
 		columnMap []genieql.ColumnMap
 	)
-
+	fset := token.NewFileSet()
 	if columnMap, err = t.Generator.mapColumns(); err != nil {
 		log.Println("failed to map columns", err)
 		return err

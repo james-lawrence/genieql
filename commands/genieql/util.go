@@ -3,15 +3,15 @@ package main
 import (
 	"bytes"
 	"go/ast"
+	"go/build"
 	"go/token"
+	"io"
 	"log"
-	"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/commands"
 )
 
 func defaultIfBlank(s, defaultValue string) string {
@@ -29,26 +29,112 @@ func lowercaseFirstLetter(s string) string {
 	return string(unicode.ToLower(r)) + s[n:]
 }
 
-func printScanner(output string, generator genieql.Generator, pkg *ast.Package) {
+type headerGenerator struct {
+	fset *token.FileSet
+	pkg  *ast.Package
+	args []string
+}
+
+func (t headerGenerator) Generate(dst io.Writer) error {
+	return genieql.PrintPackage(genieql.ASTPrinter{}, dst, t.fset, t.pkg, t.args)
+}
+
+type printGenerator struct {
+	delegate genieql.Generator
+}
+
+func (t printGenerator) Generate(dst io.Writer) error {
 	var err error
-	printer := genieql.ASTPrinter{}
 	buffer := bytes.NewBuffer([]byte{})
 	formatted := bytes.NewBuffer([]byte{})
-	fset := token.NewFileSet()
 
-	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err = generator.Generate(buffer, fset); err != nil {
-		log.Fatalln(err)
+	if err = t.delegate.Generate(buffer); err != nil {
+		return err
 	}
 
 	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
-	if err = commands.WriteStdoutOrFile(output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, formatted); err != nil {
-		log.Fatalln(err)
+	_, err = io.Copy(dst, formatted)
+
+	return err
+}
+
+type printNodes struct{}
+
+func (t printNodes) Visit(node ast.Node) ast.Visitor {
+	log.Printf("%T\n", node)
+	return t
+}
+
+type printComments struct{}
+
+func (t printComments) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.Comment:
+		log.Printf("%#v\n", n)
+	case *ast.CommentGroup:
+		log.Printf("%#v\n", n)
 	}
+	return t
+}
+
+// TaggedFiles used to check if a specific file had a specific set of tags.
+type TaggedFiles struct {
+	files []string
+}
+
+// IsTagged checks the provided file against the set of files with the tags.
+func (t TaggedFiles) IsTagged(name string) bool {
+	for _, tagged := range t.files {
+		if tagged == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func currentPackage(dir string) *build.Package {
+	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
+	if err != nil {
+		log.Println("failed to load package for", dir)
+	}
+
+	return pkg
+}
+
+func findTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
+	var (
+		err         error
+		taggedFiles TaggedFiles
+	)
+
+	ctx := build.Default
+	ctx.BuildTags = tags
+	normal, err := build.Default.Import(path, ".", build.IgnoreVendor)
+	if err != nil {
+		return taggedFiles, err
+	}
+
+	tagged, err := ctx.Import(path, ".", build.IgnoreVendor)
+	if err != nil {
+		return taggedFiles, err
+	}
+
+	for _, t := range tagged.GoFiles {
+		missing := true
+		for _, n := range normal.GoFiles {
+			if t == n {
+				missing = false
+			}
+		}
+
+		if missing {
+			taggedFiles.files = append(taggedFiles.files, t)
+		}
+	}
+
+	return taggedFiles, nil
 }
