@@ -2,12 +2,15 @@ package main
 
 import (
 	"go/build"
+	"go/token"
 	"log"
+	"os"
 	"path/filepath"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/scanner"
 )
 
@@ -17,8 +20,13 @@ type queryLiteral struct {
 }
 
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
-	var configuration genieql.Configuration
-	var mappingConfig genieql.MappingConfig
+	var (
+		configuration genieql.Configuration
+		mappingConfig genieql.MappingConfig
+		dialect       genieql.Dialect
+		fset          = token.NewFileSet()
+	)
+
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
 
@@ -35,22 +43,16 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	db, err := genieql.ConnectDB(configuration)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkg)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	dialect, err := genieql.LookupDialect(configuration.Dialect)
-	if err != nil {
+	if dialect, err = genieql.LookupDialect(configuration); err != nil {
 		log.Fatalln(err)
 	}
 
-	columns, err := dialect.ColumnInformationForQuery(db, query)
+	columns, err := dialect.ColumnInformationForQuery(query)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -60,7 +62,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.StaticScanner{
+	gen := scanner.StaticScanner{
 		Generator: scanner.Generator{
 			Mappings: []genieql.MappingConfig{mappingConfig},
 			Columns:  genieql.ColumnInfoSet(columns).ColumnNames(),
@@ -74,7 +76,19 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		ErrScannerName:   t.scanner.errScannerName,
 	}
 
-	printScanner(t.scanner.output, generator, pkg)
+	hg := headerGenerator{
+		fset: fset,
+		pkg:  pkg,
+		args: os.Args[1:],
+	}
+
+	pg := printGenerator{
+		delegate: genieql.MultiGenerate(hg, gen),
+	}
+
+	if err = commands.WriteStdoutOrFile(pg, t.scanner.output, commands.DefaultWriteFlags); err != nil {
+		log.Fatalln(err)
+	}
 
 	return nil
 }

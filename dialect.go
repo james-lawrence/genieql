@@ -1,9 +1,6 @@
 package genieql
 
-import (
-	"database/sql"
-	"fmt"
-)
+import "fmt"
 
 // ErrMissingDialect - returned when a dialect has not been registered.
 var ErrMissingDialect = fmt.Errorf("requested dialect is not registered")
@@ -14,13 +11,27 @@ var ErrDuplicateDialect = fmt.Errorf("dialect has already been registered")
 var dialects = dialectRegistry{}
 
 // RegisterDialect register a sql dialect with genieql. usually in an init function.
-func RegisterDialect(dialect string, imp Dialect) error {
+func RegisterDialect(dialect string, imp DialectFactory) error {
 	return dialects.RegisterDialect(dialect, imp)
 }
 
 // LookupDialect lookup a registered dialect.
-func LookupDialect(dialect string) (Dialect, error) {
-	return dialects.LookupDialect(dialect)
+func LookupDialect(config Configuration) (Dialect, error) {
+	var (
+		err     error
+		factory DialectFactory
+	)
+
+	if factory, err = dialects.LookupDialect(config.Dialect); err != nil {
+		return nil, err
+	}
+
+	return factory.Connect(config)
+}
+
+// DialectFactory ...
+type DialectFactory interface {
+	Connect(Configuration) (Dialect, error)
 }
 
 // Dialect ...
@@ -29,13 +40,13 @@ type Dialect interface {
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates []string) string
 	Delete(table string, columns, predicates []string) string
-	ColumnInformation(db *sql.DB, table string) ([]ColumnInfo, error)
-	ColumnInformationForQuery(db *sql.DB, query string) ([]ColumnInfo, error)
+	ColumnInformation(table string) ([]ColumnInfo, error)
+	ColumnInformationForQuery(query string) ([]ColumnInfo, error)
 }
 
-type dialectRegistry map[string]Dialect
+type dialectRegistry map[string]DialectFactory
 
-func (t dialectRegistry) RegisterDialect(dialect string, imp Dialect) error {
+func (t dialectRegistry) RegisterDialect(dialect string, imp DialectFactory) error {
 	if _, exists := t[dialect]; exists {
 		return ErrDuplicateDialect
 	}
@@ -45,7 +56,7 @@ func (t dialectRegistry) RegisterDialect(dialect string, imp Dialect) error {
 	return nil
 }
 
-func (t dialectRegistry) LookupDialect(dialect string) (Dialect, error) {
+func (t dialectRegistry) LookupDialect(dialect string) (DialectFactory, error) {
 	impl, exists := t[dialect]
 	if !exists {
 		return nil, ErrMissingDialect

@@ -1,8 +1,6 @@
 package genieql
 
 import (
-	"database/sql"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -11,14 +9,14 @@ var _ = Describe("Dialect", func() {
 	Describe("dialectRegistry", func() {
 		Describe("RegisterDialect", func() {
 			It("should err if the dialect is already registered", func() {
-				dialect := testDialect{}
+				dialect := testDialectFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 				Expect(reg.RegisterDialect("testDialect", dialect)).To(MatchError(ErrDuplicateDialect))
 			})
 
 			It("should register a dialect", func() {
-				dialect := testDialect{}
+				dialect := testDialectFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 			})
@@ -34,7 +32,7 @@ var _ = Describe("Dialect", func() {
 
 			It("should return the dialect if its been registered", func() {
 				dialectName := "testDialect"
-				dialect := testDialect{}
+				dialect := testDialectFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect(dialectName, dialect)).ToNot(HaveOccurred())
 				foundDialect, err := reg.LookupDialect(dialectName)
@@ -44,6 +42,12 @@ var _ = Describe("Dialect", func() {
 		})
 	})
 })
+
+type testDialectFactory testDialect
+
+func (t testDialectFactory) Connect(Configuration) (Dialect, error) {
+	return testDialect(t), nil
+}
 
 type testDialect struct {
 	insertq     string
@@ -78,10 +82,10 @@ func (t testDialect) PrimaryKeyQuery(table string) string {
 	return t.primarykeyq
 }
 
-func (t testDialect) ColumnInformation(db *sql.DB, table string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformation(table string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }
 
-func (t testDialect) ColumnInformationForQuery(db *sql.DB, query string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformationForQuery(query string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }

@@ -1,9 +1,7 @@
 package genieql
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"sort"
 )
 
@@ -56,14 +54,8 @@ func (t ColumnInfoSet) AmbiguityCheck() error {
 	return nil
 }
 
-// ConnectDB connects to a database based on the configuration.
-func ConnectDB(config Configuration) (*sql.DB, error) {
-	log.Printf("connection %s\n", config.ConnectionURL)
-	return sql.Open(config.Dialect, config.ConnectionURL)
-}
-
 // LookupTableDetails determines the table details for the given dialect.
-func LookupTableDetails(db *sql.DB, dialect Dialect, table string) (TableDetails, error) {
+func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 	var (
 		err         error
 		columnNames []string
@@ -71,7 +63,7 @@ func LookupTableDetails(db *sql.DB, dialect Dialect, table string) (TableDetails
 		columns     []ColumnInfo
 	)
 
-	if columns, err = dialect.ColumnInformation(db, table); err != nil {
+	if columns, err = dialect.ColumnInformation(table); err != nil {
 		return TableDetails{}, err
 	}
 

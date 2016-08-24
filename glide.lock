@@ -1,27 +1,29 @@
-hash: 8429469505ceee9df80eba4e45b674f2a4b2f9ea43cf1caaa44a0ff656ba4dee
-updated: 2016-03-12T14:12:31.303557136-05:00
+hash: a69946f5a06436cdbdee295bce12c481497fcc7b507418ed1287902bdba1a4a4
+updated: 2016-08-20T20:32:34.250551452-04:00
 imports:
 - name: github.com/alecthomas/template
-  version: 14fd436dd20c3cc65242a9f396b61bfc8a3926fc
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+- name: github.com/jackc/pgx
+  version: b2dd61515c294578902f4e398410cbf791009155
 - name: github.com/lib/pq
-  version: 165a3529e799da61ab10faed1fabff3662d6193f
+  version: 80f8150043c80fb52dee6bc863a709cdac7ec8f8
   subpackages:
   - oid
 - name: github.com/satori/go.uuid
-  version: e673fdd4dea8a7334adbbe7f57b7e4b00bdc5502
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/serenize/snaker
   version: 8824b61eca66d308fcb2d515287d3d7a28dba8d6
 - name: golang.org/x/tools
-  version: 093d7650abf0a26882924de03a6c840a00356572
+  version: 8ea9d4606980305f7f46cabde046adbb530e71c8
   subpackages:
   - imports
   - go/ast/astutil
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: 8cccfa8eb2e3183254457fb1749b2667fbc364c7
+  version: e5900212cbf65b181d3d8e08308ef06a01d117cf
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 devImports: []

@@ -13,47 +13,47 @@ import (
 type Insert genieql.TableDetails
 
 func (t Insert) Build(name string, defaults []string) genieql.Generator {
-	return generatorFunc(func(dst io.Writer, fset *token.FileSet) error {
+	return generatorFunc(func(dst io.Writer) error {
 		query := t.Dialect.Insert(t.Table, t.Columns, defaults)
-		return emit(dst, fset, name, query)
+		return emit(dst, name, query)
 	})
 }
 
 type Select genieql.TableDetails
 
 func (t Select) Build(name string, predicates []string) genieql.Generator {
-	return generatorFunc(func(dst io.Writer, fset *token.FileSet) error {
+	return generatorFunc(func(dst io.Writer) error {
 		query := t.Dialect.Select(t.Table, t.Columns, predicates)
-		return emit(dst, fset, name, query)
+		return emit(dst, name, query)
 	})
 }
 
 type Update genieql.TableDetails
 
 func (t Update) Build(name string, predicates []string) genieql.Generator {
-	return generatorFunc(func(dst io.Writer, fset *token.FileSet) error {
+	return generatorFunc(func(dst io.Writer) error {
 		query := t.Dialect.Update(t.Table, t.Columns, predicates)
-		return emit(dst, fset, name, query)
+		return emit(dst, name, query)
 	})
 }
 
 type Delete genieql.TableDetails
 
 func (t Delete) Build(name string, predicates []string) genieql.Generator {
-	return generatorFunc(func(dst io.Writer, fset *token.FileSet) error {
+	return generatorFunc(func(dst io.Writer) error {
 		query := t.Dialect.Delete(t.Table, t.Columns, predicates)
-		return emit(dst, fset, name, query)
+		return emit(dst, name, query)
 	})
 }
 
-type generatorFunc func(dst io.Writer, fset *token.FileSet) error
+type generatorFunc func(dst io.Writer) error
 
-func (t generatorFunc) Generate(dst io.Writer, fset *token.FileSet) error {
-	return t(dst, fset)
+func (t generatorFunc) Generate(dst io.Writer) error {
+	return t(dst)
 }
 
-func emit(dst io.Writer, fset *token.FileSet, constName, query string) error {
-	if err := format.Node(dst, fset, genieql.QueryLiteral(constName, query)); err != nil {
+func emit(dst io.Writer, constName, query string) error {
+	if err := format.Node(dst, token.NewFileSet(), genieql.QueryLiteral(constName, query)); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(dst, "\n")

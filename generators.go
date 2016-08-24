@@ -1,18 +1,18 @@
 package genieql
 
 import (
-	"go/token"
+	"fmt"
 	"io"
 )
 
 // Generator interface for the code generators.
 type Generator interface {
-	Generate(dst io.Writer, fset *token.FileSet) error
+	Generate(dst io.Writer) error
 }
 
 // CrudWriter TODO...
 type CrudWriter interface {
-	Write(fset *token.FileSet) error
+	Write() error
 }
 
 // MultiGenerate generate multiple scanners into a single buffer.
@@ -26,11 +26,12 @@ type multiGenerator struct {
 	generators []Generator
 }
 
-func (t multiGenerator) Generate(dst io.Writer, fset *token.FileSet) error {
+func (t multiGenerator) Generate(dst io.Writer) error {
 	for _, generator := range t.generators {
-		if err := generator.Generate(dst, fset); err != nil {
+		if err := generator.Generate(dst); err != nil {
 			return err
 		}
+		fmt.Fprintf(dst, "\n\n")
 	}
 	return nil
 }

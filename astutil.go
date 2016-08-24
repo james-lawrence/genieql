@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -86,6 +85,28 @@ func ExtractFields(decl ast.Spec) (list *ast.FieldList) {
 		return true
 	})
 	return
+}
+
+type constantFilter struct {
+	constants []*ast.GenDecl
+}
+
+func (t *constantFilter) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.GenDecl:
+		if n.Tok == token.CONST {
+			t.constants = append(t.constants, n)
+		}
+	}
+
+	return t
+}
+
+// FindConstants locates constants within the provided node's subtree.
+func FindConstants(node ast.Node) []*ast.GenDecl {
+	v := constantFilter{}
+	ast.Walk(&v, node)
+	return v.constants
 }
 
 // FindUniqueType searches the provided packages for the unique declaration
@@ -233,25 +254,18 @@ func locatePackages(pkgName string, context build.Context) ([]*ast.Package, erro
 	fset := token.NewFileSet()
 	packages := []*ast.Package{}
 
-	for _, srcDir := range context.SrcDirs() {
-		directory := filepath.Join(srcDir, pkgName)
-		pkg, err := context.ImportDir(directory, build.FindOnly)
-		if err != nil {
-			return packages, err
-		}
+	pkg, err := context.Import(pkgName, ".", build.IgnoreVendor)
+	if err != nil {
+		return packages, err
+	}
 
-		pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
-		if os.IsNotExist(err) {
-			continue
-		}
+	pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
+	if err != nil {
+		return packages, err
+	}
 
-		if err != nil {
-			return packages, err
-		}
-
-		for _, astPkg := range pkgs {
-			packages = append(packages, astPkg)
-		}
+	for _, astPkg := range pkgs {
+		packages = append(packages, astPkg)
 	}
 
 	return packages, nil

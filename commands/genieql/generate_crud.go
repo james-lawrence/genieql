@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"go/build"
 	"go/token"
 	"log"
@@ -24,8 +23,11 @@ type generateCrud struct {
 }
 
 func (t *generateCrud) Execute(*kingpin.ParseContext) error {
-	var configuration genieql.Configuration
-	var mapping genieql.MappingConfig
+	var (
+		configuration genieql.Configuration
+		mapping       genieql.MappingConfig
+		fset          = token.NewFileSet()
+	)
 
 	pkgName, typName := extractPackageType(t.packageType)
 
@@ -49,29 +51,25 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	}
 
 	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
-	fset := token.NewFileSet()
-	buffer := bytes.NewBuffer([]byte{})
-	formatted := bytes.NewBuffer([]byte{})
-	printer := genieql.ASTPrinter{}
 
 	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		return err
 	}
 
-	if err = genieql.PrintPackage(printer, buffer, fset, pkg, os.Args[1:]); err != nil {
-		log.Fatalln("PrintPackage failed:", err)
+	hg := headerGenerator{
+		fset: fset,
+		pkg:  pkg,
+		args: os.Args[1:],
 	}
 
-	if err = crud.New(configuration, details, pkgName, typName).Generate(buffer, fset); err != nil {
-		log.Fatalln("crud generation failed:", err)
+	cg := crud.New(configuration, details, pkgName, typName)
+
+	pg := printGenerator{
+		delegate: genieql.MultiGenerate(hg, cg),
 	}
 
-	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
-		log.Fatalln("format output failed:", err)
-	}
-
-	if err = commands.WriteStdoutOrFile(t.output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, formatted); err != nil {
+	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 	return nil

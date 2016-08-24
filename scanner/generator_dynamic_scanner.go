@@ -20,11 +20,12 @@ type DynamicScannerGenerator struct {
 }
 
 // Generate - implementation of the genieql.Generator interface.
-func (t DynamicScannerGenerator) Generate(dst io.Writer, fset *token.FileSet) error {
+func (t DynamicScannerGenerator) Generate(dst io.Writer) error {
 	var (
 		err       error
 		columnMap []genieql.ColumnMap
 	)
+	fset := token.NewFileSet()
 	// mapper := t.Mappings[0].Mapper()
 	// columnMap, err := mapper.MapColumns(t.Fields, t.Columns...)
 	if columnMap, err = t.mapColumns(); err != nil {

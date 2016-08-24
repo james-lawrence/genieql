@@ -2,12 +2,15 @@ package main
 
 import (
 	"go/build"
+	"go/token"
 	"log"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/scanner"
 )
 
@@ -27,8 +30,12 @@ func (t dynamicScanner) Options() []scannerOption {
 }
 
 func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
-	var configuration genieql.Configuration
-	var mappingConfig genieql.MappingConfig
+	var (
+		configuration genieql.Configuration
+		mappingConfig genieql.MappingConfig
+		fset          = token.NewFileSet()
+	)
+
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 
 	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.scanner.configName), &configuration); err != nil {
@@ -54,7 +61,7 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	generator := scanner.DynamicScannerGenerator{
+	gen := scanner.DynamicScannerGenerator{
 		Generator: scanner.Generator{
 			Mappings: []genieql.MappingConfig{mappingConfig},
 			Fields:   fields,
@@ -67,7 +74,19 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 		ErrScannerName:   t.scanner.errScannerName,
 	}
 
-	printScanner(t.scanner.output, generator, pkg)
+	hg := headerGenerator{
+		fset: fset,
+		pkg:  pkg,
+		args: os.Args[1:],
+	}
+
+	pg := printGenerator{
+		delegate: genieql.MultiGenerate(hg, gen),
+	}
+
+	if err = commands.WriteStdoutOrFile(pg, t.scanner.output, commands.DefaultWriteFlags); err != nil {
+		log.Fatalln(err)
+	}
 
 	return nil
 }
