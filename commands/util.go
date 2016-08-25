@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"bitbucket.org/jatone/genieql"
 )
 
@@ -33,13 +35,14 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	)
 
 	if err = g.Generate(buffer); err != nil {
+		log.Printf("failed to generate: %+v\n", err)
 		return err
 	}
 
 	if len(fpath) > 0 {
-		log.Println("Writing Results to", fpath)
+		log.Println("writing results to", fpath)
 		if dst, err = os.OpenFile(fpath, flags, 0666); err != nil {
-			dst = errWriter{err: err}
+			dst = errWriter{err: errors.Wrap(err, "")}
 		}
 		defer dst.Close()
 	}

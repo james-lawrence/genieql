@@ -14,38 +14,33 @@ func init() {
 	genieql.RegisterDriver("github.com/lib/pq", genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
 }
 
-func pqNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
-	var expr ast.Expr
-	ok := true
+func pqNullableTypes(dst, from ast.Expr) (ast.Expr, bool) {
+	var (
+		orig = dst
+	)
 
-	// if its not a starexpr its not nullable
-	x, ok := typ.(*ast.StarExpr)
-	if !ok {
-		return typ, false
+	if x, ok := dst.(*ast.StarExpr); ok {
+		dst = x.X
 	}
 
 	typeToExpr := func(selector string) ast.Expr {
 		return mustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
 	}
 
-	switch types.ExprString(x.X) {
+	switch types.ExprString(dst) {
 	case timeExprString:
-		expr = typeToExpr("Time")
+		return typeToExpr("Time"), true
 	default:
-		expr, ok = typ, false
+		return orig, false
 	}
-
-	return expr, ok
 }
 
 func pqLookupNullableType(typ ast.Expr) ast.Expr {
-	// if its not a starexpr its not nullable
-	x, ok := typ.(*ast.StarExpr)
-	if !ok {
-		return typ
+	if x, ok := typ.(*ast.StarExpr); ok {
+		typ = x.X
 	}
 
-	switch types.ExprString(x.X) {
+	switch types.ExprString(typ) {
 	case timeExprString:
 		return mustParseExpr("pq.NullTime").(*ast.SelectorExpr)
 	default:

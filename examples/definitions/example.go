@@ -6,4 +6,4 @@ package definitions
 //go:generate genieql bootstrap --driver=github.com/lib/pq postgres://postgres@localhost:5432/genieql_examples?sslmode=disable
 //go:generate genieql generate experimental structure table constants -o postgresql.table.structs.gen.go
 //go:generate genieql generate experimental structure query constants -o postgresql.query.structs.gen.go
-// go:generate genieql generate scanners
+//go:generate genieql generate experimental scanners types -o postgresql.scanners.gen.go

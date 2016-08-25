@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 )
 
 // Expr converts a template expression into an ast.Expr node.
@@ -123,4 +124,23 @@ func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
 		Fun:  fun,
 		Args: args,
 	}
+}
+
+func MapIdentToExpr(args ...*ast.Ident) []ast.Expr {
+	result := make([]ast.Expr, 0, len(args))
+
+	for _, ident := range args {
+		result = append(result, ident)
+	}
+
+	return result
+}
+
+func MapExprToString(args ...ast.Expr) []string {
+	result := make([]string, 0, len(args))
+	for _, expr := range args {
+		result = append(result, types.ExprString(expr))
+	}
+
+	return result
 }

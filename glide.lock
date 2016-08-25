@@ -1,5 +1,5 @@
-hash: a69946f5a06436cdbdee295bce12c481497fcc7b507418ed1287902bdba1a4a4
-updated: 2016-08-20T20:32:34.250551452-04:00
+hash: e1a1cb2f829698fbd1b5486f8a41339b813ef8c0f12db8539c5375c522258cd7
+updated: 2016-08-26T09:46:37.276974457-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -13,10 +13,14 @@ imports:
   version: 80f8150043c80fb52dee6bc863a709cdac7ec8f8
   subpackages:
   - oid
+- name: github.com/pkg/errors
+  version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/serenize/snaker
   version: 8824b61eca66d308fcb2d515287d3d7a28dba8d6
+- name: github.com/zieckey/goini
+  version: a5ac009e4c949ec8e0d4048fc8f80bbd137fd40d
 - name: golang.org/x/tools
   version: 8ea9d4606980305f7f46cabde046adbb530e71c8
   subpackages:

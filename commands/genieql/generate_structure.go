@@ -51,19 +51,24 @@ func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause 
 
 func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 	var (
+		err           error
 		configuration genieql.Configuration
 	)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	configuration, err = genieql.NewConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		return err
 	}
 
 	dialect, err := genieql.LookupDialect(configuration)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	info, err := dialect.ColumnInformation(t.table)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -73,7 +78,9 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 			generators.StructOptionName(
 				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
 			),
-			generators.StructOptionFields(info...),
+			generators.StructOptionFieldsDelegate(func() ([]genieql.ColumnInfo, error) {
+				return dialect.ColumnInformationForTable(t.table)
+			}),
 		),
 	}
 
@@ -123,8 +130,13 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		dialect       genieql.Dialect
 		fset          = token.NewFileSet()
 	)
+	configuration = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
 
-	if err = genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -150,21 +162,24 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 
 	g := []genieql.Generator{}
 
-	for k, f := range pkg.Files {
-		if !taggedFiles.IsTagged(filepath.Base(k)) {
-			continue
+	genieql.NewUtils(fset).WalkFiles([]*build.Package{pkg}, func(path string, file *ast.File) {
+		if !taggedFiles.IsTagged(filepath.Base(path)) {
+			return
 		}
 
-		decls := mapConstantsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
-			return generators.StructureFromGenDecl(decl, func(table string) generators.FieldsDelegate {
+		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
+			delegate := func(table string) generators.FieldsDelegate {
 				return func() ([]genieql.ColumnInfo, error) {
-					return dialect.ColumnInformation(table)
+					return dialect.ColumnInformationForTable(table)
 				}
-			})
-		}, genieql.FindConstants(f)...)
-		g = append(g, decls...)
-	}
+			}
+			return generators.StructureFromGenDecl(decl, delegate)
+		}, genieql.FindConstants(file)...)
 
+		g = append(g, decls...)
+	})
+
+	mg := genieql.MultiGenerate(g...)
 	hg := headerGenerator{
 		fset: fset,
 		pkg:  pkg,
@@ -172,7 +187,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
-		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
+		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
 	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
@@ -202,10 +217,17 @@ func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause 
 
 func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 	var (
+		err           error
 		configuration genieql.Configuration
 	)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	configuration = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
+
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		return err
 	}
 
@@ -214,9 +236,8 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	info, err := dialect.ColumnInformationForQuery(t.query)
-	if err != nil {
-		log.Fatalln(err)
+	delegate := func() ([]genieql.ColumnInfo, error) {
+		return dialect.ColumnInformationForQuery(t.query)
 	}
 
 	pg := printGenerator{
@@ -224,7 +245,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 			generators.StructOptionName(
 				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
 			),
-			generators.StructOptionFields(info...),
+			generators.StructOptionFieldsDelegate(delegate),
 		),
 	}
 
@@ -275,8 +296,16 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		dialect       genieql.Dialect
 		fset          = token.NewFileSet()
 	)
+	configuration, err = genieql.NewConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
+	if err != nil {
+		return err
+	}
 
-	if err = genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -302,12 +331,12 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 
 	g := []genieql.Generator{}
 
-	for k, f := range pkg.Files {
+	genieql.NewUtils(fset).WalkFiles([]*build.Package{pkg}, func(k string, f *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(k)) {
-			continue
+			return
 		}
 
-		decls := mapConstantsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
+		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
 			return generators.StructureFromGenDecl(decl, func(query string) generators.FieldsDelegate {
 				return func() ([]genieql.ColumnInfo, error) {
 					return dialect.ColumnInformationForQuery(strings.Trim(query, "\""))
@@ -315,7 +344,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 			})
 		}, genieql.FindConstants(f)...)
 		g = append(g, decls...)
-	}
+	})
 
 	hg := headerGenerator{
 		fset: fset,
@@ -332,12 +361,4 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 	}
 
 	return nil
-}
-
-func mapConstantsToGenerator(b func(*ast.GenDecl) []genieql.Generator, consts ...*ast.GenDecl) []genieql.Generator {
-	r := make([]genieql.Generator, 0, len(consts))
-	for _, c := range consts {
-		r = append(r, b(c)...)
-	}
-	return r
 }

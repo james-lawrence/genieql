@@ -29,12 +29,17 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
+	configuration = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.scanner.configName),
+		),
+	)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.scanner.configName), &configuration); err != nil {
+	if err := genieql.ReadConfiguration(&configuration); err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.scanner.mapName, configuration, &mappingConfig); err != nil {
+	if err := genieql.ReadMapper(configuration, pkgName, typName, t.scanner.mapName, &mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -43,7 +48,12 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkg)
+	pkgset, err := genieql.NewUtils(fset).ParsePackages(pkg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkgset...)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,7 +67,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	fields, err := mappingConfig.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	fields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -31,18 +31,24 @@ func (t staticScanner) Options() []scannerOption {
 
 func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 	var (
+		err           error
 		configuration genieql.Configuration
 		mappingConfig genieql.MappingConfig
 		fset          = token.NewFileSet()
 	)
+	configuration = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.scanner.configName),
+		),
+	)
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.scanner.configName), &configuration); err != nil {
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.scanner.mapName, configuration, &mappingConfig); err != nil {
+	if err = genieql.ReadMapper(configuration, pkgName, typName, t.scanner.mapName, &mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -56,7 +62,7 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	fields, err := mappingConfig.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	fields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}

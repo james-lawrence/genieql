@@ -35,3 +35,16 @@ func (t multiGenerator) Generate(dst io.Writer) error {
 	}
 	return nil
 }
+
+// NewErrGenerator builds a generate that errors out.
+func NewErrGenerator(err error) Generator {
+	return errGenerator{err: err}
+}
+
+type errGenerator struct {
+	err error
+}
+
+func (t errGenerator) Generate(io.Writer) error {
+	return t.err
+}

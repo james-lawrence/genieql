@@ -27,7 +27,7 @@ var _ = Describe("Dialect", func() {
 				reg := dialectRegistry{}
 				dialect, err := reg.LookupDialect("testDialect")
 				Expect(dialect).To(BeNil())
-				Expect(err).To(MatchError(ErrMissingDialect))
+				Expect(err).To(MatchError("dialect (testDialect) is not registered"))
 			})
 
 			It("should return the dialect if its been registered", func() {
@@ -50,12 +50,10 @@ func (t testDialectFactory) Connect(Configuration) (Dialect, error) {
 }
 
 type testDialect struct {
-	insertq     string
-	selectq     string
-	updateq     string
-	deleteq     string
-	columnq     string
-	primarykeyq string
+	insertq string
+	selectq string
+	updateq string
+	deleteq string
 }
 
 func (t testDialect) Insert(table string, columns, defaults []string) string {
@@ -74,18 +72,10 @@ func (t testDialect) Delete(table string, columns, predicates []string) string {
 	return t.deleteq
 }
 
-func (t testDialect) ColumnQuery(table string) string {
-	return t.columnq
-}
-
-func (t testDialect) PrimaryKeyQuery(table string) string {
-	return t.primarykeyq
-}
-
-func (t testDialect) ColumnInformation(table string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformationForQuery(query string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }
 
-func (t testDialect) ColumnInformationForQuery(query string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformationForTable(table string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }

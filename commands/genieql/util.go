@@ -31,7 +31,7 @@ func lowercaseFirstLetter(s string) string {
 
 type headerGenerator struct {
 	fset *token.FileSet
-	pkg  *ast.Package
+	pkg  *build.Package
 	args []string
 }
 
@@ -137,4 +137,12 @@ func findTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
 	}
 
 	return taggedFiles, nil
+}
+
+func mapDeclsToGenerator(b func(*ast.GenDecl) []genieql.Generator, decls ...*ast.GenDecl) []genieql.Generator {
+	r := make([]genieql.Generator, 0, len(decls))
+	for _, c := range decls {
+		r = append(r, b(c)...)
+	}
+	return r
 }

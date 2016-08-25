@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/jackc/pgx"
+	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -38,10 +39,8 @@ func (t dialectFactory) Connect(config genieql.Configuration) (genieql.Dialect, 
 		db  *sql.DB
 	)
 
-	log.Printf("connection %s\n", config.ConnectionURL)
-
 	db, err = sql.Open(config.Dialect, config.ConnectionURL)
-	return dialectImplementation{db: db}, err
+	return dialectImplementation{db: db}, errors.Wrap(err, "failure to open database connection")
 }
 
 type dialectImplementation struct {
@@ -64,23 +63,23 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 	return Delete(table, columns, predicates)
 }
 
-func (t dialectImplementation) ColumnInformation(table string) ([]genieql.ColumnInfo, error) {
+func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
 	return t.columnInformation(t.db, columnInformationQuery, table)
 }
 
 func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, 'f' AS nullable, 'f' AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
-	const table = "genieql_query_columns"
+	const table = "genieql_query_columns_table"
 
 	tx, err := t.db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failure to start transaction")
 	}
 	defer tx.Rollback()
-
-	if _, err = tx.Exec(fmt.Sprintf("CREATE TABLE %s AS (%s)", table, query)); err != nil {
-		return nil, err
+	q := fmt.Sprintf("CREATE TABLE %s AS (%s)", table, query)
+	if _, err = tx.Exec(q); err != nil {
+		return nil, errors.Wrapf(err, "failure to execute %s", q)
 	}
 
 	return t.columnInformation(tx, columnInformationQuery, table)
@@ -105,11 +104,11 @@ func (t dialectImplementation) columnInformation(q queryer, query, table string)
 		)
 
 		if err = rows.Scan(&info.Name, &oid, &info.Nullable, &info.PrimaryKey); err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
 		if expr = oidToType(oid); expr == nil {
-			log.Println("skipping column", info.Name, "unknown type identifier", oid, "please open and issue")
+			log.Println("skipping column", info.Name, "unknown type identifier", oid, "please open an issue")
 			continue
 		}
 
@@ -118,7 +117,7 @@ func (t dialectImplementation) columnInformation(q queryer, query, table string)
 		columns = append(columns, info)
 	}
 
-	return columns, rows.Err()
+	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
 }
 
 // This is driver dependent, will have to abstract away.

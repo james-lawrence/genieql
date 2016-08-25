@@ -23,12 +23,16 @@ type bootstrap struct {
 
 func (t bootstrap) Bootstrap() error {
 	log.Println("bootstraping", t.dburi)
-	return genieql.Bootstrap(filepath.Join(t.outputfilepath, t.outputfile), t.driver, t.dburi)
+	return genieql.Bootstrap(
+		genieql.ConfigurationOptionLocation(filepath.Join(t.outputfilepath, t.outputfile)),
+		genieql.ConfigurationOptionDriver(t.driver),
+		genieql.ConfigurationOptionDatabase(t.dburi),
+	)
 }
 
 func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
 	bootstrap := app.Command("bootstrap", "build a instance of qlgenie")
-	bootstrap.Flag("output-directory", "directory to place the configuration file").Default(configurationDirectory()).StringVar(&t.outputfilepath)
+	bootstrap.Flag("output-directory", "directory to place the configuration file").Default(genieql.ConfigurationDirectory()).StringVar(&t.outputfilepath)
 	bootstrap.Flag("output-file", "filename of the configuration directory").Default("default.config").StringVar(&t.outputfile)
 	bootstrap.Flag("driver", "name of the underlying driver for the database, usually the import url").
 		Default("github.com/lib/pq").StringVar(&t.driver)

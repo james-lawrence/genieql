@@ -3,7 +3,27 @@ package genieql
 import "fmt"
 
 // ErrMissingDialect - returned when a dialect has not been registered.
-var ErrMissingDialect = fmt.Errorf("requested dialect is not registered")
+type ErrMissingDialect interface {
+	MissingDialect() string
+}
+
+// IsMissingDialectErr determines if the given error is a missing dialect error.
+func IsMissingDialectErr(err error) bool {
+	_, ok := err.(ErrMissingDialect)
+	return ok
+}
+
+type errMissingDialect struct {
+	dialect string
+}
+
+func (t errMissingDialect) MissingDialect() string {
+	return t.dialect
+}
+
+func (t errMissingDialect) Error() string {
+	return fmt.Sprintf("dialect (%s) is not registered", t.dialect)
+}
 
 // ErrDuplicateDialect - returned when a dialect gets registered twice.
 var ErrDuplicateDialect = fmt.Errorf("dialect has already been registered")
@@ -40,7 +60,7 @@ type Dialect interface {
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates []string) string
 	Delete(table string, columns, predicates []string) string
-	ColumnInformation(table string) ([]ColumnInfo, error)
+	ColumnInformationForTable(table string) ([]ColumnInfo, error)
 	ColumnInformationForQuery(query string) ([]ColumnInfo, error)
 }
 
@@ -59,7 +79,7 @@ func (t dialectRegistry) RegisterDialect(dialect string, imp DialectFactory) err
 func (t dialectRegistry) LookupDialect(dialect string) (DialectFactory, error) {
 	impl, exists := t[dialect]
 	if !exists {
-		return nil, ErrMissingDialect
+		return nil, errMissingDialect{dialect: dialect}
 	}
 
 	return impl, nil

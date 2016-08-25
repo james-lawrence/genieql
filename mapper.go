@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,21 +18,29 @@ type MappingConfig struct {
 	Type                 string
 	IncludeTablePrefixes bool
 	Transformations      []string
+	TableOrQuery         string
+	CustomQuery          bool
+	dialect              Dialect
 }
 
-// Mapper TODO...
+// Mapper ...
 func (t MappingConfig) Mapper() Mapper {
 	return Mapper{Aliasers: []Aliaser{AliaserBuilder(t.Transformations...)}}
 }
 
-// TypeFields TODO...
-func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Package) bool) ([]*ast.Field, error) {
+// Aliaser ...
+func (t MappingConfig) Aliaser() Aliaser {
+	return AliaserBuilder(t.Transformations...)
+}
+
+// TypeFields ...
+func (t MappingConfig) TypeFields(fset *token.FileSet, context build.Context, filter func(*build.Package) bool) ([]*ast.Field, error) {
 	pkg, err := LocatePackage(t.Package, context, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	typ, err := FindUniqueType(FilterName(t.Type), pkg)
+	typ, err := NewUtils(fset).FindUniqueType(FilterName(t.Type), pkg)
 	if err != nil {
 		return nil, err
 	}
@@ -39,14 +48,23 @@ func (t MappingConfig) TypeFields(context build.Context, filter func(*ast.Packag
 	return ExtractFields(typ).List, nil
 }
 
+// ColumnInfo defined by the mapping.
+func (t MappingConfig) ColumnInfo() ([]ColumnInfo, error) {
+	if t.CustomQuery {
+		return t.dialect.ColumnInformationForQuery(t.TableOrQuery)
+	}
+
+	return t.dialect.ColumnInformationForTable(t.TableOrQuery)
+}
+
 // WriteMapper persists the structure -> result row mapping to disk.
-func WriteMapper(root string, configuration Configuration, name string, m MappingConfig) error {
+func WriteMapper(config Configuration, name string, m MappingConfig) error {
 	d, err := yaml.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	path := filepath.Join(root, configuration.Database, m.Package, m.Type, name)
+	path := filepath.Join(config.Location, config.Database, m.Package, m.Type, name)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
@@ -54,23 +72,35 @@ func WriteMapper(root string, configuration Configuration, name string, m Mappin
 }
 
 // ReadMapper loads the structure -> result row mapping from disk.
-func ReadMapper(root, pkg, typ, name string, configuration Configuration, m *MappingConfig) error {
-	raw, err := ioutil.ReadFile(filepath.Join(root, configuration.Database, pkg, typ, name))
+func ReadMapper(config Configuration, pkg, typ, name string, m *MappingConfig) error {
+	var (
+		err error
+	)
+
+	if m.dialect, err = LookupDialect(config); err != nil {
+		return err
+	}
+
+	raw, err := ioutil.ReadFile(filepath.Join(config.Location, config.Database, pkg, typ, name))
 	if err != nil {
 		return err
 	}
+
 	return yaml.Unmarshal(raw, m)
 }
 
 // Map TODO...
 func Map(configFile, name string, m MappingConfig) error {
-	var config Configuration
+	var config = Configuration{
+		Location: filepath.Dir(configFile),
+		Name:     filepath.Base(configFile),
+	}
 
-	if err := ReadConfiguration(configFile, &config); err != nil {
+	if err := ReadConfiguration(&config); err != nil {
 		return err
 	}
 
-	return WriteMapper(filepath.Dir(configFile), config, name, m)
+	return WriteMapper(config, name, m)
 }
 
 // Mapper responsible for mapping a result row to a structure.

@@ -3,6 +3,7 @@ package main
 import (
 	"go/ast"
 	"go/build"
+	"go/token"
 	"log"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ type functionScanner struct {
 }
 
 func (t *functionScanner) Execute(*kingpin.ParseContext) error {
+	fset := token.NewFileSet()
 	pkgName, typName := extractPackageType(t.functionType)
 
 	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
@@ -23,7 +25,7 @@ func (t *functionScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	spec, err := genieql.FindUniqueType(genieql.FilterName(typName), pkg)
+	spec, err := genieql.NewUtils(fset).FindUniqueType(genieql.FilterName(typName), pkg)
 	log.Println("error", err)
 	x := spec.Type.(*ast.FuncType)
 
@@ -35,7 +37,7 @@ func (t *functionScanner) Execute(*kingpin.ParseContext) error {
 		return r
 	}
 
-	log.Println("Package", pkg.Name, pkg.Imports, pkg.Files)
+	log.Println("Package", pkg.Name, pkg.Imports)
 	log.Printf("spec %s, %#v\n", spec.Name, spec.Type.(*ast.FuncType).Func)
 	for _, params := range x.Params.List {
 		log.Printf("Type %T\n", params.Type)

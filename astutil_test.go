@@ -18,14 +18,14 @@ var _ = Describe("Astutil", func() {
 	Describe("LocatePackage", func() {
 		It("find a the specified package", func() {
 			var err error
-			var p *ast.Package
+			var p *build.Package
 
 			p, err = LocatePackage("go/build", build.Default, StrictPackageName("build"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(p.Name).To(Equal("build"))
 
 			p, err = LocatePackage("does/not/exist", build.Default, StrictPackageName("exist"))
-			Expect(err).To(Equal(ErrPackageNotFound))
+			Expect(err).To(HaveOccurred())
 			Expect(p).To(BeNil())
 		})
 	})
@@ -86,49 +86,31 @@ var _ = Describe("Astutil", func() {
 	Describe("FindUniqueDeclaration", func() {
 		It("should return the declaration if it is unique", func() {
 			fset := token.NewFileSet()
-			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+			p, err := LocatePackage("go/ast", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
-			p := ast.Package{
-				Files: map[string]*ast.File{
-					"examples.go": examples,
-				},
-			}
-
-			typ, err := FindUniqueType(FilterName("aStruct"), &p)
+			typ, err := NewUtils(fset).FindUniqueType(FilterName("Package"), p)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(typ.Name.Name).To(Equal("aStruct"))
+			Expect(typ.Name.Name).To(Equal("Package"))
 		})
 
 		It("should return an error if the declaration is ambiguous", func() {
 			fset := token.NewFileSet()
-			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+
+			p, err := LocatePackage("go/ast", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
-			p := ast.Package{
-				Files: map[string]*ast.File{
-					"examples1.go": examples,
-					"examples2.go": examples,
-				},
-			}
-
-			typ, err := FindUniqueType(FilterName("aStruct"), &p)
+			typ, err := NewUtils(fset).FindUniqueType(FilterName("Package"), p, p)
 			Expect(err).To(Equal(ErrAmbiguousDeclaration))
 			Expect(typ).To(Equal(&ast.TypeSpec{}))
 		})
 
 		It("should return an error if the declaration is not found", func() {
 			fset := token.NewFileSet()
-			examples, err := parser.ParseFile(fset, "examples.go", examples, 0)
+			p, err := LocatePackage("go/ast", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
-			p := ast.Package{
-				Files: map[string]*ast.File{
-					"examples1.go": examples,
-				},
-			}
-
-			typ, err := FindUniqueType(FilterName("DoesNotExist"), &p)
+			typ, err := NewUtils(fset).FindUniqueType(FilterName("DoesNotExist"), p)
 			Expect(err).To(Equal(ErrDeclarationNotFound))
 			Expect(typ).To(Equal(&ast.TypeSpec{}))
 		})
@@ -144,26 +126,22 @@ var _ = Describe("Astutil", func() {
 
 	Describe("PrintPackage", func() {
 		It("should return any error that occurred", func() {
-			pkg := &ast.Package{
-				Files: map[string]*ast.File{},
-				Name:  "example",
-			}
+			fset := token.NewFileSet()
+			pkg, err := LocatePackage("go/ast", build.Default, StrictPackageName("ast"))
+			Expect(err).ToNot(HaveOccurred())
 			p := ASTPrinter{}
 			w := errWriter{err: fmt.Errorf("boom")}
-			fset := token.NewFileSet()
 			Expect(PrintPackage(p, w, fset, pkg, []string{})).To(MatchError("boom"))
 		})
 
 		It("should write out the package name and the preface", func() {
-			pkg := &ast.Package{
-				Files: map[string]*ast.File{},
-				Name:  "example",
-			}
+			fset := token.NewFileSet()
+			pkg, err := LocatePackage("go/ast", build.Default, StrictPackageName("ast"))
+			Expect(err).ToNot(HaveOccurred())
 			p := ASTPrinter{}
 			w := bytes.NewBuffer([]byte{})
-			fset := token.NewFileSet()
 			Expect(PrintPackage(p, w, fset, pkg, []string{})).ToNot(HaveOccurred())
-			Expect(w.String()).To(Equal(fmt.Sprintf("package example\n%s\n\n", fmt.Sprintf(Preface, ""))))
+			Expect(w.String()).To(Equal(fmt.Sprintf("package ast\n%s\n\n", fmt.Sprintf(Preface, ""))))
 		})
 	})
 

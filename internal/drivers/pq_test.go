@@ -15,8 +15,8 @@ var _ = Describe("pq", func() {
 			resultExpr string
 		}{
 			{"int", false, "int"},
-			{"time.Time", false, "time.Time"},
 			{"*int", false, "*int"},
+			{"time.Time", true, "time.Time"},
 			{"*time.Time", true, "myVar.Time"},
 		}
 
@@ -36,10 +36,11 @@ var _ = Describe("pq", func() {
 			input, expected string
 		}{
 			{"int", "int"},
-			{"time.Time", "time.Time"},
-			{"*int", "*int"},
+			{"*int", "int"},
+			{"time.Time", "pq.NullTime"},
 			{"*time.Time", "pq.NullTime"},
 		}
+
 		It("should properly convert types to their Null Equivalents", func() {
 			for _, test := range typeTable {
 				result := pqLookupNullableType(mustParseExpr(test.input))

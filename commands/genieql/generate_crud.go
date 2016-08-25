@@ -24,27 +24,34 @@ type generateCrud struct {
 
 func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	var (
-		configuration genieql.Configuration
-		mapping       genieql.MappingConfig
-		fset          = token.NewFileSet()
+		err     error
+		config  genieql.Configuration
+		mapping genieql.MappingConfig
+		fset    = token.NewFileSet()
 	)
 
 	pkgName, typName := extractPackageType(t.packageType)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
+	config = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
+
+	if err = genieql.ReadConfiguration(&config); err != nil {
 		return err
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mapping); err != nil {
+	if err = genieql.ReadMapper(config, pkgName, typName, t.mapName, &mapping); err != nil {
 		return err
 	}
 
-	details, err := genieql.LoadInformation(configuration, t.table)
+	details, err := genieql.LoadInformation(config, t.table)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fields, err := mapping.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	fields, err := mapping.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Println("type fields error")
 		log.Fatalln(err)
@@ -63,7 +70,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		args: os.Args[1:],
 	}
 
-	cg := crud.New(configuration, details, pkgName, typName)
+	cg := crud.New(config, details, pkgName, typName)
 
 	pg := printGenerator{
 		delegate: genieql.MultiGenerate(hg, cg),

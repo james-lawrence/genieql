@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// load the postgresql driver
 	_ "github.com/lib/pq"

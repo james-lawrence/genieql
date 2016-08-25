@@ -5,7 +5,11 @@ import (
 	"go/ast"
 	"go/format"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
 
+	"github.com/pkg/errors"
 	"golang.org/x/tools/imports"
 )
 
@@ -58,15 +62,15 @@ func FormatOutput(dst io.Writer, raw []byte) error {
 	var err error
 
 	if raw, err = imports.Process("", raw, nil); err != nil {
-		return err
+		return errors.Wrap(err, "failed to add required imports")
 	}
 
 	if raw, err = format.Source(raw); err != nil {
-		return err
+		return errors.Wrap(err, "failed to format source")
 	}
 
 	_, err = dst.Write(raw)
-	return err
+	return errors.Wrap(err, "failed to write to completed code to destination")
 }
 
 // LoadInformation loads table information based on the configuration and
@@ -85,4 +89,21 @@ func LoadInformation(configuration Configuration, table string) (TableDetails, e
 	details, err = LookupTableDetails(dialect, table)
 
 	return details, err
+}
+
+// ConfigurationDirectory determines the configuration directory based on the
+// go environment.
+func ConfigurationDirectory() string {
+	var err error
+	var defaultPath string
+	paths := filepath.SplitList(os.Getenv("GOPATH"))
+	if len(paths) == 0 {
+		if defaultPath, err = os.Getwd(); err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		defaultPath = paths[0]
+	}
+
+	return filepath.Join(defaultPath, ".genieql")
 }

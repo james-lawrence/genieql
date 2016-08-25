@@ -2,6 +2,8 @@ package genieql
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
 	"sort"
 )
 
@@ -10,6 +12,16 @@ type ColumnInfo struct {
 	Nullable   bool
 	PrimaryKey bool
 	Type       string
+}
+
+func (t ColumnInfo) MapColumn(x ast.Expr) (ColumnMap2, error) {
+	typ, err := parser.ParseExpr(t.Type)
+	return ColumnMap2{
+		Name:   t.Name,
+		Dst:    x,
+		PtrDst: t.Nullable,
+		Type:   typ,
+	}, err
 }
 
 type ColumnInfoSet []ColumnInfo
@@ -63,7 +75,7 @@ func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 		columns     []ColumnInfo
 	)
 
-	if columns, err = dialect.ColumnInformation(table); err != nil {
+	if columns, err = dialect.ColumnInformationForTable(table); err != nil {
 		return TableDetails{}, err
 	}
 

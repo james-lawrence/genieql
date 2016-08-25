@@ -9,3 +9,5 @@ import:
 - package: gopkg.in/yaml.v2
 - package: github.com/satori/go.uuid
 - package: github.com/jackc/pgx
+- package: github.com/pkg/errors
+- package: github.com/zieckey/goini

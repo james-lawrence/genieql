@@ -27,17 +27,24 @@ type generateInsert struct {
 
 func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 	var (
+		err           error
 		configuration genieql.Configuration
 		mapping       genieql.MappingConfig
 		fset          = token.NewFileSet()
 	)
-	pkgName, typName := extractPackageType(t.packageType)
 
-	if err := genieql.ReadConfiguration(filepath.Join(configurationDirectory(), t.configName), &configuration); err != nil {
-		return err
+	configuration = genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
+		),
+	)
+	if err = genieql.ReadConfiguration(&configuration); err != nil {
+		log.Fatalln(err)
 	}
 
-	if err := genieql.ReadMapper(configurationDirectory(), pkgName, typName, t.mapName, configuration, &mapping); err != nil {
+	pkgName, typName := extractPackageType(t.packageType)
+
+	if err = genieql.ReadMapper(configuration, pkgName, typName, t.mapName, &mapping); err != nil {
 		return err
 	}
 
@@ -46,7 +53,7 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	fields, err := mapping.TypeFields(build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	fields, err := mapping.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Println("type fields error")
 		log.Fatalln(err)

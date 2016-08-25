@@ -13,6 +13,19 @@ type ColumnMap struct {
 	Type         ast.Expr
 }
 
+type ColumnMap2 struct {
+	Name   string
+	Type   ast.Expr
+	Dst    ast.Expr
+	PtrDst bool
+}
+
+func (t ColumnMap2) Local(i int) ast.Expr {
+	return &ast.Ident{
+		Name: fmt.Sprintf("c%d", i),
+	}
+}
+
 // AssignmentExpr generates an assignment to a local variable for this
 // field specified by this mapping.
 func (t ColumnMap) AssignmentExpr(local ast.Expr) ast.Expr {

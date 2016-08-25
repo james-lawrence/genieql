@@ -45,5 +45,5 @@ func (t mapper) toMapper() genieql.MappingConfig {
 }
 
 func (t mapper) Map() error {
-	return genieql.Map(filepath.Join(configurationDirectory(), t.configuration), t.name, t.toMapper())
+	return genieql.Map(filepath.Join(genieql.ConfigurationDirectory(), t.configuration), t.name, t.toMapper())
 }

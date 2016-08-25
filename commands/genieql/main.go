@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -49,19 +48,4 @@ func extractPackageType(s string) (string, string) {
 		return s[:i], s[i+1:]
 	}
 	return "", ""
-}
-
-func configurationDirectory() string {
-	var err error
-	var defaultPath string
-	paths := filepath.SplitList(os.Getenv("GOPATH"))
-	if len(paths) == 0 {
-		if defaultPath, err = os.Getwd(); err != nil {
-			log.Fatalln(err)
-		}
-	} else {
-		defaultPath = paths[0]
-	}
-
-	return filepath.Join(defaultPath, ".genieql")
 }
