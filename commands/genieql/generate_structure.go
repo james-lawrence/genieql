@@ -55,14 +55,11 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		configuration genieql.Configuration
 	)
 
-	configuration, err = genieql.NewConfiguration(
+	configuration = genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-	if err != nil {
-		return err
-	}
 
 	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		return err

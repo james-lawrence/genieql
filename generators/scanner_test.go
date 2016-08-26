@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	_ "bitbucket.org/jatone/genieql/internal/drivers"
+
 	. "bitbucket.org/jatone/genieql/generators"
 
 	. "github.com/onsi/ginkgo"
@@ -13,9 +17,16 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = PDescribe("Scanner", func() {
+var _ = Describe("Scanner", func() {
+	config := genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), "scanner-test.config"),
+		),
+	)
+	genieql.RegisterDriver(config.Driver, noopDriver{})
+
 	DescribeTable("should build a scanner for builtin types",
-		func(definition, output string) {
+		func(definition, fixture string) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
@@ -25,61 +36,24 @@ var _ = PDescribe("Scanner", func() {
 
 			buffer.WriteString("package example\n\n")
 			for _, d := range genieql.SelectFuncType(genieql.FindTypes(node)...) {
-				for _, g := range ScannerFromGenDecl(d) {
+				for _, g := range ScannerFromGenDecl(d, ScannerOptionConfiguration(config)) {
 					Expect(g.Generate(buffer)).ToNot(HaveOccurred())
 					buffer.WriteString("\n")
 				}
 			}
-
+			expected, err := ioutil.ReadFile(fixture)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
-			Expect(formatted.String()).To(Equal(output))
+			Expect(formatted.Bytes()).To(Equal(expected))
 		},
-		Entry("scan int", `package example; type example func(arg int)`, intScanner),
-		Entry("scan bool", `package example; type example func(arg bool)`, boolScanner),
-		Entry("scan time.Time", `package example; type example func(arg time.Time)`, timeScanner),
-		Entry("scan multipleParams", `package example; type example func(arg1, arg2 int, arg3 bool, arg4 string)`, multiParamScanner),
+		Entry("scan int", `package example; type ExampleInt func(arg int)`, "_test_fixtures/int_scanner.go"),
+		Entry("scan bool", `package example; type ExampleBool func(arg bool)`, "_test_fixtures/bool_scanner.go"),
+		Entry("scan time.Time", `package example; type ExampleTime func(arg time.Time)`, "_test_fixtures/time_scanner.go"),
+		Entry("scan multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, "_test_fixtures/multiple_params_scanner.go"),
 	)
 })
 
-const intScanner = `package example
-
-import "database/sql"
-
-type example struct {
-	Rows *sql.Rows
-}
-
-func (t example) Scan(arg *int) error {
-	var (
-		c0 sql.NullInt64
-	)
-
-	if err := t.Rows.Scan(&c0); err != nil {
-		return err
-	}
-
-	if c0.Valid {
-		tmp := int(c0.Int64)
-		arg = &tmp
-	}
-
-	return t.Rows.Err()
-}
-
-func (t example) Err() error {
-	return t.Rows.Err()
-}
-
-func (t example) Close() error {
-	if t.Rows == nil {
-		return nil
-	}
-	return t.Rows.Close()
-}
-
-func (t example) Next() bool {
-	return t.Rows.Next()
-}
+const intScanner = `
 `
 
 const boolScanner = `package example

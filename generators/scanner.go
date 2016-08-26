@@ -470,6 +470,7 @@ func (t dynamic{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 
 	return t.Rows.Err()
 }
+
 func (t dynamic{{.Name}}) Err() error {
 	return t.Rows.Err()
 }
