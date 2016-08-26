@@ -16,7 +16,7 @@ var _ = Describe("pq", func() {
 		}{
 			{"int", false, "int"},
 			{"*int", false, "*int"},
-			{"time.Time", true, "time.Time"},
+			{"time.Time", true, "myVar.Time"},
 			{"*time.Time", true, "myVar.Time"},
 		}
 

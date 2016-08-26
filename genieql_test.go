@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"go/ast"
 
+	"github.com/pkg/errors"
+
 	. "bitbucket.org/jatone/genieql"
 
 	. "github.com/onsi/ginkgo"
@@ -20,7 +22,8 @@ var _ = Describe("Genieql", func() {
 
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			Expect(FormatOutput(buffer, []byte(invalidCode))).To(MatchError("2:1: expected 'package', found 'func'"))
+			err := errors.Cause(FormatOutput(buffer, []byte(invalidCode)))
+			Expect(err).To(MatchError("2:1: expected 'package', found 'func'"))
 		})
 	})
 
