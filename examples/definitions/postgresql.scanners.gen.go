@@ -185,6 +185,7 @@ func (t dynamicProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error 
 
 	return t.Rows.Err()
 }
+
 func (t dynamicProfileScanner) Err() error {
 	return t.Rows.Err()
 }
@@ -388,6 +389,7 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 
 	return t.Rows.Err()
 }
+
 func (t dynamicExample1Scanner) Err() error {
 	return t.Rows.Err()
 }
