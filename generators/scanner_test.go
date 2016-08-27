@@ -46,9 +46,9 @@ var _ = Describe("Scanner", func() {
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.Bytes()).To(Equal(expected))
 		},
-		Entry("scanner int", `package example; type ExampleInt func(arg int)`, "_test_fixtures/int_scanner.go"),
-		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, "_test_fixtures/bool_scanner.go"),
-		Entry("scanner time.Time", `package example; type ExampleTime func(arg time.Time)`, "_test_fixtures/time_scanner.go"),
-		Entry("scanner multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, "_test_fixtures/multiple_params_scanner.go"),
+		Entry("scanner int", `package example; type ExampleInt func(arg int)`, ".fixtures/int_scanner.go"),
+		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, ".fixtures/bool_scanner.go"),
+		Entry("scanner time.Time", `package example; type ExampleTime func(arg time.Time)`, ".fixtures/time_scanner.go"),
+		Entry("scanner multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/multiple_params_scanner.go"),
 	)
 })
