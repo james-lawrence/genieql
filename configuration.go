@@ -35,6 +35,10 @@ func (t Configuration) ReadMap(pkg, typ, name string, m *MappingConfig) error {
 	return ReadMapper(t, pkg, typ, name, m)
 }
 
+func (t Configuration) WriteMap(name string, m MappingConfig) error {
+	return WriteMapper(t, name, m)
+}
+
 // Bootstrap takes a db connection url and creates a genieql
 // configuration from the url and writes out the configuration to the provided
 // path.

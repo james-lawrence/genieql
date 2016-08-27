@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
@@ -53,6 +52,9 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 	var (
 		err           error
 		configuration genieql.Configuration
+		dialect       genieql.Dialect
+		wd            string
+		pkg           *build.Package
 	)
 
 	configuration = genieql.MustConfiguration(
@@ -61,23 +63,34 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		),
 	)
 
+	if wd, err = os.Getwd(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if pkg = currentPackage(wd); pkg == nil {
+		log.Fatalln("error no package found in", wd)
+	}
+
 	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		return err
 	}
 
-	dialect, err := genieql.LookupDialect(configuration)
-	if err != nil {
+	if dialect, err = genieql.LookupDialect(configuration); err != nil {
 		log.Fatalln(err)
 	}
 
 	pg := printGenerator{
 		delegate: generators.NewStructure(
+			generators.StructOptionConfiguration(configuration),
 			generators.StructOptionName(
 				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
 			),
-			generators.StructOptionFieldsDelegate(func() ([]genieql.ColumnInfo, error) {
-				return dialect.ColumnInformationForTable(t.table)
-			}),
+			generators.StructOptionMappingConfigOptions(
+				genieql.MCOCustom(false),
+				genieql.MCOColumnInfo(t.table),
+				genieql.MCODialect(dialect),
+				genieql.MCOPackage(pkg.ImportPath),
+			),
 		),
 	}
 
@@ -163,15 +176,19 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
+		consts := genieql.FindConstants(file)
 
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
-			delegate := func(table string) generators.FieldsDelegate {
-				return func() ([]genieql.ColumnInfo, error) {
-					return dialect.ColumnInformationForTable(table)
-				}
-			}
-			return generators.StructureFromGenDecl(decl, delegate)
-		}, genieql.FindConstants(file)...)
+			return generators.StructureFromGenDecl(
+				decl,
+				generators.StructOptionConfiguration(configuration),
+				generators.StructOptionMappingConfigOptions(
+					genieql.MCOCustom(false),
+					genieql.MCODialect(dialect),
+					genieql.MCOPackage(pkg.ImportPath),
+				),
+			)
+		}, consts...)
 
 		g = append(g, decls...)
 	})
@@ -216,7 +233,18 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 	var (
 		err           error
 		configuration genieql.Configuration
+		dialect       genieql.Dialect
+		wd            string
+		pkg           *build.Package
 	)
+
+	if wd, err = os.Getwd(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if pkg = currentPackage(wd); pkg == nil {
+		log.Fatalln("error no package found in", wd)
+	}
 
 	configuration = genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
@@ -228,21 +256,21 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	dialect, err := genieql.LookupDialect(configuration)
-	if err != nil {
+	if dialect, err = genieql.LookupDialect(configuration); err != nil {
 		log.Fatalln(err)
-	}
-
-	delegate := func() ([]genieql.ColumnInfo, error) {
-		return dialect.ColumnInformationForQuery(t.query)
 	}
 
 	pg := printGenerator{
 		delegate: generators.NewStructure(
+			generators.StructOptionConfiguration(configuration),
 			generators.StructOptionName(
 				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
 			),
-			generators.StructOptionFieldsDelegate(delegate),
+			generators.StructOptionMappingConfigOptions(
+				genieql.MCOCustom(true),
+				genieql.MCODialect(dialect),
+				genieql.MCOPackage(pkg.ImportPath),
+			),
 		),
 	}
 
@@ -293,14 +321,11 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		dialect       genieql.Dialect
 		fset          = token.NewFileSet()
 	)
-	configuration, err = genieql.NewConfiguration(
+	configuration = genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-	if err != nil {
-		return err
-	}
 
 	if err = genieql.ReadConfiguration(&configuration); err != nil {
 		log.Fatalln(err)
@@ -334,11 +359,15 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		}
 
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
-			return generators.StructureFromGenDecl(decl, func(query string) generators.FieldsDelegate {
-				return func() ([]genieql.ColumnInfo, error) {
-					return dialect.ColumnInformationForQuery(strings.Trim(query, "\""))
-				}
-			})
+			return generators.StructureFromGenDecl(
+				decl,
+				generators.StructOptionConfiguration(configuration),
+				generators.StructOptionMappingConfigOptions(
+					genieql.MCOCustom(true),
+					genieql.MCODialect(dialect),
+					genieql.MCOPackage(pkg.ImportPath),
+				),
+			)
 		}, genieql.FindConstants(f)...)
 		g = append(g, decls...)
 	})

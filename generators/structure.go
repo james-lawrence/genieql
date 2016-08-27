@@ -24,19 +24,11 @@ func StructOptionName(n string) StructOption {
 	}
 }
 
-// StructOptionFieldsDelegate provides the fields delegate function for lookuping
-// up the fields.
-func StructOptionFieldsDelegate(delegate FieldsDelegate) StructOption {
-	return func(s *structure) {
-		s.ColumnsDelegate = delegate
-	}
-}
-
 // StructOptionAliasStrategy provides the default aliasing strategy for
 // generating the a struct's field names.
-func StructOptionAliasStrategy(aliaser genieql.Aliaser) StructOption {
+func StructOptionAliasStrategy(mcp genieql.MappingConfigOption) StructOption {
 	return func(s *structure) {
-		s.aliaser = aliaser
+		s.aliaser = mcp
 	}
 }
 
@@ -44,18 +36,38 @@ func StructOptionAliasStrategy(aliaser genieql.Aliaser) StructOption {
 // generating the struct's field names.
 func StructOptionRenameMap(m map[string]string) StructOption {
 	return func(s *structure) {
-		s.renameMap = m
+		s.renameMap = genieql.MCORenameMap(m)
 	}
 }
 
-// FieldsDelegate extracts the fields for something within the database.
-type FieldsDelegate func() ([]genieql.ColumnInfo, error)
+// StructOptionFieldsQuery sets the query to determine the fields of the structure.
+func StructOptionFieldsQuery(q string) StructOption {
+	return func(s *structure) {
+		s.query = genieql.MCOColumnInfo(q)
+	}
+}
+
+// StructOptionConfiguration sets the genieql.Configuration for the structure generator.
+func StructOptionConfiguration(c genieql.Configuration) StructOption {
+	return func(s *structure) {
+		s.config = c
+	}
+}
+
+// StructOptionMappingConfigOptions sets the base configuration to be used for
+// the MappingConfig.
+func StructOptionMappingConfigOptions(options ...genieql.MappingConfigOption) StructOption {
+	return func(s *structure) {
+		s.mappingOptions = options
+	}
+}
 
 // NewStructure creates a Generator that builds structures from column information.
 func NewStructure(opts ...StructOption) genieql.Generator {
 	s := structure{
-		aliaser:   genieql.AliasStrategyCamelcase,
-		renameMap: map[string]string{},
+		renameMap:      genieql.MCORenameMap(map[string]string{}),
+		aliaser:        genieql.MCOTransformations("camelcase"),
+		mappingOptions: []genieql.MappingConfigOption{},
 	}
 
 	for _, opt := range opts {
@@ -66,16 +78,19 @@ func NewStructure(opts ...StructOption) genieql.Generator {
 }
 
 // StructureFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
-func StructureFromGenDecl(decl *ast.GenDecl, fields func(string) FieldsDelegate) []genieql.Generator {
+func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.Generator {
 	var (
-		err     error
-		options []StructOption
+		err        error
+		configOpts []StructOption
 	)
 
-	if decl.Doc != nil {
-		if options, err = configOptions(decl.Doc.Text()); err != nil {
+	if decl.Doc == nil {
+		configOpts = options
+	} else {
+		if configOpts, err = configOptions(decl.Doc.Text()); err != nil {
 			return []genieql.Generator{genieql.NewErrGenerator(err)}
 		}
+		configOpts = append(options, configOpts...)
 	}
 
 	specs := genieql.FindValueSpecs(decl)
@@ -83,8 +98,7 @@ func StructureFromGenDecl(decl *ast.GenDecl, fields func(string) FieldsDelegate)
 
 	for _, vs := range specs {
 		m := mapStructureToGenerator{
-			delegate: fields,
-			options:  options,
+			options: configOpts,
 		}
 		g = append(g, m.Map(vs)...)
 	}
@@ -93,10 +107,12 @@ func StructureFromGenDecl(decl *ast.GenDecl, fields func(string) FieldsDelegate)
 }
 
 type structure struct {
-	Name            string
-	ColumnsDelegate FieldsDelegate
-	aliaser         genieql.Aliaser
-	renameMap       map[string]string
+	Name           string
+	aliaser        genieql.MappingConfigOption
+	renameMap      genieql.MappingConfigOption
+	query          genieql.MappingConfigOption
+	mappingOptions []genieql.MappingConfigOption
+	config         genieql.Configuration
 }
 
 func (t structure) Generate(dst io.Writer) error {
@@ -111,20 +127,14 @@ type {{.Name}} struct {
 		Columns []genieql.ColumnInfo
 	}
 
-	columns, err := t.ColumnsDelegate()
-	if err != nil {
+	mapping := genieql.NewMappingConfig(append(t.mappingOptions, t.renameMap, t.aliaser, t.query, genieql.MCOType(t.Name))...)
+	if err := t.config.WriteMap("default", mapping); err != nil {
 		return err
 	}
 
-	alias := func(name string) string {
-		// if the configuration explicitly renames
-		// a column use that value do not try to
-		// transform it.
-		if v, ok := t.renameMap[name]; ok {
-			return v
-		}
-
-		return t.aliaser.Alias(name)
+	columns, err := mapping.ColumnInfo()
+	if err != nil {
+		return err
 	}
 
 	ctx := context{
@@ -133,7 +143,7 @@ type {{.Name}} struct {
 	}
 
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
-		"transformation": alias,
+		"transformation": mapping.Aliaser(),
 	}).Parse(tmpl)).Execute(dst, ctx)
 }
 
@@ -172,7 +182,7 @@ func configOptions(config string) ([]StructOption, error) {
 			if alias := genieql.AliaserSelect(kvmap[aliasOption]); alias != nil {
 				// this could cause multiple aliasers to be applied to the Generator
 				// but it doesn't matter as last one will win.
-				options = append(options, StructOptionAliasStrategy(alias))
+				options = append(options, StructOptionAliasStrategy(genieql.MCOTransformations(kvmap[aliasOption])))
 			}
 		}
 	}
@@ -181,21 +191,20 @@ func configOptions(config string) ([]StructOption, error) {
 }
 
 type mapStructureToGenerator struct {
-	options  []StructOption
-	delegate func(string) FieldsDelegate
+	options []StructOption
 }
 
 func (t mapStructureToGenerator) Map(vs *ast.ValueSpec) []genieql.Generator {
 	dst := make([]genieql.Generator, 0, len(vs.Names))
 
 	for idx := range vs.Names {
-		tablename := types.ExprString(vs.Values[idx])
+		tablename := strings.Trim(types.ExprString(vs.Values[idx]), "\"")
 		s := NewStructure(
 			append(t.options,
 				StructOptionName(
 					vs.Names[idx].Name,
 				),
-				StructOptionFieldsDelegate(t.delegate(tablename)),
+				StructOptionFieldsQuery(tablename),
 			)...,
 		)
 		dst = append(dst, s)

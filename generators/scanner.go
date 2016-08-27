@@ -128,10 +128,14 @@ func (t scanner) Generate(dst io.Writer) error {
 	}
 
 	for _, param := range t.Fields.List {
-		columns, err := t.columnMapper(param)
-		if err != nil {
+		var (
+			columns []genieql.ColumnMap2
+		)
+
+		if columns, err = t.columnMapper(param); err != nil {
 			return err
 		}
+
 		ctx.Columns = append(ctx.Columns, columns...)
 	}
 

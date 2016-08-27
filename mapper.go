@@ -12,12 +12,68 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// MappingConfigOption (MCO) options for building MappingConfigs.
+type MappingConfigOption func(*MappingConfig)
+
+func MCOPackage(p string) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.Package = p
+	}
+}
+
+func MCOColumnInfo(q string) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.TableOrQuery = q
+	}
+}
+
+func MCOCustom(custom bool) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.CustomQuery = custom
+	}
+}
+
+func MCODialect(d Dialect) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.dialect = d
+	}
+}
+
+func MCOTransformations(t ...string) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.Transformations = t
+	}
+}
+
+func MCORenameMap(m map[string]string) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.RenameMap = m
+	}
+}
+
+func MCOType(t string) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.Type = t
+	}
+}
+
+func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
+	mc := MappingConfig{}
+
+	for _, opt := range options {
+		opt(&mc)
+	}
+
+	return mc
+}
+
 // MappingConfig TODO...
 type MappingConfig struct {
 	Package              string
 	Type                 string
-	IncludeTablePrefixes bool
+	IncludeTablePrefixes bool // deprecated
 	Transformations      []string
+	RenameMap            map[string]string
 	TableOrQuery         string
 	CustomQuery          bool
 	dialect              Dialect
@@ -30,7 +86,17 @@ func (t MappingConfig) Mapper() Mapper {
 
 // Aliaser ...
 func (t MappingConfig) Aliaser() Aliaser {
-	return AliaserBuilder(t.Transformations...)
+	alias := AliaserBuilder(t.Transformations...)
+	return AliaserFunc(func(name string) string {
+		// if the configuration explicitly renames
+		// a column use that value do not try to
+		// transform it.
+		if v, ok := t.RenameMap[name]; ok {
+			return v
+		}
+
+		return alias.Alias(name)
+	})
 }
 
 // TypeFields ...
