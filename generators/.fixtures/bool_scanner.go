@@ -78,6 +78,35 @@ func (t staticExampleBool) Next() bool {
 	return t.Rows.Next()
 }
 
+// NewStaticRowExampleBool creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowExampleBool(row *sql.Row) StaticRowExampleBool {
+	return StaticRowExampleBool{
+		row: row,
+	}
+}
+
+type StaticRowExampleBool struct {
+	row *sql.Row
+}
+
+func (t StaticRowExampleBool) Scan(arg *bool) error {
+	var (
+		c0 sql.NullBool
+	)
+
+	if err := t.row.Scan(&c0); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := c0.Bool
+		*arg = tmp
+	}
+
+	return nil
+}
+
 // DynamicExampleBool creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
 func DynamicExampleBool(rows *sql.Rows, err error) ExampleBool {

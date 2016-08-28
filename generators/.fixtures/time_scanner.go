@@ -78,6 +78,32 @@ func (t staticExampleTime) Next() bool {
 	return t.Rows.Next()
 }
 
+// NewStaticRowExampleTime creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowExampleTime(row *sql.Row) StaticRowExampleTime {
+	return StaticRowExampleTime{
+		row: row,
+	}
+}
+
+type StaticRowExampleTime struct {
+	row *sql.Row
+}
+
+func (t StaticRowExampleTime) Scan(arg *time.Time) error {
+	var (
+		c0 time.Time
+	)
+
+	if err := t.row.Scan(&c0); err != nil {
+		return err
+	}
+
+	*arg = c0
+
+	return nil
+}
+
 // DynamicExampleTime creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
 func DynamicExampleTime(rows *sql.Rows, err error) ExampleTime {

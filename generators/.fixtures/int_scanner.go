@@ -78,6 +78,35 @@ func (t staticExampleInt) Next() bool {
 	return t.Rows.Next()
 }
 
+// NewStaticRowExampleInt creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowExampleInt(row *sql.Row) StaticRowExampleInt {
+	return StaticRowExampleInt{
+		row: row,
+	}
+}
+
+type StaticRowExampleInt struct {
+	row *sql.Row
+}
+
+func (t StaticRowExampleInt) Scan(arg *int) error {
+	var (
+		c0 sql.NullInt64
+	)
+
+	if err := t.row.Scan(&c0); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := int(c0.Int64)
+		*arg = tmp
+	}
+
+	return nil
+}
+
 // DynamicExampleInt creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
 func DynamicExampleInt(rows *sql.Rows, err error) ExampleInt {

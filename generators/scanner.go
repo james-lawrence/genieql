@@ -165,6 +165,13 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	dst.Write([]byte("\n"))
 
+	tmpl = template.Must(template.New("static-row").Funcs(funcMap).Parse(staticRowScanner))
+	if err = tmpl.Execute(dst, ctx); err != nil {
+		return errors.Wrap(err, "failed to generate static row scanner")
+	}
+
+	dst.Write([]byte("\n"))
+
 	tmpl = template.Must(template.New("dynamic").Funcs(funcMap).Parse(dynamicScanner))
 	if err = tmpl.Execute(dst, ctx); err != nil {
 		return errors.Wrap(err, "failed to generate dynamic scanner")
@@ -411,6 +418,37 @@ func (t static{{.Name}}) Close() error {
 
 func (t static{{.Name}}) Next() bool {
 	return t.Rows.Next()
+}
+`
+
+const staticRowScanner = `// NewStaticRow{{.Name}} creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRow{{.Name}}(row *sql.Row) StaticRow{{.Name}} {
+	return StaticRow{{.Name}}{
+		row: row,
+	}
+}
+
+type StaticRow{{.Name}} struct {
+	row *sql.Row
+}
+
+func (t StaticRow{{.Name}}) Scan({{ .Parameters | arguments }}) error {
+	var (
+		{{- range $index, $column := .Columns }}
+		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
+		{{ end }}
+	)
+
+	if err := t.row.Scan({{ .Columns | scan}}); err != nil {
+		return err
+	}
+
+	{{ range $index, $column := .Columns}}
+	{{ assignment $index $column | printAST }}
+	{{ end }}
+
+	return nil
 }
 `
 

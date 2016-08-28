@@ -44,7 +44,7 @@ var _ = Describe("Scanner", func() {
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
-			Expect(formatted.Bytes()).To(Equal(expected))
+			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("scanner int", `package example; type ExampleInt func(arg int)`, ".fixtures/int_scanner.go"),
 		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, ".fixtures/bool_scanner.go"),
