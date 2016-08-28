@@ -24,7 +24,7 @@ var _ = Describe("Mapper", func() {
 				column:  "column1",
 				field:   &ast.Field{Names: []*ast.Ident{&ast.Ident{Name: "Column1"}}, Type: &ast.Ident{Name: "int"}},
 				offset:  0,
-				Aliaser: AliasStrategyLowercase,
+				Aliaser: AliasStrategyCamelcase,
 			},
 		}
 

@@ -149,6 +149,13 @@ func (t scanner) Generate(dst io.Writer) error {
 		"nulltype":   lookupNullableTypes,
 		"assignment": assignmentStmt{NullableType: nullableTypes}.assignment,
 		"printAST":   astPrint,
+		"columns": func(i []genieql.ColumnMap2) string {
+			s := make([]string, 0, len(i))
+			for _, c := range i {
+				s = append(s, c.Name)
+			}
+			return strings.Join(s, ",")
+		},
 	}
 
 	tmpl = template.Must(template.New("interface").Funcs(funcMap).Parse(interfaceScanner))
@@ -342,7 +349,9 @@ func astPrint(n ast.Node) (string, error) {
 	return dst.String(), nil
 }
 
-const interfaceScanner = `// {{.Name}} scanner interface.
+const interfaceScanner = `const {{.Name}}StaticColumns = "{{ .Columns | columns}}"
+
+// {{.Name}} scanner interface.
 type {{.Name}} interface {
 	Scan({{ .Parameters | arguments }}) error
 	Next() bool

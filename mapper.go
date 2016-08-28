@@ -201,7 +201,7 @@ func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Al
 
 	fieldName := field.Names[0].Name
 	for _, aliaser := range aliases {
-		if column == aliaser.Alias(fieldName) {
+		if aliaser.Alias(column) == fieldName {
 			return ColumnMap{
 				ColumnName:   column,
 				FieldName:    fieldName,

@@ -44,7 +44,7 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.packageType)
 
-	if err = genieql.ReadMapper(configuration, pkgName, typName, t.mapName, &mapping); err != nil {
+	if err = configuration.ReadMap(pkgName, typName, t.mapName, &mapping); err != nil {
 		return err
 	}
 

@@ -44,12 +44,15 @@ func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser)
 	dup.UnmappedColumns = make([]string, 0, len(t.Columns))
 
 	for _, column := range t.Columns {
+		var mapped bool
 		for _, field := range fields {
 			if _, matched, _ := MapFieldToColumn(column, 0, field, aliases...); matched {
+				mapped = true
 				dup.Columns = append(dup.Columns, column)
-			} else {
-				dup.UnmappedColumns = append(dup.UnmappedColumns, column)
 			}
+		}
+		if !mapped {
+			dup.UnmappedColumns = append(dup.UnmappedColumns, column)
 		}
 	}
 
