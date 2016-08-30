@@ -1,3 +1,0 @@
-func NewRowScanner(row *sql.Row) IRowScanner {
-	return RowScanner{row: row}
-}
