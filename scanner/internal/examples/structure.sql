@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS type1;
 CREATE TABLE IF NOT EXISTS type1 (
 	field1 text PRIMARY KEY DEFAULT ''::text NOT NULL,
 	field2 text,

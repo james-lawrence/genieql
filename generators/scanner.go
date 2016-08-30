@@ -99,6 +99,15 @@ func ScannerOptionInterfaceName(n string) ScannerOption {
 	}
 }
 
+// ScannerOptionIgnoreSet DEPRECATED only used for old functions.
+// sets the selection of columns to be ignored.
+func ScannerOptionIgnoreSet(n ...string) ScannerOption {
+	return func(s *scanner) error {
+		s.ignoreSet = ignoreSet(n)
+		return nil
+	}
+}
+
 // ScannerFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
 func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
@@ -138,6 +147,19 @@ func NewScanner(options ...ScannerOption) genieql.Generator {
 	return s
 }
 
+type ignoreSet []string
+
+func (t ignoreSet) Contains(s string) bool {
+	for _, x := range t {
+		if x == s {
+			log.Println("ignoring", x)
+			return true
+		}
+	}
+
+	return false
+}
+
 type scanner struct {
 	Name          string
 	interfaceName string // DEPRECATED
@@ -146,6 +168,7 @@ type scanner struct {
 	Package       *build.Package
 	Config        genieql.Configuration
 	Driver        genieql.Driver
+	ignoreSet     ignoreSet
 }
 
 func (t scanner) Generate(dst io.Writer) error {
@@ -238,7 +261,7 @@ func (t scanner) packageName(x ast.Expr) string {
 	case *ast.SelectorExpr:
 		// TODO
 		log.Println("imports", x.Sel.Name, t.Package.Imports)
-		return ""
+		panic("unimplemented code path: currently structures from other packages are not supported")
 	default:
 		return t.Package.ImportPath
 	}
@@ -272,6 +295,10 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap2, error) {
 
 	for _, arg := range param.Names {
 		for _, column := range columns {
+			if t.ignoreSet.Contains(column.Name) {
+				continue
+			}
+
 			c, err := column.MapColumn(&ast.SelectorExpr{
 				Sel: ast.NewIdent(aliaser.Alias(column.Name)),
 				X:   arg,

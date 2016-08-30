@@ -196,6 +196,35 @@ func (t Mapper) MapColumns(fields []*ast.Field, columns ...string) ([]ColumnMap,
 	return matches, nil
 }
 
+// UnmappedColumns returns the columns that do not map to a field.
+func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]string, error) {
+	matches := make([]string, 0, len(columns))
+	for idx, column := range columns {
+		var (
+			matched bool
+			err     error
+		)
+
+		for _, field := range fields {
+			_, matched, err = MapFieldToColumn(column, idx, field, t.Aliasers...)
+			if err != nil {
+				return matches, err
+			}
+
+			if matched {
+				break
+			}
+		}
+
+		if !matched {
+			matches = append(matches, column)
+			break
+		}
+	}
+
+	return matches, nil
+}
+
 // MapFieldToColumn maps a column to a field based on the provided aliases.
 func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) (ColumnMap, bool, error) {
 	if len(field.Names) != 1 {

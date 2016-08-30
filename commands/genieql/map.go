@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"path/filepath"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -28,13 +27,12 @@ func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
 	mapCmd.Flag("mapping", "name to give the mapping").Default("default").StringVar(&t.name)
 	mapCmd.Arg("package.type", "location of type to work with github.com/soandso/package.MyType").Required().StringVar(&t.packageType)
 	mapCmd.Arg("transformations", "transformations (in left to right order) to apply to structure fields to map them to column names").
-		Default("snakecase", "lowercase").StringsVar(&t.transformations)
+		Default("camelcase").StringsVar(&t.transformations)
 
 	return mapCmd
 }
 
 func (t mapper) toMapper() genieql.MappingConfig {
-	log.Println("Package Type", t.packageType)
 	pkg, typ := extractPackageType(t.packageType)
 	return genieql.MappingConfig{
 		Package:              pkg,

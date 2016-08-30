@@ -60,6 +60,24 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 	}
 	// END HACK!
 
+	// HACK - this section lets us build up the ignored field set.
+	// this lets us maintain backwards compatability with previous versions.
+	// but it should be refactored.
+	details, err := genieql.LoadInformation(configuration, t.table)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	xfields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	unmappedColumns, err := mappingConfig.Mapper().UnmappedColumns(xfields, details.Columns...)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// END HACK
+
 	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
@@ -73,6 +91,7 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		generators.ScannerOptionParameters(&ast.FieldList{List: fields}),
 		generators.ScannerOptionOutputMode(generators.ModeStatic),
 		generators.ScannerOptionPackage(pkg),
+		generators.ScannerOptionIgnoreSet(unmappedColumns...),
 	)
 
 	hg := headerGenerator{
