@@ -2,6 +2,8 @@ package example
 
 import "database/sql"
 
+const ExampleMultipleParamStaticColumns = "arg1,arg2,arg3,arg4"
+
 // ExampleMultipleParam scanner interface.
 type ExampleMultipleParam interface {
 	Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error

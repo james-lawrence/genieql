@@ -19,6 +19,21 @@ import (
 	"bitbucket.org/jatone/genieql/astutil"
 )
 
+type mode int
+
+func (t mode) Enabled(o mode) bool {
+	return t&o != 0
+}
+
+const (
+	// ModeInterface - output the scanner interface.
+	ModeInterface mode = 1 << iota
+	// ModeStatic - output the static scanner.
+	ModeStatic
+	// ModeDynamic - output the dynamic scanner.
+	ModeDynamic
+)
+
 // ScannerOption option to provide the structure function.
 type ScannerOption func(*scanner) error
 
@@ -66,6 +81,24 @@ func ScannerOptionConfiguration(c genieql.Configuration) ScannerOption {
 	}
 }
 
+// ScannerOptionOutputMode set the output mode for the scanner.
+// e.g.) generators.ModeInterface|generators.ModeStatic|generators.ModeDynamic
+// each mode provided enables the given scanner type.
+func ScannerOptionOutputMode(m mode) ScannerOption {
+	return func(s *scanner) error {
+		s.Mode = m
+		return nil
+	}
+}
+
+// ScannerOptionInterfaceName DEPRECATED only used for old functions.
+func ScannerOptionInterfaceName(n string) ScannerOption {
+	return func(s *scanner) error {
+		s.interfaceName = n
+		return nil
+	}
+}
+
 // ScannerFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
 func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
@@ -91,7 +124,10 @@ func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []g
 
 // NewScanner creates a new genieql.Generator from the provided scanner options.
 func NewScanner(options ...ScannerOption) genieql.Generator {
-	s := scanner{}
+	// by default enable all modes
+	s := scanner{
+		Mode: ModeInterface | ModeStatic | ModeDynamic,
+	}
 
 	for _, opt := range options {
 		if err := opt(&s); err != nil {
@@ -103,11 +139,13 @@ func NewScanner(options ...ScannerOption) genieql.Generator {
 }
 
 type scanner struct {
-	Name    string
-	Fields  *ast.FieldList
-	Package *build.Package
-	Config  genieql.Configuration
-	Driver  genieql.Driver
+	Name          string
+	interfaceName string // DEPRECATED
+	Mode          mode
+	Fields        *ast.FieldList
+	Package       *build.Package
+	Config        genieql.Configuration
+	Driver        genieql.Driver
 }
 
 func (t scanner) Generate(dst io.Writer) error {
@@ -117,14 +155,16 @@ func (t scanner) Generate(dst io.Writer) error {
 	)
 
 	type context struct {
-		Name       string
-		Parameters []*ast.Field
-		Columns    []genieql.ColumnMap2
+		Name          string
+		InterfaceName string
+		Parameters    []*ast.Field
+		Columns       []genieql.ColumnMap2
 	}
 
 	ctx := context{
-		Name:       t.Name,
-		Parameters: t.Fields.List,
+		Name:          t.Name,
+		InterfaceName: defaultIfBlank(t.interfaceName, t.Name),
+		Parameters:    t.Fields.List,
 	}
 
 	for _, param := range t.Fields.List {
@@ -158,30 +198,36 @@ func (t scanner) Generate(dst io.Writer) error {
 		},
 	}
 
-	tmpl = template.Must(template.New("interface").Funcs(funcMap).Parse(interfaceScanner))
-	if err = tmpl.Execute(dst, ctx); err != nil {
-		return errors.Wrap(err, "failed to generate interface scanner")
+	if t.Mode.Enabled(ModeInterface) {
+		tmpl = template.Must(template.New("interface").Funcs(funcMap).Parse(interfaceScanner))
+		if err = tmpl.Execute(dst, ctx); err != nil {
+			return errors.Wrap(err, "failed to generate interface scanner")
+		}
+
+		dst.Write([]byte("\n"))
 	}
 
-	dst.Write([]byte("\n"))
+	if t.Mode.Enabled(ModeStatic) {
+		tmpl = template.Must(template.New("static").Funcs(funcMap).Parse(staticScanner))
+		if err = tmpl.Execute(dst, ctx); err != nil {
+			return errors.Wrap(err, "failed to generate static scanner")
+		}
 
-	tmpl = template.Must(template.New("static").Funcs(funcMap).Parse(staticScanner))
-	if err = tmpl.Execute(dst, ctx); err != nil {
-		return errors.Wrap(err, "failed to generate static scanner")
+		dst.Write([]byte("\n"))
+
+		tmpl = template.Must(template.New("static-row").Funcs(funcMap).Parse(staticRowScanner))
+		if err = tmpl.Execute(dst, ctx); err != nil {
+			return errors.Wrap(err, "failed to generate static row scanner")
+		}
+
+		dst.Write([]byte("\n"))
 	}
 
-	dst.Write([]byte("\n"))
-
-	tmpl = template.Must(template.New("static-row").Funcs(funcMap).Parse(staticRowScanner))
-	if err = tmpl.Execute(dst, ctx); err != nil {
-		return errors.Wrap(err, "failed to generate static row scanner")
-	}
-
-	dst.Write([]byte("\n"))
-
-	tmpl = template.Must(template.New("dynamic").Funcs(funcMap).Parse(dynamicScanner))
-	if err = tmpl.Execute(dst, ctx); err != nil {
-		return errors.Wrap(err, "failed to generate dynamic scanner")
+	if t.Mode.Enabled(ModeDynamic) {
+		tmpl = template.Must(template.New("dynamic").Funcs(funcMap).Parse(dynamicScanner))
+		if err = tmpl.Execute(dst, ctx); err != nil {
+			return errors.Wrap(err, "failed to generate dynamic scanner")
+		}
 	}
 
 	return nil
@@ -351,40 +397,40 @@ func astPrint(n ast.Node) (string, error) {
 
 const interfaceScanner = `const {{.Name}}StaticColumns = "{{ .Columns | columns}}"
 
-// {{.Name}} scanner interface.
-type {{.Name}} interface {
+// {{.InterfaceName}} scanner interface.
+type {{.InterfaceName}} interface {
 	Scan({{ .Parameters | arguments }}) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type err{{.Name}} struct {
+type err{{.InterfaceName}} struct {
 	e error
 }
 
-func (t err{{.Name}}) Scan({{ .Parameters | arguments }}) error {
+func (t err{{.InterfaceName}}) Scan({{ .Parameters | arguments }}) error {
 	return t.e
 }
 
-func (t err{{.Name}}) Next() bool {
+func (t err{{.InterfaceName}}) Next() bool {
 	return false
 }
 
-func (t err{{.Name}}) Err() error {
+func (t err{{.InterfaceName}}) Err() error {
 	return t.e
 }
 
-func (t err{{.Name}}) Close() error {
+func (t err{{.InterfaceName}}) Close() error {
 	return nil
 }
 `
 
 const staticScanner = `// Static{{.Name}} creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func Static{{.Name}}(rows *sql.Rows, err error) {{.Name}} {
+func Static{{.Name}}(rows *sql.Rows, err error) {{.InterfaceName}} {
 	if err != nil {
-		return err{{.Name}}{e: err}
+		return err{{.InterfaceName}}{e: err}
 	}
 
 	return static{{.Name}}{
@@ -464,9 +510,9 @@ func (t StaticRow{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 const dynamicScanner = `
 // Dynamic{{.Name}} creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func Dynamic{{.Name}}(rows *sql.Rows, err error) {{.Name}} {
+func Dynamic{{.Name}}(rows *sql.Rows, err error) {{.InterfaceName}} {
 	if err != nil {
-		return err{{.Name}}{e: err}
+		return err{{.InterfaceName}}{e: err}
 	}
 
 	return dynamic{{.Name}}{

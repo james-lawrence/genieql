@@ -2,6 +2,8 @@ package example
 
 import "database/sql"
 
+const ExampleBoolStaticColumns = "arg"
+
 // ExampleBool scanner interface.
 type ExampleBool interface {
 	Scan(arg *bool) error

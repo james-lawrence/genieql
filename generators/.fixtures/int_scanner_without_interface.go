@@ -2,53 +2,23 @@ package example
 
 import "database/sql"
 
-const ExampleIntStaticColumns = "arg"
-
-// ExampleInt scanner interface.
-type ExampleInt interface {
-	Scan(arg *int) error
-	Next() bool
-	Close() error
-	Err() error
-}
-
-type errExampleInt struct {
-	e error
-}
-
-func (t errExampleInt) Scan(arg *int) error {
-	return t.e
-}
-
-func (t errExampleInt) Next() bool {
-	return false
-}
-
-func (t errExampleInt) Err() error {
-	return t.e
-}
-
-func (t errExampleInt) Close() error {
-	return nil
-}
-
-// StaticExampleInt creates a scanner that operates on a static
+// StaticExampleIntNoInterface creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExampleInt(rows *sql.Rows, err error) ExampleInt {
+func StaticExampleIntNoInterface(rows *sql.Rows, err error) ExampleIntNoInterface {
 	if err != nil {
-		return errExampleInt{e: err}
+		return errExampleIntNoInterface{e: err}
 	}
 
-	return staticExampleInt{
+	return staticExampleIntNoInterface{
 		Rows: rows,
 	}
 }
 
-type staticExampleInt struct {
+type staticExampleIntNoInterface struct {
 	Rows *sql.Rows
 }
 
-func (t staticExampleInt) Scan(arg *int) error {
+func (t staticExampleIntNoInterface) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)
@@ -65,34 +35,34 @@ func (t staticExampleInt) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleInt) Err() error {
+func (t staticExampleIntNoInterface) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleInt) Close() error {
+func (t staticExampleIntNoInterface) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExampleInt) Next() bool {
+func (t staticExampleIntNoInterface) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExampleInt creates a scanner that operates on a static
+// NewStaticRowExampleIntNoInterface creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExampleInt(row *sql.Row) StaticRowExampleInt {
-	return StaticRowExampleInt{
+func NewStaticRowExampleIntNoInterface(row *sql.Row) StaticRowExampleIntNoInterface {
+	return StaticRowExampleIntNoInterface{
 		row: row,
 	}
 }
 
-type StaticRowExampleInt struct {
+type StaticRowExampleIntNoInterface struct {
 	row *sql.Row
 }
 
-func (t StaticRowExampleInt) Scan(arg *int) error {
+func (t StaticRowExampleIntNoInterface) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)
@@ -109,23 +79,23 @@ func (t StaticRowExampleInt) Scan(arg *int) error {
 	return nil
 }
 
-// DynamicExampleInt creates a scanner that operates on a dynamic
+// DynamicExampleIntNoInterface creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExampleInt(rows *sql.Rows, err error) ExampleInt {
+func DynamicExampleIntNoInterface(rows *sql.Rows, err error) ExampleIntNoInterface {
 	if err != nil {
-		return errExampleInt{e: err}
+		return errExampleIntNoInterface{e: err}
 	}
 
-	return dynamicExampleInt{
+	return dynamicExampleIntNoInterface{
 		Rows: rows,
 	}
 }
 
-type dynamicExampleInt struct {
+type dynamicExampleIntNoInterface struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExampleInt) Scan(arg *int) error {
+func (t dynamicExampleIntNoInterface) Scan(arg *int) error {
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -166,17 +136,17 @@ func (t dynamicExampleInt) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleInt) Err() error {
+func (t dynamicExampleIntNoInterface) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleInt) Close() error {
+func (t dynamicExampleIntNoInterface) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExampleInt) Next() bool {
+func (t dynamicExampleIntNoInterface) Next() bool {
 	return t.Rows.Next()
 }

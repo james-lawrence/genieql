@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const ExampleTimeStaticColumns = "arg"
+
 // ExampleTime scanner interface.
 type ExampleTime interface {
 	Scan(arg *time.Time) error
