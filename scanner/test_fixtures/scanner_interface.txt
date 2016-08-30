@@ -1,0 +1,3 @@
+type AScanner interface {
+	Scan(arg0 *AType) error
+}

@@ -1,0 +1,6 @@
+func NewScanner(rows *sql.Rows, err error) IScanner {
+	if err != nil {
+		return ErrScanner{err: err}
+	}
+	return Scanner{Rows: rows}
+}

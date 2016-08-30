@@ -1,0 +1,17 @@
+type RowScanner struct {
+	row *sql.Row
+}
+
+func (t RowScanner) Scan(arg0 *CustomType) error {
+	var c1 bool
+	var c2 sql.NullBool
+	if err := t.row.Scan(&c1, &c2); err != nil {
+		return err
+	}
+	arg0.Field1 = c1
+	if c2.Valid {
+		tmp := c2.Bool
+		arg0.Field2 = &tmp
+	}
+	return nil
+}

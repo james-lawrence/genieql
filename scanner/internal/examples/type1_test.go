@@ -25,8 +25,7 @@ var _ = Describe("Type1", func() {
 					tx, err := DB.Begin()
 					Expect(err).ToNot(HaveOccurred())
 					defer tx.Rollback()
-
-					scanner := NewStaticRowType1StaticScanner(tx.QueryRow(Type1Insert, explode(testEntry)...))
+					scanner := NewType1StaticRowScanner(tx.QueryRow(Type1Insert, explode(testEntry)...))
 					Expect(scanner.Scan(&found)).ToNot(HaveOccurred())
 					Expect(found.Field1).To(Equal(testEntry.Field1))
 					Expect(found.Field2).To(Equal(testEntry.Field2))
@@ -50,7 +49,7 @@ var _ = Describe("Type1", func() {
 					Expect(err).ToNot(HaveOccurred())
 					defer tx.Rollback()
 
-					scanner := StaticType1StaticScanner(tx.Query(Type1Insert, explode(testEntry)...))
+					scanner := NewType1StaticScanner(tx.Query(Type1Insert, explode(testEntry)...))
 					Expect(scanner.Next()).To(BeTrue())
 					Expect(scanner.Scan(&found)).ToNot(HaveOccurred())
 					Expect(scanner.Close()).ToNot(HaveOccurred())
@@ -70,19 +69,19 @@ var _ = Describe("Type1", func() {
 
 	Describe("Dynamic Scanner", func() {
 		It("should ignore unmapped fields", func() {
-			const q = "SELECT 1+1 AS unmappedField,field1,field2,field3,field4,field5,field6,field7,field8 FROM type1"
+			const q = "SELECT unmappedField,field1,field2,field3,field4,field5,field6,field7,field8 FROM type1"
 			for _, testEntry := range table {
 				func() {
 					var found Type1
 					tx, err := DB.Begin()
 					Expect(err).ToNot(HaveOccurred())
 					defer tx.Rollback()
-					scanner := StaticType1StaticScanner(tx.Query(Type1Insert, explode(testEntry)...))
+					scanner := NewType1StaticScanner(tx.Query(Type1Insert, explode(testEntry)...))
 					Expect(scanner.Next()).To(BeTrue())
 					Expect(scanner.Scan(&found)).ToNot(HaveOccurred())
 					Expect(scanner.Close()).ToNot(HaveOccurred())
 
-					scanner = DynamicType1DynamicScanner(tx.Query(q))
+					scanner = NewType1DynamicScanner(tx.Query(q))
 					Expect(scanner.Next()).To(BeTrue())
 					Expect(scanner.Scan(&found)).ToNot(HaveOccurred())
 					Expect(scanner.Close()).ToNot(HaveOccurred())

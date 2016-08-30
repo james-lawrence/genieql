@@ -1,0 +1,16 @@
+type ErrorScanner struct {
+	err error
+}
+
+func (t ErrorScanner) Scan(arg0 *CustomType) error {
+	return t.err
+}
+func (t ErrorScanner) Err() error {
+	return t.err
+}
+func (t ErrorScanner) Close() error {
+	return nil
+}
+func (t ErrorScanner) Next() bool {
+	return false
+}
