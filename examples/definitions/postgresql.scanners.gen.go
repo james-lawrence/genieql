@@ -11,6 +11,8 @@ import (
 // genieql generate experimental scanners types -o postgresql.scanners.gen.go
 // invoked by go generate @ definitions/example.go line 9
 
+const ProfileScannerStaticColumns = "i1,i2,b1,t1"
+
 // ProfileScanner scanner interface.
 type ProfileScanner interface {
 	Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error
@@ -103,6 +105,53 @@ func (t staticProfileScanner) Close() error {
 
 func (t staticProfileScanner) Next() bool {
 	return t.Rows.Next()
+}
+
+// NewStaticRowProfileScanner creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowProfileScanner(row *sql.Row) StaticRowProfileScanner {
+	return StaticRowProfileScanner{
+		row: row,
+	}
+}
+
+type StaticRowProfileScanner struct {
+	row *sql.Row
+}
+
+func (t StaticRowProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
+	var (
+		c0 sql.NullInt64
+		c1 sql.NullInt64
+		c2 sql.NullBool
+		c3 pq.NullTime
+	)
+
+	if err := t.row.Scan(&c0, &c1, &c2, &c3); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := int(c0.Int64)
+		*i1 = tmp
+	}
+
+	if c1.Valid {
+		tmp := int(c1.Int64)
+		*i2 = tmp
+	}
+
+	if c2.Valid {
+		tmp := c2.Bool
+		*b1 = tmp
+	}
+
+	if c3.Valid {
+		tmp := c3.Time
+		*t1 = tmp
+	}
+
+	return nil
 }
 
 // DynamicProfileScanner creates a scanner that operates on a dynamic
@@ -200,6 +249,8 @@ func (t dynamicProfileScanner) Close() error {
 func (t dynamicProfileScanner) Next() bool {
 	return t.Rows.Next()
 }
+
+const Example1ScannerStaticColumns = "id,text_field,uuid_field,created_at,updated_at"
 
 // Example1Scanner scanner interface.
 type Example1Scanner interface {
@@ -299,6 +350,59 @@ func (t staticExample1Scanner) Close() error {
 
 func (t staticExample1Scanner) Next() bool {
 	return t.Rows.Next()
+}
+
+// NewStaticRowExample1Scanner creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowExample1Scanner(row *sql.Row) StaticRowExample1Scanner {
+	return StaticRowExample1Scanner{
+		row: row,
+	}
+}
+
+type StaticRowExample1Scanner struct {
+	row *sql.Row
+}
+
+func (t StaticRowExample1Scanner) Scan(e *Example1) error {
+	var (
+		c0 sql.NullInt64
+		c1 sql.NullString
+		c2 sql.NullString
+		c3 pq.NullTime
+		c4 pq.NullTime
+	)
+
+	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := int(c0.Int64)
+		e.ID = tmp
+	}
+
+	if c1.Valid {
+		tmp := c1.String
+		e.TextField = &tmp
+	}
+
+	if c2.Valid {
+		tmp := c2.String
+		e.UUIDField = tmp
+	}
+
+	if c3.Valid {
+		tmp := c3.Time
+		e.CreatedAt = tmp
+	}
+
+	if c4.Valid {
+		tmp := c4.Time
+		e.UpdatedAt = tmp
+	}
+
+	return nil
 }
 
 // DynamicExample1Scanner creates a scanner that operates on a dynamic
