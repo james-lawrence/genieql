@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/build"
 	"go/token"
 	"log"
@@ -11,7 +12,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
-	"bitbucket.org/jatone/genieql/scanner"
+	"bitbucket.org/jatone/genieql/generators"
 )
 
 type queryLiteral struct {
@@ -23,7 +24,6 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	var (
 		configuration genieql.Configuration
 		mappingConfig genieql.MappingConfig
-		dialect       genieql.Dialect
 		fset          = token.NewFileSet()
 	)
 
@@ -54,33 +54,27 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
+	// BEGIN HACK! apply the table to the mapping and then save it to disk.
+	// this allows the new generator to pick it up.
+	(&mappingConfig).Apply(
+		genieql.MCOColumnInfo(query),
+		genieql.MCOCustom(true),
+	)
+
+	if err = configuration.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
+	// END HACK!
 
-	columns, err := dialect.ColumnInformationForQuery(query)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	gen := scanner.StaticScanner{
-		Generator: scanner.Generator{
-			Mappings: []genieql.MappingConfig{mappingConfig},
-			Columns:  genieql.ColumnInfoSet(columns).ColumnNames(),
-			Fields:   fields,
-			Driver:   genieql.MustLookupDriver(configuration.Driver),
-		},
-		ScannerName:      t.scanner.scannerName,
-		RowScannerName:   t.scanner.scannerRowName,
-		InterfaceName:    t.scanner.interfaceName,
-		InterfaceRowName: t.scanner.interfaceRowName,
-		ErrScannerName:   t.scanner.errScannerName,
-	}
+	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
+	gen := generators.NewScanner(
+		generators.ScannerOptionConfiguration(configuration),
+		generators.ScannerOptionName(t.scanner.scannerName),
+		generators.ScannerOptionInterfaceName(t.scanner.interfaceName),
+		generators.ScannerOptionParameters(&ast.FieldList{List: fields}),
+		generators.ScannerOptionOutputMode(generators.ModeStatic),
+		generators.ScannerOptionPackage(pkg),
+	)
 
 	hg := headerGenerator{
 		fset: fset,
