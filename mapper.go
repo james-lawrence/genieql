@@ -77,6 +77,7 @@ type MappingConfig struct {
 	dialect              Dialect
 }
 
+// Apply the options to the current MappingConfig
 func (t *MappingConfig) Apply(options ...MappingConfigOption) {
 	for _, opt := range options {
 		opt(t)
@@ -177,25 +178,6 @@ type Mapper struct {
 	Aliasers []Aliaser
 }
 
-// MapColumns TODO...
-func (t Mapper) MapColumns(fields []*ast.Field, columns ...string) ([]ColumnMap, error) {
-	matches := make([]ColumnMap, 0, len(columns))
-	for idx, column := range columns {
-		for _, field := range fields {
-			m, matched, err := MapFieldToColumn(column, idx, field, t.Aliasers...)
-			if err != nil {
-				return matches, err
-			}
-			if matched {
-				matches = append(matches, m)
-				break
-			}
-		}
-	}
-
-	return matches, nil
-}
-
 // UnmappedColumns returns the columns that do not map to a field.
 func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]string, error) {
 	matches := make([]string, 0, len(columns))
@@ -206,7 +188,7 @@ func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]strin
 		)
 
 		for _, field := range fields {
-			_, matched, err = MapFieldToColumn(column, idx, field, t.Aliasers...)
+			matched, err = MapFieldToColumn(column, idx, field, t.Aliasers...)
 			if err != nil {
 				return matches, err
 			}
@@ -226,22 +208,17 @@ func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]strin
 }
 
 // MapFieldToColumn maps a column to a field based on the provided aliases.
-func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) (ColumnMap, bool, error) {
+func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) (bool, error) {
 	if len(field.Names) != 1 {
-		return ColumnMap{}, false, fmt.Errorf("field had more than 1 name")
+		return false, fmt.Errorf("field had more than 1 name")
 	}
 
 	fieldName := field.Names[0].Name
 	for _, aliaser := range aliases {
 		if aliaser.Alias(column) == fieldName {
-			return ColumnMap{
-				ColumnName:   column,
-				FieldName:    fieldName,
-				ColumnOffset: colIdx,
-				Type:         field.Type,
-			}, true, nil
+			return true, nil
 		}
 	}
 
-	return ColumnMap{}, false, nil
+	return false, nil
 }

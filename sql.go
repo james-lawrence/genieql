@@ -14,9 +14,9 @@ type ColumnInfo struct {
 	Type       string
 }
 
-func (t ColumnInfo) MapColumn(x ast.Expr) (ColumnMap2, error) {
+func (t ColumnInfo) MapColumn(x ast.Expr) (ColumnMap, error) {
 	typ, err := parser.ParseExpr(t.Type)
-	return ColumnMap2{
+	return ColumnMap{
 		Name:   t.Name,
 		Dst:    x,
 		PtrDst: t.Nullable,

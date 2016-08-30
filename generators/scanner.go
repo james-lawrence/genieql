@@ -181,7 +181,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		Name          string
 		InterfaceName string
 		Parameters    []*ast.Field
-		Columns       []genieql.ColumnMap2
+		Columns       []genieql.ColumnMap
 	}
 
 	ctx := context{
@@ -192,7 +192,7 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	for _, param := range t.Fields.List {
 		var (
-			columns []genieql.ColumnMap2
+			columns []genieql.ColumnMap
 		)
 
 		if columns, err = t.columnMapper(param); err != nil {
@@ -212,7 +212,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		"nulltype":   lookupNullableTypes,
 		"assignment": assignmentStmt{NullableType: nullableTypes}.assignment,
 		"printAST":   astPrint,
-		"columns": func(i []genieql.ColumnMap2) string {
+		"columns": func(i []genieql.ColumnMap) string {
 			s := make([]string, 0, len(i))
 			for _, c := range i {
 				s = append(s, c.Name)
@@ -267,7 +267,7 @@ func (t scanner) packageName(x ast.Expr) string {
 	}
 }
 
-func (t scanner) columnMapper(param *ast.Field) ([]genieql.ColumnMap2, error) {
+func (t scanner) columnMapper(param *ast.Field) ([]genieql.ColumnMap, error) {
 	if builtinType(param.Type) {
 		return builtinParam(param)
 	}
@@ -275,22 +275,22 @@ func (t scanner) columnMapper(param *ast.Field) ([]genieql.ColumnMap2, error) {
 }
 
 // mappedParam converts a *ast.Field that represents a struct into an array
-// of ColumnMap2.
-func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap2, error) {
+// of ColumnMap.
+func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	var (
-		cMap []genieql.ColumnMap2
+		cMap []genieql.ColumnMap
 		m    genieql.MappingConfig
 	)
 
 	if err := t.Config.ReadMap(t.packageName(param.Type), types.ExprString(param.Type), "default", &m); err != nil {
-		return []genieql.ColumnMap2{}, err
+		return []genieql.ColumnMap{}, err
 	}
 
 	aliaser := m.Aliaser()
 	columns, err := m.ColumnInfo()
 
 	if err != nil {
-		return []genieql.ColumnMap2{}, err
+		return []genieql.ColumnMap{}, err
 	}
 
 	for _, arg := range param.Names {
@@ -304,7 +304,7 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap2, error) {
 				X:   arg,
 			})
 			if err != nil {
-				return []genieql.ColumnMap2{}, err
+				return []genieql.ColumnMap{}, err
 			}
 			cMap = append(cMap, c)
 		}
@@ -330,11 +330,11 @@ func builtinType(x ast.Expr) bool {
 }
 
 // builtinParam converts a *ast.Field that represents a builtin type
-// (time.Time, int,float,bool, etc) into an array of ColumnMap2.
-func builtinParam(param *ast.Field) ([]genieql.ColumnMap2, error) {
-	columns := make([]genieql.ColumnMap2, 0, len(param.Names))
+// (time.Time, int,float,bool, etc) into an array of ColumnMap.
+func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
+	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
-		columns = append(columns, genieql.ColumnMap2{
+		columns = append(columns, genieql.ColumnMap{
 			Name:   name.Name,
 			Type:   &ast.StarExpr{X: param.Type},
 			Dst:    &ast.StarExpr{X: name},
@@ -358,7 +358,7 @@ func arguments(fields []*ast.Field) string {
 
 // turns an array of column mappings into the inputs into the inputs to the
 // scan function.
-func scan(columns []genieql.ColumnMap2) string {
+func scan(columns []genieql.ColumnMap) string {
 	args := []string{}
 
 	for idx, col := range columns {
@@ -372,7 +372,7 @@ type assignmentStmt struct {
 	genieql.NullableType
 }
 
-func (t assignmentStmt) assignment(i int, column genieql.ColumnMap2) ast.Stmt {
+func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
 	var (
 		local         = column.Local(i)
 		nullExpresion ast.Expr
