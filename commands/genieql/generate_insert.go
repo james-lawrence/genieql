@@ -33,14 +33,11 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		fset          = token.NewFileSet()
 	)
 
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
 
 	pkgName, typName := extractPackageType(t.packageType)
 

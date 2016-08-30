@@ -32,15 +32,11 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.packageType)
 
-	config = genieql.MustConfiguration(
+	config = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-
-	if err = genieql.ReadConfiguration(&config); err != nil {
-		return err
-	}
 
 	if err = genieql.ReadMapper(config, pkgName, typName, t.mapName, &mapping); err != nil {
 		return err

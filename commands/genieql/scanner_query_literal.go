@@ -29,15 +29,11 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.scanner.configName),
 		),
 	)
-
-	if err := genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
 
 	if err := genieql.ReadMapper(configuration, pkgName, typName, t.scanner.mapName, &mappingConfig); err != nil {
 		log.Fatalln(err)

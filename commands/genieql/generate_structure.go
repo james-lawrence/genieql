@@ -140,15 +140,11 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		dialect       genieql.Dialect
 		fset          = token.NewFileSet()
 	)
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
 
 	if dialect, err = genieql.LookupDialect(configuration); err != nil {
 		log.Fatalln(err)

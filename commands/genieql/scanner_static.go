@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/build"
 	"go/token"
 	"log"
@@ -11,7 +12,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
-	"bitbucket.org/jatone/genieql/scanner"
+	"bitbucket.org/jatone/genieql/generators"
 )
 
 type staticScanner struct {
@@ -36,7 +37,7 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		mappingConfig genieql.MappingConfig
 		fset          = token.NewFileSet()
 	)
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.scanner.configName),
 		),
@@ -44,42 +45,35 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.scanner.packageType)
 
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
-
 	if err = genieql.ReadMapper(configuration, pkgName, typName, t.scanner.mapName, &mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
+
+	// BEGIN HACK! apply the table to the mapping and then save it to disk.
+	// this allows the new generator to pick it up.
+	(&mappingConfig).Apply(
+		genieql.MCOColumnInfo(t.table),
+	)
+
+	if err = configuration.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
+		log.Fatalln(err)
+	}
+	// END HACK!
 
 	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	details, err := genieql.LoadInformation(configuration, t.table)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	gen := scanner.StaticScanner{
-		Generator: scanner.Generator{
-			Mappings: []genieql.MappingConfig{mappingConfig},
-			Fields:   fields,
-			Columns:  details.Columns,
-			Driver:   genieql.MustLookupDriver(configuration.Driver),
-		},
-		ScannerName:      t.scanner.scannerName,
-		RowScannerName:   t.scanner.scannerRowName,
-		InterfaceName:    t.scanner.interfaceName,
-		InterfaceRowName: t.scanner.interfaceRowName,
-		ErrScannerName:   t.scanner.errScannerName,
-	}
+	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
+	gen := generators.NewScanner(
+		generators.ScannerOptionConfiguration(configuration),
+		generators.ScannerOptionName(t.scanner.scannerName),
+		generators.ScannerOptionInterfaceName(t.scanner.interfaceName),
+		generators.ScannerOptionParameters(&ast.FieldList{List: fields}),
+		generators.ScannerOptionOutputMode(generators.ModeStatic),
+		generators.ScannerOptionPackage(pkg),
+	)
 
 	hg := headerGenerator{
 		fset: fset,

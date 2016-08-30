@@ -83,6 +83,15 @@ func MustConfiguration(options ...ConfigurationOption) Configuration {
 	if e != nil {
 		log.Fatalln(e)
 	}
+
+	return c
+}
+
+func MustReadConfiguration(options ...ConfigurationOption) Configuration {
+	c := MustConfiguration(options...)
+	if e := ReadConfiguration(&c); e != nil {
+		log.Fatalln(e)
+	}
 	return c
 }
 

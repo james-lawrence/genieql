@@ -60,9 +60,7 @@ func MCOType(t string) MappingConfigOption {
 func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
 	mc := MappingConfig{}
 
-	for _, opt := range options {
-		opt(&mc)
-	}
+	(&mc).Apply(options...)
 
 	return mc
 }
@@ -77,6 +75,12 @@ type MappingConfig struct {
 	TableOrQuery         string
 	CustomQuery          bool
 	dialect              Dialect
+}
+
+func (t *MappingConfig) Apply(options ...MappingConfigOption) {
+	for _, opt := range options {
+		opt(t)
+	}
 }
 
 // Mapper ...
@@ -119,7 +123,6 @@ func (t MappingConfig) ColumnInfo() ([]ColumnInfo, error) {
 	if t.CustomQuery {
 		return t.dialect.ColumnInformationForQuery(t.TableOrQuery)
 	}
-
 	return t.dialect.ColumnInformationForTable(t.TableOrQuery)
 }
 

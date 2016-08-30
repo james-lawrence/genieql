@@ -64,14 +64,11 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 		fset          = token.NewFileSet()
 	)
 
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
 	)
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
 
 	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
 	if err != nil {
@@ -84,7 +81,11 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 	}
 
 	g := genieql.MultiGenerate(mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
-		return generators.ScannerFromGenDecl(d)
+		return generators.ScannerFromGenDecl(
+			d,
+			generators.ScannerOptionPackage(pkg),
+			generators.ScannerOptionConfiguration(configuration),
+		)
 	}, genieql.SelectFuncType(genieql.FindTypes(node)...)...)...)
 
 	hg := headerGenerator{
@@ -139,7 +140,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		fset          = token.NewFileSet()
 	)
 
-	configuration = genieql.MustConfiguration(
+	configuration = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
 		),
@@ -148,10 +149,6 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
 	if err != nil {
 		log.Fatalln(err)
-	}
-
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		return err
 	}
 
 	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "scanners")
