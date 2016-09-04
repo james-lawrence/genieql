@@ -96,8 +96,7 @@ const Lowercase = "type1"
 		Entry(
 			"invalid configuration",
 			`package example
-
-//genieql.options: general alias=lowercase
+// genieql.options: general alias=lowercase
 const Lowercase = "type1"
 `,
 			"failed to parse comment configuration: Came accross an error : general is NOT a valid key/value pair",
@@ -110,9 +109,3 @@ const Lowercase = "type1"
 		),
 	)
 })
-
-func panicOnError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}

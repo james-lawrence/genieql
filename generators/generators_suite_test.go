@@ -30,3 +30,9 @@ func mustParseExpr(s string) ast.Expr {
 	panicOnError(err)
 	return x
 }
+
+func panicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
