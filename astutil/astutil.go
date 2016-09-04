@@ -17,6 +17,14 @@ func Expr(template string) ast.Expr {
 	return expr
 }
 
+// Field builds an ast.Field from the given type and names.
+func Field(typ ast.Expr, names ...*ast.Ident) *ast.Field {
+	return &ast.Field{
+		Names: names,
+		Type:  typ,
+	}
+}
+
 // ExprList converts a series of template expressions into a slice of
 // ast.Expr.
 func ExprList(examples ...string) []ast.Expr {
@@ -126,6 +134,16 @@ func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
 	}
 }
 
+// MapFieldsToNameExpr - extracts all the names from the provided fields.
+func MapFieldsToNameExpr(args ...*ast.Field) []ast.Expr {
+	result := make([]ast.Expr, 0, len(args))
+	for _, f := range args {
+		result = append(result, MapIdentToExpr(f.Names...)...)
+	}
+	return result
+}
+
+// MapIdentToExpr converts all the Ident's to expressions.
 func MapIdentToExpr(args ...*ast.Ident) []ast.Expr {
 	result := make([]ast.Expr, 0, len(args))
 
@@ -136,6 +154,7 @@ func MapIdentToExpr(args ...*ast.Ident) []ast.Expr {
 	return result
 }
 
+// MapExprToString maps all the expressions to the corresponding strings.
 func MapExprToString(args ...ast.Expr) []string {
 	result := make([]string, 0, len(args))
 	for _, expr := range args {

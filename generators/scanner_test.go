@@ -46,10 +46,10 @@ var _ = Describe("Scanner", func() {
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry("scanner int", `package example; type ExampleInt func(arg int)`, ".fixtures/int_scanner.go"),
-		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, ".fixtures/bool_scanner.go"),
-		Entry("scanner time.Time", `package example; type ExampleTime func(arg time.Time)`, ".fixtures/time_scanner.go"),
-		Entry("scanner multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/multiple_params_scanner.go"),
+		Entry("scanner int", `package example; type ExampleInt func(arg int)`, ".fixtures/scanners/int.go"),
+		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, ".fixtures/scanners/bool.go"),
+		Entry("scanner time.Time", `package example; type ExampleTime func(arg time.Time)`, ".fixtures/scanners/time.go"),
+		Entry("scanner multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/scanners/multiple_params.go"),
 	)
 
 	DescribeTable("should build scanners with only the specified outputs",
@@ -75,17 +75,17 @@ var _ = Describe("Scanner", func() {
 		},
 		Entry("scanner int without interface",
 			`package example; type ExampleIntNoInterface func(arg int)`,
-			".fixtures/int_scanner_without_interface.go",
+			".fixtures/scanners/int_without_interface.go",
 			ScannerOptionOutputMode(ModeStatic|ModeDynamic),
 		),
 		Entry("scanner int without static",
 			`package example; type ExampleIntNoStatic func(arg int)`,
-			".fixtures/int_scanner_without_static.go",
+			".fixtures/scanners/int_without_static.go",
 			ScannerOptionOutputMode(ModeInterface|ModeDynamic),
 		),
 		Entry("scanner int without dynamic",
 			`package example; type ExampleIntNoDynamic func(arg int)`,
-			".fixtures/int_scanner_without_dynamic.go",
+			".fixtures/scanners/int_without_dynamic.go",
 			ScannerOptionOutputMode(ModeInterface|ModeStatic),
 		),
 	)

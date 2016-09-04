@@ -1,11 +1,9 @@
 package generators
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/printer"
 	"go/token"
 	"go/types"
 	"io"
@@ -208,10 +206,10 @@ func (t scanner) Generate(dst io.Writer) error {
 	funcMap := template.FuncMap{
 		"expr":       types.ExprString,
 		"scan":       scan,
-		"arguments":  arguments,
+		"arguments":  argumentsAsPointers,
+		"printAST":   astPrint,
 		"nulltype":   lookupNullableTypes,
 		"assignment": assignmentStmt{NullableType: nullableTypes}.assignment,
-		"printAST":   astPrint,
 		"columns": func(i []genieql.ColumnMap) string {
 			s := make([]string, 0, len(i))
 			for _, c := range i {
@@ -344,18 +342,6 @@ func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	return columns, nil
 }
 
-func arguments(fields []*ast.Field) string {
-	result := []string{}
-	for _, field := range fields {
-		result = append(result,
-			strings.Join(
-				astutil.MapExprToString(astutil.MapIdentToExpr(field.Names...)...),
-				", ",
-			)+" "+types.ExprString(&ast.StarExpr{X: field.Type}))
-	}
-	return strings.Join(result, ", ")
-}
-
 // turns an array of column mappings into the inputs into the inputs to the
 // scan function.
 func scan(columns []genieql.ColumnMap) string {
@@ -410,16 +396,6 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
 			},
 		},
 	}
-}
-
-func astPrint(n ast.Node) (string, error) {
-	dst := bytes.NewBuffer([]byte{})
-	fset := token.NewFileSet()
-	if err := printer.Fprint(dst, fset, n); err != nil {
-		log.Println("failure to print ast", err)
-		return "", err
-	}
-	return dst.String(), nil
 }
 
 const interfaceScanner = `const {{.Name}}StaticColumns = "{{ .Columns | columns}}"

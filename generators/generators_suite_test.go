@@ -2,6 +2,7 @@ package generators_test
 
 import (
 	"go/ast"
+	"go/parser"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,4 +23,10 @@ func (t noopDriver) LookupNullableType(x ast.Expr) ast.Expr {
 
 func (t noopDriver) NullableType(typ, from ast.Expr) (ast.Expr, bool) {
 	return typ, false
+}
+
+func mustParseExpr(s string) ast.Expr {
+	x, err := parser.ParseExpr(s)
+	panicOnError(err)
+	return x
 }
