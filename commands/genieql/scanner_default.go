@@ -68,7 +68,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		log.Fatalln(err)
 	}
 
-	unmappedColumns, err := mappingConfig.Mapper().UnmappedColumns(xfields, details.Columns...)
+	unmappedColumns, err := mappingConfig.Mapper().UnmappedColumns(xfields, genieql.ColumnInfoSet(details.Columns).ColumnNames()...)
 	if err != nil {
 		log.Fatalln(err)
 	}

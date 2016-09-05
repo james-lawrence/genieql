@@ -31,9 +31,9 @@ var _ = Describe("Genieql", func() {
 		It("should filter out columns that do not match the provided fields", func() {
 			details := TableDetails{
 				Table:           "table",
-				Naturalkey:      []string{"column1"},
-				Columns:         []string{"column1", "column2", "column3"},
-				UnmappedColumns: []string{},
+				Naturalkey:      []ColumnInfo{{Name: "column1"}},
+				Columns:         []ColumnInfo{{Name: "column1"}, {Name: "column2"}, {Name: "column3"}},
+				UnmappedColumns: []ColumnInfo{},
 			}
 
 			filteredDetails := details.OnlyMappedColumns([]*ast.Field{}, AliasStrategyLowercase)
@@ -45,8 +45,8 @@ var _ = Describe("Genieql", func() {
 			}
 
 			filteredDetails = details.OnlyMappedColumns(fields, AliasStrategyLowercase)
-			Expect(filteredDetails.Columns).To(Equal([]string{"column1"}))
-			Expect(filteredDetails.UnmappedColumns).To(Equal([]string{"column2", "column3"}))
+			Expect(filteredDetails.Columns).To(Equal([]ColumnInfo{{Name: "column1"}}))
+			Expect(filteredDetails.UnmappedColumns).To(Equal([]ColumnInfo{{Name: "column2"}, {Name: "column3"}}))
 		})
 	})
 })

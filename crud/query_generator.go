@@ -14,7 +14,8 @@ type Insert genieql.TableDetails
 
 func (t Insert) Build(name string, defaults []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
-		query := t.Dialect.Insert(t.Table, t.Columns, defaults)
+		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
+		query := t.Dialect.Insert(t.Table, names, defaults)
 		return emit(dst, name, query)
 	})
 }
@@ -23,7 +24,8 @@ type Select genieql.TableDetails
 
 func (t Select) Build(name string, predicates []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
-		query := t.Dialect.Select(t.Table, t.Columns, predicates)
+		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
+		query := t.Dialect.Select(t.Table, names, predicates)
 		return emit(dst, name, query)
 	})
 }
@@ -32,7 +34,8 @@ type Update genieql.TableDetails
 
 func (t Update) Build(name string, predicates []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
-		query := t.Dialect.Update(t.Table, t.Columns, predicates)
+		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
+		query := t.Dialect.Update(t.Table, names, predicates)
 		return emit(dst, name, query)
 	})
 }
@@ -41,7 +44,8 @@ type Delete genieql.TableDetails
 
 func (t Delete) Build(name string, predicates []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
-		query := t.Dialect.Delete(t.Table, t.Columns, predicates)
+		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
+		query := t.Dialect.Delete(t.Table, names, predicates)
 		return emit(dst, name, query)
 	})
 }

@@ -136,6 +136,37 @@ func FindTypes(node ast.Node) []*ast.GenDecl {
 	return v.types
 }
 
+type funcFilter struct {
+	functions []*ast.FuncDecl
+}
+
+func (t *funcFilter) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.FuncDecl:
+		t.functions = append(t.functions, n)
+	}
+
+	return t
+}
+
+// FindFunc searches the provided node for ast.FuncDecl
+func FindFunc(node ast.Node) []*ast.FuncDecl {
+	v := funcFilter{}
+	ast.Walk(&v, node)
+	return v.functions
+}
+
+// SelectFuncDecl select a function from the set of function based on a filter.
+func SelectFuncDecl(filter func(*ast.FuncDecl) bool, functions ...*ast.FuncDecl) []*ast.FuncDecl {
+	r := make([]*ast.FuncDecl, 0, len(functions))
+	for _, f := range functions {
+		if filter(f) {
+			r = append(r, f)
+		}
+	}
+	return r
+}
+
 // SelectFuncType filters the provided GenDecl to ones that define functions.
 func SelectFuncType(decls ...*ast.GenDecl) []*ast.GenDecl {
 	result := make([]*ast.GenDecl, 0, len(decls))
@@ -164,6 +195,7 @@ func SelectFuncType(decls ...*ast.GenDecl) []*ast.GenDecl {
 type Utils interface {
 	ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error)
 	FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.TypeSpec, error)
+	FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDecl, error)
 	WalkFiles(pkgset []*build.Package, delegate func(path string, file *ast.File)) error
 }
 
@@ -221,6 +253,29 @@ func (t utils) FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.
 		return found[0], nil
 	default:
 		return &ast.TypeSpec{}, ErrAmbiguousDeclaration
+	}
+}
+
+func (t utils) FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDecl, error) {
+	pkgs, err := t.ParsePackages(pkgset...)
+	if err != nil {
+		return nil, err
+	}
+
+	found := []*ast.FuncDecl{}
+	for _, pkg := range pkgs {
+		found = append(found, FindFunc(pkg)...)
+	}
+
+	found = SelectFuncDecl(func(fx *ast.FuncDecl) bool { return f(fx.Name.Name) }, found...)
+	x := len(found)
+	switch {
+	case x == 0:
+		return &ast.FuncDecl{}, ErrDeclarationNotFound
+	case x == 1:
+		return found[0], nil
+	default:
+		return &ast.FuncDecl{}, ErrAmbiguousDeclaration
 	}
 }
 

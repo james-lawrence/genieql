@@ -12,6 +12,7 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	(&generateInsert{}).configure(cmd)
 	(&GenerateStructure{}).configure(x)
 	(&GenerateScanner{}).configure(x)
+	(&generateCRUDFunctions{}).configure(x)
 
 	return cmd
 }

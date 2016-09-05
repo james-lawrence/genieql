@@ -66,13 +66,51 @@ func (t ColumnInfoSet) AmbiguityCheck() error {
 	return nil
 }
 
+// TableDetails provides information about the table.
+type TableDetails struct {
+	Dialect         Dialect
+	Table           string
+	Naturalkey      []ColumnInfo
+	Columns         []ColumnInfo
+	UnmappedColumns []ColumnInfo
+}
+
+// OnlyMappedColumns filters out columns from the current TableDetails that do not
+// exist in the destination structure. Mainly used for generating queries.
+func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser) TableDetails {
+	dup := t
+
+	if len(fields) == 0 {
+		dup.Columns = []ColumnInfo{}
+		dup.UnmappedColumns = append(dup.UnmappedColumns, t.Columns...)
+		return dup
+	}
+
+	dup.Columns = make([]ColumnInfo, 0, len(t.Columns))
+	dup.UnmappedColumns = make([]ColumnInfo, 0, len(t.Columns))
+
+	for _, column := range t.Columns {
+		var mapped bool
+		for _, field := range fields {
+			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
+				mapped = true
+				dup.Columns = append(dup.Columns, column)
+			}
+		}
+		if !mapped {
+			dup.UnmappedColumns = append(dup.UnmappedColumns, column)
+		}
+	}
+
+	return dup
+}
+
 // LookupTableDetails determines the table details for the given dialect.
 func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 	var (
-		err         error
-		columnNames []string
-		naturalKey  []string
-		columns     []ColumnInfo
+		err        error
+		naturalKey []ColumnInfo
+		columns    []ColumnInfo
 	)
 
 	if columns, err = dialect.ColumnInformationForTable(table); err != nil {
@@ -80,9 +118,8 @@ func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 	}
 
 	for _, column := range columns {
-		columnNames = append(columnNames, column.Name)
 		if column.PrimaryKey {
-			naturalKey = append(naturalKey, column.Name)
+			naturalKey = append(naturalKey, column)
 		}
 	}
 
@@ -90,6 +127,6 @@ func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 		Dialect:    dialect,
 		Table:      table,
 		Naturalkey: naturalKey,
-		Columns:    columnNames,
+		Columns:    columns,
 	}, nil
 }

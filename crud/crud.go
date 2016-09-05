@@ -23,7 +23,6 @@ func New(c genieql.Configuration, details genieql.TableDetails, pkg, prefix stri
 type generator struct {
 	genieql.Configuration
 	genieql.TableDetails
-	Table   string
 	Package string
 	Prefix  string
 }
@@ -54,29 +53,25 @@ type crudWriter struct {
 }
 
 func (t crudWriter) Write() error {
+	names := genieql.ColumnInfoSet(t.details.Columns).ColumnNames()
+	naturalKeyNames := genieql.ColumnInfoSet(t.details.Naturalkey).ColumnNames()
+	gens := make([]genieql.Generator, 0, 10)
+
 	constName := fmt.Sprintf("%sInsert", t.prefix)
-	if err := Insert(t.details).Build(constName, []string{}).Generate(t.out); err != nil {
-		return err
-	}
+	gens = append(gens, Insert(t.details).Build(constName, []string{}))
 
 	for i, column := range t.details.Columns {
-		constName = fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column))
-		if err := Select(t.details).Build(constName, t.details.Columns[i:i+1]).Generate(t.out); err != nil {
-			return err
-		}
+		constName = fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column.Name))
+		gens = append(gens, Select(t.details).Build(constName, names[i:i+1]))
 	}
 
 	if len(t.details.Naturalkey) > 0 {
 		constName = fmt.Sprintf("%sUpdateByID", t.prefix)
-		if err := Update(t.details).Build(constName, t.details.Naturalkey).Generate(t.out); err != nil {
-			return err
-		}
+		gens = append(gens, Update(t.details).Build(constName, naturalKeyNames))
 
 		constName = fmt.Sprintf("%sDeleteByID", t.prefix)
-		if err := Delete(t.details).Build(constName, t.details.Naturalkey).Generate(t.out); err != nil {
-			return err
-		}
+		gens = append(gens, Delete(t.details).Build(constName, naturalKeyNames))
 	}
 
-	return nil
+	return genieql.MultiGenerate(gens...).Generate(t.out)
 }

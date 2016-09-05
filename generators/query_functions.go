@@ -70,7 +70,13 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 
 // NewQueryFunction build a query function generator from the provided options.
 func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
-	qf := queryFunction{}
+	qf := queryFunction{
+		Parameters:      []*ast.Field{},
+		QueryerName:     "q",
+		Queryer:         &ast.StarExpr{X: &ast.SelectorExpr{X: ast.NewIdent("sql"), Sel: ast.NewIdent("DB")}},
+		QueryerFunction: ast.NewIdent("Query"),
+	}
+
 	if err := qf.Apply(options...); err != nil {
 		return genieql.NewErrGenerator(err)
 	}

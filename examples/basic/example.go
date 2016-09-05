@@ -13,6 +13,7 @@ import "time"
 //go:generate genieql scanner dynamic --output=example_dynamic_scanner.gen.go bitbucket.org/jatone/genieql/examples/basic.example crud
 //go:generate genieql generate crud --output=example_crud_queries.gen.go bitbucket.org/jatone/genieql/examples/basic.example crud
 //go:generate genieql generate insert --output=example_insert_queries.gen.go bitbucket.org/jatone/genieql/examples/basic.example crud --suffix=WithDefaults --default=updated --default=created
+//go:generate genieql generate experimental crud --output=example_crud_functions.gen.go --table=crud --scanner=StaticExampleStaticScanner bitbucket.org/jatone/genieql/examples/basic.example
 type example struct {
 	ID      int
 	Email   *string
