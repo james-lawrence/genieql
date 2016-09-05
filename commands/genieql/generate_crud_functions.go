@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
-	"bitbucket.org/jatone/genieql/generators"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -20,6 +19,7 @@ type generateCRUDFunctions struct {
 	mapName     string
 	table       string
 	scanner     string
+	uniqScanner string
 	queryer     string
 	output      string
 }
@@ -64,7 +64,12 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 	scanner, err := genieql.NewUtils(fset).FindFunction(func(s string) bool {
 		return s == t.scanner
 	}, pkg)
-
+	if err != nil {
+		return err
+	}
+	uniqScanner, err := genieql.NewUtils(fset).FindFunction(func(s string) bool {
+		return s == t.uniqScanner
+	}, pkg)
 	if err != nil {
 		return err
 	}
@@ -75,13 +80,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		args: os.Args[1:],
 	}
 
-	baseOptions := []generators.QueryFunctionOption{
-		generators.QFOName(typName),
-		generators.QFOParameters(fields...),
-		generators.QFOScanner(scanner),
-	}
-
-	cg := crud.NewFunctions(config, details, pkgName, typName, baseOptions...)
+	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner)
 
 	pg := printGenerator{
 		delegate: genieql.MultiGenerate(hg, cg),
@@ -118,8 +117,18 @@ func (t *generateCRUDFunctions) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 
 	crud.Flag(
 		"scanner",
-		"scanner function you're using",
+		"scanner function for multiple results",
 	).Required().StringVar(&t.scanner)
+
+	crud.Flag(
+		"unique-scanner",
+		"scanner function for a single row",
+	).Required().StringVar(&t.uniqScanner)
+
+	crud.Flag(
+		"queryer-type",
+		"the type that executes queries, its the first argument to any generated functions",
+	).Default("*sql.DB").StringVar(&t.queryer)
 
 	crud.Arg(
 		"package.Type",

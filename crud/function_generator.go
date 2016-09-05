@@ -3,6 +3,7 @@ package crud
 import (
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"io"
 
 	"github.com/serenize/snaker"
@@ -12,65 +13,94 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 )
 
-func NewFunctions(c genieql.Configuration, details genieql.TableDetails, pkg, prefix string, options ...generators.QueryFunctionOption) genieql.Generator {
+func NewFunctions(c genieql.Configuration, queryer string, details genieql.TableDetails, pkg, prefix string, scanner, uniqScanner *ast.FuncDecl) genieql.Generator {
+	q, err := parser.ParseExpr(queryer)
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+
 	return funcGenerator{
 		TableDetails: details,
 		Package:      pkg,
 		Prefix:       prefix,
-		Options:      options,
+		Scanner:      scanner,
+		UniqScanner:  uniqScanner,
+		Queryer:      q,
 	}
 }
 
 type funcGenerator struct {
 	genieql.TableDetails
-	Package string
-	Prefix  string
-	Options []generators.QueryFunctionOption
+	Package     string
+	Prefix      string
+	Scanner     *ast.FuncDecl
+	UniqScanner *ast.FuncDecl
+	Queryer     ast.Expr
 }
 
 func (t funcGenerator) Generate(dst io.Writer) error {
 	mg := make([]genieql.Generator, 0, 10)
 	names := genieql.ColumnInfoSet(t.TableDetails.Columns).ColumnNames()
+	naturalKeyNames := genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames()
+	queryerOption := generators.QFOQueryer("q", t.Queryer)
+
 	query := t.TableDetails.Dialect.Insert(t.TableDetails.Table, names, []string{})
-	options := append(
-		t.Options,
+	options := []generators.QueryFunctionOption{
+		queryerOption,
+		generators.QFOName(fmt.Sprintf("%sInsert", t.Prefix)),
+		generators.QFOScanner(t.UniqScanner),
 		generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
 		generators.QFOBuiltinQuery(query),
-		generators.QFOName(fmt.Sprintf("%sInsert", t.Prefix)),
-	)
+		generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
+	}
 
 	mg = append(mg, generators.NewQueryFunction(options...))
 
 	for i, column := range t.TableDetails.Columns {
-
 		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Columns[i:i+1]).ColumnNames())
-		options = append(
-			t.Options,
+		options = []generators.QueryFunctionOption{
+			queryerOption,
 			generators.QFOBuiltinQuery(query),
 			generators.QFOParameters(fieldFromColumnInfo(column)...),
 			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Prefix, snaker.SnakeToCamel(column.Name))),
-		)
+			generators.QFOScanner(t.Scanner),
+		}
 
 		mg = append(mg, generators.NewQueryFunction(options...))
 	}
 
 	if len(t.TableDetails.Naturalkey) > 0 {
-		query = t.TableDetails.Dialect.Update(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames())
-		options = append(
-			t.Options,
+		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKeyNames)
+		options = []generators.QueryFunctionOption{
+			queryerOption,
+			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
+			generators.QFOBuiltinQuery(query),
+			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Prefix)),
+			generators.QFOScanner(t.UniqScanner),
+			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		}
+		mg = append(mg, generators.NewQueryFunction(options...))
+
+		query = t.TableDetails.Dialect.Update(t.TableDetails.Table, names, naturalKeyNames)
+		options = []generators.QueryFunctionOption{
+			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
 			generators.QFOBuiltinQuery(query),
 			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Prefix)),
-		)
+			generators.QFOScanner(t.UniqScanner),
+			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 
 		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames())
-		options = append(
-			t.Options,
+		options = []generators.QueryFunctionOption{
+			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
 			generators.QFOBuiltinQuery(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Prefix)),
-		)
+			generators.QFOScanner(t.UniqScanner),
+			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 	}
 
