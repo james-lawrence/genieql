@@ -143,6 +143,18 @@ func MapFieldsToNameExpr(args ...*ast.Field) []ast.Expr {
 	return result
 }
 
+// MapFieldsToTypExpr - extracts the type for each name for each of the provided fields.
+// i.e.) a,b int, c string, d float is transformed into: int, int, string, float
+func MapFieldsToTypExpr(args ...*ast.Field) []ast.Expr {
+	r := []ast.Expr{}
+	for _, f := range args {
+		for _ = range f.Names {
+			r = append(r, f.Type)
+		}
+	}
+	return r
+}
+
 // MapIdentToExpr converts all the Ident's to expressions.
 func MapIdentToExpr(args ...*ast.Ident) []ast.Expr {
 	result := make([]ast.Expr, 0, len(args))
@@ -162,4 +174,21 @@ func MapExprToString(args ...ast.Expr) []string {
 	}
 
 	return result
+}
+
+// TypePattern build a pattern matcher from the provided expressions.
+func TypePattern(pattern ...ast.Expr) func(...ast.Expr) bool {
+	return func(testcase ...ast.Expr) bool {
+		if len(pattern) != len(testcase) {
+			return false
+		}
+
+		for idx := range pattern {
+			if types.ExprString(pattern[idx]) != types.ExprString(testcase[idx]) {
+				return false
+			}
+		}
+
+		return true
+	}
 }

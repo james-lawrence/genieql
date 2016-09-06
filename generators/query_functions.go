@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"fmt"
 	"go/ast"
 	"go/types"
 	"io"
@@ -71,15 +72,27 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 // NewQueryFunction build a query function generator from the provided options.
 func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 	qf := queryFunction{
-		Parameters:      []*ast.Field{},
-		QueryerName:     "q",
-		Queryer:         &ast.StarExpr{X: &ast.SelectorExpr{X: ast.NewIdent("sql"), Sel: ast.NewIdent("DB")}},
-		QueryerFunction: ast.NewIdent("Query"),
+		Parameters:  []*ast.Field{},
+		QueryerName: "q",
+		Queryer:     &ast.StarExpr{X: &ast.SelectorExpr{X: ast.NewIdent("sql"), Sel: ast.NewIdent("DB")}},
 	}
 
 	if err := qf.Apply(options...); err != nil {
 		return genieql.NewErrGenerator(err)
 	}
+
+	pattern := astutil.MapFieldsToTypExpr(qf.ScannerDecl.Type.Params.List...)
+	// attempt to infer the type from the pattern of the scanner function.
+	if qf.QueryerFunction != nil {
+		// do nothing, the function was specified.
+	} else if queryPattern(pattern...) {
+		qf.QueryerFunction = ast.NewIdent("Query")
+	} else if queryRowPattern(pattern...) {
+		qf.QueryerFunction = ast.NewIdent("QueryRow")
+	} else {
+		return genieql.NewErrGenerator(fmt.Errorf("a query function was not provided and failed to infer from the scanner function"))
+	}
+
 	return qf
 }
 
@@ -169,6 +182,9 @@ func (t queryFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(tmpl.Execute(dst, ctx), "failed to generate static scanner")
 }
 
+var queryPattern = astutil.TypePattern(astutil.ExprList("*sql.Rows", "error")...)
+var queryRowPattern = astutil.TypePattern(astutil.Expr("*sql.Row"))
+
 const queryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
 	{{ if .BuiltinQuery -}}
 	{{ .BuiltinQuery | printAST }}
@@ -177,6 +193,12 @@ const queryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType
 }
 `
 
+// notes: should be able to remove the queryer-function for general use cases by inspecting the return function.
+// if a custom queryer-function was provided, use that.
+// if it has the pattern (*sql.Row) then we use QueryRow.
+// if it matches the pattern (*sql.Rows, error) then we use Query.
+// if it doesn't match any of the above: error.
+//
 // genieql.options: [general] inlined-query="SELECT * FROM foo WHERE bar = $1 || bar = $2"
 // type MyQueryFunction func(q sqlx.Queryer, param1, param2 int) StaticExampleScanner
 // creates:
@@ -184,13 +206,19 @@ const queryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType
 // 	const query = `SELECT * FROM foo WHERE bar = $1 || bar = $2`
 // 	return StaticExampleScanner(q.Query(query, param1, param2))
 // }
-
+//
+// type MyQueryFunction func(q sqlx.Queryer, param1, param2 int) StaticExampleScanner
+// creates:
+// func MyQueryFunction func(q sqlx.Queryer, query string, param1, param2 int) ExampleScanner {
+// 	return StaticExampleScanner(q.Query(query, param1, param2))
+// }
+//
 // type MyQueryFunction func(q sqlx.Queryer) DynamicExampleScanner
 // creates:
 // func MyQueryFunction(q sqlx.Queryer, query string, params ...interface{}) ExampleScanner {
 // 	return DynamicExampleScanner(q.Query(query, params...))
 // }
-
+//
 // genieql.options: [general] queryer-function=QueryRow
 // type MyQueryFunction func(q sqlx.Queryer) NewStaticRowExample
 // creates:

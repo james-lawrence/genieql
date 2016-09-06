@@ -51,7 +51,6 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		generators.QFOScanner(t.UniqScanner),
 		generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
 		generators.QFOBuiltinQuery(query),
-		generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
 	}
 
 	mg = append(mg, generators.NewQueryFunction(options...))
@@ -77,7 +76,6 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOBuiltinQuery(query),
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
-			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 
@@ -88,7 +86,6 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOBuiltinQuery(query),
 			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
-			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 
@@ -99,7 +96,6 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOBuiltinQuery(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
-			generators.QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 	}

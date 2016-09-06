@@ -20,6 +20,34 @@ import (
 )
 
 var _ = Describe("Query Functions", func() {
+	exampleScanner := &ast.FuncDecl{
+		Name: ast.NewIdent("StaticExampleScanner"),
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					astutil.Field(astutil.Expr("*sql.Rows"), ast.NewIdent("rows")),
+					astutil.Field(astutil.Expr("error"), ast.NewIdent("err")),
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
+			},
+		},
+	}
+	exampleRowScanner := &ast.FuncDecl{
+		Name: ast.NewIdent("StaticExampleScanner"),
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					astutil.Field(astutil.Expr("*sql.Row"), ast.NewIdent("row")),
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
+			},
+		},
+	}
+
 	DescribeTable("build a query function based on the options",
 		func(fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
@@ -28,7 +56,7 @@ var _ = Describe("Query Functions", func() {
 			buffer.WriteString("package example\n\n")
 			Expect(NewQueryFunction(options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
-			// log.Println(buffer.String())
+
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
@@ -40,16 +68,8 @@ var _ = Describe("Query Functions", func() {
 			".fixtures/query-functions/example1.go",
 			QFOName("queryFunction1"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
-			QFOScanner(&ast.FuncDecl{
-				Name: ast.NewIdent("StaticExampleScanner"),
-				Type: &ast.FuncType{
-					Results: &ast.FieldList{
-						List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
-					},
-				},
-			}),
+			QFOScanner(exampleScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
-			QFOQueryerFunction(ast.NewIdent("Query")),
 			QFOBuiltinQuery("SELECT * FROM example WHERE id = $1"),
 		),
 		Entry(
@@ -57,14 +77,7 @@ var _ = Describe("Query Functions", func() {
 			".fixtures/query-functions/example2.go",
 			QFOName("queryFunction2"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
-			QFOScanner(&ast.FuncDecl{
-				Name: ast.NewIdent("StaticExampleScanner"),
-				Type: &ast.FuncType{
-					Results: &ast.FieldList{
-						List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
-					},
-				},
-			}),
+			QFOScanner(exampleScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("Query")),
 		),
@@ -73,30 +86,15 @@ var _ = Describe("Query Functions", func() {
 			".fixtures/query-functions/example3.go",
 			QFOName("queryFunction3"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
-			QFOScanner(&ast.FuncDecl{
-				Name: ast.NewIdent("StaticExampleScanner"),
-				Type: &ast.FuncType{
-					Results: &ast.FieldList{
-						List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
-					},
-				},
-			}),
+			QFOScanner(exampleRowScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
-			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
 		Entry(
 			"example 4",
 			".fixtures/query-functions/example4.go",
 			QFOName("queryFunction4"),
 			QFOParameters(astutil.Field(&ast.Ellipsis{Elt: &ast.InterfaceType{Methods: &ast.FieldList{}}}, ast.NewIdent("params"))),
-			QFOScanner(&ast.FuncDecl{
-				Name: ast.NewIdent("StaticExampleScanner"),
-				Type: &ast.FuncType{
-					Results: &ast.FieldList{
-						List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
-					},
-				},
-			}),
+			QFOScanner(exampleRowScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
