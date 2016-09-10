@@ -98,7 +98,7 @@ func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, er
 	)
 
 	if rows, err = q.Query(query, table); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to query column information: %s, %s", query, table)
 	}
 
 	for rows.Next() {

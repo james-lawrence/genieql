@@ -29,30 +29,27 @@ type generator struct {
 
 func (t generator) Generate(dst io.Writer) error {
 	crud := NewCRUDWriter(
-		dst,
 		t.Prefix,
 		t.TableDetails,
 	)
 
-	return crud.Write()
+	return crud.Generate(dst)
 }
 
 // NewCRUDWriter generates crud queries. implements the genieql.CrudWriter interface.
-func NewCRUDWriter(out io.Writer, prefix string, details genieql.TableDetails) genieql.CrudWriter {
+func NewCRUDWriter(prefix string, details genieql.TableDetails) genieql.Generator {
 	return crudWriter{
-		out:     out,
 		prefix:  prefix,
 		details: details,
 	}
 }
 
 type crudWriter struct {
-	out     io.Writer
 	prefix  string
 	details genieql.TableDetails
 }
 
-func (t crudWriter) Write() error {
+func (t crudWriter) Generate(out io.Writer) error {
 	names := genieql.ColumnInfoSet(t.details.Columns).ColumnNames()
 	naturalKeyNames := genieql.ColumnInfoSet(t.details.Naturalkey).ColumnNames()
 	gens := make([]genieql.Generator, 0, 10)
@@ -73,5 +70,5 @@ func (t crudWriter) Write() error {
 		gens = append(gens, Delete(t.details).Build(constName, naturalKeyNames))
 	}
 
-	return genieql.MultiGenerate(gens...).Generate(t.out)
+	return genieql.MultiGenerate(gens...).Generate(out)
 }

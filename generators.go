@@ -10,11 +10,6 @@ type Generator interface {
 	Generate(dst io.Writer) error
 }
 
-// CrudWriter TODO...
-type CrudWriter interface {
-	Write() error
-}
-
 // MultiGenerate generate multiple scanners into a single buffer.
 func MultiGenerate(generators ...Generator) Generator {
 	return multiGenerator{

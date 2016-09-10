@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -53,7 +54,7 @@ func Bootstrap(options ...ConfigurationOption) error {
 	}
 
 	if err := os.MkdirAll(config.Location, 0755); err != nil {
-		return err
+		return errors.Wrap(err, "failed to make bootstrap directory")
 	}
 
 	return WriteConfiguration(config)
@@ -78,6 +79,7 @@ func ReadConfiguration(config *Configuration) error {
 	return yaml.Unmarshal(raw, config)
 }
 
+// MustConfiguration builds a configuration from the provided options.
 func MustConfiguration(options ...ConfigurationOption) Configuration {
 	c, e := NewConfiguration(options...)
 	if e != nil {
@@ -87,6 +89,8 @@ func MustConfiguration(options ...ConfigurationOption) Configuration {
 	return c
 }
 
+// MustReadConfiguration builds a new configuration from the provided options,
+// and read's it from disk.
 func MustReadConfiguration(options ...ConfigurationOption) Configuration {
 	c := MustConfiguration(options...)
 	if e := ReadConfiguration(&c); e != nil {
@@ -95,6 +99,7 @@ func MustReadConfiguration(options ...ConfigurationOption) Configuration {
 	return c
 }
 
+// NewConfiguration builds a configuration from the provided options.
 func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 	var (
 		config Configuration

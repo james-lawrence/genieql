@@ -10,6 +10,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type errorString string
@@ -48,7 +50,7 @@ func LocatePackage(pkgName string, context build.Context, matches func(*build.Pa
 	pkg, err := context.Import(pkgName, ".", build.IgnoreVendor&build.ImportComment)
 	_, noGoError := err.(*build.NoGoError)
 	if err != nil && !noGoError {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to import the package")
 	}
 
 	if pkg != nil && (matches == nil || matches(pkg)) {
@@ -391,6 +393,7 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 
 	printer.FprintAST(dst, fset, file)
 	printer.Fprintf(dst, Preface, strings.Join(args, " "))
+
 	// check if executed by go generate
 	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
 		printer.Fprintf(
@@ -401,6 +404,8 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 			os.Getenv("GOLINE"),
 		)
 	}
+
 	printer.Fprintf(dst, "\n\n")
-	return printer.Err()
+
+	return errors.Wrap(printer.Err(), "failed to print the package header")
 }
