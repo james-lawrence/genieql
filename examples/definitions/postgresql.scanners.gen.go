@@ -250,7 +250,7 @@ func (t dynamicProfileScanner) Next() bool {
 	return t.Rows.Next()
 }
 
-const Example1ScannerStaticColumns = "id,text_field,uuid_field,created_at,updated_at"
+const Example1ScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field"
 
 // Example1Scanner scanner interface.
 type Example1Scanner interface {
@@ -298,11 +298,11 @@ type staticExample1Scanner struct {
 
 func (t staticExample1Scanner) Scan(e *Example1) error {
 	var (
-		c0 sql.NullInt64
-		c1 sql.NullString
+		c0 pq.NullTime
+		c1 sql.NullInt64
 		c2 sql.NullString
 		c3 pq.NullTime
-		c4 pq.NullTime
+		c4 sql.NullString
 	)
 
 	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4); err != nil {
@@ -310,28 +310,28 @@ func (t staticExample1Scanner) Scan(e *Example1) error {
 	}
 
 	if c0.Valid {
-		tmp := int(c0.Int64)
-		e.ID = tmp
+		tmp := c0.Time
+		e.CreatedAt = tmp
 	}
 
 	if c1.Valid {
-		tmp := c1.String
-		e.TextField = &tmp
+		tmp := int(c1.Int64)
+		e.ID = tmp
 	}
 
 	if c2.Valid {
 		tmp := c2.String
-		e.UUIDField = tmp
+		e.TextField = &tmp
 	}
 
 	if c3.Valid {
 		tmp := c3.Time
-		e.CreatedAt = tmp
+		e.UpdatedAt = tmp
 	}
 
 	if c4.Valid {
-		tmp := c4.Time
-		e.UpdatedAt = tmp
+		tmp := c4.String
+		e.UUIDField = tmp
 	}
 
 	return t.Rows.Err()
@@ -366,11 +366,11 @@ type StaticRowExample1Scanner struct {
 
 func (t StaticRowExample1Scanner) Scan(e *Example1) error {
 	var (
-		c0 sql.NullInt64
-		c1 sql.NullString
+		c0 pq.NullTime
+		c1 sql.NullInt64
 		c2 sql.NullString
 		c3 pq.NullTime
-		c4 pq.NullTime
+		c4 sql.NullString
 	)
 
 	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4); err != nil {
@@ -378,28 +378,28 @@ func (t StaticRowExample1Scanner) Scan(e *Example1) error {
 	}
 
 	if c0.Valid {
-		tmp := int(c0.Int64)
-		e.ID = tmp
+		tmp := c0.Time
+		e.CreatedAt = tmp
 	}
 
 	if c1.Valid {
-		tmp := c1.String
-		e.TextField = &tmp
+		tmp := int(c1.Int64)
+		e.ID = tmp
 	}
 
 	if c2.Valid {
 		tmp := c2.String
-		e.UUIDField = tmp
+		e.TextField = &tmp
 	}
 
 	if c3.Valid {
 		tmp := c3.Time
-		e.CreatedAt = tmp
+		e.UpdatedAt = tmp
 	}
 
 	if c4.Valid {
-		tmp := c4.Time
-		e.UpdatedAt = tmp
+		tmp := c4.String
+		e.UUIDField = tmp
 	}
 
 	return nil
@@ -427,11 +427,11 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 		err     error
 		columns []string
 		dst     []interface{}
-		c0      sql.NullInt64
-		c1      sql.NullString
+		c0      pq.NullTime
+		c1      sql.NullInt64
 		c2      sql.NullString
 		c3      pq.NullTime
-		c4      pq.NullTime
+		c4      sql.NullString
 	)
 
 	if columns, err = t.Rows.Columns(); err != nil {
@@ -442,15 +442,15 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "id":
-			dst = append(dst, &c0)
-		case "text_field":
-			dst = append(dst, &c1)
-		case "uuid_field":
-			dst = append(dst, &c2)
 		case "created_at":
-			dst = append(dst, &c3)
+			dst = append(dst, &c0)
+		case "id":
+			dst = append(dst, &c1)
+		case "text_field":
+			dst = append(dst, &c2)
 		case "updated_at":
+			dst = append(dst, &c3)
+		case "uuid_field":
 			dst = append(dst, &c4)
 		default:
 			dst = append(dst, &ignored)
@@ -463,30 +463,30 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "id":
+		case "created_at":
 			if c0.Valid {
-				tmp := int(c0.Int64)
+				tmp := c0.Time
+				e.CreatedAt = tmp
+			}
+		case "id":
+			if c1.Valid {
+				tmp := int(c1.Int64)
 				e.ID = tmp
 			}
 		case "text_field":
-			if c1.Valid {
-				tmp := c1.String
-				e.TextField = &tmp
-			}
-		case "uuid_field":
 			if c2.Valid {
 				tmp := c2.String
-				e.UUIDField = tmp
-			}
-		case "created_at":
-			if c3.Valid {
-				tmp := c3.Time
-				e.CreatedAt = tmp
+				e.TextField = &tmp
 			}
 		case "updated_at":
-			if c4.Valid {
-				tmp := c4.Time
+			if c3.Valid {
+				tmp := c3.Time
 				e.UpdatedAt = tmp
+			}
+		case "uuid_field":
+			if c4.Valid {
+				tmp := c4.String
+				e.UUIDField = tmp
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 package examples_test
 
 import (
-	. "bitbucket.org/jatone/genieql/internal/sqlxtest"
+	. "bitbucket.org/jatone/genieql/sqlxtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -14,9 +14,11 @@ func TestIntegrationTests(t *testing.T) {
 	RunSpecs(t, "Examples Suite")
 }
 
-var TX *sql.Tx
-var DB *sql.DB
-var dbname string
+var (
+	TX     *sql.Tx
+	DB     *sql.DB
+	dbname string
+)
 
 var _ = BeforeSuite(func() {
 	dbname, DB = NewPostgresql(TemplateDatabaseName)

@@ -1,36 +1,71 @@
-package postgresql
+package postgresql_test
 
 import (
-	"go/types"
+	"bitbucket.org/jatone/genieql"
 
-	"github.com/jackc/pgx"
-
+	. "bitbucket.org/jatone/genieql/internal/postgresql"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Postgresql", func() {
-	DescribeTable("oidType",
-		func(oid int, typ string) {
-			expr := oidToType(oid)
-			Expect(types.ExprString(expr)).To(
-				Equal(typ), "unknown expression type(%T) for example expected %s\n", expr, typ,
+	Describe("Dialect", func() {
+		It("should return the columns in the query in sorted order", func() {
+			info, err := NewDialect(DB).ColumnInformationForQuery(
+				"SELECT xact_rollback, conflicts, blks_read, blks_hit FROM pg_stat_database",
 			)
-		},
-		Entry("handle booleans", pgx.BoolOid, "bool"),
-		Entry("handle text", pgx.TextOid, "string"),
-		Entry("handle varchar", pgx.VarcharOid, "string"),
-		Entry("handle inet", pgx.InetOid, "string"),
-		Entry("handle uuid", pgx.UuidOid, "string"),
-		Entry("handle dates", pgx.DateOid, "time.Time"),
-		Entry("handle timestamps with timezone", pgx.TimestampTzOid, "time.Time"),
-		Entry("handle timestamps", pgx.TimestampOid, "time.Time"),
-		Entry("handle int20", pgx.Int2Oid, "int"),
-		Entry("handle int40", pgx.Int4Oid, "int"),
-		Entry("handle int80", pgx.Int8Oid, "int"),
-		Entry("handle float32", pgx.Float4Oid, "float32"),
-		Entry("handle float64", pgx.Float8Oid, "float64"),
-		Entry("handle byte arrays", pgx.ByteaOid, "[]byte"),
-	)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(genieql.ColumnInfoSet(info).ColumnNames()).To(Equal([]string{"blks_hit", "blks_read", "conflicts", "xact_rollback"}))
+		})
+
+		It("should return the columns in the table in the sorted order", func() {
+			info, err := NewDialect(DB).ColumnInformationForTable("pg_stat_database")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(
+				genieql.ColumnInfoSet(info).ColumnNames(),
+			).To(
+				Equal([]string{
+					"blk_read_time",
+					"blk_write_time",
+					"blks_hit",
+					"blks_read",
+					"conflicts",
+					"datid",
+					"datname",
+					"deadlocks",
+					"numbackends",
+					"stats_reset",
+					"temp_bytes",
+					"temp_files",
+					"tup_deleted",
+					"tup_fetched",
+					"tup_inserted",
+					"tup_returned",
+					"tup_updated",
+					"xact_commit",
+					"xact_rollback",
+				}),
+			)
+		})
+
+		It("should support insert queries", func() {
+			q := NewDialect(DB).Insert("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			Expect(q).To(Equal("INSERT INTO table (c1,c2,c2) VALUES (DEFAULT,$1,$2) RETURNING c1,c2,c2"))
+		})
+
+		It("should support select queries", func() {
+			q := NewDialect(DB).Select("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			Expect(q).To(Equal("SELECT c1,c2,c2 FROM table WHERE c1 = $1"))
+		})
+
+		It("should support update queries", func() {
+			q := NewDialect(DB).Update("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			Expect(q).To(Equal("UPDATE table SET c1 = $1, c2 = $2, c2 = $3 WHERE c1 = $4 RETURNING c1,c2,c2"))
+		})
+
+		It("should support delete queries", func() {
+			q := NewDialect(DB).Delete("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			Expect(q).To(Equal("DELETE FROM table WHERE c1 = $1 RETURNING c1,c2,c2"))
+		})
+	})
 })

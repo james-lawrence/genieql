@@ -24,6 +24,37 @@ func (t ColumnInfo) MapColumn(x ast.Expr) (ColumnMap, error) {
 	}, err
 }
 
+type lesser func(i, j ColumnInfo) bool
+
+// SortColumnInfo ...
+func SortColumnInfo(input []ColumnInfo) func(c lesser) []ColumnInfo {
+	return func(c lesser) []ColumnInfo {
+		sort.Sort(sortableColumnInfo{columns: input, lesser: c})
+		return input
+	}
+}
+
+type sortableColumnInfo struct {
+	lesser  lesser
+	columns []ColumnInfo
+}
+
+func (t sortableColumnInfo) Len() int {
+	return len(t.columns)
+}
+
+func (t sortableColumnInfo) Swap(i, j int) {
+	t.columns[i], t.columns[j] = t.columns[j], t.columns[i]
+}
+
+func (t sortableColumnInfo) Less(i, j int) bool {
+	return t.lesser(t.columns[i], t.columns[j])
+}
+
+func ByName(i, j ColumnInfo) bool {
+	return i.Name < j.Name
+}
+
 type ColumnInfoSet []ColumnInfo
 
 // ColumnNames returns the column names inside the ColumnInfoSet.

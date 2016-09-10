@@ -60,15 +60,6 @@ func placeholders(offset int, columns []placeholder) ([]string, int) {
 	return clauses, len(clauses)
 }
 
-func defaults(offset int, columns ...string) ([]string, int) {
-	clauses := make([]string, 0, len(columns))
-	for range columns {
-		clauses = append(clauses, "DEFAULT")
-	}
-
-	return clauses, len(clauses) + 1
-}
-
 func selectPlaceholder(columns, defaults []string) []placeholder {
 	placeholders := make([]placeholder, 0, len(columns))
 	for _, column := range columns {

@@ -7,15 +7,19 @@ import (
 	"go/types"
 	"log"
 
-	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/postgresql/internal"
 )
 
 // Dialect constant representing the dialect name.
 const Dialect = "postgres"
+
+// NewDialect creates a postgresql Dialect from the queryer
+func NewDialect(q *sql.DB) genieql.Dialect {
+	return dialectImplementation{db: q}
+}
 
 func init() {
 	maybePanic := func(err error) {
@@ -65,7 +69,7 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 
 func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
-	return t.columnInformation(t.db, columnInformationQuery, table)
+	return columnInformation(t.db, columnInformationQuery, table)
 }
 
 func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
@@ -77,15 +81,16 @@ func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieq
 		return nil, errors.Wrap(err, "failure to start transaction")
 	}
 	defer tx.Rollback()
+
 	q := fmt.Sprintf("CREATE TABLE %s AS (%s)", table, query)
 	if _, err = tx.Exec(q); err != nil {
 		return nil, errors.Wrapf(err, "failure to execute %s", q)
 	}
 
-	return t.columnInformation(tx, columnInformationQuery, table)
+	return columnInformation(tx, columnInformationQuery, table)
 }
 
-func (t dialectImplementation) columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, error) {
+func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, error) {
 	var (
 		err     error
 		rows    *sql.Rows
@@ -107,7 +112,7 @@ func (t dialectImplementation) columnInformation(q queryer, query, table string)
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
-		if expr = oidToType(oid); expr == nil {
+		if expr = internal.OIDToType(oid); expr == nil {
 			log.Println("skipping column", info.Name, "unknown type identifier", oid, "please open an issue")
 			continue
 		}
@@ -117,31 +122,7 @@ func (t dialectImplementation) columnInformation(q queryer, query, table string)
 		columns = append(columns, info)
 	}
 
-	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
-}
+	columns = genieql.SortColumnInfo(columns)(genieql.ByName)
 
-// This is driver dependent, will have to abstract away.
-func oidToType(oid int) ast.Expr {
-	switch oid {
-	case pgx.BoolOid:
-		return astutil.Expr("bool")
-	case pgx.UuidOid:
-		return astutil.Expr("string")
-	case pgx.TimestampTzOid, pgx.TimestampOid, pgx.DateOid:
-		return astutil.Expr("time.Time")
-	case pgx.Int2Oid, pgx.Int4Oid, pgx.Int8Oid:
-		return astutil.Expr("int")
-	case pgx.TextOid, pgx.VarcharOid, pgx.JsonOid:
-		return astutil.Expr("string")
-	case pgx.ByteaOid:
-		return astutil.Expr("[]byte")
-	case pgx.Float4Oid:
-		return astutil.Expr("float32")
-	case pgx.Float8Oid:
-		return astutil.Expr("float64")
-	case pgx.InetOid:
-		return astutil.Expr("string")
-	default:
-		return nil
-	}
+	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
 }
