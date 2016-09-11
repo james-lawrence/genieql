@@ -1,5 +1,5 @@
-hash: e1a1cb2f829698fbd1b5486f8a41339b813ef8c0f12db8539c5375c522258cd7
-updated: 2016-08-26T09:46:37.276974457-04:00
+hash: 459c29c56cf1ea886d64290922eb2bf3862e513c821ab8bf3799883a419d4266
+updated: 2016-09-11T14:59:14.349783576-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -8,11 +8,13 @@ imports:
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/jackc/pgx
-  version: b2dd61515c294578902f4e398410cbf791009155
+  version: 0c7277fe15359549b236292644f4ad7eff753544
 - name: github.com/lib/pq
-  version: 80f8150043c80fb52dee6bc863a709cdac7ec8f8
+  version: 50761b0867bd1d9d069276790bcd4a3bccf2324a
   subpackages:
   - oid
+- name: github.com/mattn/go-sqlite3
+  version: 3fb7a0e792edd47bf0cf1e919dfc14e2be412e15
 - name: github.com/pkg/errors
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/satori/go.uuid
@@ -22,12 +24,12 @@ imports:
 - name: github.com/zieckey/goini
   version: a5ac009e4c949ec8e0d4048fc8f80bbd137fd40d
 - name: golang.org/x/tools
-  version: 8ea9d4606980305f7f46cabde046adbb530e71c8
+  version: 86ad1193da6aba71355e71191641b9cfb26daa67
   subpackages:
   - imports
   - go/ast/astutil
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: e5900212cbf65b181d3d8e08308ef06a01d117cf
+  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 devImports: []

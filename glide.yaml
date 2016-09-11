@@ -11,3 +11,4 @@ import:
 - package: github.com/jackc/pgx
 - package: github.com/pkg/errors
 - package: github.com/zieckey/goini
+- package: github.com/mattn/go-sqlite3
