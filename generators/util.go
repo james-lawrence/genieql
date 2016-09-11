@@ -89,11 +89,6 @@ func toPrivate(s string) string {
 	return strings.Map(lowercaseFirst, s)
 }
 
-func isEllipsisType(x ast.Expr) bool {
-	_, isEllipsis := x.(*ast.Ellipsis)
-	return isEllipsis
-}
-
 func astPrint(n ast.Node) (string, error) {
 	dst := bytes.NewBuffer([]byte{})
 	fset := token.NewFileSet()

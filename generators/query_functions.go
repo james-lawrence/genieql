@@ -3,6 +3,7 @@ package generators
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 	"io"
 	"text/template"
@@ -62,9 +63,6 @@ func QFOQueryerFunction(x *ast.Ident) QueryFunctionOption {
 func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 	return func(qf *queryFunction) error {
 		qf.Parameters = params
-		if len(params) == 1 {
-			qf.EllipsisParameter = isEllipsisType(params[0].Type)
-		}
 		return nil
 	}
 }
@@ -97,14 +95,13 @@ func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 }
 
 type queryFunction struct {
-	Name              string
-	ScannerDecl       *ast.FuncDecl
-	BuiltinQuery      string
-	Queryer           ast.Expr
-	QueryerName       string
-	QueryerFunction   *ast.Ident
-	Parameters        []*ast.Field
-	EllipsisParameter bool
+	Name            string
+	ScannerDecl     *ast.FuncDecl
+	BuiltinQuery    string
+	Queryer         ast.Expr
+	QueryerName     string
+	QueryerFunction *ast.Ident
+	Parameters      []*ast.Field
 }
 
 func (t *queryFunction) Apply(options ...QueryFunctionOption) error {
@@ -156,19 +153,16 @@ func (t queryFunction) Generate(dst io.Writer) error {
 	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(queryFieldParam)...)
 	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(t.Parameters...)...)
 
-	query = &ast.CallExpr{
-		Fun:  &ast.SelectorExpr{X: ast.NewIdent(t.QueryerName), Sel: t.QueryerFunction},
-		Args: queryParameters,
-	}
-
 	// if we're dealing with an ellipsis parameter function
 	// mark the CallExpr Ellipsis
-	// this should only be the case when there is a single value
-	// in t.Parameters and it is a ast.Ellipsis expression.
+	// this should only be the case when t.Parameters ends with
+	// an ast.Ellipsis expression.
 	// this allows for the creation of a generic function:
 	// func F(q sql.DB, query, params ...interface{}) StaticExampleScanner
-	if t.EllipsisParameter {
-		query.Ellipsis = query.End()
+	query = &ast.CallExpr{
+		Fun:      &ast.SelectorExpr{X: ast.NewIdent(t.QueryerName), Sel: t.QueryerFunction},
+		Args:     queryParameters,
+		Ellipsis: isEllipsis(t.Parameters),
 	}
 
 	ctx := context{
@@ -194,6 +188,24 @@ const queryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType
 	return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
 }
 `
+
+func isEllipsis(fields []*ast.Field) token.Pos {
+	var (
+		x ast.Expr
+	)
+
+	if len(fields) == 0 {
+		return token.Pos(0)
+	}
+
+	x = fields[len(fields)-1].Type
+
+	if _, isEllipsis := x.(*ast.Ellipsis); !isEllipsis {
+		return token.Pos(0)
+	}
+
+	return token.Pos(1)
+}
 
 // notes: should be able to remove the queryer-function for general use cases by inspecting the return function.
 // if a custom queryer-function was provided, use that.
