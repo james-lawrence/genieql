@@ -149,7 +149,7 @@ var _ = Describe("Configuration", func() {
 				ConfigurationOptionDriver("github.com/lib/pq"),
 				ConfigurationOptionDatabase(uri),
 			)
-			Expect(err).To(MatchError(fmt.Sprintf("mkdir %s: permission denied", filepath.Dir(path))))
+			Expect(err).To(MatchError(fmt.Sprintf("failed to make bootstrap directory: mkdir %s: permission denied", filepath.Dir(path))))
 		})
 
 		It("should error if uri is invalid", func() {

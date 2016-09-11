@@ -134,6 +134,8 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		query           *ast.CallExpr
 	)
 
+	t.Parameters = normalizeFieldNames(t.Parameters)
+
 	queryFieldParam := astutil.Field(ast.NewIdent("string"), ast.NewIdent("query"))
 
 	funcMap := template.FuncMap{

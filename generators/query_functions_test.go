@@ -98,5 +98,20 @@ var _ = Describe("Query Functions", func() {
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
+		// normalize parameter names.
+		Entry(
+			"example 5",
+			".fixtures/query-functions/example5.go",
+			QFOName("queryFunction5"),
+			QFOParameters(
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("CamelcaseArgument")),
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("snakecase_argument")),
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("UPPERCASE_ARGUMENT")),
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("lowercase_argument")),
+			),
+			QFOScanner(exampleRowScanner),
+			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
+			QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		),
 	)
 })

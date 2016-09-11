@@ -131,7 +131,7 @@ var _ = Describe("Astutil", func() {
 			Expect(err).ToNot(HaveOccurred())
 			p := ASTPrinter{}
 			w := errWriter{err: fmt.Errorf("boom")}
-			Expect(PrintPackage(p, w, fset, pkg, []string{})).To(MatchError("boom"))
+			Expect(PrintPackage(p, w, fset, pkg, []string{})).To(MatchError("failed to print the package header: boom"))
 		})
 
 		It("should write out the package name and the preface", func() {
