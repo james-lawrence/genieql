@@ -1,54 +1,80 @@
 package drivers
 
 import (
-	"fmt"
 	"go/ast"
 	"go/types"
 
 	"bitbucket.org/jatone/genieql"
 )
 
-// implements the pgx postgresql driver github.com/jackc/pgx
-
+// implements the pgx driver https://github.com/jackc/pgx
 func init() {
-	genieql.RegisterDriver("github.com/jackc/pgx", genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
+	genieql.RegisterDriver(PGX, genieql.NewDriver(pgxNullableTypes, pgxLookupNullableType))
 }
 
-func pgxNullableTypes(typ, from ast.Expr) (ast.Expr, bool) {
-	var expr ast.Expr
-	ok := true
+// PGX - driver for github.com/jackc/pgx
+const PGX = "github.com/jackc/pgx"
 
-	// if its not a starexpr its not nullable
-	x, ok := typ.(*ast.StarExpr)
-	if !ok {
-		return typ, false
+func pgxNullableTypes(dst, from ast.Expr) (ast.Expr, bool) {
+	var (
+		orig = dst
+	)
+
+	if x, ok := dst.(*ast.StarExpr); ok {
+		dst = x.X
 	}
 
-	typeToExpr := func(selector string) ast.Expr {
-		return mustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
-	}
-
-	switch types.ExprString(x.X) {
+	switch types.ExprString(dst) {
+	case float32ExprString:
+		return typeToExpr(from, "Float32"), true
+	case float64ExprString:
+		return typeToExpr(from, "Float64"), true
+	case stringExprString:
+		return typeToExpr(from, "String"), true
+	case int16ExprString:
+		return typeToExpr(from, "Int16"), true
+	case int32ExprString:
+		return typeToExpr(from, "Int32"), true
+	case int64ExprString:
+		return typeToExpr(from, "Int64"), true
+	case boolExprString:
+		return typeToExpr(from, "Bool"), true
 	case timeExprString:
-		expr = typeToExpr("Time")
+		return typeToExpr(from, "Time"), true
 	default:
-		expr, ok = typ, false
+		return orig, false
 	}
-
-	return expr, ok
 }
 
 func pgxLookupNullableType(typ ast.Expr) ast.Expr {
-	// if its not a starexpr its not nullable
-	x, ok := typ.(*ast.StarExpr)
-	if !ok {
-		return typ
+	var (
+		typs string
+	)
+
+	if x, ok := typ.(*ast.StarExpr); ok {
+		typ = x.X
 	}
 
-	switch types.ExprString(x.X) {
+	switch types.ExprString(typ) {
+	case float32ExprString:
+		typs = "pgx.NullFloat32"
+	case float64ExprString:
+		typs = "pgx.NullFloat64"
+	case stringExprString:
+		typs = "pgx.NullString"
+	case int16ExprString:
+		typs = "pgx.NullInt16"
+	case int32ExprString:
+		typs = "pgx.NullInt32"
+	case int64ExprString:
+		typs = "pgx.NullInt64"
+	case boolExprString:
+		typs = "pgx.NullBool"
 	case timeExprString:
-		return mustParseExpr("pq.NullTime").(*ast.SelectorExpr)
+		typs = "pgx.NullTime"
 	default:
 		return typ
 	}
+
+	return MustParseExpr(typs)
 }

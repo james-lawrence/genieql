@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"fmt"
 	"go/ast"
 	"go/types"
 
@@ -9,10 +8,12 @@ import (
 )
 
 // implements the lib/pq driver https://github.com/lib/pq
-
 func init() {
-	genieql.RegisterDriver("github.com/lib/pq", genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
+	genieql.RegisterDriver(PQ, genieql.NewDriver(pqNullableTypes, pqLookupNullableType))
 }
+
+// PQ - driver for github.com/lib/pq
+const PQ = "github.com/lib/pq"
 
 func pqNullableTypes(dst, from ast.Expr) (ast.Expr, bool) {
 	var (
@@ -23,13 +24,9 @@ func pqNullableTypes(dst, from ast.Expr) (ast.Expr, bool) {
 		dst = x.X
 	}
 
-	typeToExpr := func(selector string) ast.Expr {
-		return mustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
-	}
-
 	switch types.ExprString(dst) {
 	case timeExprString:
-		return typeToExpr("Time"), true
+		return typeToExpr(from, "Time"), true
 	default:
 		return orig, false
 	}
@@ -42,7 +39,7 @@ func pqLookupNullableType(typ ast.Expr) ast.Expr {
 
 	switch types.ExprString(typ) {
 	case timeExprString:
-		return mustParseExpr("pq.NullTime").(*ast.SelectorExpr)
+		return MustParseExpr("pq.NullTime")
 	default:
 		return typ
 	}

@@ -1,51 +1,33 @@
-package drivers
+package drivers_test
 
 import (
-	"go/types"
+	"bitbucket.org/jatone/genieql"
+	. "bitbucket.org/jatone/genieql/internal/drivers"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("pq", func() {
-	Describe("pqNullableTypes", func() {
-		examples := []struct {
-			typ        string
-			nullable   bool
-			resultExpr string
-		}{
-			{"int", false, "int"},
-			{"*int", false, "*int"},
-			{"time.Time", true, "myVar.Time"},
-			{"*time.Time", true, "myVar.Time"},
-		}
-
-		It("should properly determine if the type is nullable and return the proper expression", func() {
-			for _, example := range examples {
-				typ := mustParseExpr(example.typ)
-				myVar := mustParseExpr("myVar")
-				rhs, nullable := pqNullableTypes(typ, myVar)
-				Expect(nullable).To(Equal(example.nullable), example.typ)
-				Expect(types.ExprString(rhs)).To(Equal(example.resultExpr), example.typ)
-			}
-		})
+	It("should register the driver", func() {
+		_, err := genieql.LookupDriver(PQ)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
-	Describe("pqLookupNullableType", func() {
-		typeTable := []struct {
-			input, expected string
-		}{
-			{"int", "int"},
-			{"*int", "int"},
-			{"time.Time", "pq.NullTime"},
-			{"*time.Time", "pq.NullTime"},
-		}
+	DescribeTable("pqNullableTypes",
+		nullableTypeTest(genieql.MustLookupDriver(PQ).NullableType),
+		Entry("int", "int", false, "int"),
+		Entry("int pointer", "*int", false, "*int"),
+		Entry("time", "time.Time", true, "nullableType.Time"),
+		Entry("time pointer", "*time.Time", true, "nullableType.Time"),
+	)
 
-		It("should properly convert types to their Null Equivalents", func() {
-			for _, test := range typeTable {
-				result := pqLookupNullableType(mustParseExpr(test.input))
-				Expect(types.ExprString(result)).To(Equal(test.expected), test.input)
-			}
-		})
-	})
+	DescribeTable("pqLookupNullableType",
+		lookupNullableTypeTest(genieql.MustLookupDriver(PQ).LookupNullableType),
+		Entry("int", "int", "int"),
+		Entry("int pointer", "*int", "int"),
+		Entry("time", "time.Time", "pq.NullTime"),
+		Entry("time pointer", "*time.Time", "pq.NullTime"),
+	)
 })
