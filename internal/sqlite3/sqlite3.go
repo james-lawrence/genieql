@@ -2,6 +2,7 @@ package sqlite3
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -11,7 +12,7 @@ import (
 // Dialect constant representing the dialect name.
 const Dialect = "sqlite3"
 
-// NewDialect creates a postgresql Dialect from the queryer
+// NewDialect creates a sqlite Dialect from the queryer
 func NewDialect(q *sql.DB) genieql.Dialect {
 	return dialectImplementation{db: q}
 }
@@ -63,29 +64,76 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 }
 
 func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
-	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
+	const columnInformationQuery = `PRAGMA table_info('%s')`
 	return columnInformation(t.db, columnInformationQuery, table)
 }
 
 func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
-	return columnInformation(t.db, query, "table")
-	// const columnInformationQuery = `SELECT a.attname, a.atttypid, 'f' AS nullable, 'f' AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
-	// const table = "genieql_query_columns_table"
-	//
-	// tx, err := t.db.Begin()
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "failure to start transaction")
-	// }
-	// defer tx.Rollback()
-	//
-	// q := fmt.Sprintf("CREATE TABLE %s AS (%s)", table, query)
-	// if _, err = tx.Exec(q); err != nil {
-	// 	return nil, errors.Wrapf(err, "failure to execute %s", q)
-	// }
-	//
-	// return columnInformation(tx, columnInformationQuery, table)
+	const columnInformationQuery = `PRAGMA table_info('%s')`
+	const table = "genieql_query_columns_table"
+
+	tx, err := t.db.Begin()
+	if err != nil {
+		return nil, errors.Wrap(err, "failure to start transaction")
+	}
+	defer tx.Rollback()
+
+	q := fmt.Sprintf("CREATE TABLE %s AS %s", table, query)
+	if _, err = tx.Exec(q); err != nil {
+		return nil, errors.Wrapf(err, "failure to execute %s", q)
+	}
+
+	return columnInformation(tx, columnInformationQuery, table)
 }
 
 func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, error) {
-	return []genieql.ColumnInfo(nil), nil
+	var (
+		err     error
+		rows    *sql.Rows
+		columns []genieql.ColumnInfo
+	)
+
+	if rows, err = q.Query(fmt.Sprintf(query, table)); err != nil {
+		return nil, errors.Wrapf(err, "failed to query column information: %s, %s", query, table)
+	}
+
+	for rows.Next() {
+		var (
+			id         int         // ignored.
+			cName      string      // column name.
+			cType      string      // column type.
+			nullable   int         // nullable.
+			defaultVal interface{} // ignored.
+			primary    int         // part of the primary key.
+		)
+
+		if err = rows.Scan(&id, &cName, &cType, &nullable, &defaultVal, &primary); err != nil {
+			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
+		}
+
+		columns = append(columns, genieql.ColumnInfo{
+			Name:       cName,
+			Nullable:   isNullable(nullable),
+			PrimaryKey: isPrimary(primary),
+			Type:       cType, // TODO mapping function from sqlite to golang.
+		})
+	}
+
+	columns = genieql.SortColumnInfo(columns)(genieql.ByName)
+
+	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
+}
+
+func isNullable(i int) bool {
+	if i == 0 {
+		return true
+	}
+	return false
+}
+
+func isPrimary(i int) bool {
+	if i == 0 {
+		return false
+	}
+	return true
 }
