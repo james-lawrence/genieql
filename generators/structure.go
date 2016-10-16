@@ -1,15 +1,11 @@
 package generators
 
 import (
-	"bufio"
 	"go/ast"
 	"go/types"
 	"html/template"
 	"io"
 	"strings"
-
-	"github.com/pkg/errors"
-	"github.com/zieckey/goini"
 
 	"bitbucket.org/jatone/genieql"
 )
@@ -62,6 +58,32 @@ func StructOptionMappingConfigOptions(options ...genieql.MappingConfigOption) St
 	}
 }
 
+// StructOptionFromCommentGroup parses a configuration and converts it into an array of options.
+func StructOptionFromCommentGroup(comment *ast.CommentGroup) ([]StructOption, error) {
+	const aliasOption = `alias`
+	const generalSection = `general`
+	const renameSection = `rename.columns`
+
+	options := []StructOption{}
+	ini, err := OptionsFromCommentGroup(comment)
+	if err != nil {
+		return options, err
+	}
+	if kvmap, ok := ini.GetKvmap(renameSection); ok {
+		options = append(options, StructOptionRenameMap(kvmap))
+	}
+
+	if kvmap, ok := ini.GetKvmap(generalSection); ok {
+		if alias := genieql.AliaserSelect(kvmap[aliasOption]); alias != nil {
+			// this could cause multiple aliasers to be applied to the Generator
+			// but it doesn't matter as last one will win.
+			options = append(options, StructOptionAliasStrategy(genieql.MCOTransformations(kvmap[aliasOption])))
+		}
+	}
+
+	return options, nil
+}
+
 // NewStructure creates a Generator that builds structures from column information.
 func NewStructure(opts ...StructOption) genieql.Generator {
 	s := structure{
@@ -87,7 +109,7 @@ func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.
 	if decl.Doc == nil {
 		configOpts = options
 	} else {
-		if configOpts, err = configOptions(decl.Doc.Text()); err != nil {
+		if configOpts, err = StructOptionFromCommentGroup(decl.Doc); err != nil {
 			return []genieql.Generator{genieql.NewErrGenerator(err)}
 		}
 		configOpts = append(options, configOpts...)
@@ -145,49 +167,6 @@ type {{.Name}} struct {
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
 		"transformation": mapping.Aliaser(),
 	}).Parse(tmpl)).Execute(dst, ctx)
-}
-
-// ConfigOptions parses a configuration and converts it into an array of options.
-func configOptions(config string) ([]StructOption, error) {
-	const magicPrefix = `genieql.options:`
-	const aliasOption = `alias`
-	const generalSection = `general`
-	const renameSection = `rename.columns`
-
-	options := []StructOption{}
-
-	scanner := bufio.NewScanner(strings.NewReader(config))
-	scanner.Split(bufio.ScanLines)
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		if !strings.HasPrefix(text, magicPrefix) {
-			continue
-		}
-
-		text = strings.TrimSpace(strings.TrimPrefix(text, magicPrefix))
-
-		ini := goini.New()
-		ini.SetParseSection(true)
-
-		if err := ini.Parse([]byte(text), " ", "="); err != nil {
-			return nil, errors.Wrap(err, "failed to parse comment configuration")
-		}
-
-		if kvmap, ok := ini.GetKvmap(renameSection); ok {
-			options = append(options, StructOptionRenameMap(kvmap))
-		}
-
-		if kvmap, ok := ini.GetKvmap("general"); ok {
-			if alias := genieql.AliaserSelect(kvmap[aliasOption]); alias != nil {
-				// this could cause multiple aliasers to be applied to the Generator
-				// but it doesn't matter as last one will win.
-				options = append(options, StructOptionAliasStrategy(genieql.MCOTransformations(kvmap[aliasOption])))
-			}
-		}
-	}
-
-	return options, nil
 }
 
 type mapStructureToGenerator struct {

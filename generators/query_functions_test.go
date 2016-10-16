@@ -95,6 +95,13 @@ var _ = Describe("Query Functions", func() {
 			QFOBuiltinQuery(`SELECT * FROM example WHERE id = $1`),
 		),
 		Entry(
+			"example 1 - with static query function",
+			`package example
+// genieql.options: inlined-query=SELECT * FROM example WHERE id = $1
+type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
+			".fixtures/query-functions/example1.go",
+		),
+		Entry(
 			"example 2 - allow provided query parameter",
 			"package example; type queryFunction2 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
 			".fixtures/query-functions/example2.go",

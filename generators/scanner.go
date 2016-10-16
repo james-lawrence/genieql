@@ -55,9 +55,8 @@ func ScannerOptionParameters(fields *ast.FieldList) ScannerOption {
 // ScannerOptionsFromComment extracts configuration from a comment group attached
 // to the function type.
 func ScannerOptionsFromComment(comment *ast.CommentGroup) []ScannerOption {
-	options := make([]ScannerOption, 0, 10)
-
-	return options
+	// TODO
+	return []ScannerOption{}
 }
 
 // ScannerOptionPackage provides the package being used to build the scanners.

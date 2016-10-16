@@ -66,8 +66,8 @@ var _ = Describe("Structure", func() {
 			"type1 structure with configuration",
 			`package example
 // additional documentation.
-// genieql.options: [general] alias=lowercase
-// genieql.options: [rename.columns] field1=CustomName
+// genieql.options: [general]||alias=lowercase
+// genieql.options: [rename.columns]||field1=CustomName
 const Lowercase = "type1"
 `,
 			".fixtures/structures/type1_configuration.go",
@@ -96,7 +96,7 @@ const Lowercase = "type1"
 		Entry(
 			"invalid configuration",
 			`package example
-// genieql.options: general alias=lowercase
+// genieql.options: general||alias=lowercase
 const Lowercase = "type1"
 `,
 			"failed to parse comment configuration: Came accross an error : general is NOT a valid key/value pair",

@@ -69,9 +69,21 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 }
 
 // QFOFromComment extracts options from a ast.CommentGroup.
-func QFOFromComment(comment *ast.CommentGroup) []QueryFunctionOption {
-	// TODO
-	return []QueryFunctionOption{}
+func QFOFromComment(comments *ast.CommentGroup) []QueryFunctionOption {
+	// genieql.options: inlined-query="SELECT * FROM foo WHERE bar = $1 OR bar = $2"
+	const generalSection = `general`
+	const inlinedQueryOption = `inlined-query`
+	options := []QueryFunctionOption{}
+	ini, err := OptionsFromCommentGroup(comments)
+	if err != nil {
+		return []QueryFunctionOption{maybeQFO(nil, err)}
+	}
+
+	if q, ok := ini.Get(inlinedQueryOption); ok {
+		options = append(options, QFOBuiltinQuery(q))
+	}
+
+	return options
 }
 
 func maybeQFO(qfo QueryFunctionOption, err error) QueryFunctionOption {
