@@ -194,6 +194,23 @@ func SelectFuncType(decls ...*ast.GenDecl) []*ast.GenDecl {
 	return result
 }
 
+type Searcher interface {
+	FindFunction(f ast.Filter) (*ast.FuncDecl, error)
+}
+
+func NewSearcher(fset *token.FileSet, pkgset ...*build.Package) Searcher {
+	return searcher{fset: fset, pkgset: pkgset}
+}
+
+type searcher struct {
+	fset   *token.FileSet
+	pkgset []*build.Package
+}
+
+func (t searcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
+	return NewUtils(t.fset).FindFunction(f, t.pkgset...)
+}
+
 type Utils interface {
 	ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error)
 	FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.TypeSpec, error)

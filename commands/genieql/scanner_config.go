@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"bitbucket.org/jatone/genieql/x/stringsx"
+
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -80,11 +82,11 @@ func (t *scannerConfig) configure(cmd *kingpin.CmdClause, opts ...scannerOption)
 func (t *scannerConfig) apply(*kingpin.ParseContext) error {
 	_, typName := extractPackageType(t.packageType)
 
-	t.scannerName = defaultIfBlank(t.scannerName, fmt.Sprintf(t.defaultScannerNameFormat, typName))
-	t.scannerRowName = defaultIfBlank(t.scannerRowName, fmt.Sprintf(t.defaultRowScannerNameFormat, typName))
-	t.interfaceName = defaultIfBlank(t.interfaceName, fmt.Sprintf(t.defaultInterfaceNameFormat, typName))
-	t.interfaceRowName = defaultIfBlank(t.interfaceRowName, fmt.Sprintf(t.defaultInterfaceRowNameFormat, typName))
-	t.errScannerName = defaultIfBlank(t.errScannerName, fmt.Sprintf(t.defaultErrScannerNameFormat, typName))
+	t.scannerName = stringsx.DefaultIfBlank(t.scannerName, fmt.Sprintf(t.defaultScannerNameFormat, typName))
+	t.scannerRowName = stringsx.DefaultIfBlank(t.scannerRowName, fmt.Sprintf(t.defaultRowScannerNameFormat, typName))
+	t.interfaceName = stringsx.DefaultIfBlank(t.interfaceName, fmt.Sprintf(t.defaultInterfaceNameFormat, typName))
+	t.interfaceRowName = stringsx.DefaultIfBlank(t.interfaceRowName, fmt.Sprintf(t.defaultInterfaceRowNameFormat, typName))
+	t.errScannerName = stringsx.DefaultIfBlank(t.errScannerName, fmt.Sprintf(t.defaultErrScannerNameFormat, typName))
 
 	if t.private {
 		t.scannerName = lowercaseFirstLetter(t.scannerName)

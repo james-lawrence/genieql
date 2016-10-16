@@ -108,7 +108,7 @@ func (t *generateCRUDFunctions) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 	crud.Flag(
 		"output",
 		"path of output file",
-	).Default("").StringVar(&t.output)
+	).Short('o').Default("").StringVar(&t.output)
 
 	crud.Flag(
 		"table",

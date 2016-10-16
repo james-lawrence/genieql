@@ -11,6 +11,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/x/stringsx"
 
 	"github.com/serenize/snaker"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -83,7 +84,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		delegate: generators.NewStructure(
 			generators.StructOptionConfiguration(configuration),
 			generators.StructOptionName(
-				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
+				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
 			),
 			generators.StructOptionMappingConfigOptions(
 				genieql.MCOCustom(false),
@@ -260,7 +261,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		delegate: generators.NewStructure(
 			generators.StructOptionConfiguration(configuration),
 			generators.StructOptionName(
-				defaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
+				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
 			),
 			generators.StructOptionMappingConfigOptions(
 				genieql.MCOCustom(true),

@@ -15,6 +15,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
 type mode int
@@ -184,7 +185,7 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	ctx := context{
 		Name:          t.Name,
-		InterfaceName: defaultIfBlank(t.interfaceName, t.Name),
+		InterfaceName: stringsx.DefaultIfBlank(t.interfaceName, t.Name),
 		Parameters:    t.Fields.List,
 	}
 

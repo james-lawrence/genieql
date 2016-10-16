@@ -508,3 +508,362 @@ func (t dynamicExample1Scanner) Close() error {
 func (t dynamicExample1Scanner) Next() bool {
 	return t.Rows.Next()
 }
+
+const ComboScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field,bool_field,created_at,text_field,updated_at,uuid_field"
+
+// ComboScanner scanner interface.
+type ComboScanner interface {
+	Scan(e1 *Example1, e2 *Example2) error
+	Next() bool
+	Close() error
+	Err() error
+}
+
+type errComboScanner struct {
+	e error
+}
+
+func (t errComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+	return t.e
+}
+
+func (t errComboScanner) Next() bool {
+	return false
+}
+
+func (t errComboScanner) Err() error {
+	return t.e
+}
+
+func (t errComboScanner) Close() error {
+	return nil
+}
+
+// StaticComboScanner creates a scanner that operates on a static
+// set of columns that are always returned in the same order.
+func StaticComboScanner(rows *sql.Rows, err error) ComboScanner {
+	if err != nil {
+		return errComboScanner{e: err}
+	}
+
+	return staticComboScanner{
+		Rows: rows,
+	}
+}
+
+type staticComboScanner struct {
+	Rows *sql.Rows
+}
+
+func (t staticComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+	var (
+		c0 pq.NullTime
+		c1 sql.NullInt64
+		c2 sql.NullString
+		c3 pq.NullTime
+		c4 sql.NullString
+		c5 sql.NullBool
+		c6 pq.NullTime
+		c7 sql.NullString
+		c8 pq.NullTime
+		c9 sql.NullString
+	)
+
+	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := c0.Time
+		e1.CreatedAt = tmp
+	}
+
+	if c1.Valid {
+		tmp := int(c1.Int64)
+		e1.ID = tmp
+	}
+
+	if c2.Valid {
+		tmp := c2.String
+		e1.TextField = &tmp
+	}
+
+	if c3.Valid {
+		tmp := c3.Time
+		e1.UpdatedAt = tmp
+	}
+
+	if c4.Valid {
+		tmp := c4.String
+		e1.UUIDField = tmp
+	}
+
+	if c5.Valid {
+		tmp := c5.Bool
+		e2.BoolField = tmp
+	}
+
+	if c6.Valid {
+		tmp := c6.Time
+		e2.CreatedAt = tmp
+	}
+
+	if c7.Valid {
+		tmp := c7.String
+		e2.TextField = tmp
+	}
+
+	if c8.Valid {
+		tmp := c8.Time
+		e2.UpdatedAt = tmp
+	}
+
+	if c9.Valid {
+		tmp := c9.String
+		e2.UUIDField = tmp
+	}
+
+	return t.Rows.Err()
+}
+
+func (t staticComboScanner) Err() error {
+	return t.Rows.Err()
+}
+
+func (t staticComboScanner) Close() error {
+	if t.Rows == nil {
+		return nil
+	}
+	return t.Rows.Close()
+}
+
+func (t staticComboScanner) Next() bool {
+	return t.Rows.Next()
+}
+
+// NewStaticRowComboScanner creates a scanner that operates on a static
+// set of columns that are always returned in the same order, only scans a single row.
+func NewStaticRowComboScanner(row *sql.Row) StaticRowComboScanner {
+	return StaticRowComboScanner{
+		row: row,
+	}
+}
+
+type StaticRowComboScanner struct {
+	row *sql.Row
+}
+
+func (t StaticRowComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+	var (
+		c0 pq.NullTime
+		c1 sql.NullInt64
+		c2 sql.NullString
+		c3 pq.NullTime
+		c4 sql.NullString
+		c5 sql.NullBool
+		c6 pq.NullTime
+		c7 sql.NullString
+		c8 pq.NullTime
+		c9 sql.NullString
+	)
+
+	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9); err != nil {
+		return err
+	}
+
+	if c0.Valid {
+		tmp := c0.Time
+		e1.CreatedAt = tmp
+	}
+
+	if c1.Valid {
+		tmp := int(c1.Int64)
+		e1.ID = tmp
+	}
+
+	if c2.Valid {
+		tmp := c2.String
+		e1.TextField = &tmp
+	}
+
+	if c3.Valid {
+		tmp := c3.Time
+		e1.UpdatedAt = tmp
+	}
+
+	if c4.Valid {
+		tmp := c4.String
+		e1.UUIDField = tmp
+	}
+
+	if c5.Valid {
+		tmp := c5.Bool
+		e2.BoolField = tmp
+	}
+
+	if c6.Valid {
+		tmp := c6.Time
+		e2.CreatedAt = tmp
+	}
+
+	if c7.Valid {
+		tmp := c7.String
+		e2.TextField = tmp
+	}
+
+	if c8.Valid {
+		tmp := c8.Time
+		e2.UpdatedAt = tmp
+	}
+
+	if c9.Valid {
+		tmp := c9.String
+		e2.UUIDField = tmp
+	}
+
+	return nil
+}
+
+// DynamicComboScanner creates a scanner that operates on a dynamic
+// set of columns that can be returned in any subset/order.
+func DynamicComboScanner(rows *sql.Rows, err error) ComboScanner {
+	if err != nil {
+		return errComboScanner{e: err}
+	}
+
+	return dynamicComboScanner{
+		Rows: rows,
+	}
+}
+
+type dynamicComboScanner struct {
+	Rows *sql.Rows
+}
+
+func (t dynamicComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+	var (
+		ignored sql.RawBytes
+		err     error
+		columns []string
+		dst     []interface{}
+		c0      pq.NullTime
+		c1      sql.NullInt64
+		c2      sql.NullString
+		c3      pq.NullTime
+		c4      sql.NullString
+		c5      sql.NullBool
+		c6      pq.NullTime
+		c7      sql.NullString
+		c8      pq.NullTime
+		c9      sql.NullString
+	)
+
+	if columns, err = t.Rows.Columns(); err != nil {
+		return err
+	}
+
+	dst = make([]interface{}, 0, len(columns))
+
+	for _, column := range columns {
+		switch column {
+		case "created_at":
+			dst = append(dst, &c0)
+		case "id":
+			dst = append(dst, &c1)
+		case "text_field":
+			dst = append(dst, &c2)
+		case "updated_at":
+			dst = append(dst, &c3)
+		case "uuid_field":
+			dst = append(dst, &c4)
+		case "bool_field":
+			dst = append(dst, &c5)
+		case "created_at":
+			dst = append(dst, &c6)
+		case "text_field":
+			dst = append(dst, &c7)
+		case "updated_at":
+			dst = append(dst, &c8)
+		case "uuid_field":
+			dst = append(dst, &c9)
+		default:
+			dst = append(dst, &ignored)
+		}
+	}
+
+	if err := t.Rows.Scan(dst...); err != nil {
+		return err
+	}
+
+	for _, column := range columns {
+		switch column {
+		case "created_at":
+			if c0.Valid {
+				tmp := c0.Time
+				e1.CreatedAt = tmp
+			}
+		case "id":
+			if c1.Valid {
+				tmp := int(c1.Int64)
+				e1.ID = tmp
+			}
+		case "text_field":
+			if c2.Valid {
+				tmp := c2.String
+				e1.TextField = &tmp
+			}
+		case "updated_at":
+			if c3.Valid {
+				tmp := c3.Time
+				e1.UpdatedAt = tmp
+			}
+		case "uuid_field":
+			if c4.Valid {
+				tmp := c4.String
+				e1.UUIDField = tmp
+			}
+		case "bool_field":
+			if c5.Valid {
+				tmp := c5.Bool
+				e2.BoolField = tmp
+			}
+		case "created_at":
+			if c6.Valid {
+				tmp := c6.Time
+				e2.CreatedAt = tmp
+			}
+		case "text_field":
+			if c7.Valid {
+				tmp := c7.String
+				e2.TextField = tmp
+			}
+		case "updated_at":
+			if c8.Valid {
+				tmp := c8.Time
+				e2.UpdatedAt = tmp
+			}
+		case "uuid_field":
+			if c9.Valid {
+				tmp := c9.String
+				e2.UUIDField = tmp
+			}
+		}
+	}
+
+	return t.Rows.Err()
+}
+
+func (t dynamicComboScanner) Err() error {
+	return t.Rows.Err()
+}
+
+func (t dynamicComboScanner) Close() error {
+	if t.Rows == nil {
+		return nil
+	}
+	return t.Rows.Close()
+}
+
+func (t dynamicComboScanner) Next() bool {
+	return t.Rows.Next()
+}

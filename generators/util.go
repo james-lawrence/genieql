@@ -7,20 +7,12 @@ import (
 	"go/token"
 	"go/types"
 	"strings"
-	"unicode"
 
 	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql/astutil"
 )
-
-func defaultIfBlank(s, defaultValue string) string {
-	if len(strings.TrimSpace(s)) == 0 {
-		return defaultValue
-	}
-	return s
-}
 
 // utility function that converts a set of ast.Field into
 // a string representation of a function's arguments.
@@ -65,11 +57,9 @@ func normalizeIdent(idents []*ast.Ident) []*ast.Ident {
 
 	for _, ident := range idents {
 		n := ident.Name
-
-		if strings.ContainsRune(ident.Name, '_') {
-			n = snaker.SnakeToCamel(strings.ToLower(ident.Name))
+		if !strings.Contains(n, "_") {
+			n = snaker.CamelToSnake(ident.Name)
 		}
-
 		result = append(result, ast.NewIdent(toPrivate(n)))
 	}
 
@@ -77,16 +67,13 @@ func normalizeIdent(idents []*ast.Ident) []*ast.Ident {
 }
 
 func toPrivate(s string) string {
-	first := true
-	lowercaseFirst := func(r rune) rune {
-		if first {
-			first = false
-			return unicode.ToLower(r)
-		}
-		return r
+	parts := strings.SplitN(s, "_", 2)
+	switch len(parts) {
+	case 2:
+		return strings.ToLower(parts[0]) + snaker.SnakeToCamel(strings.ToLower(parts[1]))
+	default:
+		return strings.ToLower(s)
 	}
-
-	return strings.Map(lowercaseFirst, s)
 }
 
 func astPrint(n ast.Node) (string, error) {

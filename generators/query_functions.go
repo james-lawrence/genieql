@@ -1,7 +1,6 @@
 package generators
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -13,6 +12,8 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 )
+
+const defaultQueryParamName = "q"
 
 // QueryFunctionOption options for building query functions.
 type QueryFunctionOption func(*queryFunction) error
@@ -67,11 +68,85 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 	}
 }
 
+// QFOFromComment extracts options from a ast.CommentGroup.
+func QFOFromComment(comment *ast.CommentGroup) []QueryFunctionOption {
+	// TODO
+	return []QueryFunctionOption{}
+}
+
+func maybeQFO(qfo QueryFunctionOption, err error) QueryFunctionOption {
+	return func(qf *queryFunction) error {
+		if err == nil {
+			qfo(qf)
+		}
+		return err
+	}
+}
+
+func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...QueryFunctionOption) genieql.Generator {
+	// validations
+	if ft.Params.NumFields() < 1 {
+		return genieql.NewErrGenerator(
+			errors.Errorf("function prototype (%s) requires at least the type which will perform the query", name),
+		)
+	}
+
+	if ft.Results.NumFields() != 1 {
+		return genieql.NewErrGenerator(
+			errors.Errorf("function prototype (%s) requires a single function as the return value", name),
+		)
+	}
+
+	queryer, params := extractOptionsFromParams(ft.Params.List...)
+	scanner := extractOptionsFromResult(util, ft.Results.List[0])
+
+	options := append(
+		poptions,
+		QFOName(name.Name),
+		queryer,
+		params,
+		scanner,
+	)
+
+	options = append(options, QFOFromComment(comment)...)
+
+	return NewQueryFunction(options...)
+}
+
+// NewQueryFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
+func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, options ...QueryFunctionOption) []genieql.Generator {
+	g := make([]genieql.Generator, 0, len(decl.Specs))
+
+	for _, spec := range decl.Specs {
+		if ts, ok := spec.(*ast.TypeSpec); ok {
+			if ft, ok := ts.Type.(*ast.FuncType); ok {
+				g = append(g, generatorFromFuncType(util, ts.Name, decl.Doc, ft, options...))
+			}
+		}
+	}
+
+	return g
+}
+
+func extractOptionsFromParams(fields ...*ast.Field) (queryer, params QueryFunctionOption) {
+	queryerf, paramsf := fields[0], fields[1:]
+	return QFOQueryer(defaultQueryParamName, queryerf.Type), QFOParameters(paramsf...)
+}
+
+func extractOptionsFromResult(util genieql.Searcher, field *ast.Field) QueryFunctionOption {
+	scanner, err := util.FindFunction(func(s string) bool {
+		return s == types.ExprString(field.Type)
+	})
+
+	return maybeQFO(QFOScanner(scanner), err)
+}
+
 // NewQueryFunction build a query function generator from the provided options.
 func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 	qf := queryFunction{
+		Template:    queryFunc,
 		Parameters:  []*ast.Field{},
-		QueryerName: "q",
+		QueryerName: defaultQueryParamName,
 		Queryer:     &ast.StarExpr{X: &ast.SelectorExpr{X: ast.NewIdent("sql"), Sel: ast.NewIdent("DB")}},
 	}
 
@@ -88,7 +163,7 @@ func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 	} else if queryRowPattern(pattern...) {
 		qf.QueryerFunction = ast.NewIdent("QueryRow")
 	} else {
-		return genieql.NewErrGenerator(fmt.Errorf("a query function was not provided and failed to infer from the scanner function"))
+		return genieql.NewErrGenerator(errors.Errorf("a query function was not provided and failed to infer from the scanner function parameter list"))
 	}
 
 	return qf
@@ -102,6 +177,7 @@ type queryFunction struct {
 	QueryerName     string
 	QueryerFunction *ast.Ident
 	Parameters      []*ast.Field
+	Template        string
 }
 
 func (t *queryFunction) Apply(options ...QueryFunctionOption) error {
@@ -174,7 +250,7 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		Queryer:      query,
 	}
 
-	tmpl = template.Must(template.New("query-function").Funcs(funcMap).Parse(queryFunc))
+	tmpl = template.Must(template.New("query-function").Funcs(funcMap).Parse(t.Template))
 	return errors.Wrap(tmpl.Execute(dst, ctx), "failed to generate static scanner")
 }
 
@@ -213,11 +289,11 @@ func isEllipsis(fields []*ast.Field) token.Pos {
 // if it matches the pattern (*sql.Rows, error) then we use Query.
 // if it doesn't match any of the above: error.
 //
-// genieql.options: [general] inlined-query="SELECT * FROM foo WHERE bar = $1 || bar = $2"
+// genieql.options: [general] inlined-query="SELECT * FROM foo WHERE bar = $1 OR bar = $2"
 // type MyQueryFunction func(q sqlx.Queryer, param1, param2 int) StaticExampleScanner
 // creates:
 // func MyQueryFunction(q sqlx.Queryer, param1, param2 int) ExampleScanner {
-// 	const query = `SELECT * FROM foo WHERE bar = $1 || bar = $2`
+// 	const query = `SELECT * FROM foo WHERE bar = $1 OR bar = $2`
 // 	return StaticExampleScanner(q.Query(query, param1, param2))
 // }
 //
