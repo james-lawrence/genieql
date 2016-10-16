@@ -2,7 +2,6 @@ package internal
 
 import (
 	"go/ast"
-	"log"
 
 	"github.com/jackc/pgx"
 
@@ -37,7 +36,6 @@ func OIDToType(oid int) ast.Expr {
 	case nameOID:
 		return astutil.Expr("string")
 	default:
-		log.Println("missed", oid)
 		return nil
 	}
 }
