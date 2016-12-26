@@ -194,6 +194,36 @@ func SelectFuncType(decls ...*ast.GenDecl) []*ast.GenDecl {
 	return result
 }
 
+type FilteredValue struct {
+	Ident *ast.Ident
+	Value ast.Expr
+}
+
+type valueFilter struct {
+	values []FilteredValue
+}
+
+func (t *valueFilter) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.ValueSpec:
+		for idx, name := range n.Names {
+			t.values = append(t.values, FilteredValue{
+				Ident: name,
+				Value: n.Values[idx],
+			})
+		}
+	}
+
+	return t
+}
+
+// SelectValues searches the provided node for value specs.
+func SelectValues(node ast.Node) []FilteredValue {
+	v := valueFilter{}
+	ast.Walk(&v, node)
+	return v.values
+}
+
 type Searcher interface {
 	FindFunction(f ast.Filter) (*ast.FuncDecl, error)
 }
@@ -351,7 +381,7 @@ func RetrieveBasicLiteralString(f ast.Filter, packageSet ...*ast.Package) (strin
 		for idx, v := range valueSpec.Values {
 			basicLit, ok := v.(*ast.BasicLit)
 			if ok && basicLit.Kind == token.STRING && f(valueSpec.Names[idx].Name) {
-				return strings.Trim(basicLit.Value, "`"), nil
+				return strings.Trim(basicLit.Value, "`\""), nil
 			}
 		}
 	default:

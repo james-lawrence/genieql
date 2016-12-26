@@ -138,3 +138,12 @@ func mapDeclsToGenerator(b func(*ast.GenDecl) []genieql.Generator, decls ...*ast
 	}
 	return r
 }
+
+func mapFuncDeclsToGenerator(b func(*ast.FuncDecl) genieql.Generator, decls ...*ast.FuncDecl) []genieql.Generator {
+	r := make([]genieql.Generator, 0, len(decls))
+	for _, c := range decls {
+		r = append(r, b(c))
+	}
+
+	return r
+}

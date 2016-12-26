@@ -50,7 +50,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		generators.QFOName(fmt.Sprintf("%sInsert", t.Prefix)),
 		generators.QFOScanner(t.UniqScanner),
 		generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
-		generators.QFOBuiltinQuery(query),
+		generators.QFOBuiltinQueryFromString(query),
 	}
 
 	mg = append(mg, generators.NewQueryFunction(options...))
@@ -59,7 +59,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Columns[i:i+1]).ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOBuiltinQuery(query),
+			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOParameters(fieldFromColumnInfo(column)...),
 			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Prefix, snaker.SnakeToCamel(column.Name))),
 			generators.QFOScanner(t.Scanner),
@@ -73,7 +73,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
-			generators.QFOBuiltinQuery(query),
+			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
 		}
@@ -83,7 +83,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
-			generators.QFOBuiltinQuery(query),
+			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
 		}
@@ -93,7 +93,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
-			generators.QFOBuiltinQuery(query),
+			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
 		}

@@ -76,7 +76,7 @@ var _ = Describe("Query Functions", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			buffer.WriteString("package example\n\n")
-			for _, decl := range genieql.SelectFuncType(genieql.FindTypes(file)...) {
+			for _, decl := range genieql.FindTypes(file) {
 				gen := genieql.MultiGenerate(NewQueryFunctionFromGenDecl(util, decl, options...)...)
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
@@ -91,35 +91,84 @@ var _ = Describe("Query Functions", func() {
 		Entry(
 			"example 1 - with static query function",
 			"package example; type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
-			".fixtures/query-functions/example1.go",
-			QFOBuiltinQuery(`SELECT * FROM example WHERE id = $1`),
+			".fixtures/query-functions/output1.go",
+			QFOBuiltinQueryFromString(`SELECT * FROM example WHERE id = $1`),
 		),
 		Entry(
 			"example 1 - with static query function",
 			`package example
 // genieql.options: inlined-query=SELECT * FROM example WHERE id = $1
 type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
-			".fixtures/query-functions/example1.go",
+			".fixtures/query-functions/output1.go",
 		),
 		Entry(
 			"example 2 - allow provided query parameter",
 			"package example; type queryFunction2 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
-			".fixtures/query-functions/example2.go",
+			".fixtures/query-functions/output2.go",
 		),
 		Entry(
 			"example 3 - alternate scanner function support",
 			"package example; type queryFunction3 func(q sqlx.Queryer, arg1 int) StaticExampleRowScanner",
-			".fixtures/query-functions/example3.go",
+			".fixtures/query-functions/output3.go",
 		),
 		Entry(
 			"example 4 - ellipsis support",
 			"package example; type queryFunction4 func(q sqlx.Queryer, params ...interface{}) StaticExampleRowScanner",
-			".fixtures/query-functions/example4.go",
+			".fixtures/query-functions/output4.go",
 		),
 		Entry(
 			"example 5 - normalized parameter names",
 			"package example; type queryFunction5 func(q sqlx.Queryer, UUIDArgument int, CamelcaseArgument int, snakecase_argument int, UPPERCASE_ARGUMENT int, lowercase_argument int) StaticExampleRowScanner",
-			".fixtures/query-functions/example5.go",
+			".fixtures/query-functions/output5.go",
+		),
+	)
+
+	DescribeTable("build a query function from a function prototype",
+		func(prototype, fixture string, options ...QueryFunctionOption) {
+			buffer := bytes.NewBuffer([]byte{})
+			formatted := bytes.NewBuffer([]byte{})
+			fset := token.NewFileSet()
+
+			util := testSearcher{functions: []*ast.FuncDecl{exampleScanner, exampleRowScanner}}
+			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
+			Expect(err).ToNot(HaveOccurred())
+
+			buffer.WriteString("package example\n\n")
+			for _, decl := range genieql.FindFunc(file) {
+				gen := NewQueryFunctionFromFuncDecl(util, decl, options...)
+				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
+			}
+			buffer.WriteString("\n")
+
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+
+			expected, err := ioutil.ReadFile(fixture)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(formatted.String()).To(Equal(string(expected)))
+		},
+		Entry(
+			"example 1 - should handle a basic literal query",
+			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
+	const query = `+"`SELECT * FROM example WHERE id = $1`"+`
+	return nil
+}`,
+			".fixtures/query-functions/output1.go",
+		),
+		Entry(
+			"example 2 - should handle a query referenced by an ident query",
+			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
+	var query = HelloWorld
+	return nil
+}`,
+			".fixtures/query-functions/output6.go",
+		),
+		Entry(
+			"example 3 - should handle a query referencing another package ident.",
+			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
+	var query = mypkg.HelloWorld
+	return nil
+}`,
+			".fixtures/query-functions/output7.go",
 		),
 	)
 
@@ -140,16 +189,16 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 		},
 		Entry(
 			"example 1",
-			".fixtures/query-functions/example1.go",
+			".fixtures/query-functions/output1.go",
 			QFOName("queryFunction1"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
 			QFOScanner(exampleScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
-			QFOBuiltinQuery("SELECT * FROM example WHERE id = $1"),
+			QFOBuiltinQueryFromString("SELECT * FROM example WHERE id = $1"),
 		),
 		Entry(
 			"example 2",
-			".fixtures/query-functions/example2.go",
+			".fixtures/query-functions/output2.go",
 			QFOName("queryFunction2"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
 			QFOScanner(exampleScanner),
@@ -158,7 +207,7 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 		),
 		Entry(
 			"example 3 - use alternate scanner",
-			".fixtures/query-functions/example3.go",
+			".fixtures/query-functions/output3.go",
 			QFOName("queryFunction3"),
 			QFOParameters(astutil.Field(ast.NewIdent("int"), ast.NewIdent("arg1"))),
 			QFOScanner(exampleRowScanner),
@@ -166,7 +215,7 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 		),
 		Entry(
 			"example 4 - ellipsis support",
-			".fixtures/query-functions/example4.go",
+			".fixtures/query-functions/output4.go",
 			QFOName("queryFunction4"),
 			QFOParameters(astutil.Field(&ast.Ellipsis{Elt: &ast.InterfaceType{Methods: &ast.FieldList{}}}, ast.NewIdent("params"))),
 			QFOScanner(exampleRowScanner),
@@ -175,7 +224,7 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 		),
 		Entry(
 			"example 5 - normalizing parameter names",
-			".fixtures/query-functions/example5.go",
+			".fixtures/query-functions/output5.go",
 			QFOName("queryFunction5"),
 			QFOParameters(
 				astutil.Field(ast.NewIdent("int"), ast.NewIdent("UUIDArgument")),

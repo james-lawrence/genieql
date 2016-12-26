@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -34,11 +35,23 @@ func QFOScanner(n *ast.FuncDecl) QueryFunctionOption {
 	}
 }
 
+// QFOBuiltinQueryFromString force the query function to only execute the specified
+// query.
+func QFOBuiltinQueryFromString(q string) QueryFunctionOption {
+	return func(qf *queryFunction) error {
+		qf.BuiltinQuery = &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: fmt.Sprintf("`%s`", q),
+		}
+		return nil
+	}
+}
+
 // QFOBuiltinQuery force the query function to only execute the specified
 // query.
-func QFOBuiltinQuery(q string) QueryFunctionOption {
+func QFOBuiltinQuery(x ast.Expr) QueryFunctionOption {
 	return func(qf *queryFunction) error {
-		qf.BuiltinQuery = q
+		qf.BuiltinQuery = x
 		return nil
 	}
 }
@@ -70,7 +83,6 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 
 // QFOFromComment extracts options from a ast.CommentGroup.
 func QFOFromComment(comments *ast.CommentGroup) []QueryFunctionOption {
-	// genieql.options: inlined-query="SELECT * FROM foo WHERE bar = $1 OR bar = $2"
 	const generalSection = `general`
 	const inlinedQueryOption = `inlined-query`
 	options := []QueryFunctionOption{}
@@ -80,7 +92,11 @@ func QFOFromComment(comments *ast.CommentGroup) []QueryFunctionOption {
 	}
 
 	if q, ok := ini.Get(inlinedQueryOption); ok {
-		options = append(options, QFOBuiltinQuery(q))
+		x := &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: fmt.Sprintf("`%s`", q),
+		}
+		options = append(options, QFOBuiltinQuery(x))
 	}
 
 	return options
@@ -128,7 +144,6 @@ func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.
 // NewQueryFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
 func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, options ...QueryFunctionOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
-
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
@@ -138,6 +153,25 @@ func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, optio
 	}
 
 	return g
+}
+
+// NewQueryFunctionFromFuncDecl creates a function generator from the provided *ast.GenDecl
+func NewQueryFunctionFromFuncDecl(util genieql.Searcher, decl *ast.FuncDecl, options ...QueryFunctionOption) genieql.Generator {
+	options = append(options, extractOptionsFromFunctionDecls(decl.Body)...)
+	return generatorFromFuncType(util, decl.Name, decl.Doc, decl.Type, options...)
+}
+
+func extractOptionsFromFunctionDecls(body *ast.BlockStmt) []QueryFunctionOption {
+	options := []QueryFunctionOption{}
+
+	for _, val := range genieql.SelectValues(body) {
+		switch val.Ident.Name {
+		case "query":
+			options = append(options, QFOBuiltinQuery(val.Value))
+		}
+	}
+
+	return options
 }
 
 func extractOptionsFromParams(fields ...*ast.Field) (queryer, params QueryFunctionOption) {
@@ -184,7 +218,7 @@ func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 type queryFunction struct {
 	Name            string
 	ScannerDecl     *ast.FuncDecl
-	BuiltinQuery    string
+	BuiltinQuery    ast.Expr
 	Queryer         ast.Expr
 	QueryerName     string
 	QueryerFunction *ast.Ident
@@ -230,10 +264,15 @@ func (t queryFunction) Generate(dst io.Writer) error {
 	}
 
 	parameters = append(parameters, astutil.Field(t.Queryer, ast.NewIdent(t.QueryerName)))
-	if t.BuiltinQuery == "" {
+	if t.BuiltinQuery == nil {
 		parameters = append(parameters, queryFieldParam)
 	} else {
-		builtinQuery = genieql.QueryLiteral("query", t.BuiltinQuery)
+		switch t.BuiltinQuery.(type) {
+		case *ast.BasicLit:
+			builtinQuery = genieql.QueryLiteral2(token.CONST, "query", t.BuiltinQuery)
+		default:
+			builtinQuery = genieql.QueryLiteral2(token.VAR, "query", t.BuiltinQuery)
+		}
 	}
 
 	parameters = append(parameters, t.Parameters...)

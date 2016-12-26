@@ -72,12 +72,18 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 			return
 		}
 
-		functions := mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
+		functionsTypes := mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
 			return generators.NewQueryFunctionFromGenDecl(
 				searcher,
 				d,
 			)
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
+
+		g = append(g, functionsTypes...)
+		log.Println("generating functions")
+		functions := mapFuncDeclsToGenerator(func(d *ast.FuncDecl) genieql.Generator {
+			return generators.NewQueryFunctionFromFuncDecl(searcher, d)
+		}, genieql.SelectFuncDecl(func(*ast.FuncDecl) bool { return true }, genieql.FindFunc(file)...)...)
 
 		g = append(g, functions...)
 	})
