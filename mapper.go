@@ -127,20 +127,6 @@ func (t MappingConfig) ColumnInfo() ([]ColumnInfo, error) {
 	return t.dialect.ColumnInformationForTable(t.TableOrQuery)
 }
 
-// AliasedColumnInfo Column info defined by the mapping and aliaser.
-func (t MappingConfig) AliasedColumnInfo(a Aliaser) ([]ColumnInfo, error) {
-	infos, err := t.ColumnInfo()
-	if err != nil {
-		return infos, err
-	}
-
-	for idx, info := range infos {
-		info.Name = a.Alias(info.Name)
-		infos[idx] = info
-	}
-	return infos, nil
-}
-
 // WriteMapper persists the structure -> result row mapping to disk.
 func WriteMapper(config Configuration, name string, m MappingConfig) error {
 	d, err := yaml.Marshal(m)

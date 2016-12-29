@@ -130,5 +130,5 @@ func mappedParam(ctx ColumnConstantContext, param *ast.Field) ([]genieql.ColumnI
 		return infos, err
 	}
 
-	return m.AliasedColumnInfo(m.Aliaser())
+	return m.ColumnInfo()
 }
