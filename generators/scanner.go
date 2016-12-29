@@ -7,7 +7,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"strings"
 	"text/template"
 
@@ -101,14 +100,14 @@ func ScannerOptionInterfaceName(n string) ScannerOption {
 // sets the selection of columns to be ignored.
 func ScannerOptionIgnoreSet(n ...string) ScannerOption {
 	return func(s *scanner) error {
-		s.ignoreSet = ignoreSet(n)
+		s.ignoreSet = n
 		return nil
 	}
 }
 
 // ScannerFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
 func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []genieql.Generator {
-	g := make([]genieql.Generator, 0, len(decl.Specs))
+	g := make([]genieql.Generator, 0, len(decl.Specs)*2)
 
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
@@ -120,7 +119,6 @@ func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []g
 				)
 
 				options = append(options, ScannerOptionsFromComment(decl.Doc)...)
-
 				g = append(g, NewScanner(options...))
 			}
 		}
@@ -131,6 +129,17 @@ func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []g
 
 // NewScanner creates a new genieql.Generator from the provided scanner options.
 func NewScanner(options ...ScannerOption) genieql.Generator {
+	return maybeScanner(newScanner(options...))
+}
+
+func maybeScanner(s scanner, err error) genieql.Generator {
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+	return s
+}
+
+func newScanner(options ...ScannerOption) (scanner, error) {
 	// by default enable all modes
 	s := scanner{
 		Mode: ModeInterface | ModeStatic | ModeDynamic,
@@ -138,24 +147,11 @@ func NewScanner(options ...ScannerOption) genieql.Generator {
 
 	for _, opt := range options {
 		if err := opt(&s); err != nil {
-			return genieql.NewErrGenerator(err)
+			return s, err
 		}
 	}
 
-	return s
-}
-
-type ignoreSet []string
-
-func (t ignoreSet) Contains(s string) bool {
-	for _, x := range t {
-		if x == s {
-			log.Println("ignoring", x)
-			return true
-		}
-	}
-
-	return false
+	return s, nil
 }
 
 type scanner struct {
@@ -166,7 +162,7 @@ type scanner struct {
 	Package       *build.Package
 	Config        genieql.Configuration
 	Driver        genieql.Driver
-	ignoreSet     ignoreSet
+	ignoreSet     []string
 }
 
 func (t scanner) Generate(dst io.Writer) error {
@@ -184,7 +180,7 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	ctx := context{
 		Name:          t.Name,
-		InterfaceName: stringsx.DefaultIfBlank(t.interfaceName, t.Name),
+		InterfaceName: stringsx.ToPublic(stringsx.DefaultIfBlank(t.interfaceName, t.Name)),
 		Parameters:    t.Fields.List,
 	}
 
@@ -193,7 +189,7 @@ func (t scanner) Generate(dst io.Writer) error {
 			columns []genieql.ColumnMap
 		)
 
-		if columns, err = t.columnMapper(param); err != nil {
+		if columns, err = t.columnMaps(param); err != nil {
 			return err
 		}
 
@@ -210,13 +206,8 @@ func (t scanner) Generate(dst io.Writer) error {
 		"printAST":   astPrint,
 		"nulltype":   lookupNullableTypes,
 		"assignment": assignmentStmt{NullableType: nullableTypes}.assignment,
-		"columns": func(i []genieql.ColumnMap) string {
-			s := make([]string, 0, len(i))
-			for _, c := range i {
-				s = append(s, c.Name)
-			}
-			return strings.Join(s, ",")
-		},
+		"title":      stringsx.ToPublic,
+		"private":    stringsx.ToPrivate,
 	}
 
 	if t.Mode.Enabled(ModeInterface) {
@@ -229,6 +220,19 @@ func (t scanner) Generate(dst io.Writer) error {
 	}
 
 	if t.Mode.Enabled(ModeStatic) {
+		cc := NewColumnConstantFromFieldList(
+			ColumnConstantContext{
+				Config:  t.Config,
+				Package: t.Package,
+			},
+			fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
+			genieql.NewColumnInfoNameTransformer(),
+			t.Fields,
+		)
+		if err = cc.Generate(dst); err != nil {
+			return err
+		}
+
 		tmpl = template.Must(template.New("static").Funcs(funcMap).Parse(staticScanner))
 		if err = tmpl.Execute(dst, ctx); err != nil {
 			return errors.Wrap(err, "failed to generate static scanner")
@@ -254,18 +258,7 @@ func (t scanner) Generate(dst io.Writer) error {
 	return nil
 }
 
-func (t scanner) packageName(x ast.Expr) string {
-	switch x := x.(type) {
-	case *ast.SelectorExpr:
-		// TODO
-		log.Println("imports", x.Sel.Name, t.Package.Imports)
-		panic("unimplemented code path: currently structures from other packages are not supported")
-	default:
-		return t.Package.ImportPath
-	}
-}
-
-func (t scanner) columnMapper(param *ast.Field) ([]genieql.ColumnMap, error) {
+func (t scanner) columnMaps(param *ast.Field) ([]genieql.ColumnMap, error) {
 	if builtinType(param.Type) {
 		return builtinParam(param)
 	}
@@ -280,7 +273,7 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 		m    genieql.MappingConfig
 	)
 
-	if err := t.Config.ReadMap(t.packageName(param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+	if err := t.Config.ReadMap(packageName(t.Package, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
 		return []genieql.ColumnMap{}, err
 	}
 
@@ -293,7 +286,7 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 
 	for _, arg := range param.Names {
 		for _, column := range columns {
-			if t.ignoreSet.Contains(column.Name) {
+			if stringsx.Contains(column.Name, t.ignoreSet...) {
 				continue
 			}
 
@@ -311,38 +304,7 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	return cMap, nil
 }
 
-func builtinType(x ast.Expr) bool {
-	name := types.ExprString(x)
-	for _, t := range types.Typ {
-		if name == t.Name() {
-			return true
-		}
-	}
-
-	switch name {
-	case "time.Time":
-		return true
-	default:
-		return false
-	}
-}
-
-// builtinParam converts a *ast.Field that represents a builtin type
-// (time.Time, int,float,bool, etc) into an array of ColumnMap.
-func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
-	columns := make([]genieql.ColumnMap, 0, len(param.Names))
-	for _, name := range param.Names {
-		columns = append(columns, genieql.ColumnMap{
-			Name:   name.Name,
-			Type:   &ast.StarExpr{X: param.Type},
-			Dst:    &ast.StarExpr{X: name},
-			PtrDst: false,
-		})
-	}
-	return columns, nil
-}
-
-// turns an array of column mappings into the inputs into the inputs to the
+// turns an array of column mappings into the inputs to the
 // scan function.
 func scan(columns []genieql.ColumnMap) string {
 	args := []string{}
@@ -398,8 +360,7 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
 	}
 }
 
-const interfaceScanner = `const {{.Name}}StaticColumns = "{{ .Columns | columns}}"
-
+const interfaceScanner = `
 // {{.InterfaceName}} scanner interface.
 type {{.InterfaceName}} interface {
 	Scan({{ .Parameters | arguments }}) error
@@ -429,23 +390,23 @@ func (t err{{.InterfaceName}}) Close() error {
 }
 `
 
-const staticScanner = `// Static{{.Name}} creates a scanner that operates on a static
+const staticScanner = `// New{{.Name | title}}Static creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func Static{{.Name}}(rows *sql.Rows, err error) {{.InterfaceName}} {
+func New{{.Name | title}}Static(rows *sql.Rows, err error) {{.InterfaceName}} {
 	if err != nil {
 		return err{{.InterfaceName}}{e: err}
 	}
 
-	return static{{.Name}}{
+	return {{.Name | private}}Static{
 		Rows: rows,
 	}
 }
 
-type static{{.Name}} struct {
+type {{.Name | private}}Static struct {
 	Rows *sql.Rows
 }
 
-func (t static{{.Name}}) Scan({{ .Parameters | arguments }}) error {
+func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	var (
 		{{- range $index, $column := .Columns }}
 		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
@@ -463,35 +424,35 @@ func (t static{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 	return t.Rows.Err()
 }
 
-func (t static{{.Name}}) Err() error {
+func (t {{.Name | private}}Static) Err() error {
 	return t.Rows.Err()
 }
 
-func (t static{{.Name}}) Close() error {
+func (t {{.Name | private}}Static) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t static{{.Name}}) Next() bool {
+func (t {{.Name | private}}Static) Next() bool {
 	return t.Rows.Next()
 }
 `
 
-const staticRowScanner = `// NewStaticRow{{.Name}} creates a scanner that operates on a static
+const staticRowScanner = `// New{{.Name | title}}StaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRow{{.Name}}(row *sql.Row) StaticRow{{.Name}} {
-	return StaticRow{{.Name}}{
+func New{{.Name | title}}StaticRow(row *sql.Row) {{.Name | title}}StaticRow {
+	return {{.Name | title}}StaticRow {
 		row: row,
 	}
 }
 
-type StaticRow{{.Name}} struct {
+type {{.Name | title}}StaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRow{{.Name}}) Scan({{ .Parameters | arguments }}) error {
+func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	var (
 		{{- range $index, $column := .Columns }}
 		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
@@ -511,23 +472,28 @@ func (t StaticRow{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 `
 
 const dynamicScanner = `
-// Dynamic{{.Name}} creates a scanner that operates on a dynamic
+// New{{.Name | title}}Dynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func Dynamic{{.Name}}(rows *sql.Rows, err error) {{.InterfaceName}} {
+func New{{.Name | title}}Dynamic(rows *sql.Rows, err error) {{.InterfaceName}} {
 	if err != nil {
 		return err{{.InterfaceName}}{e: err}
 	}
 
-	return dynamic{{.Name}}{
+	return {{.Name | private}}Dynamic{
 		Rows: rows,
 	}
 }
 
-type dynamic{{.Name}} struct {
+type {{.Name | private}}Dynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamic{{.Name}}) Scan({{ .Parameters | arguments }}) error {
+func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
+	const (
+		{{- range $index, $column := .Columns }}
+		{{$column.Name}}{{$index}} = "{{$column.Name}}"
+		{{- end }}
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -547,7 +513,7 @@ func (t dynamic{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 	for _, column := range columns {
 		switch column {
 		{{- range $index, $column := .Columns }}
-		case "{{$column.Name}}":
+		case {{$column.Name}}{{$index}}:
 			dst = append(dst, &{{ $column.Local $index -}})
 		{{- end }}
 		default:
@@ -562,7 +528,7 @@ func (t dynamic{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 	for _, column := range columns {
 		switch column {
 		{{- range $index, $column := .Columns}}
-		case "{{$column.Name}}":
+		case {{$column.Name}}{{$index}}:
 			{{ assignment $index $column | printAST -}}
 		{{- end }}
 		}
@@ -571,18 +537,18 @@ func (t dynamic{{.Name}}) Scan({{ .Parameters | arguments }}) error {
 	return t.Rows.Err()
 }
 
-func (t dynamic{{.Name}}) Err() error {
+func (t {{.Name | private}}Dynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamic{{.Name}}) Close() error {
+func (t {{.Name | private}}Dynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamic{{.Name}}) Next() bool {
+func (t {{.Name | private}}Dynamic) Next() bool {
 	return t.Rows.Next()
 }
 `

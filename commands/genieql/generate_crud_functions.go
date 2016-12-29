@@ -7,10 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+	"gopkg.in/alecthomas/kingpin.v2"
+
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type generateCRUDFunctions struct {
@@ -65,13 +67,13 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return s == t.scanner
 	}, pkg)
 	if err != nil {
-		return err
+		return errors.Wrap(err, t.scanner)
 	}
 	uniqScanner, err := genieql.NewUtils(fset).FindFunction(func(s string) bool {
 		return s == t.uniqScanner
 	}, pkg)
 	if err != nil {
-		return err
+		return errors.Wrap(err, t.uniqScanner)
 	}
 
 	hg := headerGenerator{

@@ -3,7 +3,19 @@ package postgresql
 import (
 	"fmt"
 	"strings"
+
+	"bitbucket.org/jatone/genieql"
 )
+
+type columnValueTransformer struct {
+	offset int
+}
+
+func (t *columnValueTransformer) Transform(c genieql.ColumnInfo) string {
+	t.offset++
+	p, _ := offsetPlaceholder{}.String(t.offset)
+	return p
+}
 
 // Insert generate an insert query.
 func Insert(table string, columns, defaulted []string) string {

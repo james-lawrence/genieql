@@ -2,53 +2,53 @@ package example
 
 import "database/sql"
 
-const ExampleMultipleParamStaticColumns = "arg1,arg2,arg3,arg4"
-
-// ExampleMultipleParam scanner interface.
-type ExampleMultipleParam interface {
+// MultipleParam scanner interface.
+type MultipleParam interface {
 	Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type errExampleMultipleParam struct {
+type errMultipleParam struct {
 	e error
 }
 
-func (t errExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
+func (t errMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
 	return t.e
 }
 
-func (t errExampleMultipleParam) Next() bool {
+func (t errMultipleParam) Next() bool {
 	return false
 }
 
-func (t errExampleMultipleParam) Err() error {
+func (t errMultipleParam) Err() error {
 	return t.e
 }
 
-func (t errExampleMultipleParam) Close() error {
+func (t errMultipleParam) Close() error {
 	return nil
 }
 
-// StaticExampleMultipleParam creates a scanner that operates on a static
+const MultipleParamStaticColumns = "arg1,arg2,arg3,arg4"
+
+// NewMultipleParamStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExampleMultipleParam(rows *sql.Rows, err error) ExampleMultipleParam {
+func NewMultipleParamStatic(rows *sql.Rows, err error) MultipleParam {
 	if err != nil {
-		return errExampleMultipleParam{e: err}
+		return errMultipleParam{e: err}
 	}
 
-	return staticExampleMultipleParam{
+	return multipleParamStatic{
 		Rows: rows,
 	}
 }
 
-type staticExampleMultipleParam struct {
+type multipleParamStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
+func (t multipleParamStatic) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
 	var (
 		c0 sql.NullInt64
 		c1 sql.NullInt64
@@ -83,34 +83,34 @@ func (t staticExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *stri
 	return t.Rows.Err()
 }
 
-func (t staticExampleMultipleParam) Err() error {
+func (t multipleParamStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleMultipleParam) Close() error {
+func (t multipleParamStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExampleMultipleParam) Next() bool {
+func (t multipleParamStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExampleMultipleParam creates a scanner that operates on a static
+// NewMultipleParamStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExampleMultipleParam(row *sql.Row) StaticRowExampleMultipleParam {
-	return StaticRowExampleMultipleParam{
+func NewMultipleParamStaticRow(row *sql.Row) MultipleParamStaticRow {
+	return MultipleParamStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowExampleMultipleParam struct {
+type MultipleParamStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
+func (t MultipleParamStaticRow) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
 	var (
 		c0 sql.NullInt64
 		c1 sql.NullInt64
@@ -145,23 +145,29 @@ func (t StaticRowExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *s
 	return nil
 }
 
-// DynamicExampleMultipleParam creates a scanner that operates on a dynamic
+// NewMultipleParamDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExampleMultipleParam(rows *sql.Rows, err error) ExampleMultipleParam {
+func NewMultipleParamDynamic(rows *sql.Rows, err error) MultipleParam {
 	if err != nil {
-		return errExampleMultipleParam{e: err}
+		return errMultipleParam{e: err}
 	}
 
-	return dynamicExampleMultipleParam{
+	return multipleParamDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicExampleMultipleParam struct {
+type multipleParamDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
+func (t multipleParamDynamic) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) error {
+	const (
+		arg10 = "arg1"
+		arg21 = "arg2"
+		arg32 = "arg3"
+		arg43 = "arg4"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -181,13 +187,13 @@ func (t dynamicExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *str
 
 	for _, column := range columns {
 		switch column {
-		case "arg1":
+		case arg10:
 			dst = append(dst, &c0)
-		case "arg2":
+		case arg21:
 			dst = append(dst, &c1)
-		case "arg3":
+		case arg32:
 			dst = append(dst, &c2)
-		case "arg4":
+		case arg43:
 			dst = append(dst, &c3)
 		default:
 			dst = append(dst, &ignored)
@@ -200,22 +206,22 @@ func (t dynamicExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *str
 
 	for _, column := range columns {
 		switch column {
-		case "arg1":
+		case arg10:
 			if c0.Valid {
 				tmp := int(c0.Int64)
 				*arg1 = tmp
 			}
-		case "arg2":
+		case arg21:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				*arg2 = tmp
 			}
-		case "arg3":
+		case arg32:
 			if c2.Valid {
 				tmp := c2.Bool
 				*arg3 = tmp
 			}
-		case "arg4":
+		case arg43:
 			if c3.Valid {
 				tmp := c3.String
 				*arg4 = tmp
@@ -226,17 +232,17 @@ func (t dynamicExampleMultipleParam) Scan(arg1, arg2 *int, arg3 *bool, arg4 *str
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleMultipleParam) Err() error {
+func (t multipleParamDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleMultipleParam) Close() error {
+func (t multipleParamDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExampleMultipleParam) Next() bool {
+func (t multipleParamDynamic) Next() bool {
 	return t.Rows.Next()
 }

@@ -5,6 +5,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"sort"
+
+	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
 type ColumnInfo struct {
@@ -95,6 +97,34 @@ func (t ColumnInfoSet) AmbiguityCheck() error {
 	}
 
 	return nil
+}
+
+func NewColumnInfoNameTransformer() ColumnInfoNameTransformer {
+	return ColumnInfoNameTransformer{}
+}
+
+type ColumnInfoNameTransformer struct{}
+
+func (ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
+	return column.Name
+}
+
+type ColumnValueTransformer struct {
+	Defaults           []string
+	DialectTransformer ColumnTransformer
+}
+
+func (t ColumnValueTransformer) Transform(column ColumnInfo) string {
+	const defaultValue = "DEFAULT"
+	if stringsx.Contains(column.Name, t.Defaults...) {
+		return defaultValue
+	}
+	return t.DialectTransformer.Transform(column)
+}
+
+// ColumnTransformer transforms a ColumnInfo into a string for the constant.
+type ColumnTransformer interface {
+	Transform(ColumnInfo) string
 }
 
 // TableDetails provides information about the table.

@@ -2,53 +2,54 @@ package example
 
 import "database/sql"
 
-const ExampleIntNoStaticStaticColumns = "arg"
-
-// ExampleIntNoStatic scanner interface.
-type ExampleIntNoStatic interface {
+// IntNoStatic scanner interface.
+type IntNoStatic interface {
 	Scan(arg *int) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type errExampleIntNoStatic struct {
+type errIntNoStatic struct {
 	e error
 }
 
-func (t errExampleIntNoStatic) Scan(arg *int) error {
+func (t errIntNoStatic) Scan(arg *int) error {
 	return t.e
 }
 
-func (t errExampleIntNoStatic) Next() bool {
+func (t errIntNoStatic) Next() bool {
 	return false
 }
 
-func (t errExampleIntNoStatic) Err() error {
+func (t errIntNoStatic) Err() error {
 	return t.e
 }
 
-func (t errExampleIntNoStatic) Close() error {
+func (t errIntNoStatic) Close() error {
 	return nil
 }
 
-// DynamicExampleIntNoStatic creates a scanner that operates on a dynamic
+// NewIntNoStaticDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExampleIntNoStatic(rows *sql.Rows, err error) ExampleIntNoStatic {
+func NewIntNoStaticDynamic(rows *sql.Rows, err error) IntNoStatic {
 	if err != nil {
-		return errExampleIntNoStatic{e: err}
+		return errIntNoStatic{e: err}
 	}
 
-	return dynamicExampleIntNoStatic{
+	return intNoStaticDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicExampleIntNoStatic struct {
+type intNoStaticDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExampleIntNoStatic) Scan(arg *int) error {
+func (t intNoStaticDynamic) Scan(arg *int) error {
+	const (
+		arg0 = "arg"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -65,7 +66,7 @@ func (t dynamicExampleIntNoStatic) Scan(arg *int) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			dst = append(dst, &c0)
 		default:
 			dst = append(dst, &ignored)
@@ -78,7 +79,7 @@ func (t dynamicExampleIntNoStatic) Scan(arg *int) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			if c0.Valid {
 				tmp := int(c0.Int64)
 				*arg = tmp
@@ -89,17 +90,17 @@ func (t dynamicExampleIntNoStatic) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleIntNoStatic) Err() error {
+func (t intNoStaticDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleIntNoStatic) Close() error {
+func (t intNoStaticDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExampleIntNoStatic) Next() bool {
+func (t intNoStaticDynamic) Next() bool {
 	return t.Rows.Next()
 }

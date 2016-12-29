@@ -5,53 +5,53 @@ import (
 	"time"
 )
 
-const ExampleTimeStaticColumns = "arg"
-
-// ExampleTime scanner interface.
-type ExampleTime interface {
+// Time scanner interface.
+type Time interface {
 	Scan(arg *time.Time) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type errExampleTime struct {
+type errTime struct {
 	e error
 }
 
-func (t errExampleTime) Scan(arg *time.Time) error {
+func (t errTime) Scan(arg *time.Time) error {
 	return t.e
 }
 
-func (t errExampleTime) Next() bool {
+func (t errTime) Next() bool {
 	return false
 }
 
-func (t errExampleTime) Err() error {
+func (t errTime) Err() error {
 	return t.e
 }
 
-func (t errExampleTime) Close() error {
+func (t errTime) Close() error {
 	return nil
 }
 
-// StaticExampleTime creates a scanner that operates on a static
+const TimeStaticColumns = "arg"
+
+// NewTimeStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExampleTime(rows *sql.Rows, err error) ExampleTime {
+func NewTimeStatic(rows *sql.Rows, err error) Time {
 	if err != nil {
-		return errExampleTime{e: err}
+		return errTime{e: err}
 	}
 
-	return staticExampleTime{
+	return timeStatic{
 		Rows: rows,
 	}
 }
 
-type staticExampleTime struct {
+type timeStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticExampleTime) Scan(arg *time.Time) error {
+func (t timeStatic) Scan(arg *time.Time) error {
 	var (
 		c0 time.Time
 	)
@@ -65,34 +65,34 @@ func (t staticExampleTime) Scan(arg *time.Time) error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleTime) Err() error {
+func (t timeStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleTime) Close() error {
+func (t timeStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExampleTime) Next() bool {
+func (t timeStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExampleTime creates a scanner that operates on a static
+// NewTimeStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExampleTime(row *sql.Row) StaticRowExampleTime {
-	return StaticRowExampleTime{
+func NewTimeStaticRow(row *sql.Row) TimeStaticRow {
+	return TimeStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowExampleTime struct {
+type TimeStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowExampleTime) Scan(arg *time.Time) error {
+func (t TimeStaticRow) Scan(arg *time.Time) error {
 	var (
 		c0 time.Time
 	)
@@ -106,23 +106,26 @@ func (t StaticRowExampleTime) Scan(arg *time.Time) error {
 	return nil
 }
 
-// DynamicExampleTime creates a scanner that operates on a dynamic
+// NewTimeDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExampleTime(rows *sql.Rows, err error) ExampleTime {
+func NewTimeDynamic(rows *sql.Rows, err error) Time {
 	if err != nil {
-		return errExampleTime{e: err}
+		return errTime{e: err}
 	}
 
-	return dynamicExampleTime{
+	return timeDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicExampleTime struct {
+type timeDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExampleTime) Scan(arg *time.Time) error {
+func (t timeDynamic) Scan(arg *time.Time) error {
+	const (
+		arg0 = "arg"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -139,7 +142,7 @@ func (t dynamicExampleTime) Scan(arg *time.Time) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			dst = append(dst, &c0)
 		default:
 			dst = append(dst, &ignored)
@@ -152,7 +155,7 @@ func (t dynamicExampleTime) Scan(arg *time.Time) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			*arg = c0
 		}
 	}
@@ -160,17 +163,17 @@ func (t dynamicExampleTime) Scan(arg *time.Time) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleTime) Err() error {
+func (t timeDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleTime) Close() error {
+func (t timeDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExampleTime) Next() bool {
+func (t timeDynamic) Next() bool {
 	return t.Rows.Next()
 }

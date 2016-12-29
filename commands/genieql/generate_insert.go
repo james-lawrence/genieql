@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
+	"bitbucket.org/jatone/genieql/generators"
 )
 
 type generateInsert struct {
@@ -71,10 +72,18 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		args: os.Args[1:],
 	}
 
+	cc := generators.NewColumnConstants(
+		fmt.Sprintf("%sStaticColumns", constName),
+		genieql.ColumnValueTransformer{
+			Defaults:           t.defaults,
+			DialectTransformer: details.Dialect.ColumnValueTransformer(),
+		},
+		details.Columns,
+	)
 	cg := crud.Insert(details).Build(constName, t.defaults)
 
 	pg := printGenerator{
-		delegate: genieql.MultiGenerate(hg, cg),
+		delegate: genieql.MultiGenerate(hg, cc, cg),
 	}
 
 	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {

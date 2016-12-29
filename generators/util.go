@@ -4,15 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"go/ast"
+	"go/build"
 	"go/printer"
 	"go/token"
 	"go/types"
+	"log"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 	"github.com/zieckey/goini"
 
+	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 )
 
@@ -108,4 +111,46 @@ func OptionsFromCommentGroup(comments *ast.CommentGroup) (*goini.INI, error) {
 	}
 
 	return ini, nil
+}
+
+func builtinType(x ast.Expr) bool {
+	name := types.ExprString(x)
+	for _, t := range types.Typ {
+		if name == t.Name() {
+			return true
+		}
+	}
+
+	switch name {
+	case "time.Time":
+		return true
+	default:
+		return false
+	}
+}
+
+// builtinParam converts a *ast.Field that represents a builtin type
+// (time.Time, int,float,bool, etc) into an array of ColumnMap.
+func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
+	columns := make([]genieql.ColumnMap, 0, len(param.Names))
+	for _, name := range param.Names {
+		columns = append(columns, genieql.ColumnMap{
+			Name:   name.Name,
+			Type:   &ast.StarExpr{X: param.Type},
+			Dst:    &ast.StarExpr{X: name},
+			PtrDst: false,
+		})
+	}
+	return columns, nil
+}
+
+func packageName(pkg *build.Package, x ast.Expr) string {
+	switch x := x.(type) {
+	case *ast.SelectorExpr:
+		// TODO
+		log.Println("imports", x.Sel.Name, pkg.Imports)
+		panic("unimplemented code path: currently structures from other packages are not supported")
+	default:
+		return pkg.ImportPath
+	}
 }

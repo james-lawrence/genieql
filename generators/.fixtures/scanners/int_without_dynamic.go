@@ -2,53 +2,53 @@ package example
 
 import "database/sql"
 
-const ExampleIntNoDynamicStaticColumns = "arg"
-
-// ExampleIntNoDynamic scanner interface.
-type ExampleIntNoDynamic interface {
+// IntNoDynamic scanner interface.
+type IntNoDynamic interface {
 	Scan(arg *int) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type errExampleIntNoDynamic struct {
+type errIntNoDynamic struct {
 	e error
 }
 
-func (t errExampleIntNoDynamic) Scan(arg *int) error {
+func (t errIntNoDynamic) Scan(arg *int) error {
 	return t.e
 }
 
-func (t errExampleIntNoDynamic) Next() bool {
+func (t errIntNoDynamic) Next() bool {
 	return false
 }
 
-func (t errExampleIntNoDynamic) Err() error {
+func (t errIntNoDynamic) Err() error {
 	return t.e
 }
 
-func (t errExampleIntNoDynamic) Close() error {
+func (t errIntNoDynamic) Close() error {
 	return nil
 }
 
-// StaticExampleIntNoDynamic creates a scanner that operates on a static
+const IntNoDynamicStaticColumns = "arg"
+
+// NewIntNoDynamicStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExampleIntNoDynamic(rows *sql.Rows, err error) ExampleIntNoDynamic {
+func NewIntNoDynamicStatic(rows *sql.Rows, err error) IntNoDynamic {
 	if err != nil {
-		return errExampleIntNoDynamic{e: err}
+		return errIntNoDynamic{e: err}
 	}
 
-	return staticExampleIntNoDynamic{
+	return intNoDynamicStatic{
 		Rows: rows,
 	}
 }
 
-type staticExampleIntNoDynamic struct {
+type intNoDynamicStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticExampleIntNoDynamic) Scan(arg *int) error {
+func (t intNoDynamicStatic) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)
@@ -65,34 +65,34 @@ func (t staticExampleIntNoDynamic) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleIntNoDynamic) Err() error {
+func (t intNoDynamicStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleIntNoDynamic) Close() error {
+func (t intNoDynamicStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExampleIntNoDynamic) Next() bool {
+func (t intNoDynamicStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExampleIntNoDynamic creates a scanner that operates on a static
+// NewIntNoDynamicStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExampleIntNoDynamic(row *sql.Row) StaticRowExampleIntNoDynamic {
-	return StaticRowExampleIntNoDynamic{
+func NewIntNoDynamicStaticRow(row *sql.Row) IntNoDynamicStaticRow {
+	return IntNoDynamicStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowExampleIntNoDynamic struct {
+type IntNoDynamicStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowExampleIntNoDynamic) Scan(arg *int) error {
+func (t IntNoDynamicStaticRow) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)

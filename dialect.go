@@ -60,6 +60,7 @@ type Dialect interface {
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates []string) string
 	Delete(table string, columns, predicates []string) string
+	ColumnValueTransformer() ColumnTransformer
 	ColumnInformationForTable(table string) ([]ColumnInfo, error)
 	ColumnInformationForQuery(query string) ([]ColumnInfo, error)
 }

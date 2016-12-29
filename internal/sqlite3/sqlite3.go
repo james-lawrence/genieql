@@ -63,6 +63,11 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 	return Delete(table, columns, predicates)
 }
 
+func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransformer {
+	// TODO
+	return genieql.ColumnInfoNameTransformer{}
+}
+
 func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `PRAGMA table_info('%s')`
 	return columnInformation(t.db, columnInformationQuery, table)

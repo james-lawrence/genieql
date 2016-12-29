@@ -46,10 +46,11 @@ var _ = Describe("Scanner", func() {
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry("scanner int", `package example; type ExampleInt func(arg int)`, ".fixtures/scanners/int.go"),
-		Entry("scanner bool", `package example; type ExampleBool func(arg bool)`, ".fixtures/scanners/bool.go"),
-		Entry("scanner time.Time", `package example; type ExampleTime func(arg time.Time)`, ".fixtures/scanners/time.go"),
-		Entry("scanner multipleParams", `package example; type ExampleMultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/scanners/multiple_params.go"),
+		Entry("scanner int", `package example; type Int func(arg int)`, ".fixtures/scanners/int.go"),
+		Entry("scanner bool", `package example; type Bool func(arg bool)`, ".fixtures/scanners/bool.go"),
+		Entry("scanner time.Time", `package example; type Time func(arg time.Time)`, ".fixtures/scanners/time.go"),
+		Entry("scanner multipleParams", `package example; type MultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/scanners/multiple_params.go"),
+		Entry("scanner private mode", `package example; type privateInt func(arg int)`, ".fixtures/scanners/private_int.go"),
 	)
 
 	DescribeTable("should build scanners with only the specified outputs",
@@ -71,20 +72,20 @@ var _ = Describe("Scanner", func() {
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
-			Expect(formatted.Bytes()).To(Equal(expected))
+			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("scanner int without interface",
-			`package example; type ExampleIntNoInterface func(arg int)`,
+			`package example; type IntNoInterface func(arg int)`,
 			".fixtures/scanners/int_without_interface.go",
 			ScannerOptionOutputMode(ModeStatic|ModeDynamic),
 		),
 		Entry("scanner int without static",
-			`package example; type ExampleIntNoStatic func(arg int)`,
+			`package example; type IntNoStatic func(arg int)`,
 			".fixtures/scanners/int_without_static.go",
 			ScannerOptionOutputMode(ModeInterface|ModeDynamic),
 		),
 		Entry("scanner int without dynamic",
-			`package example; type ExampleIntNoDynamic func(arg int)`,
+			`package example; type IntNoDynamic func(arg int)`,
 			".fixtures/scanners/int_without_dynamic.go",
 			ScannerOptionOutputMode(ModeInterface|ModeStatic),
 		),

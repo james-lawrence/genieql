@@ -207,7 +207,7 @@ var _ = Describe("Astutil", func() {
 
 			value, err := RetrieveBasicLiteralString(FilterName("aConstant"), &p)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(value).To(Equal("\"constant string\""))
+			Expect(value).To(Equal("constant string"))
 		})
 
 		It("should return an error when the literal cannot be found", func() {

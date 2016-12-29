@@ -2,53 +2,53 @@ package example
 
 import "database/sql"
 
-const ExampleBoolStaticColumns = "arg"
-
-// ExampleBool scanner interface.
-type ExampleBool interface {
+// Bool scanner interface.
+type Bool interface {
 	Scan(arg *bool) error
 	Next() bool
 	Close() error
 	Err() error
 }
 
-type errExampleBool struct {
+type errBool struct {
 	e error
 }
 
-func (t errExampleBool) Scan(arg *bool) error {
+func (t errBool) Scan(arg *bool) error {
 	return t.e
 }
 
-func (t errExampleBool) Next() bool {
+func (t errBool) Next() bool {
 	return false
 }
 
-func (t errExampleBool) Err() error {
+func (t errBool) Err() error {
 	return t.e
 }
 
-func (t errExampleBool) Close() error {
+func (t errBool) Close() error {
 	return nil
 }
 
-// StaticExampleBool creates a scanner that operates on a static
+const BoolStaticColumns = "arg"
+
+// NewBoolStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExampleBool(rows *sql.Rows, err error) ExampleBool {
+func NewBoolStatic(rows *sql.Rows, err error) Bool {
 	if err != nil {
-		return errExampleBool{e: err}
+		return errBool{e: err}
 	}
 
-	return staticExampleBool{
+	return boolStatic{
 		Rows: rows,
 	}
 }
 
-type staticExampleBool struct {
+type boolStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticExampleBool) Scan(arg *bool) error {
+func (t boolStatic) Scan(arg *bool) error {
 	var (
 		c0 sql.NullBool
 	)
@@ -65,34 +65,34 @@ func (t staticExampleBool) Scan(arg *bool) error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleBool) Err() error {
+func (t boolStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExampleBool) Close() error {
+func (t boolStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExampleBool) Next() bool {
+func (t boolStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExampleBool creates a scanner that operates on a static
+// NewBoolStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExampleBool(row *sql.Row) StaticRowExampleBool {
-	return StaticRowExampleBool{
+func NewBoolStaticRow(row *sql.Row) BoolStaticRow {
+	return BoolStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowExampleBool struct {
+type BoolStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowExampleBool) Scan(arg *bool) error {
+func (t BoolStaticRow) Scan(arg *bool) error {
 	var (
 		c0 sql.NullBool
 	)
@@ -109,23 +109,26 @@ func (t StaticRowExampleBool) Scan(arg *bool) error {
 	return nil
 }
 
-// DynamicExampleBool creates a scanner that operates on a dynamic
+// NewBoolDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExampleBool(rows *sql.Rows, err error) ExampleBool {
+func NewBoolDynamic(rows *sql.Rows, err error) Bool {
 	if err != nil {
-		return errExampleBool{e: err}
+		return errBool{e: err}
 	}
 
-	return dynamicExampleBool{
+	return boolDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicExampleBool struct {
+type boolDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExampleBool) Scan(arg *bool) error {
+func (t boolDynamic) Scan(arg *bool) error {
+	const (
+		arg0 = "arg"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -142,7 +145,7 @@ func (t dynamicExampleBool) Scan(arg *bool) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			dst = append(dst, &c0)
 		default:
 			dst = append(dst, &ignored)
@@ -155,7 +158,7 @@ func (t dynamicExampleBool) Scan(arg *bool) error {
 
 	for _, column := range columns {
 		switch column {
-		case "arg":
+		case arg0:
 			if c0.Valid {
 				tmp := c0.Bool
 				*arg = tmp
@@ -166,17 +169,17 @@ func (t dynamicExampleBool) Scan(arg *bool) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleBool) Err() error {
+func (t boolDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExampleBool) Close() error {
+func (t boolDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExampleBool) Next() bool {
+func (t boolDynamic) Next() bool {
 	return t.Rows.Next()
 }

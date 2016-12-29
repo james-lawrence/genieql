@@ -2,25 +2,53 @@ package example
 
 import "database/sql"
 
-const IntNoInterfaceStaticColumns = "arg"
+// PrivateInt scanner interface.
+type PrivateInt interface {
+	Scan(arg *int) error
+	Next() bool
+	Close() error
+	Err() error
+}
 
-// NewIntNoInterfaceStatic creates a scanner that operates on a static
+type errPrivateInt struct {
+	e error
+}
+
+func (t errPrivateInt) Scan(arg *int) error {
+	return t.e
+}
+
+func (t errPrivateInt) Next() bool {
+	return false
+}
+
+func (t errPrivateInt) Err() error {
+	return t.e
+}
+
+func (t errPrivateInt) Close() error {
+	return nil
+}
+
+const PrivateIntStaticColumns = "arg"
+
+// NewPrivateIntStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func NewIntNoInterfaceStatic(rows *sql.Rows, err error) IntNoInterface {
+func NewPrivateIntStatic(rows *sql.Rows, err error) PrivateInt {
 	if err != nil {
-		return errIntNoInterface{e: err}
+		return errPrivateInt{e: err}
 	}
 
-	return intNoInterfaceStatic{
+	return privateIntStatic{
 		Rows: rows,
 	}
 }
 
-type intNoInterfaceStatic struct {
+type privateIntStatic struct {
 	Rows *sql.Rows
 }
 
-func (t intNoInterfaceStatic) Scan(arg *int) error {
+func (t privateIntStatic) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)
@@ -37,34 +65,34 @@ func (t intNoInterfaceStatic) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t intNoInterfaceStatic) Err() error {
+func (t privateIntStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t intNoInterfaceStatic) Close() error {
+func (t privateIntStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t intNoInterfaceStatic) Next() bool {
+func (t privateIntStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewIntNoInterfaceStaticRow creates a scanner that operates on a static
+// NewPrivateIntStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewIntNoInterfaceStaticRow(row *sql.Row) IntNoInterfaceStaticRow {
-	return IntNoInterfaceStaticRow{
+func NewPrivateIntStaticRow(row *sql.Row) PrivateIntStaticRow {
+	return PrivateIntStaticRow{
 		row: row,
 	}
 }
 
-type IntNoInterfaceStaticRow struct {
+type PrivateIntStaticRow struct {
 	row *sql.Row
 }
 
-func (t IntNoInterfaceStaticRow) Scan(arg *int) error {
+func (t PrivateIntStaticRow) Scan(arg *int) error {
 	var (
 		c0 sql.NullInt64
 	)
@@ -81,23 +109,23 @@ func (t IntNoInterfaceStaticRow) Scan(arg *int) error {
 	return nil
 }
 
-// NewIntNoInterfaceDynamic creates a scanner that operates on a dynamic
+// NewPrivateIntDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func NewIntNoInterfaceDynamic(rows *sql.Rows, err error) IntNoInterface {
+func NewPrivateIntDynamic(rows *sql.Rows, err error) PrivateInt {
 	if err != nil {
-		return errIntNoInterface{e: err}
+		return errPrivateInt{e: err}
 	}
 
-	return intNoInterfaceDynamic{
+	return privateIntDynamic{
 		Rows: rows,
 	}
 }
 
-type intNoInterfaceDynamic struct {
+type privateIntDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t intNoInterfaceDynamic) Scan(arg *int) error {
+func (t privateIntDynamic) Scan(arg *int) error {
 	const (
 		arg0 = "arg"
 	)
@@ -141,17 +169,17 @@ func (t intNoInterfaceDynamic) Scan(arg *int) error {
 	return t.Rows.Err()
 }
 
-func (t intNoInterfaceDynamic) Err() error {
+func (t privateIntDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t intNoInterfaceDynamic) Close() error {
+func (t privateIntDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t intNoInterfaceDynamic) Next() bool {
+func (t privateIntDynamic) Next() bool {
 	return t.Rows.Next()
 }
