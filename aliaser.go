@@ -30,16 +30,6 @@ func AliaserChain(aliasers ...Aliaser) Aliaser {
 	})
 }
 
-// MultiAliaser TODO ...
-func MultiAliaser(name string, aliasers ...Aliaser) []string {
-	result := make([]string, 0, len(aliasers))
-	for _, aliaser := range aliasers {
-		result = append(result, aliaser.Alias(name))
-	}
-
-	return result
-}
-
 // AliaserBuilder looks up transformations by name, if any of transformations
 // do not exist returns nil.
 func AliaserBuilder(names ...string) Aliaser {

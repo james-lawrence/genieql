@@ -99,14 +99,16 @@ func (t ColumnInfoSet) AmbiguityCheck() error {
 	return nil
 }
 
-func NewColumnInfoNameTransformer() ColumnInfoNameTransformer {
-	return ColumnInfoNameTransformer{}
+func NewColumnInfoNameTransformer(aliasers ...Aliaser) ColumnInfoNameTransformer {
+	return ColumnInfoNameTransformer{Aliaser: AliaserChain(aliasers...)}
 }
 
-type ColumnInfoNameTransformer struct{}
+type ColumnInfoNameTransformer struct {
+	Aliaser
+}
 
-func (ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
-	return column.Name
+func (t ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
+	return t.Aliaser.Alias(column.Name)
 }
 
 type ColumnValueTransformer struct {
