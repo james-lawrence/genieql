@@ -82,9 +82,14 @@ func toPrivate(s string) string {
 }
 
 func astPrint(n ast.Node) (string, error) {
+	if n == nil {
+		return "", nil
+	}
+
 	dst := bytes.NewBuffer([]byte{})
 	fset := token.NewFileSet()
 	err := printer.Fprint(dst, fset, n)
+
 	return dst.String(), errors.Wrap(err, "failure to print ast")
 }
 

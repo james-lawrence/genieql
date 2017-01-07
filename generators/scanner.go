@@ -156,7 +156,7 @@ func newScanner(options ...ScannerOption) (scanner, error) {
 
 type scanner struct {
 	Name          string
-	interfaceName string // DEPRECATED
+	interfaceName string
 	Mode          mode
 	Fields        *ast.FieldList
 	Package       *build.Package

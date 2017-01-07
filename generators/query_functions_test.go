@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 
 	"bitbucket.org/jatone/genieql"
 
@@ -236,6 +237,39 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			QFOScanner(exampleRowScanner),
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		),
+	)
+
+	DescribeTable("insert query builder",
+		func(maximum int, options ...QueryFunctionOption) {
+			var (
+				buffer bytes.Buffer
+			)
+			gg := NewBatchInsert(maximum, astutil.Field(mustParseExpr("int"), ast.NewIdent("foo")), options...)
+			Expect(gg.Generate(&buffer)).ToNot(HaveOccurred())
+			log.Println(buffer.String())
+		},
+		Entry(
+			"batch insert integers",
+			1,
+			QFOName("batchInsert"),
+			QFOParameters(
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("i")),
+			),
+			QFOScanner(exampleRowScanner),
+			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
+			QFOQueryerFunction(ast.NewIdent("Query")),
+		),
+		Entry(
+			"batch insert integers",
+			2,
+			QFOName("batchInsert"),
+			QFOParameters(
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("i")),
+			),
+			QFOScanner(exampleRowScanner),
+			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
+			QFOQueryerFunction(ast.NewIdent("Query")),
 		),
 	)
 })
