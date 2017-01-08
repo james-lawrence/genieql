@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"path/filepath"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -33,66 +32,47 @@ func (t dynamicScanner) Options() []scannerOption {
 func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 	var (
 		err           error
-		configuration genieql.Configuration
+		config        genieql.Configuration
+		dialect       genieql.Dialect
 		mappingConfig genieql.MappingConfig
+		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-
-	configuration = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.scanner.configName),
-		),
-	)
-
 	pkgName, typName := extractPackageType(t.scanner.packageType)
+	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkgName, typName, t.scanner.mapName); err != nil {
+		return err
+	}
 
-	if err = genieql.ReadMapper(configuration, pkgName, typName, t.scanner.mapName, &mappingConfig); err != nil {
-		log.Fatalln(err)
+	if pkg, err = locatePackage(pkgName); err != nil {
+		return err
 	}
 
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
-	(&mappingConfig).Apply(
+	mappingConfig.Apply(
 		genieql.MCOColumnInfo(t.table),
 	)
 
-	if err = configuration.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
+	if err = config.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
 		log.Fatalln(err)
 	}
 	// END HACK!
 
-	// HACK - this section lets us build up the ignored field set.
-	// this lets us maintain backwards compatability with previous versions.
-	// but it should be refactored.
-	details, err := genieql.LoadInformation(configuration, t.table)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	xfields, err := mappingConfig.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	unmappedColumns, err := mappingConfig.Mapper().UnmappedColumns(xfields, genieql.ColumnInfoSet(details.Columns).ColumnNames()...)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	// END HACK
-
-	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Fatalln(err)
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  config,
+		Dialect:        dialect,
 	}
 
 	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
 	gen := generators.NewScanner(
-		generators.ScannerOptionConfiguration(configuration),
+		generators.ScannerOptionContext(ctx),
 		generators.ScannerOptionName(t.scanner.scannerName),
 		generators.ScannerOptionInterfaceName(t.scanner.interfaceName),
 		generators.ScannerOptionParameters(&ast.FieldList{List: fields}),
 		generators.ScannerOptionOutputMode(generators.ModeDynamic),
-		generators.ScannerOptionPackage(pkg),
-		generators.ScannerOptionIgnoreSet(unmappedColumns...),
+		// generators.ScannerOptionIgnoreSet(unmappedColumns...),
 	)
 
 	hg := headerGenerator{

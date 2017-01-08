@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"go/types"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -130,6 +131,52 @@ func OptionsFromCommentGroup(comments *ast.CommentGroup) (*goini.INI, error) {
 	}
 
 	return ini, nil
+}
+
+func areArrayType(xs ...ast.Expr) bool {
+	for _, x := range xs {
+		if _, ok := x.(*ast.ArrayType); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func extractArrayInfo(x *ast.ArrayType) (int, ast.Expr, error) {
+	var (
+		err error
+		max int
+		ok  bool
+		lit *ast.BasicLit
+	)
+	if lit, ok = x.Len.(*ast.BasicLit); !ok {
+		return max, x.Elt, errors.New("expected a basic literal for the array")
+	}
+
+	if lit.Kind != token.INT {
+		return max, x.Elt, errors.New("expected the basic literal of the array to be of type integer")
+	}
+
+	if max, err = strconv.Atoi(lit.Value); err != nil {
+		return max, x.Elt, errors.Wrap(err, "failed to convert the array size to an integer")
+	}
+
+	return max, x.Elt, nil
+}
+
+func selectType(x ast.Expr) bool {
+	_, ok := x.(*ast.SelectorExpr)
+	return ok
+}
+
+func allBuiltinTypes(xs ...ast.Expr) bool {
+	for _, x := range xs {
+		if !builtinType(x) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func builtinType(x ast.Expr) bool {

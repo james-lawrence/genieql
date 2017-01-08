@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -30,12 +31,6 @@ func MCOColumnInfo(q string) MappingConfigOption {
 func MCOCustom(custom bool) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.CustomQuery = custom
-	}
-}
-
-func MCODialect(d Dialect) MappingConfigOption {
-	return func(mc *MappingConfig) {
-		mc.dialect = d
 	}
 }
 
@@ -74,7 +69,6 @@ type MappingConfig struct {
 	RenameMap            map[string]string
 	TableOrQuery         string
 	CustomQuery          bool
-	dialect              Dialect
 }
 
 // Apply the options to the current MappingConfig
@@ -104,13 +98,18 @@ func (t MappingConfig) Aliaser() Aliaser {
 	})
 }
 
-// TypeFields ...
+// TypeFields deprecated use TypeFields2
 func (t MappingConfig) TypeFields(fset *token.FileSet, context build.Context, filter func(*build.Package) bool) ([]*ast.Field, error) {
 	pkg, err := LocatePackage(t.Package, context, filter)
 	if err != nil {
 		return nil, err
 	}
 
+	return t.TypeFields2(fset, pkg)
+}
+
+// TypeFields2 ...
+func (t MappingConfig) TypeFields2(fset *token.FileSet, pkg *build.Package) ([]*ast.Field, error) {
 	typ, err := NewUtils(fset).FindUniqueType(FilterName(t.Type), pkg)
 	if err != nil {
 		return nil, err
@@ -120,11 +119,58 @@ func (t MappingConfig) TypeFields(fset *token.FileSet, context build.Context, fi
 }
 
 // ColumnInfo defined by the mapping.
-func (t MappingConfig) ColumnInfo() ([]ColumnInfo, error) {
+func (t MappingConfig) ColumnInfo(dialect Dialect) ([]ColumnInfo, error) {
 	if t.CustomQuery {
-		return t.dialect.ColumnInformationForQuery(t.TableOrQuery)
+		return dialect.ColumnInformationForQuery(t.TableOrQuery)
 	}
-	return t.dialect.ColumnInformationForTable(t.TableOrQuery)
+	return dialect.ColumnInformationForTable(t.TableOrQuery)
+}
+
+// MappedColumnInfo - deprecated use MappedColumnInfo2
+func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, context build.Context, filter func(*build.Package) bool) ([]ColumnInfo, []ColumnInfo, error) {
+	pkg, err := LocatePackage(t.Package, context, filter)
+	if err != nil {
+		return []ColumnInfo(nil), []ColumnInfo(nil), err
+	}
+	return t.MappedColumnInfo2(dialect, fset, pkg)
+}
+
+func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
+	var (
+		err     error
+		fields  []*ast.Field
+		columns []ColumnInfo
+	)
+
+	if fields, err = t.TypeFields2(fset, pkg); err != nil {
+		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
+	}
+
+	if columns, err = t.ColumnInfo(dialect); err != nil {
+		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+	}
+
+	mColumns, uColumns := mapColumns(columns, fields, t.Mapper().Aliasers...)
+	return mColumns, uColumns, nil
+}
+
+func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]*ast.Field, []*ast.Field, error) {
+	var (
+		err     error
+		fields  []*ast.Field
+		columns []ColumnInfo
+	)
+
+	if fields, err = t.TypeFields2(fset, pkg); err != nil {
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
+	}
+
+	if columns, err = t.ColumnInfo(dialect); err != nil {
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+	}
+
+	mFields, uFields := mapFields(columns, fields, t.Mapper().Aliasers...)
+	return mFields, uFields, nil
 }
 
 // WriteMapper persists the structure -> result row mapping to disk.
@@ -146,10 +192,6 @@ func ReadMapper(config Configuration, pkg, typ, name string, m *MappingConfig) e
 	var (
 		err error
 	)
-
-	if m.dialect, err = LookupDialect(config); err != nil {
-		return err
-	}
 
 	raw, err := ioutil.ReadFile(filepath.Join(config.Location, config.Database, pkg, typ, name))
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	// register the postgresql dialect
+	"bitbucket.org/jatone/genieql"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 
 	// register the drivers
@@ -23,11 +24,21 @@ func main() {
 	generator := &generate{}
 	scanner := &scanners{}
 
-	app := kingpin.New("qlgenie", "query language genie - a tool for interfacing with databases")
+	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	bootstrapCmd := bootstrap.configure(app)
 	mapCmd := mapper.configure(app)
 	generator.configure(app)
 	scanner.configure(app)
+
+	if os.Getenv("DEBUGPANIC") != "" {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println(r)
+				log.Fatalln("panic debug", genieql.PrintDebug())
+				panic(r)
+			}
+		}()
+	}
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 

@@ -7,12 +7,12 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("ColumnConstants", func() {
+var _ = ginkgo.Describe("ColumnConstants", func() {
 	DescribeTable("should create a constant based on the table details",
 		func(name string, columns []genieql.ColumnInfo, trans genieql.ColumnTransformer, result string) {
 			dst := bytes.NewBuffer([]byte{})

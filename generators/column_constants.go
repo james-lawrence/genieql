@@ -16,13 +16,12 @@ import (
 // ColumnConstantContext for building column sets.
 // TODO consider turning this into a general generator context.
 type ColumnConstantContext struct {
-	Config    genieql.Configuration
-	Package   *build.Package
-	IgnoreSet []string
+	Config  genieql.Configuration
+	Package *build.Package
 }
 
 // NewColumnConstantFromFieldList generates column constants from field list.
-func NewColumnConstantFromFieldList(ctx ColumnConstantContext, name string, trans genieql.ColumnTransformer, fields *ast.FieldList) genieql.Generator {
+func NewColumnConstantFromFieldList(ctx Context, name string, trans genieql.ColumnTransformer, fields *ast.FieldList, ignoreset ...string) genieql.Generator {
 	var (
 		infos []genieql.ColumnInfo
 	)
@@ -97,11 +96,12 @@ func (t transformer) transform(m []genieql.ColumnInfo) []string {
 	return s
 }
 
-func columnInfo(ctx ColumnConstantContext, param *ast.Field) ([]genieql.ColumnInfo, error) {
+func columnInfo(ctx Context, param *ast.Field) ([]genieql.ColumnInfo, error) {
 	if builtinType(param.Type) {
 		return builtinParamColumnInfo(param)
 	}
-	return mappedParam(ctx, param)
+	_, info, err := mappedParam(ctx, param)
+	return info, err
 }
 
 // builtinParamColumnInfo converts a *ast.Field that represents a builtin type
@@ -119,16 +119,33 @@ func builtinParamColumnInfo(param *ast.Field) ([]genieql.ColumnInfo, error) {
 
 // mappedParam converts a *ast.Field that represents a struct into an array
 // of ColumnMap.
-func mappedParam(ctx ColumnConstantContext, param *ast.Field) ([]genieql.ColumnInfo, error) {
+func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieql.ColumnInfo, error) {
 	var (
 		err   error
 		infos []genieql.ColumnInfo
 		m     genieql.MappingConfig
 	)
 
-	if err = ctx.Config.ReadMap(packageName(ctx.Package, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
-		return infos, err
+	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+		return m, infos, err
 	}
 
-	return m.ColumnInfo()
+	infos, _, err = m.MappedColumnInfo2(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	return m, infos, err
+}
+
+// converts a *ast.Field that represents a struct into a list of fields that map
+// to columns.
+func mappedFields(ctx Context, param *ast.Field) ([]*ast.Field, error) {
+	var (
+		err   error
+		infos []*ast.Field
+		m     genieql.MappingConfig
+	)
+
+	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+		return infos, err
+	}
+	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	return infos, err
 }

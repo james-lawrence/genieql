@@ -1,6 +1,7 @@
 package genieql
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -226,6 +227,7 @@ func SelectValues(node ast.Node) []FilteredValue {
 
 type Searcher interface {
 	FindFunction(f ast.Filter) (*ast.FuncDecl, error)
+	FindUniqueType(f ast.Filter) (*ast.TypeSpec, error)
 }
 
 func NewSearcher(fset *token.FileSet, pkgset ...*build.Package) Searcher {
@@ -241,11 +243,15 @@ func (t searcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
 	return NewUtils(t.fset).FindFunction(f, t.pkgset...)
 }
 
+func (t searcher) FindUniqueType(f ast.Filter) (*ast.TypeSpec, error) {
+	return NewUtils(t.fset).FindUniqueType(f, t.pkgset...)
+}
+
 type Utils interface {
 	ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error)
 	FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.TypeSpec, error)
 	FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDecl, error)
-	WalkFiles(pkgset []*build.Package, delegate func(path string, file *ast.File)) error
+	WalkFiles(delegate func(path string, file *ast.File), pkgset ...*build.Package) error
 }
 
 func NewUtils(fset *token.FileSet) Utils {
@@ -256,7 +262,7 @@ type utils struct {
 	fset *token.FileSet
 }
 
-func (t utils) WalkFiles(pkgset []*build.Package, delegate func(path string, file *ast.File)) error {
+func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*build.Package) error {
 	pkgs, err := t.ParsePackages(pkgset...)
 	if err != nil {
 		return err
@@ -455,4 +461,23 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 	printer.Fprintf(dst, "\n\n")
 
 	return errors.Wrap(printer.Err(), "failed to print the package header")
+}
+
+// PrintDebug ...
+func PrintDebug() string {
+	var (
+		buffer bytes.Buffer
+	)
+	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
+		buffer.WriteString(
+			fmt.Sprintf(
+				"invoked by go generate @ %s/%s line %s\n",
+				os.Getenv("GOPACKAGE"),
+				os.Getenv("GOFILE"),
+				os.Getenv("GOLINE"),
+			),
+		)
+	}
+	buffer.WriteString(strings.Join(os.Args[1:], " "))
+	return buffer.String()
 }

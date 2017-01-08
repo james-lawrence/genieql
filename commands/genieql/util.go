@@ -7,11 +7,19 @@ import (
 	"go/token"
 	"io"
 	"log"
+	"path/filepath"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/pkg/errors"
+
 	"bitbucket.org/jatone/genieql"
 )
+
+func locatePackage(pkg string) (*build.Package, error) {
+	bpkg, err := genieql.LocatePackage(pkg, build.Default, genieql.StrictPackageName(filepath.Base(pkg)))
+	return bpkg, errors.Wrapf(err, "failed to locate package: %s", pkg)
+}
 
 func lowercaseFirstLetter(s string) string {
 	if s == "" {
@@ -19,6 +27,24 @@ func lowercaseFirstLetter(s string) string {
 	}
 	r, n := utf8.DecodeRuneInString(s)
 	return string(unicode.ToLower(r)) + s[n:]
+}
+
+func newHeaderGenerator(fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
+	var (
+		err error
+		pkg *build.Package
+	)
+	name, _ := extractPackageType(pkgtype)
+
+	if pkg, err = genieql.LocatePackage(name, build.Default, genieql.StrictPackageName(filepath.Base(name))); err != nil {
+		return genieql.NewErrGenerator(errors.Wrapf(err, "failed to locate package: %s", name))
+	}
+
+	return headerGenerator{
+		fset: fset,
+		pkg:  pkg,
+		args: args,
+	}
 }
 
 type headerGenerator struct {
@@ -36,19 +62,20 @@ type printGenerator struct {
 }
 
 func (t printGenerator) Generate(dst io.Writer) error {
-	var err error
-	buffer := bytes.NewBuffer([]byte{})
-	formatted := bytes.NewBuffer([]byte{})
+	var (
+		err               error
+		buffer, formatted bytes.Buffer
+	)
 
-	if err = t.delegate.Generate(buffer); err != nil {
+	if err = t.delegate.Generate(&buffer); err != nil {
 		return err
 	}
 
-	if err = genieql.FormatOutput(formatted, buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(&formatted, buffer.Bytes()); err != nil {
 		return err
 	}
 
-	_, err = io.Copy(dst, formatted)
+	_, err = io.Copy(dst, &formatted)
 
 	return err
 }

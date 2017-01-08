@@ -38,7 +38,7 @@ func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 	c := functions.Command("types", "generates functions defined by function types within a package").Action(t.execute)
 	c.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	c.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	c.Flag("package", "package to search for constant definitions").StringVar(&t.pkg)
+	c.Flag("package", "package to search for definitions").StringVar(&t.pkg)
 
 	return c
 }
@@ -46,12 +46,12 @@ func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	var (
 		err  error
+		pkg  *build.Package
 		fset = token.NewFileSet()
 	)
 
-	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
-	if err != nil {
-		log.Fatalln(err)
+	if pkg, err = locatePackage(t.pkg); err != nil {
+		return err
 	}
 
 	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "functions")
@@ -60,14 +60,14 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	if len(taggedFiles.files) == 0 {
-		log.Println("no files tagged")
+		log.Println("no files tagged, ignoring")
 		// nothing to do.
 		return nil
 	}
 
 	g := []genieql.Generator{}
 	searcher := genieql.NewSearcher(fset, pkg)
-	genieql.NewUtils(fset).WalkFiles([]*build.Package{pkg}, func(path string, file *ast.File) {
+	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -80,13 +80,13 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
 
 		g = append(g, functionsTypes...)
-		log.Println("generating functions")
+
 		functions := mapFuncDeclsToGenerator(func(d *ast.FuncDecl) genieql.Generator {
 			return generators.NewQueryFunctionFromFuncDecl(searcher, d)
 		}, genieql.SelectFuncDecl(func(*ast.FuncDecl) bool { return true }, genieql.FindFunc(file)...)...)
 
 		g = append(g, functions...)
-	})
+	}, pkg)
 
 	mg := genieql.MultiGenerate(g...)
 

@@ -43,10 +43,10 @@ func StructOptionFieldsQuery(q string) StructOption {
 	}
 }
 
-// StructOptionConfiguration sets the genieql.Configuration for the structure generator.
-func StructOptionConfiguration(c genieql.Configuration) StructOption {
+// StructOptionContext sets the Context for the structure generator.
+func StructOptionContext(c Context) StructOption {
 	return func(s *structure) {
-		s.config = c
+		s.Context = c
 	}
 }
 
@@ -129,12 +129,12 @@ func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.
 }
 
 type structure struct {
+	Context
 	Name           string
 	aliaser        genieql.MappingConfigOption
 	renameMap      genieql.MappingConfigOption
 	query          genieql.MappingConfigOption
 	mappingOptions []genieql.MappingConfigOption
-	config         genieql.Configuration
 }
 
 func (t structure) Generate(dst io.Writer) error {
@@ -150,11 +150,11 @@ type {{.Name}} struct {
 	}
 
 	mapping := genieql.NewMappingConfig(append(t.mappingOptions, t.renameMap, t.aliaser, t.query, genieql.MCOType(t.Name))...)
-	if err := t.config.WriteMap("default", mapping); err != nil {
+	if err := t.Context.Configuration.WriteMap("default", mapping); err != nil {
 		return err
 	}
 
-	columns, err := mapping.ColumnInfo()
+	columns, err := mapping.ColumnInfo(t.Context.Dialect)
 	if err != nil {
 		return err
 	}

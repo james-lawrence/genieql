@@ -1,15 +1,17 @@
-package generators
+package generators_test
 
 import (
 	"bitbucket.org/jatone/genieql/astutil"
-	. "github.com/onsi/ginkgo"
+	. "bitbucket.org/jatone/genieql/generators"
+
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	"go/types"
 )
 
-var _ = Describe("Nullable", func() {
+var _ = ginkgo.Describe("Nullable", func() {
 	DescribeTable("DefaultNullableTypes",
 		func(input string, nullable bool, castExpr string) {
 			typ := astutil.Expr(input)

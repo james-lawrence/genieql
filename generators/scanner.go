@@ -61,7 +61,23 @@ func ScannerOptionsFromComment(comment *ast.CommentGroup) []ScannerOption {
 // ScannerOptionPackage provides the package being used to build the scanners.
 func ScannerOptionPackage(p *build.Package) ScannerOption {
 	return func(s *scanner) error {
-		s.Package = p
+		s.Context.CurrentPackage = p
+		return nil
+	}
+}
+
+// ScannerOptionContext set the generation context for the scanner.
+func ScannerOptionContext(p Context) ScannerOption {
+	return func(s *scanner) error {
+		s.Context = p
+		return nil
+	}
+}
+
+// ScannerOptionFileSet provides the token.FileSet being used to build the scanners.
+func ScannerOptionFileSet(p *token.FileSet) ScannerOption {
+	return func(s *scanner) error {
+		s.Context.FileSet = p
 		return nil
 	}
 }
@@ -69,12 +85,8 @@ func ScannerOptionPackage(p *build.Package) ScannerOption {
 // ScannerOptionConfiguration provides the configuration being used to build the scanners.
 func ScannerOptionConfiguration(c genieql.Configuration) ScannerOption {
 	return func(s *scanner) error {
-		var (
-			err error
-		)
-		s.Config = c
-		s.Driver, err = genieql.LookupDriver(c.Driver)
-		return err
+		s.Context.Configuration = c
+		return nil
 	}
 }
 
@@ -140,28 +152,33 @@ func maybeScanner(s scanner, err error) genieql.Generator {
 }
 
 func newScanner(options ...ScannerOption) (scanner, error) {
+	var (
+		err error
+	)
+
 	// by default enable all modes
 	s := scanner{
 		Mode: ModeInterface | ModeStatic | ModeDynamic,
 	}
 
 	for _, opt := range options {
-		if err := opt(&s); err != nil {
+		if err = opt(&s); err != nil {
 			return s, err
 		}
 	}
 
-	return s, nil
+	s.Driver, err = genieql.LookupDriver(s.Context.Configuration.Driver)
+
+	return s, err
 }
 
 type scanner struct {
+	Context
+	Driver        genieql.Driver
 	Name          string
 	interfaceName string
 	Mode          mode
 	Fields        *ast.FieldList
-	Package       *build.Package
-	Config        genieql.Configuration
-	Driver        genieql.Driver
 	ignoreSet     []string
 }
 
@@ -221,10 +238,7 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	if t.Mode.Enabled(ModeStatic) {
 		cc := NewColumnConstantFromFieldList(
-			ColumnConstantContext{
-				Config:  t.Config,
-				Package: t.Package,
-			},
+			t.Context,
 			fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
 			genieql.NewColumnInfoNameTransformer(),
 			t.Fields,
@@ -269,20 +283,16 @@ func (t scanner) columnMaps(param *ast.Field) ([]genieql.ColumnMap, error) {
 // of ColumnMap.
 func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	var (
-		cMap []genieql.ColumnMap
-		m    genieql.MappingConfig
+		err     error
+		m       genieql.MappingConfig
+		columns []genieql.ColumnInfo
+		cMap    []genieql.ColumnMap
 	)
 
-	if err := t.Config.ReadMap(packageName(t.Package, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
-		return []genieql.ColumnMap{}, err
+	if m, columns, err = mappedParam(t.Context, param); err != nil {
+		return cMap, err
 	}
-
 	aliaser := m.Aliaser()
-	columns, err := m.ColumnInfo()
-
-	if err != nil {
-		return []genieql.ColumnMap{}, err
-	}
 
 	for _, arg := range param.Names {
 		for _, column := range columns {

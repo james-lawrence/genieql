@@ -12,15 +12,15 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Scanner", func() {
+var _ = ginkgo.Describe("Scanner", func() {
 	config := genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), "scanner-test.config"),
+			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
 		),
 	)
 	genieql.RegisterDriver(config.Driver, noopDriver{})

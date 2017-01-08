@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,37 +30,29 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		err     error
 		config  genieql.Configuration
 		mapping genieql.MappingConfig
+		dialect genieql.Dialect
+		columns []genieql.ColumnInfo
 		fset    = token.NewFileSet()
+		pkg     *build.Package
 	)
 
 	pkgName, typName := extractPackageType(t.packageType)
-
-	config = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if err = genieql.ReadMapper(config, pkgName, typName, t.mapName, &mapping); err != nil {
+	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
 
-	details, err := genieql.LoadInformation(config, t.table)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fields, err := mapping.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
-
-	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
 	}
+
+	mapping.CustomQuery = false
+	mapping.TableOrQuery = t.table
+
+	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+		return err
+	}
+
+	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}
 
 	scanner, err := genieql.NewUtils(fset).FindFunction(func(s string) bool {
 		return s == t.scanner
@@ -76,11 +67,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return errors.Wrap(err, t.uniqScanner)
 	}
 
-	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
-		args: os.Args[1:],
-	}
+	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
 
 	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner)
 

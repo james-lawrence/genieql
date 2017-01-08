@@ -14,12 +14,12 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Batch Functions", func() {
+var _ = ginkgo.Describe("Batch Functions", func() {
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{
@@ -83,7 +83,7 @@ var _ = Describe("Batch Functions", func() {
 			3,
 			astutil.Field(ast.NewIdent("int"), ast.NewIdent("i")),
 			BatchFunctionQueryBuilder(builder),
-			BatchFunctionExploder(ast.NewIdent("A"), ast.NewIdent("B"), ast.NewIdent("C")),
+			BatchFunctionExploder(astutil.Field(ast.NewIdent("int"), ast.NewIdent("A")), astutil.Field(ast.NewIdent("int"), ast.NewIdent("B")), astutil.Field(ast.NewIdent("int"), ast.NewIdent("C"))),
 			BatchFunctionQFOptions(
 				QFOName("batchFunction3"),
 				QFOScanner(exampleScanner),

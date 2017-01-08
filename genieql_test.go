@@ -2,7 +2,6 @@ package genieql_test
 
 import (
 	"bytes"
-	"go/ast"
 
 	"github.com/pkg/errors"
 
@@ -24,29 +23,6 @@ var _ = Describe("Genieql", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			err := errors.Cause(FormatOutput(buffer, []byte(invalidCode)))
 			Expect(err).To(MatchError("2:1: expected 'package', found 'func'"))
-		})
-	})
-
-	Describe("TableDetails", func() {
-		It("should filter out columns that do not match the provided fields", func() {
-			details := TableDetails{
-				Table:           "table",
-				Naturalkey:      []ColumnInfo{{Name: "column1"}},
-				Columns:         []ColumnInfo{{Name: "column1"}, {Name: "column2"}, {Name: "column3"}},
-				UnmappedColumns: []ColumnInfo{},
-			}
-
-			filteredDetails := details.OnlyMappedColumns([]*ast.Field{}, AliasStrategyLowercase)
-			Expect(filteredDetails.Columns).To(BeEmpty())
-			Expect(filteredDetails.UnmappedColumns).To(Equal(details.Columns))
-
-			fields := []*ast.Field{
-				{Names: []*ast.Ident{&ast.Ident{Name: "column1"}}},
-			}
-
-			filteredDetails = details.OnlyMappedColumns(fields, AliasStrategyLowercase)
-			Expect(filteredDetails.Columns).To(Equal([]ColumnInfo{{Name: "column1"}}))
-			Expect(filteredDetails.UnmappedColumns).To(Equal([]ColumnInfo{{Name: "column2"}, {Name: "column3"}}))
 		})
 	})
 })

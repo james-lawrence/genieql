@@ -17,13 +17,14 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 type testSearcher struct {
 	functions []*ast.FuncDecl
+	types     []*ast.TypeSpec
 }
 
 func (t testSearcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
@@ -36,7 +37,17 @@ func (t testSearcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
 	return nil, fmt.Errorf("function not found")
 }
 
-var _ = Describe("Query Functions", func() {
+func (t testSearcher) FindUniqueType(f ast.Filter) (*ast.TypeSpec, error) {
+	for _, spec := range t.types {
+		if f(spec.Name.Name) {
+			return spec, nil
+		}
+	}
+
+	return nil, fmt.Errorf("type not found")
+}
+
+var _ = ginkgo.Describe("Query Functions", func() {
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{

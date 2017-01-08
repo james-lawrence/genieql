@@ -13,7 +13,6 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
-	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -38,14 +37,30 @@ type GenerateTableCLI struct {
 	typeName   string
 	output     string
 	configName string
+	pkg        string
 }
 
 func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	var (
+		err error
+		wd  string
+		pkg *build.Package
+	)
+
 	cli := cmd.Command("cli", "generates a structure for the provided options and table").Action(t.execute)
 	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
+	cli.Flag("package", "package").StringVar(&t.pkg)
 	cli.Arg("table", "name of the table to generate the mapping from").Required().StringVar(&t.table)
+
+	if wd, err = os.Getwd(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if pkg = currentPackage(wd); pkg == nil {
+		t.pkg = pkg.ImportPath
+	}
 
 	return cli
 }
@@ -55,52 +70,34 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		err           error
 		configuration genieql.Configuration
 		dialect       genieql.Dialect
-		wd            string
 		pkg           *build.Package
+		fset          = token.NewFileSet()
 	)
-
-	configuration = genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg = currentPackage(wd); pkg == nil {
-		log.Fatalln("error no package found in", wd)
-	}
-
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
 		return err
 	}
 
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
-		log.Fatalln(err)
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  configuration,
+		Dialect:        dialect,
 	}
-
 	pg := printGenerator{
 		delegate: generators.NewStructure(
-			generators.StructOptionConfiguration(configuration),
+			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
 				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
 			),
 			generators.StructOptionMappingConfigOptions(
 				genieql.MCOCustom(false),
 				genieql.MCOColumnInfo(t.table),
-				genieql.MCODialect(dialect),
 				genieql.MCOPackage(pkg.ImportPath),
 			),
 		),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
-		log.Fatalln(err)
-	}
-
-	return nil
+	return commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags)
 }
 
 // GenerateTableConstants creates a genieql mappings for the tables defined in the specified package.
@@ -118,6 +115,12 @@ func (t *GenerateTableConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdC
 		wd  string
 	)
 
+	constants := cmd.Command("constants", "generates structures for the tables defined in the specified file").Action(t.execute)
+	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
+	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
+	constants.Arg("package", "package to search for constant definitions").StringVar(&t.pkg)
+
 	if wd, err = os.Getwd(); err != nil {
 		log.Fatalln(err)
 	}
@@ -125,12 +128,6 @@ func (t *GenerateTableConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdC
 	if pkg := currentPackage(wd); pkg != nil {
 		t.pkg = pkg.ImportPath
 	}
-
-	constants := cmd.Command("constants", "generates structures for the tables defined in the specified file").Action(t.execute)
-	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
-	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
-	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	constants.Arg("package", "package to search for constant definitions").StringVar(&t.pkg)
 
 	return cmd
 }
@@ -140,26 +137,16 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		err           error
 		configuration genieql.Configuration
 		dialect       genieql.Dialect
+		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	configuration = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
-		log.Fatalln(err)
-	}
-
-	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
-	if err != nil {
-		log.Fatalln(err, errors.Wrapf(err, "failed to locate package: %s", t.pkg))
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+		return err
 	}
 
 	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "structure", "table")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	if len(taggedFiles.files) == 0 {
@@ -168,9 +155,15 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	g := []genieql.Generator{}
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  configuration,
+		Dialect:        dialect,
+	}
 
-	genieql.NewUtils(fset).WalkFiles([]*build.Package{pkg}, func(path string, file *ast.File) {
+	g := []genieql.Generator{}
+	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -179,17 +172,16 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
 			return generators.StructureFromGenDecl(
 				decl,
-				generators.StructOptionConfiguration(configuration),
+				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
 					genieql.MCOCustom(false),
-					genieql.MCODialect(dialect),
 					genieql.MCOPackage(pkg.ImportPath),
 				),
 			)
 		}, consts...)
 
 		g = append(g, decls...)
-	})
+	}, pkg)
 
 	mg := genieql.MultiGenerate(g...)
 	hg := headerGenerator{
@@ -215,14 +207,29 @@ type GenerateQueryCLI struct {
 	typeName   string
 	output     string
 	configName string
+	pkg        string
 }
 
 func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	var (
+		err error
+		wd  string
+	)
+
 	cli := cmd.Command("cli", "generates a structure for the provided options and query").Action(t.execute)
 	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
+	cli.Flag("package", "package to look for the type within").StringVar(&t.pkg)
 	cli.Arg("query", "query to generate the mapping from").Required().StringVar(&t.query)
+
+	if wd, err = os.Getwd(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if pkg := currentPackage(wd); pkg == nil {
+		t.pkg = pkg.ImportPath
+	}
 
 	return cli
 }
@@ -232,41 +239,27 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		err           error
 		configuration genieql.Configuration
 		dialect       genieql.Dialect
-		wd            string
 		pkg           *build.Package
+		fset          = token.NewFileSet()
 	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg = currentPackage(wd); pkg == nil {
-		log.Fatalln("error no package found in", wd)
-	}
-
-	configuration = genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
 		return err
 	}
 
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
-		log.Fatalln(err)
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  configuration,
+		Dialect:        dialect,
 	}
-
 	pg := printGenerator{
 		delegate: generators.NewStructure(
-			generators.StructOptionConfiguration(configuration),
+			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
 				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
 			),
 			generators.StructOptionMappingConfigOptions(
 				genieql.MCOCustom(true),
-				genieql.MCODialect(dialect),
 				genieql.MCOPackage(pkg.ImportPath),
 			),
 		),
@@ -291,8 +284,9 @@ type GenerateQueryConstants struct {
 
 func (t *GenerateQueryConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	var (
-		err error
-		wd  string
+		err     error
+		wd      string
+		pkgPath string
 	)
 
 	if wd, err = os.Getwd(); err != nil {
@@ -300,14 +294,14 @@ func (t *GenerateQueryConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdC
 	}
 
 	if pkg := currentPackage(wd); pkg != nil {
-		t.pkg = pkg.ImportPath
+		pkgPath = pkg.ImportPath
 	}
 
 	constants := cmd.Command("constants", "generates structures for the queries defined in the specified file").Action(t.execute)
 	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	constants.Arg("package", "package to search for constant definitions").StringVar(&t.pkg)
+	constants.Arg("package", "package to search for constant definitions").Default(pkgPath).StringVar(&t.pkg)
 
 	return cmd
 }
@@ -317,25 +311,11 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		err           error
 		configuration genieql.Configuration
 		dialect       genieql.Dialect
+		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	configuration = genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if err = genieql.ReadConfiguration(&configuration); err != nil {
-		log.Fatalln(err)
-	}
-
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
-		log.Fatalln(err)
-	}
-
-	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
-	if err != nil {
-		log.Fatalln(err)
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+		return err
 	}
 
 	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "structure", "query")
@@ -349,9 +329,14 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  configuration,
+		Dialect:        dialect,
+	}
 	g := []genieql.Generator{}
-
-	genieql.NewUtils(fset).WalkFiles([]*build.Package{pkg}, func(k string, f *ast.File) {
+	genieql.NewUtils(fset).WalkFiles(func(k string, f *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(k)) {
 			return
 		}
@@ -359,16 +344,15 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
 			return generators.StructureFromGenDecl(
 				decl,
-				generators.StructOptionConfiguration(configuration),
+				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
 					genieql.MCOCustom(true),
-					genieql.MCODialect(dialect),
 					genieql.MCOPackage(pkg.ImportPath),
 				),
 			)
 		}, genieql.FindConstants(f)...)
 		g = append(g, decls...)
-	})
+	}, pkg)
 
 	hg := headerGenerator{
 		fset: fset,

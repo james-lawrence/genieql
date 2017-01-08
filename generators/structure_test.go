@@ -15,15 +15,15 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Structure", func() {
+var _ = ginkgo.Describe("Structure", func() {
 	config := genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), "scanner-test.config"),
+			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
 		),
 	)
 	genieql.RegisterDriver(config.Driver, noopDriver{})
@@ -55,11 +55,10 @@ var _ = Describe("Structure", func() {
 			"type1 structure",
 			`package example; const MyStruct = "type1"`,
 			".fixtures/structures/type1.go",
-			StructOptionConfiguration(config),
+			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
 			StructOptionMappingConfigOptions(
 				genieql.MCOCustom(false),
 				genieql.MCOColumnInfo("type1"),
-				genieql.MCODialect(dialect),
 			),
 		),
 		Entry(
@@ -71,11 +70,10 @@ var _ = Describe("Structure", func() {
 const Lowercase = "type1"
 `,
 			".fixtures/structures/type1_configuration.go",
-			StructOptionConfiguration(config),
+			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
 			StructOptionMappingConfigOptions(
 				genieql.MCOCustom(false),
 				genieql.MCOColumnInfo("type1"),
-				genieql.MCODialect(dialect),
 			),
 		),
 	)
@@ -100,11 +98,10 @@ const Lowercase = "type1"
 const Lowercase = "type1"
 `,
 			"failed to parse comment configuration: Came accross an error : general is NOT a valid key/value pair",
-			StructOptionConfiguration(config),
+			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
 			StructOptionMappingConfigOptions(
 				genieql.MCOCustom(false),
 				genieql.MCOColumnInfo("type1"),
-				genieql.MCODialect(dialect),
 			),
 		),
 	)

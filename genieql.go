@@ -70,3 +70,9 @@ func ConfigurationDirectory() string {
 
 	return filepath.Join(defaultPath, ".genieql")
 }
+
+func PrintColumnInfo(columns ...ColumnInfo) {
+	for _, column := range columns {
+		log.Println(column)
+	}
+}

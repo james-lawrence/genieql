@@ -1,10 +1,12 @@
 package generators
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"strconv"
 	"text/template"
 
@@ -32,10 +34,80 @@ func BatchFunctionQFOptions(options ...QueryFunctionOption) BatchFunctionOption 
 }
 
 // BatchFunctionExploder ...
-func BatchFunctionExploder(sel ...*ast.Ident) BatchFunctionOption {
+func BatchFunctionExploder(sel ...*ast.Field) BatchFunctionOption {
 	return func(b *batchFunction) {
 		b.Selectors = sel
 	}
+}
+
+// NewBatchFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
+func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, options ...BatchFunctionOption) []genieql.Generator {
+	g := make([]genieql.Generator, 0, len(decl.Specs))
+	for _, spec := range decl.Specs {
+		if ts, ok := spec.(*ast.TypeSpec); ok {
+			if ft, ok := ts.Type.(*ast.FuncType); ok {
+				g = append(g, batchGeneratorFromFuncType(ctx, ts.Name, decl.Doc, ft, options...))
+			}
+		}
+	}
+
+	return g
+}
+
+func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...BatchFunctionOption) genieql.Generator {
+	var (
+		// cvt genieql.ColumnValueTransformer
+		qf queryFunction
+	)
+	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
+	qfoOptions, err := generatorFromFuncType(util, name, comment, ft)
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+	qf.Apply(qfoOptions...)
+
+	log.Println("parameters")
+	for _, param := range qf.Parameters {
+		log.Printf("%#v, %#v\n", param.Type, astutil.MapFieldsToNameExpr(param))
+	}
+
+	// validition...
+	if len(qf.Parameters) > 1 && areArrayType(astutil.MapFieldsToTypExpr(qf.Parameters...)...) {
+		return genieql.NewErrGenerator(errors.New("batch only supports a single array type parameter"))
+	}
+
+	max, elt, err := extractArrayInfo(qf.Parameters[0].Type.(*ast.ArrayType))
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+	field := astutil.Field(elt, qf.Parameters[0].Names...)
+
+	if !builtinType(elt) && !selectType(elt) {
+		fields, err := mappedFields(ctx, field)
+		if err != nil {
+			return genieql.NewErrGenerator(errors.Wrap(err, "failed to map params"))
+		}
+
+		poptions = append(poptions, BatchFunctionExploder(fields...))
+	}
+
+	builder := func(n int) ast.Decl {
+		// TODO extract defaults from comment options.
+		// cvt.Transform(column genieql.ColumnInfo)
+		return genieql.QueryLiteral("query", fmt.Sprintf("QUERY %d", n))
+	}
+
+	poptions = append(
+		poptions, BatchFunctionQueryBuilder(builder),
+		BatchFunctionQFOptions(
+			QFOName(qf.Name),
+			QFOScanner(qf.ScannerDecl),
+			QFOQueryer(qf.QueryerName, qf.Queryer),
+			QFOQueryerFunction(ast.NewIdent("Query")),
+		),
+	)
+
+	return NewBatchFunction(max, field, poptions...)
 }
 
 // NewBatchFunction builds functions that execute on batches of values, such as update and insert.
@@ -59,12 +131,13 @@ func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOptio
 }
 
 type batchFunction struct {
+	Context
 	Type          *ast.Field
 	Maximum       int
 	queryFunction queryFunction
 	Template      *template.Template
 	Builder       func(n int) ast.Decl
-	Selectors     []*ast.Ident
+	Selectors     []*ast.Field
 }
 
 func (t batchFunction) Generate(dst io.Writer) error {
@@ -165,7 +238,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 
-func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Ident) ast.Stmt {
+func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field) ast.Stmt {
 	if len(selectors) == 0 {
 		return nil
 	}
@@ -191,7 +264,7 @@ func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Ident
 		})
 		assignrhs = append(assignrhs, &ast.SelectorExpr{
 			X:   value,
-			Sel: sel,
+			Sel: astutil.MapFieldsToNameIdent(sel)[0],
 		})
 	}
 	body := &ast.RangeStmt{

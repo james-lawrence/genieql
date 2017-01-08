@@ -26,6 +26,14 @@ func Field(typ ast.Expr, names ...*ast.Ident) *ast.Field {
 	}
 }
 
+// SelExpr builds an *ast.SelectorExpr.
+func SelExpr(lhs, rhs string) *ast.SelectorExpr {
+	return &ast.SelectorExpr{
+		X:   ast.NewIdent(lhs),
+		Sel: ast.NewIdent(rhs),
+	}
+}
+
 // ExprTemplateList converts a series of template expressions into a slice of
 // ast.Expr.
 func ExprTemplateList(examples ...string) []ast.Expr {
@@ -150,6 +158,15 @@ func MapFieldsToNameExpr(args ...*ast.Field) []ast.Expr {
 	result := make([]ast.Expr, 0, len(args))
 	for _, f := range args {
 		result = append(result, MapIdentToExpr(f.Names...)...)
+	}
+	return result
+}
+
+// MapFieldsToNameIdent maps the set of fields to their names.
+func MapFieldsToNameIdent(args ...*ast.Field) []*ast.Ident {
+	result := make([]*ast.Ident, 0, len(args))
+	for _, f := range args {
+		result = append(result, f.Names...)
 	}
 	return result
 }

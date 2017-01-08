@@ -70,6 +70,19 @@ func (t ColumnInfoSet) ColumnNames() []string {
 	return columns
 }
 
+// PrimaryKey - returns the primary key from the column set.
+func (t ColumnInfoSet) PrimaryKey() ColumnInfoSet {
+	var columns []ColumnInfo
+
+	for _, column := range t {
+		if column.PrimaryKey {
+			columns = append(columns, column)
+		}
+	}
+
+	return ColumnInfoSet(columns)
+}
+
 // AmbiguityCheck checks the provided columns for duplicated values.
 func (t ColumnInfoSet) AmbiguityCheck() error {
 	var (
@@ -133,63 +146,74 @@ type ColumnTransformer interface {
 type TableDetails struct {
 	Dialect         Dialect
 	Table           string
-	Naturalkey      []ColumnInfo
 	Columns         []ColumnInfo
 	UnmappedColumns []ColumnInfo
-}
-
-// OnlyMappedColumns filters out columns from the current TableDetails that do not
-// exist in the destination structure. Mainly used for generating queries.
-func (t TableDetails) OnlyMappedColumns(fields []*ast.Field, aliases ...Aliaser) TableDetails {
-	dup := t
-
-	if len(fields) == 0 {
-		dup.Columns = []ColumnInfo{}
-		dup.UnmappedColumns = append(dup.UnmappedColumns, t.Columns...)
-		return dup
-	}
-
-	dup.Columns = make([]ColumnInfo, 0, len(t.Columns))
-	dup.UnmappedColumns = make([]ColumnInfo, 0, len(t.Columns))
-
-	for _, column := range t.Columns {
-		var mapped bool
-		for _, field := range fields {
-			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
-				mapped = true
-				dup.Columns = append(dup.Columns, column)
-			}
-		}
-		if !mapped {
-			dup.UnmappedColumns = append(dup.UnmappedColumns, column)
-		}
-	}
-
-	return dup
 }
 
 // LookupTableDetails determines the table details for the given dialect.
 func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
 	var (
-		err        error
-		naturalKey []ColumnInfo
-		columns    []ColumnInfo
+		err     error
+		columns []ColumnInfo
 	)
 
 	if columns, err = dialect.ColumnInformationForTable(table); err != nil {
 		return TableDetails{}, err
 	}
 
+	return TableDetails{
+		Dialect: dialect,
+		Table:   table,
+		Columns: columns,
+	}, nil
+}
+
+// mapColumns maps the columns to the fields using the aliases.
+// returns mapped, unmapped columns.
+func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]ColumnInfo, []ColumnInfo) {
+	if len(fields) == 0 {
+		return []ColumnInfo{}, columns
+	}
+
+	mColumns := make([]ColumnInfo, 0, len(columns))
+	uColumns := make([]ColumnInfo, 0, len(columns))
+
 	for _, column := range columns {
-		if column.PrimaryKey {
-			naturalKey = append(naturalKey, column)
+		var mapped bool
+		for _, field := range fields {
+			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
+				mapped = true
+				mColumns = append(mColumns, column)
+			}
+		}
+		if !mapped {
+			uColumns = append(uColumns, column)
 		}
 	}
 
-	return TableDetails{
-		Dialect:    dialect,
-		Table:      table,
-		Naturalkey: naturalKey,
-		Columns:    columns,
-	}, nil
+	return mColumns, uColumns
+}
+
+func mapFields(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]*ast.Field, []*ast.Field) {
+	if len(fields) == 0 {
+		return []*ast.Field{}, fields
+	}
+
+	mFields := make([]*ast.Field, 0, len(fields))
+	uFields := make([]*ast.Field, 0, len(fields))
+
+	for _, field := range fields {
+		for _, column := range columns {
+			var mapped bool
+			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
+				mapped = true
+				mFields = append(mFields, field)
+			}
+			if !mapped {
+				uFields = append(uFields, field)
+			}
+		}
+	}
+
+	return mFields, uFields
 }

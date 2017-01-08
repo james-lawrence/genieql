@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"path/filepath"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -26,48 +25,33 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	var (
 		err     error
 		config  genieql.Configuration
+		dialect genieql.Dialect
 		mapping genieql.MappingConfig
+		columns []genieql.ColumnInfo
+		pkg     *build.Package
 		fset    = token.NewFileSet()
 	)
-
 	pkgName, typName := extractPackageType(t.packageType)
-
-	config = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), t.configName),
-		),
-	)
-
-	if err = genieql.ReadMapper(config, pkgName, typName, t.mapName, &mapping); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
 	}
 
-	details, err := genieql.LoadInformation(config, t.table)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fields, err := mapping.TypeFields(fset, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
-		log.Println("type fields error")
-		log.Fatalln(err)
-	}
-
-	details = details.OnlyMappedColumns(fields, mapping.Mapper().Aliasers...)
-
-	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
-	if err != nil {
+	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
+
+	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+		return err
+	}
+
+	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}
 
 	hg := headerGenerator{
 		fset: fset,
 		pkg:  pkg,
 		args: os.Args[1:],
 	}
-
 	cg := crud.New(config, details, pkgName, typName)
-
 	pg := printGenerator{
 		delegate: genieql.MultiGenerate(hg, cg),
 	}

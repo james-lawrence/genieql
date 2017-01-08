@@ -51,7 +51,7 @@ type crudWriter struct {
 
 func (t crudWriter) Generate(out io.Writer) error {
 	names := genieql.ColumnInfoSet(t.details.Columns).ColumnNames()
-	naturalKeyNames := genieql.ColumnInfoSet(t.details.Naturalkey).ColumnNames()
+	naturalKeyNames := genieql.ColumnInfoSet(t.details.Columns).PrimaryKey().ColumnNames()
 	gens := make([]genieql.Generator, 0, 10)
 
 	constName := fmt.Sprintf("%sInsert", t.prefix)
@@ -62,7 +62,7 @@ func (t crudWriter) Generate(out io.Writer) error {
 		gens = append(gens, Select(t.details).Build(constName, names[i:i+1]))
 	}
 
-	if len(t.details.Naturalkey) > 0 {
+	if len(naturalKeyNames) > 0 {
 		constName = fmt.Sprintf("%sUpdateByID", t.prefix)
 		gens = append(gens, Update(t.details).Build(constName, naturalKeyNames))
 

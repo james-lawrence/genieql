@@ -104,7 +104,15 @@ func QFOFromComment(comments *ast.CommentGroup) ([]QueryFunctionOption, error) {
 	return options, nil
 }
 
-func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...QueryFunctionOption) genieql.Generator {
+func maybeQFO(options []QueryFunctionOption, err error) genieql.Generator {
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+
+	return NewQueryFunction(options...)
+}
+
+func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...QueryFunctionOption) ([]QueryFunctionOption, error) {
 	var (
 		err            error
 		commentOptions []QueryFunctionOption
@@ -113,22 +121,16 @@ func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.
 
 	// validations
 	if ft.Params.NumFields() < 1 {
-		return genieql.NewErrGenerator(
-			errors.Errorf("function prototype (%s) requires at least the type which will perform the query", name),
-		)
+		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) requires at least the type which will perform the query. i.e.) *sql.DB", name)
 	}
 
 	if ft.Results.NumFields() != 1 {
-		return genieql.NewErrGenerator(
-			errors.Errorf("function prototype (%s) requires a single function as the return value", name),
-		)
+		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) requires a single function as the return value", name)
 	}
 
 	queryer, params := extractOptionsFromParams(ft.Params.List...)
 	if scannerOption, err = extractOptionsFromResult(util, ft.Results.List[0]); err != nil {
-		return genieql.NewErrGenerator(
-			errors.Errorf("function prototype (%s) scanner option is invalid", name),
-		)
+		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) scanner option is invalid", name)
 	}
 
 	options := append(
@@ -140,10 +142,10 @@ func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.
 	)
 
 	if commentOptions, err = QFOFromComment(comment); err != nil {
-		return genieql.NewErrGenerator(errors.Errorf("function prototype (%s) comment options are invalid", name))
+		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) comment options are invalid", name)
 	}
 
-	return NewQueryFunction(append(options, commentOptions...)...)
+	return append(options, commentOptions...), nil
 }
 
 // NewQueryFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
@@ -152,7 +154,7 @@ func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, optio
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
-				g = append(g, generatorFromFuncType(util, ts.Name, decl.Doc, ft, options...))
+				g = append(g, maybeQFO(generatorFromFuncType(util, ts.Name, decl.Doc, ft, options...)))
 			}
 		}
 	}
@@ -163,7 +165,7 @@ func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, optio
 // NewQueryFunctionFromFuncDecl creates a function generator from the provided *ast.GenDecl
 func NewQueryFunctionFromFuncDecl(util genieql.Searcher, decl *ast.FuncDecl, options ...QueryFunctionOption) genieql.Generator {
 	options = append(options, extractOptionsFromFunctionDecls(decl.Body)...)
-	return generatorFromFuncType(util, decl.Name, decl.Doc, decl.Type, options...)
+	return maybeQFO(generatorFromFuncType(util, decl.Name, decl.Doc, decl.Type, options...))
 }
 
 func extractOptionsFromFunctionDecls(body *ast.BlockStmt) []QueryFunctionOption {

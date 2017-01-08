@@ -41,7 +41,7 @@ type funcGenerator struct {
 func (t funcGenerator) Generate(dst io.Writer) error {
 	mg := make([]genieql.Generator, 0, 10)
 	names := genieql.ColumnInfoSet(t.TableDetails.Columns).ColumnNames()
-	naturalKeyNames := genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames()
+	naturalKey := genieql.ColumnInfoSet(t.TableDetails.Columns).PrimaryKey()
 	queryerOption := generators.QFOQueryer("q", t.Queryer)
 
 	query := t.TableDetails.Dialect.Insert(1, t.TableDetails.Table, names, []string{})
@@ -68,31 +68,31 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		mg = append(mg, generators.NewQueryFunction(options...))
 	}
 
-	if len(t.TableDetails.Naturalkey) > 0 {
-		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKeyNames)
+	if len(naturalKey) > 0 {
+		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
+			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 
-		query = t.TableDetails.Dialect.Update(t.TableDetails.Table, names, naturalKeyNames)
+		query = t.TableDetails.Dialect.Update(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
+			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
 
-		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames())
+		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Naturalkey...)...),
+			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Prefix)),
 			generators.QFOScanner(t.UniqScanner),
