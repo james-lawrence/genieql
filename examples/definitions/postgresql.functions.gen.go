@@ -7,10 +7,10 @@ import "bitbucket.org/jatone/genieql/sqlx"
 // invoked by go generate @ definitions/example.go line 11
 
 func customQueryFunction(q sqlx.Queryer, query string, x1, x2, x3 int) ProfileScanner {
-	return DynamicProfileScanner(q.Query(query, x1, x2, x3))
+	return NewProfileScannerDynamic(q.Query(query, x1, x2, x3))
 }
 
 func customQueryFucntion2(q sqlx.Queryer, x1, x2, x3 int) ProfileScanner {
 	var query = query1
-	return DynamicProfileScanner(q.Query(query, x1, x2, x3))
+	return NewProfileScannerDynamic(q.Query(query, x1, x2, x3))
 }
