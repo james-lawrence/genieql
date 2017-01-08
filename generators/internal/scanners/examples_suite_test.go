@@ -1,4 +1,4 @@
-package examples_test
+package scanners_test
 
 import (
 	. "bitbucket.org/jatone/genieql/sqlxtest"

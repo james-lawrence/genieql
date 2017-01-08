@@ -11,6 +11,8 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/generators"
+
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -53,7 +55,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 
 	pkg, err := genieql.LocatePackage(pkgName, build.Default, genieql.StrictPackageName(filepath.Base(pkgName)))
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(errors.Wrapf(err, "failed to locate package %s", pkgName))
 	}
 
 	// HACK - this section lets us build up the ignored field set.

@@ -1,7 +1,7 @@
-package examples_test
+package scanners_test
 
 import (
-	. "bitbucket.org/jatone/genieql/scanner/internal/examples"
+	. "bitbucket.org/jatone/genieql/generators/internal/scanners"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

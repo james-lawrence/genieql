@@ -18,7 +18,7 @@ func batchFunction3(q sqlx.Queryer, i ...int) (ExampleScanner, []int) {
 			}
 			return
 		}
-		return StaticExampleScanner(q.Query(query, exploder(i...)...)), i[len(i)-1:]
+		return StaticExampleScanner(q.Query(query, exploder(i...)[:]...)), i[len(i)-1:]
 	case 2:
 		const query = `QUERY 2`
 		exploder := func(i ...int) (r [6]interface{}) {
@@ -27,7 +27,7 @@ func batchFunction3(q sqlx.Queryer, i ...int) (ExampleScanner, []int) {
 			}
 			return
 		}
-		return StaticExampleScanner(q.Query(query, exploder(i...)...)), i[len(i)-1:]
+		return StaticExampleScanner(q.Query(query, exploder(i...)[:]...)), i[len(i)-1:]
 	default:
 		const query = `QUERY 3`
 		exploder := func(i ...int) (r [9]interface{}) {
@@ -36,6 +36,6 @@ func batchFunction3(q sqlx.Queryer, i ...int) (ExampleScanner, []int) {
 			}
 			return
 		}
-		return StaticExampleScanner(q.Query(query, exploder(i[:3]...)...)), i[3:]
+		return StaticExampleScanner(q.Query(query, exploder(i[:3]...)[:]...)), i[3:]
 	}
 }

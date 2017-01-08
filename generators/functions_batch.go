@@ -15,32 +15,32 @@ import (
 )
 
 // BatchFunctionOption ...
-type BatchFunctionOption func(*batchInsert)
+type BatchFunctionOption func(*batchFunction)
 
 // BatchFunctionQueryBuilder ...
 func BatchFunctionQueryBuilder(query func(n int) ast.Decl) BatchFunctionOption {
-	return func(b *batchInsert) {
+	return func(b *batchFunction) {
 		b.Builder = query
 	}
 }
 
 // BatchFunctionQFOptions ...
 func BatchFunctionQFOptions(options ...QueryFunctionOption) BatchFunctionOption {
-	return func(b *batchInsert) {
+	return func(b *batchFunction) {
 		b.queryFunction.Apply(options...)
 	}
 }
 
 // BatchFunctionExploder ...
 func BatchFunctionExploder(sel ...*ast.Ident) BatchFunctionOption {
-	return func(b *batchInsert) {
+	return func(b *batchFunction) {
 		b.Selectors = sel
 	}
 }
 
 // NewBatchFunction builds functions that execute on batches of values, such as update and insert.
 func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOption) genieql.Generator {
-	b := batchInsert{
+	b := batchFunction{
 		Maximum:  maximum,
 		Type:     typ,
 		Template: batchQueryFuncTemplate,
@@ -58,7 +58,7 @@ func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOptio
 	return b
 }
 
-type batchInsert struct {
+type batchFunction struct {
 	Type          *ast.Field
 	Maximum       int
 	queryFunction queryFunction
@@ -67,7 +67,7 @@ type batchInsert struct {
 	Selectors     []*ast.Ident
 }
 
-func (t batchInsert) Generate(dst io.Writer) error {
+func (t batchFunction) Generate(dst io.Writer) error {
 	type queryFunctionContext struct {
 		Number       int
 		BuiltinQuery ast.Node
