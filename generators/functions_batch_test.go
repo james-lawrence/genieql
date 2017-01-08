@@ -45,6 +45,7 @@ var _ = Describe("Batch Functions", func() {
 			buffer.WriteString("package example\n\n")
 			Expect(NewBatchFunction(maximum, field, options...).Generate(&buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
+
 			Expect(genieql.FormatOutput(&formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())

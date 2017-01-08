@@ -107,18 +107,22 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		})
 		queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(t.Type)...)
 	} else {
-		defaultQueryParams = append(queryParameters, &ast.CallExpr{
-			Fun: exploderName,
-			Args: astutil.ExprList(&ast.SliceExpr{
-				X:    astutil.MapFieldsToNameExpr(t.Type)[0],
-				High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)},
-			}),
-			Ellipsis: token.Pos(1),
+		defaultQueryParams = append(queryParameters, &ast.SliceExpr{
+			X: &ast.CallExpr{
+				Fun: exploderName,
+				Args: astutil.ExprList(&ast.SliceExpr{
+					X:    astutil.MapFieldsToNameExpr(t.Type)[0],
+					High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)},
+				}),
+				Ellipsis: token.Pos(1),
+			},
 		})
-		queryParameters = append(queryParameters, &ast.CallExpr{
-			Fun:      exploderName,
-			Args:     astutil.MapFieldsToNameExpr(t.Type),
-			Ellipsis: token.Pos(1),
+		queryParameters = append(queryParameters, &ast.SliceExpr{
+			X: &ast.CallExpr{
+				Fun:      exploderName,
+				Args:     astutil.MapFieldsToNameExpr(t.Type),
+				Ellipsis: token.Pos(1),
+			},
 		})
 	}
 

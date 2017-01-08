@@ -11,7 +11,7 @@ import (
 
 func TestIntegrationTests(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Examples Suite")
+	RunSpecs(t, "Scanners Suite")
 }
 
 var (

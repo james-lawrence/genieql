@@ -27,7 +27,51 @@ type generateInsert struct {
 	defaults    []string
 }
 
-func (t *generateInsert) Execute(*kingpin.ParseContext) error {
+func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	insert := cmd.Command("insert", "generate more complicated insert queries")
+	insert.Flag(
+		"config",
+		"name of configuration file to use",
+	).Default("default.config").StringVar(&t.configName)
+
+	insert.Flag(
+		"mapping",
+		"name of the map to use",
+	).Default("default").StringVar(&t.mapName)
+
+	insert.Flag("default", "specifies a name of a column to default to database value").
+		StringsVar(&t.defaults)
+
+	insert.Flag(
+		"output",
+		"path of output file",
+	).Default("").StringVar(&t.output)
+
+	insert.Flag("batch", "number of records to insert").Default("1").IntVar(&t.batch)
+
+	cmd = insert.Command("constant", "output the query as a constant").Action(t.constant).Default()
+	cmd.Flag(
+		"suffix",
+		"suffix for the name of the generated constant",
+	).Required().StringVar(&t.constSuffix)
+
+	cmd.Arg(
+		"package.Type",
+		"package prefixed structure we want to build the scanner/query for",
+	).Required().StringVar(&t.packageType)
+
+	cmd.Arg(
+		"table",
+		"table you want to build the queries for",
+	).Required().StringVar(&t.table)
+
+	x := insert.Command("experimental", "experimental insert commands")
+	cmd = x.Command("batch-function", "generate a batch insert function")
+
+	return insert
+}
+
+func (t *generateInsert) constant(*kingpin.ParseContext) error {
 	var (
 		err           error
 		configuration genieql.Configuration
@@ -92,45 +136,4 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 	}
 
 	return nil
-}
-
-func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	insert := cmd.Command("insert", "generate more complicated insert queries that can be used by the crud scanner").Action(t.Execute)
-
-	insert.Flag(
-		"config",
-		"name of configuration file to use",
-	).Default("default.config").StringVar(&t.configName)
-
-	insert.Flag(
-		"mapping",
-		"name of the map to use",
-	).Default("default").StringVar(&t.mapName)
-
-	insert.Flag(
-		"suffix",
-		"suffix for the name of the generated constant",
-	).Required().StringVar(&t.constSuffix)
-
-	insert.Flag("default", "specifies a name of a column to default to database value").
-		StringsVar(&t.defaults)
-
-	insert.Flag(
-		"output",
-		"path of output file",
-	).Default("").StringVar(&t.output)
-
-	insert.Flag("batch", "number of records to insert").Default("1").IntVar(&t.batch)
-
-	insert.Arg(
-		"package.Type",
-		"package prefixed structure we want to build the scanner/query for",
-	).Required().StringVar(&t.packageType)
-
-	insert.Arg(
-		"table",
-		"table you want to build the queries for",
-	).Required().StringVar(&t.table)
-
-	return insert
 }

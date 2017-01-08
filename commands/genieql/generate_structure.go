@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
+	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -153,7 +154,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 
 	pkg, err := genieql.LocatePackage(t.pkg, build.Default, genieql.StrictPackageName(filepath.Base(t.pkg)))
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(err, errors.Wrapf(err, "failed to locate package: %s", t.pkg))
 	}
 
 	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "structure", "table")
