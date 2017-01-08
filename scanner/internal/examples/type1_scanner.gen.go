@@ -10,8 +10,6 @@ import (
 // genieql scanner default --config=scanner-test.config --output=type1_scanner.gen.go bitbucket.org/jatone/genieql/scanner/internal/examples.Type1 type1
 // invoked by go generate @ examples/type1.go line 10
 
-const Type1StaticScannerStaticColumns = "field1,field2,field3,field4,field5,field6,field7,field8"
-
 // Type1Scanner scanner interface.
 type Type1Scanner interface {
 	Scan(arg0 *Type1) error
@@ -40,23 +38,25 @@ func (t errType1Scanner) Close() error {
 	return nil
 }
 
-// StaticType1StaticScanner creates a scanner that operates on a static
+const Type1StaticScannerStaticColumns = "field1,field2,field3,field4,field5,field6,field7,field8,unmappedfield"
+
+// NewType1StaticScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticType1StaticScanner(rows *sql.Rows, err error) Type1Scanner {
+func NewType1StaticScannerStatic(rows *sql.Rows, err error) Type1Scanner {
 	if err != nil {
 		return errType1Scanner{e: err}
 	}
 
-	return staticType1StaticScanner{
+	return type1StaticScannerStatic{
 		Rows: rows,
 	}
 }
 
-type staticType1StaticScanner struct {
+type type1StaticScannerStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticType1StaticScanner) Scan(arg0 *Type1) error {
+func (t type1StaticScannerStatic) Scan(arg0 *Type1) error {
 	var (
 		c0 sql.NullString
 		c1 sql.NullString
@@ -115,34 +115,34 @@ func (t staticType1StaticScanner) Scan(arg0 *Type1) error {
 	return t.Rows.Err()
 }
 
-func (t staticType1StaticScanner) Err() error {
+func (t type1StaticScannerStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticType1StaticScanner) Close() error {
+func (t type1StaticScannerStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticType1StaticScanner) Next() bool {
+func (t type1StaticScannerStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowType1StaticScanner creates a scanner that operates on a static
+// NewType1StaticScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowType1StaticScanner(row *sql.Row) StaticRowType1StaticScanner {
-	return StaticRowType1StaticScanner{
+func NewType1StaticScannerStaticRow(row *sql.Row) Type1StaticScannerStaticRow {
+	return Type1StaticScannerStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowType1StaticScanner struct {
+type Type1StaticScannerStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowType1StaticScanner) Scan(arg0 *Type1) error {
+func (t Type1StaticScannerStaticRow) Scan(arg0 *Type1) error {
 	var (
 		c0 sql.NullString
 		c1 sql.NullString

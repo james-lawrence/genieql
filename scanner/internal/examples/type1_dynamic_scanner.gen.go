@@ -10,23 +10,33 @@ import (
 // genieql scanner dynamic --config=scanner-test.config --output=type1_dynamic_scanner.gen.go bitbucket.org/jatone/genieql/scanner/internal/examples.Type1 type1
 // invoked by go generate @ examples/type1.go line 11
 
-// DynamicType1DynamicScanner creates a scanner that operates on a dynamic
+// NewType1DynamicScannerDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicType1DynamicScanner(rows *sql.Rows, err error) Type1Scanner {
+func NewType1DynamicScannerDynamic(rows *sql.Rows, err error) Type1Scanner {
 	if err != nil {
 		return errType1Scanner{e: err}
 	}
 
-	return dynamicType1DynamicScanner{
+	return type1DynamicScannerDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicType1DynamicScanner struct {
+type type1DynamicScannerDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicType1DynamicScanner) Scan(arg0 *Type1) error {
+func (t type1DynamicScannerDynamic) Scan(arg0 *Type1) error {
+	const (
+		field10 = "field1"
+		field21 = "field2"
+		field32 = "field3"
+		field43 = "field4"
+		field54 = "field5"
+		field65 = "field6"
+		field76 = "field7"
+		field87 = "field8"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -50,21 +60,21 @@ func (t dynamicType1DynamicScanner) Scan(arg0 *Type1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "field1":
+		case field10:
 			dst = append(dst, &c0)
-		case "field2":
+		case field21:
 			dst = append(dst, &c1)
-		case "field3":
+		case field32:
 			dst = append(dst, &c2)
-		case "field4":
+		case field43:
 			dst = append(dst, &c3)
-		case "field5":
+		case field54:
 			dst = append(dst, &c4)
-		case "field6":
+		case field65:
 			dst = append(dst, &c5)
-		case "field7":
+		case field76:
 			dst = append(dst, &c6)
-		case "field8":
+		case field87:
 			dst = append(dst, &c7)
 		default:
 			dst = append(dst, &ignored)
@@ -77,42 +87,42 @@ func (t dynamicType1DynamicScanner) Scan(arg0 *Type1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "field1":
+		case field10:
 			if c0.Valid {
 				tmp := c0.String
 				arg0.Field1 = tmp
 			}
-		case "field2":
+		case field21:
 			if c1.Valid {
 				tmp := c1.String
 				arg0.Field2 = &tmp
 			}
-		case "field3":
+		case field32:
 			if c2.Valid {
 				tmp := c2.Bool
 				arg0.Field3 = tmp
 			}
-		case "field4":
+		case field43:
 			if c3.Valid {
 				tmp := c3.Bool
 				arg0.Field4 = &tmp
 			}
-		case "field5":
+		case field54:
 			if c4.Valid {
 				tmp := int(c4.Int64)
 				arg0.Field5 = tmp
 			}
-		case "field6":
+		case field65:
 			if c5.Valid {
 				tmp := int(c5.Int64)
 				arg0.Field6 = &tmp
 			}
-		case "field7":
+		case field76:
 			if c6.Valid {
 				tmp := c6.Time
 				arg0.Field7 = tmp
 			}
-		case "field8":
+		case field87:
 			if c7.Valid {
 				tmp := c7.Time
 				arg0.Field8 = &tmp
@@ -123,17 +133,17 @@ func (t dynamicType1DynamicScanner) Scan(arg0 *Type1) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicType1DynamicScanner) Err() error {
+func (t type1DynamicScannerDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicType1DynamicScanner) Close() error {
+func (t type1DynamicScannerDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicType1DynamicScanner) Next() bool {
+func (t type1DynamicScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }

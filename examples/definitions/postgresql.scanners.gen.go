@@ -11,8 +11,6 @@ import (
 // genieql generate experimental scanners types -o postgresql.scanners.gen.go
 // invoked by go generate @ definitions/example.go line 9
 
-const ProfileScannerStaticColumns = "i1,i2,b1,t1"
-
 // ProfileScanner scanner interface.
 type ProfileScanner interface {
 	Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error
@@ -41,23 +39,25 @@ func (t errProfileScanner) Close() error {
 	return nil
 }
 
-// StaticProfileScanner creates a scanner that operates on a static
+const ProfileScannerStaticColumns = "i1,i2,b1,t1"
+
+// NewProfileScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticProfileScanner(rows *sql.Rows, err error) ProfileScanner {
+func NewProfileScannerStatic(rows *sql.Rows, err error) ProfileScanner {
 	if err != nil {
 		return errProfileScanner{e: err}
 	}
 
-	return staticProfileScanner{
+	return profileScannerStatic{
 		Rows: rows,
 	}
 }
 
-type staticProfileScanner struct {
+type profileScannerStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
+func (t profileScannerStatic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 	var (
 		c0 sql.NullInt64
 		c1 sql.NullInt64
@@ -92,34 +92,34 @@ func (t staticProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 	return t.Rows.Err()
 }
 
-func (t staticProfileScanner) Err() error {
+func (t profileScannerStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticProfileScanner) Close() error {
+func (t profileScannerStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticProfileScanner) Next() bool {
+func (t profileScannerStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowProfileScanner creates a scanner that operates on a static
+// NewProfileScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowProfileScanner(row *sql.Row) StaticRowProfileScanner {
-	return StaticRowProfileScanner{
+func NewProfileScannerStaticRow(row *sql.Row) ProfileScannerStaticRow {
+	return ProfileScannerStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowProfileScanner struct {
+type ProfileScannerStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
+func (t ProfileScannerStaticRow) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 	var (
 		c0 sql.NullInt64
 		c1 sql.NullInt64
@@ -154,23 +154,29 @@ func (t StaticRowProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) erro
 	return nil
 }
 
-// DynamicProfileScanner creates a scanner that operates on a dynamic
+// NewProfileScannerDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicProfileScanner(rows *sql.Rows, err error) ProfileScanner {
+func NewProfileScannerDynamic(rows *sql.Rows, err error) ProfileScanner {
 	if err != nil {
 		return errProfileScanner{e: err}
 	}
 
-	return dynamicProfileScanner{
+	return profileScannerDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicProfileScanner struct {
+type profileScannerDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
+func (t profileScannerDynamic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
+	const (
+		i10 = "i1"
+		i21 = "i2"
+		b12 = "b1"
+		t13 = "t1"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -190,13 +196,13 @@ func (t dynamicProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error 
 
 	for _, column := range columns {
 		switch column {
-		case "i1":
+		case i10:
 			dst = append(dst, &c0)
-		case "i2":
+		case i21:
 			dst = append(dst, &c1)
-		case "b1":
+		case b12:
 			dst = append(dst, &c2)
-		case "t1":
+		case t13:
 			dst = append(dst, &c3)
 		default:
 			dst = append(dst, &ignored)
@@ -209,22 +215,22 @@ func (t dynamicProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error 
 
 	for _, column := range columns {
 		switch column {
-		case "i1":
+		case i10:
 			if c0.Valid {
 				tmp := int(c0.Int64)
 				*i1 = tmp
 			}
-		case "i2":
+		case i21:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				*i2 = tmp
 			}
-		case "b1":
+		case b12:
 			if c2.Valid {
 				tmp := c2.Bool
 				*b1 = tmp
 			}
-		case "t1":
+		case t13:
 			if c3.Valid {
 				tmp := c3.Time
 				*t1 = tmp
@@ -235,22 +241,20 @@ func (t dynamicProfileScanner) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error 
 	return t.Rows.Err()
 }
 
-func (t dynamicProfileScanner) Err() error {
+func (t profileScannerDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicProfileScanner) Close() error {
+func (t profileScannerDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicProfileScanner) Next() bool {
+func (t profileScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }
-
-const Example1ScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field"
 
 // Example1Scanner scanner interface.
 type Example1Scanner interface {
@@ -280,23 +284,25 @@ func (t errExample1Scanner) Close() error {
 	return nil
 }
 
-// StaticExample1Scanner creates a scanner that operates on a static
+const Example1ScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field"
+
+// NewExample1ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticExample1Scanner(rows *sql.Rows, err error) Example1Scanner {
+func NewExample1ScannerStatic(rows *sql.Rows, err error) Example1Scanner {
 	if err != nil {
 		return errExample1Scanner{e: err}
 	}
 
-	return staticExample1Scanner{
+	return example1ScannerStatic{
 		Rows: rows,
 	}
 }
 
-type staticExample1Scanner struct {
+type example1ScannerStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticExample1Scanner) Scan(e *Example1) error {
+func (t example1ScannerStatic) Scan(e *Example1) error {
 	var (
 		c0 pq.NullTime
 		c1 sql.NullInt64
@@ -337,34 +343,34 @@ func (t staticExample1Scanner) Scan(e *Example1) error {
 	return t.Rows.Err()
 }
 
-func (t staticExample1Scanner) Err() error {
+func (t example1ScannerStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticExample1Scanner) Close() error {
+func (t example1ScannerStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticExample1Scanner) Next() bool {
+func (t example1ScannerStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowExample1Scanner creates a scanner that operates on a static
+// NewExample1ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowExample1Scanner(row *sql.Row) StaticRowExample1Scanner {
-	return StaticRowExample1Scanner{
+func NewExample1ScannerStaticRow(row *sql.Row) Example1ScannerStaticRow {
+	return Example1ScannerStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowExample1Scanner struct {
+type Example1ScannerStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowExample1Scanner) Scan(e *Example1) error {
+func (t Example1ScannerStaticRow) Scan(e *Example1) error {
 	var (
 		c0 pq.NullTime
 		c1 sql.NullInt64
@@ -405,23 +411,30 @@ func (t StaticRowExample1Scanner) Scan(e *Example1) error {
 	return nil
 }
 
-// DynamicExample1Scanner creates a scanner that operates on a dynamic
+// NewExample1ScannerDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicExample1Scanner(rows *sql.Rows, err error) Example1Scanner {
+func NewExample1ScannerDynamic(rows *sql.Rows, err error) Example1Scanner {
 	if err != nil {
 		return errExample1Scanner{e: err}
 	}
 
-	return dynamicExample1Scanner{
+	return example1ScannerDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicExample1Scanner struct {
+type example1ScannerDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicExample1Scanner) Scan(e *Example1) error {
+func (t example1ScannerDynamic) Scan(e *Example1) error {
+	const (
+		created_at0 = "created_at"
+		id1         = "id"
+		text_field2 = "text_field"
+		updated_at3 = "updated_at"
+		uuid_field4 = "uuid_field"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -442,15 +455,15 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "created_at":
+		case created_at0:
 			dst = append(dst, &c0)
-		case "id":
+		case id1:
 			dst = append(dst, &c1)
-		case "text_field":
+		case text_field2:
 			dst = append(dst, &c2)
-		case "updated_at":
+		case updated_at3:
 			dst = append(dst, &c3)
-		case "uuid_field":
+		case uuid_field4:
 			dst = append(dst, &c4)
 		default:
 			dst = append(dst, &ignored)
@@ -463,27 +476,27 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 
 	for _, column := range columns {
 		switch column {
-		case "created_at":
+		case created_at0:
 			if c0.Valid {
 				tmp := c0.Time
 				e.CreatedAt = tmp
 			}
-		case "id":
+		case id1:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				e.ID = tmp
 			}
-		case "text_field":
+		case text_field2:
 			if c2.Valid {
 				tmp := c2.String
 				e.TextField = &tmp
 			}
-		case "updated_at":
+		case updated_at3:
 			if c3.Valid {
 				tmp := c3.Time
 				e.UpdatedAt = tmp
 			}
-		case "uuid_field":
+		case uuid_field4:
 			if c4.Valid {
 				tmp := c4.String
 				e.UUIDField = tmp
@@ -494,22 +507,20 @@ func (t dynamicExample1Scanner) Scan(e *Example1) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExample1Scanner) Err() error {
+func (t example1ScannerDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicExample1Scanner) Close() error {
+func (t example1ScannerDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicExample1Scanner) Next() bool {
+func (t example1ScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }
-
-const ComboScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field,bool_field,created_at,text_field,updated_at,uuid_field"
 
 // ComboScanner scanner interface.
 type ComboScanner interface {
@@ -539,23 +550,25 @@ func (t errComboScanner) Close() error {
 	return nil
 }
 
-// StaticComboScanner creates a scanner that operates on a static
+const ComboScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field,bool_field,created_at,text_field,updated_at,uuid_field"
+
+// NewComboScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func StaticComboScanner(rows *sql.Rows, err error) ComboScanner {
+func NewComboScannerStatic(rows *sql.Rows, err error) ComboScanner {
 	if err != nil {
 		return errComboScanner{e: err}
 	}
 
-	return staticComboScanner{
+	return comboScannerStatic{
 		Rows: rows,
 	}
 }
 
-type staticComboScanner struct {
+type comboScannerStatic struct {
 	Rows *sql.Rows
 }
 
-func (t staticComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+func (t comboScannerStatic) Scan(e1 *Example1, e2 *Example2) error {
 	var (
 		c0 pq.NullTime
 		c1 sql.NullInt64
@@ -626,34 +639,34 @@ func (t staticComboScanner) Scan(e1 *Example1, e2 *Example2) error {
 	return t.Rows.Err()
 }
 
-func (t staticComboScanner) Err() error {
+func (t comboScannerStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t staticComboScanner) Close() error {
+func (t comboScannerStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t staticComboScanner) Next() bool {
+func (t comboScannerStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewStaticRowComboScanner creates a scanner that operates on a static
+// NewComboScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStaticRowComboScanner(row *sql.Row) StaticRowComboScanner {
-	return StaticRowComboScanner{
+func NewComboScannerStaticRow(row *sql.Row) ComboScannerStaticRow {
+	return ComboScannerStaticRow{
 		row: row,
 	}
 }
 
-type StaticRowComboScanner struct {
+type ComboScannerStaticRow struct {
 	row *sql.Row
 }
 
-func (t StaticRowComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+func (t ComboScannerStaticRow) Scan(e1 *Example1, e2 *Example2) error {
 	var (
 		c0 pq.NullTime
 		c1 sql.NullInt64
@@ -724,23 +737,35 @@ func (t StaticRowComboScanner) Scan(e1 *Example1, e2 *Example2) error {
 	return nil
 }
 
-// DynamicComboScanner creates a scanner that operates on a dynamic
+// NewComboScannerDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func DynamicComboScanner(rows *sql.Rows, err error) ComboScanner {
+func NewComboScannerDynamic(rows *sql.Rows, err error) ComboScanner {
 	if err != nil {
 		return errComboScanner{e: err}
 	}
 
-	return dynamicComboScanner{
+	return comboScannerDynamic{
 		Rows: rows,
 	}
 }
 
-type dynamicComboScanner struct {
+type comboScannerDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t dynamicComboScanner) Scan(e1 *Example1, e2 *Example2) error {
+func (t comboScannerDynamic) Scan(e1 *Example1, e2 *Example2) error {
+	const (
+		created_at0 = "created_at"
+		id1         = "id"
+		text_field2 = "text_field"
+		updated_at3 = "updated_at"
+		uuid_field4 = "uuid_field"
+		bool_field5 = "bool_field"
+		created_at6 = "created_at"
+		text_field7 = "text_field"
+		updated_at8 = "updated_at"
+		uuid_field9 = "uuid_field"
+	)
 	var (
 		ignored sql.RawBytes
 		err     error
@@ -766,25 +791,25 @@ func (t dynamicComboScanner) Scan(e1 *Example1, e2 *Example2) error {
 
 	for _, column := range columns {
 		switch column {
-		case "created_at":
+		case created_at0:
 			dst = append(dst, &c0)
-		case "id":
+		case id1:
 			dst = append(dst, &c1)
-		case "text_field":
+		case text_field2:
 			dst = append(dst, &c2)
-		case "updated_at":
+		case updated_at3:
 			dst = append(dst, &c3)
-		case "uuid_field":
+		case uuid_field4:
 			dst = append(dst, &c4)
-		case "bool_field":
+		case bool_field5:
 			dst = append(dst, &c5)
-		case "created_at":
+		case created_at6:
 			dst = append(dst, &c6)
-		case "text_field":
+		case text_field7:
 			dst = append(dst, &c7)
-		case "updated_at":
+		case updated_at8:
 			dst = append(dst, &c8)
-		case "uuid_field":
+		case uuid_field9:
 			dst = append(dst, &c9)
 		default:
 			dst = append(dst, &ignored)
@@ -797,52 +822,52 @@ func (t dynamicComboScanner) Scan(e1 *Example1, e2 *Example2) error {
 
 	for _, column := range columns {
 		switch column {
-		case "created_at":
+		case created_at0:
 			if c0.Valid {
 				tmp := c0.Time
 				e1.CreatedAt = tmp
 			}
-		case "id":
+		case id1:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				e1.ID = tmp
 			}
-		case "text_field":
+		case text_field2:
 			if c2.Valid {
 				tmp := c2.String
 				e1.TextField = &tmp
 			}
-		case "updated_at":
+		case updated_at3:
 			if c3.Valid {
 				tmp := c3.Time
 				e1.UpdatedAt = tmp
 			}
-		case "uuid_field":
+		case uuid_field4:
 			if c4.Valid {
 				tmp := c4.String
 				e1.UUIDField = tmp
 			}
-		case "bool_field":
+		case bool_field5:
 			if c5.Valid {
 				tmp := c5.Bool
 				e2.BoolField = tmp
 			}
-		case "created_at":
+		case created_at6:
 			if c6.Valid {
 				tmp := c6.Time
 				e2.CreatedAt = tmp
 			}
-		case "text_field":
+		case text_field7:
 			if c7.Valid {
 				tmp := c7.String
 				e2.TextField = tmp
 			}
-		case "updated_at":
+		case updated_at8:
 			if c8.Valid {
 				tmp := c8.Time
 				e2.UpdatedAt = tmp
 			}
-		case "uuid_field":
+		case uuid_field9:
 			if c9.Valid {
 				tmp := c9.String
 				e2.UUIDField = tmp
@@ -853,17 +878,17 @@ func (t dynamicComboScanner) Scan(e1 *Example1, e2 *Example2) error {
 	return t.Rows.Err()
 }
 
-func (t dynamicComboScanner) Err() error {
+func (t comboScannerDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t dynamicComboScanner) Close() error {
+func (t comboScannerDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t dynamicComboScanner) Next() bool {
+func (t comboScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }
