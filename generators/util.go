@@ -19,6 +19,20 @@ import (
 	"bitbucket.org/jatone/genieql/astutil"
 )
 
+func exprToArray(x ast.Expr) ast.Expr {
+	return &ast.ArrayType{
+		Elt: x,
+	}
+}
+
+func fieldToType(f *ast.Field) ast.Expr {
+	return f.Type
+}
+
+func fieldToNames(f *ast.Field) []*ast.Ident {
+	return f.Names
+}
+
 // utility function that converts a set of ast.Field into
 // a string representation of a function's arguments.
 func arguments(fields []*ast.Field) string {

@@ -56,7 +56,7 @@ type testDialect struct {
 	deleteq string
 }
 
-func (t testDialect) Insert(table string, columns, defaults []string) string {
+func (t testDialect) Insert(n int, table string, columns, defaults []string) string {
 	return t.insertq
 }
 

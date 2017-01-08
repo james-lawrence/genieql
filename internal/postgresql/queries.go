@@ -18,11 +18,18 @@ func (t *columnValueTransformer) Transform(c genieql.ColumnInfo) string {
 }
 
 // Insert generate an insert query.
-func Insert(table string, columns, defaulted []string) string {
-	p, _ := placeholders(1, selectPlaceholder(columns, defaulted))
-	values := strings.Join(p, ",")
+func Insert(n int, table string, columns, defaulted []string) string {
+	offset := 1
+	values := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		var (
+			p []string
+		)
+		p, offset = placeholders(offset, selectPlaceholder(columns, defaulted))
+		values = append(values, fmt.Sprintf("(%s)", strings.Join(p, ",")))
+	}
 	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(insertTmpl, table, columnOrder, values, columnOrder)
+	return fmt.Sprintf(insertTmpl, table, columnOrder, strings.Join(values, ","), columnOrder)
 }
 
 // Select generate a select query.
@@ -69,7 +76,7 @@ func placeholders(offset int, columns []placeholder) ([]string, int) {
 		clauses = append(clauses, ph)
 	}
 
-	return clauses, len(clauses)
+	return clauses, idx
 }
 
 func selectPlaceholder(columns, defaults []string) []placeholder {
@@ -106,7 +113,7 @@ func (t offsetPlaceholder) String(offset int) (string, int) {
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"
-const insertTmpl = "INSERT INTO %s (%s) VALUES (%s) RETURNING %s"
+const insertTmpl = "INSERT INTO %s (%s) VALUES %s RETURNING %s"
 const updateTmpl = "UPDATE %s SET %s WHERE %s RETURNING %s"
 const deleteTmpl = "DELETE FROM %s WHERE %s RETURNING %s"
 const matchAllClause = "'t'"

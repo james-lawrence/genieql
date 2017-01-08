@@ -6,7 +6,7 @@ import (
 )
 
 // Insert generate an insert query.
-func Insert(table string, columns, defaulted []string) string {
+func Insert(n int, table string, columns, defaulted []string) string {
 	p, _ := placeholders(1, selectPlaceholder(columns, defaulted))
 	values := strings.Join(p, ",")
 	columnOrder := strings.Join(columns, ",")

@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -47,12 +46,13 @@ func QFOBuiltinQueryFromString(q string) QueryFunctionOption {
 // QFOBuiltinQuery force the query function to only execute the specified
 // query.
 func QFOBuiltinQuery(x ast.Expr) QueryFunctionOption {
+	const name = "query"
 	return func(qf *queryFunction) {
 		switch x.(type) {
 		case *ast.BasicLit:
-			qf.BuiltinQuery = genieql.QueryLiteral2(token.CONST, "query", x)
+			qf.BuiltinQuery = genieql.QueryLiteral2(token.CONST, name, x)
 		default:
-			qf.BuiltinQuery = genieql.QueryLiteral2(token.VAR, "query", x)
+			qf.BuiltinQuery = genieql.QueryLiteral2(token.VAR, name, x)
 		}
 	}
 }
@@ -251,23 +251,16 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		parameters      []*ast.Field
 		queryParameters []ast.Expr
 		query           *ast.CallExpr
+		queryParam      = astutil.Field(ast.NewIdent("string"), ast.NewIdent("query"))
 	)
 
-	t.Parameters = normalizeFieldNames(t.Parameters)
-
-	queryFieldParam := astutil.Field(ast.NewIdent("string"), ast.NewIdent("query"))
-	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(queryFieldParam)...)
-	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(t.Parameters...)...)
-
-	// [] -> [sqlx.Queryer]
-	parameters = append(parameters, astutil.Field(t.Queryer, ast.NewIdent(t.QueryerName)))
-	// [sqlx.Queryer] -> [sqlx.Queryer, query]
-	if t.BuiltinQuery == nil {
-		parameters = append(parameters, queryFieldParam)
-	}
-	// [sqlx.Queryer, query] -> [sqlx.Queryer, query, param1, param2]
-	parameters = append(parameters, t.Parameters...)
-
+	parameters = buildParameters(
+		t.BuiltinQuery == nil,
+		astutil.Field(t.Queryer, ast.NewIdent(t.QueryerName)),
+		queryParam,
+		t.Parameters...,
+	)
+	queryParameters = buildQueryParameters(queryParam, t.Parameters...)
 	// if we're dealing with an ellipsis parameter function
 	// mark the CallExpr Ellipsis
 	// this should only be the case when t.Parameters ends with
@@ -292,121 +285,41 @@ func (t queryFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate query function")
 }
 
-func NewBatchInsert(maximum int, typ *ast.Field, options ...QueryFunctionOption) genieql.Generator {
-	qf := queryFunction{}
-	qf.Apply(options...)
-
-	return batchInsert{
-		Maximum:       maximum,
-		Type:          typ,
-		Template:      insertQueryFuncTemplate,
-		queryFunction: qf,
-	}
-}
-
-type batchInsert struct {
-	Type          *ast.Field
-	Maximum       int
-	queryFunction queryFunction
-	Template      *template.Template
-}
-
-func (t batchInsert) Generate(dst io.Writer) error {
-	type queryFunctionContext struct {
-		Number       int
-		BuiltinQuery ast.Node
-	}
-	type context struct {
-		Name             string
-		ScannerFunc      ast.Expr
-		ScannerType      ast.Expr
-		Statements       []queryFunctionContext
-		Queryer          ast.Expr
-		DefaultStatement queryFunctionContext
-	}
-
+func buildParameters(queryInParams bool, queryer, query *ast.Field, params ...*ast.Field) []*ast.Field {
 	var (
-		queryParameters []ast.Expr
-		statements      []queryFunctionContext
+		parameters []*ast.Field
 	)
 
-	statements = make([]queryFunctionContext, 0, t.Maximum)
-	for i := 0; i < t.Maximum; i++ {
-		tmp := queryFunctionContext{
-			Number:       i + 1,
-			BuiltinQuery: genieql.QueryLiteral("query", "SELECT * FROM foo"), // TODO built query...
-		}
-
-		statements = append(statements, tmp)
+	params = normalizeFieldNames(params)
+	// [] -> [q sqlx.Queryer]
+	parameters = append(parameters, queryer)
+	// [q sqlx.Queryer] -> [q sqlx.Queryer, query string]
+	if queryInParams {
+		parameters = append(parameters, query)
 	}
+	// [q sqlx.Queryer, query string] -> [q sqlx.Queryer, query string, param1 int, param2 bool]
+	parameters = append(parameters, params...)
 
-	queryFieldParam := astutil.Field(ast.NewIdent("string"), ast.NewIdent("q"))
-	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(queryFieldParam)...)
-	queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(t.queryFunction.Parameters...)...)
-	query := &ast.CallExpr{
-		Fun:  &ast.SelectorExpr{X: ast.NewIdent(t.queryFunction.QueryerName), Sel: t.queryFunction.QueryerFunction},
-		Args: queryParameters,
-	}
-
-	ctx := context{
-		Name:             t.queryFunction.Name,
-		Statements:       statements[:len(statements)-1],
-		DefaultStatement: statements[len(statements)-1],
-		ScannerFunc:      t.queryFunction.ScannerDecl.Name,
-		ScannerType:      t.queryFunction.ScannerDecl.Type.Results.List[0].Type,
-		Queryer:          query,
-	}
-	log.Printf("context: %#v\n", ctx)
-	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
+	return parameters
 }
 
-func fieldExpander(n int) func([]*ast.Field) []*ast.Field {
-	return func(params []*ast.Field) []*ast.Field {
-		out := make([]*ast.Field, 0, len(params)*n)
-		for i := 0; i < n; i++ {
-			out = append(out, params...)
-		}
-		return out
-	}
+func buildQueryParameters(query *ast.Field, params ...*ast.Field) []ast.Expr {
+	params = normalizeFieldNames(params)
+	return append(astutil.MapFieldsToNameExpr(query), astutil.MapFieldsToNameExpr(params...)...)
 }
 
-var queryPattern = astutil.TypePattern(astutil.ExprList("*sql.Rows", "error")...)
+var queryPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
 var queryRowPattern = astutil.TypePattern(astutil.Expr("*sql.Row"))
 
-var defaultQueryFuncTemplate = template.Must(template.New("query-function").Funcs(funcMap).Parse(defaultQueryFunc))
-var insertQueryFuncTemplate = template.Must(template.New("query-function").Funcs(funcMap).Parse(insertQueryFunc))
-var funcMap = template.FuncMap{
+var defaultQueryFuncTemplate = template.Must(template.New("query-function").Funcs(defaultQueryFuncMap).Parse(defaultQueryFunc))
+var defaultQueryFuncMap = template.FuncMap{
 	"expr":      types.ExprString,
 	"arguments": arguments,
-	"printAST":  astPrint,
+	"ast":       astPrint,
 }
 
 const defaultQueryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
-	{{- .BuiltinQuery | printAST }}
-	return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
-}
-`
-
-const insertQueryFunc = `func Foo(values...string) {
-	var (
-		q string
-		remaining []string
-	)
-
-	switch len(values) {
-	case 0:
-		return nil
-	{{- range $ctx := .Statements }}
-	case {{ $ctx.Number }}:
-		{{ $ctx.BuiltinQuery | printAST }}
-		q = query
-	{{ end }}
-	default:
-		{{ .DefaultStatement.BuiltinQuery | printAST }}
-		q = query
-		values, remaining = values[:{{.DefaultStatement.Number}}], values[{{.DefaultStatement.Number}}:]
-	}
-
+	{{- .BuiltinQuery | ast }}
 	return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
 }
 `

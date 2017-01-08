@@ -55,7 +55,7 @@ func (t crudWriter) Generate(out io.Writer) error {
 	gens := make([]genieql.Generator, 0, 10)
 
 	constName := fmt.Sprintf("%sInsert", t.prefix)
-	gens = append(gens, Insert(t.details).Build(constName, []string{}))
+	gens = append(gens, Insert(t.details).Build(1, constName, []string{}))
 
 	for i, column := range t.details.Columns {
 		constName = fmt.Sprintf("%sFindBy%s", t.prefix, snaker.SnakeToCamel(column.Name))

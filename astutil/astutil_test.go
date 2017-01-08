@@ -12,9 +12,9 @@ import (
 )
 
 var _ = Describe("Astutil", func() {
-	Describe("ExprList", func() {
+	Describe("ExprTemplateList", func() {
 		It("should work with no arguments", func() {
-			Expect(ExprList()).To(BeEmpty())
+			Expect(ExprTemplateList()).To(BeEmpty())
 		})
 	})
 

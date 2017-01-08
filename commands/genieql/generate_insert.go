@@ -23,6 +23,7 @@ type generateInsert struct {
 	table       string
 	output      string
 	mapName     string
+	batch       int
 	defaults    []string
 }
 
@@ -80,7 +81,7 @@ func (t *generateInsert) Execute(*kingpin.ParseContext) error {
 		},
 		details.Columns,
 	)
-	cg := crud.Insert(details).Build(constName, t.defaults)
+	cg := crud.Insert(details).Build(t.batch, constName, t.defaults)
 
 	pg := printGenerator{
 		delegate: genieql.MultiGenerate(hg, cc, cg),
@@ -118,6 +119,8 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 		"output",
 		"path of output file",
 	).Default("").StringVar(&t.output)
+
+	insert.Flag("batch", "number of records to insert").Default("1").IntVar(&t.batch)
 
 	insert.Arg(
 		"package.Type",

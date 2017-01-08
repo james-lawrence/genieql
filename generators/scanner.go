@@ -328,9 +328,9 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
 	)
 
 	if nullExpresion, nullable = t.NullableType(column.Type, local); !nullable {
-		assignVal := astutil.ExprList(types.ExprString(local))
+		assignVal := astutil.ExprList(local)
 		if column.PtrDst {
-			assignVal = astutil.ExprList("&" + types.ExprString(local))
+			assignVal = astutil.ExprList(&ast.UnaryExpr{Op: token.AND, X: local})
 		}
 
 		return astutil.Assign(
@@ -340,10 +340,10 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
 		)
 	}
 
-	tmpVar := astutil.ExprList("tmp")
+	tmpVar := astutil.ExprTemplateList("tmp")
 	assignVal := tmpVar
 	if column.PtrDst {
-		assignVal = astutil.ExprList("&tmp")
+		assignVal = astutil.ExprTemplateList("&tmp")
 	}
 
 	return &ast.IfStmt{

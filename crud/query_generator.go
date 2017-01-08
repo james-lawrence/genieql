@@ -12,10 +12,10 @@ import (
 // Insert generate an insert query for the table.
 type Insert genieql.TableDetails
 
-func (t Insert) Build(name string, defaults []string) genieql.Generator {
+func (t Insert) Build(n int, name string, defaults []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
 		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
-		query := t.Dialect.Insert(t.Table, names, defaults)
+		query := t.Dialect.Insert(n, t.Table, names, defaults)
 		return emit(dst, name, query)
 	})
 }

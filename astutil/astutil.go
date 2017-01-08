@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"strconv"
 )
 
 // Expr converts a template expression into an ast.Expr node.
@@ -25,12 +26,22 @@ func Field(typ ast.Expr, names ...*ast.Ident) *ast.Field {
 	}
 }
 
-// ExprList converts a series of template expressions into a slice of
+// ExprTemplateList converts a series of template expressions into a slice of
 // ast.Expr.
-func ExprList(examples ...string) []ast.Expr {
+func ExprTemplateList(examples ...string) []ast.Expr {
 	result := make([]ast.Expr, 0, len(examples))
 	for _, example := range examples {
 		result = append(result, Expr(example))
+	}
+	return result
+}
+
+// ExprList converts a series of template expressions into a slice of
+// ast.Expr.
+func ExprList(in ...ast.Expr) []ast.Expr {
+	result := make([]ast.Expr, 0, len(in))
+	for _, x := range in {
+		result = append(result, x)
 	}
 	return result
 }
@@ -191,4 +202,9 @@ func TypePattern(pattern ...ast.Expr) func(...ast.Expr) bool {
 
 		return true
 	}
+}
+
+// IntegerLiteral builds a integer literal.
+func IntegerLiteral(n int) ast.Expr {
+	return &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(n)}
 }

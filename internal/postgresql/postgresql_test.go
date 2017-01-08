@@ -49,7 +49,7 @@ var _ = Describe("Postgresql", func() {
 		})
 
 		It("should support insert queries", func() {
-			q := NewDialect(DB).Insert("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			q := NewDialect(DB).Insert(1, "table", []string{"c1", "c2", "c2"}, []string{"c1"})
 			Expect(q).To(Equal("INSERT INTO table (c1,c2,c2) VALUES (DEFAULT,$1,$2) RETURNING c1,c2,c2"))
 		})
 

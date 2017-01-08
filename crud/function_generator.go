@@ -44,7 +44,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 	naturalKeyNames := genieql.ColumnInfoSet(t.TableDetails.Naturalkey).ColumnNames()
 	queryerOption := generators.QFOQueryer("q", t.Queryer)
 
-	query := t.TableDetails.Dialect.Insert(t.TableDetails.Table, names, []string{})
+	query := t.TableDetails.Dialect.Insert(1, t.TableDetails.Table, names, []string{})
 	options := []generators.QueryFunctionOption{
 		queryerOption,
 		generators.QFOName(fmt.Sprintf("%sInsert", t.Prefix)),
