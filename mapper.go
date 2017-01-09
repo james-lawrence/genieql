@@ -98,18 +98,8 @@ func (t MappingConfig) Aliaser() Aliaser {
 	})
 }
 
-// TypeFields deprecated use TypeFields2
-func (t MappingConfig) TypeFields(fset *token.FileSet, context build.Context, filter func(*build.Package) bool) ([]*ast.Field, error) {
-	pkg, err := LocatePackage(t.Package, context, filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return t.TypeFields2(fset, pkg)
-}
-
-// TypeFields2 ...
-func (t MappingConfig) TypeFields2(fset *token.FileSet, pkg *build.Package) ([]*ast.Field, error) {
+// TypeFields returns the fields of underlying struct of the mapping.
+func (t MappingConfig) TypeFields(fset *token.FileSet, pkg *build.Package) ([]*ast.Field, error) {
 	typ, err := NewUtils(fset).FindUniqueType(FilterName(t.Type), pkg)
 	if err != nil {
 		return nil, err
@@ -126,15 +116,7 @@ func (t MappingConfig) ColumnInfo(dialect Dialect) ([]ColumnInfo, error) {
 	return dialect.ColumnInformationForTable(t.TableOrQuery)
 }
 
-// MappedColumnInfo - deprecated use MappedColumnInfo2
-func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, context build.Context, filter func(*build.Package) bool) ([]ColumnInfo, []ColumnInfo, error) {
-	pkg, err := LocatePackage(t.Package, context, filter)
-	if err != nil {
-		return []ColumnInfo(nil), []ColumnInfo(nil), err
-	}
-	return t.MappedColumnInfo2(dialect, fset, pkg)
-}
-
+// MappedColumnInfo2 returns the mapped and unmapped columns for the mapping.
 func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
 	var (
 		err     error
@@ -142,7 +124,7 @@ func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, p
 		columns []ColumnInfo
 	)
 
-	if fields, err = t.TypeFields2(fset, pkg); err != nil {
+	if fields, err = t.TypeFields(fset, pkg); err != nil {
 		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
 	}
 
@@ -154,6 +136,7 @@ func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, p
 	return mColumns, uColumns, nil
 }
 
+// MappedFields returns the fields that are mapped to columns.
 func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]*ast.Field, []*ast.Field, error) {
 	var (
 		err     error
@@ -161,7 +144,7 @@ func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *b
 		columns []ColumnInfo
 	)
 
-	if fields, err = t.TypeFields2(fset, pkg); err != nil {
+	if fields, err = t.TypeFields(fset, pkg); err != nil {
 		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
 	}
 
