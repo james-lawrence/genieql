@@ -5,5 +5,6 @@ package definitions
 //go:generate genieql generate experimental scanners types -o postgresql.scanners.gen.go
 //go:generate genieql generate experimental crud -o postgresql.crud.functions.gen.go --table=example1 --scanner=NewExample1ScannerDynamic --unique-scanner=NewExample1ScannerStaticRow bitbucket.org/jatone/genieql/examples/definitions.Example1
 //go:generate genieql generate experimental functions types -o postgresql.functions.gen.go
+//go:generate genieql generate insert experimental batch-function -o postgresql.insert.batch.gen.go
 
 const query1 = `SELECT * FROM example1 WHERE id = $1 || id = $2 || id = $3`

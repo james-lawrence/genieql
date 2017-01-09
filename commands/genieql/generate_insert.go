@@ -31,6 +31,19 @@ type generateInsert struct {
 }
 
 func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	var (
+		err error
+		wd  string
+	)
+
+	if wd, err = os.Getwd(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if pkg := currentPackage(wd); pkg != nil {
+		t.pkg = pkg.ImportPath
+	}
+
 	insert := cmd.Command("insert", "generate more complicated insert queries")
 	insert.Flag(
 		"config",
@@ -48,7 +61,7 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	insert.Flag(
 		"output",
 		"path of output file",
-	).Default("").StringVar(&t.output)
+	).Short('o').Default("").StringVar(&t.output)
 
 	cmd = insert.Command("constant", "output the query as a constant").Action(t.constant).Default()
 	cmd.Flag(
@@ -77,7 +90,7 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	cmd.Arg(
 		"package",
 		"package to search for definitions",
-	).Required().StringVar(&t.packageType)
+	).StringVar(&t.pkg)
 
 	return insert
 }
@@ -91,7 +104,7 @@ func (t *generateInsert) batchCmd(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.packageType, fset); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
 		return err
 	}
 
@@ -102,7 +115,7 @@ func (t *generateInsert) batchCmd(*kingpin.ParseContext) error {
 		Dialect:        dialect,
 	}
 
-	taggedFiles, err := findTaggedFiles(t.packageType, "genieql", "generate", "insert", "batch")
+	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "insert", "batch")
 	if err != nil {
 		log.Fatalln(err)
 	}

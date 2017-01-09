@@ -146,6 +146,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		BuiltinQuery ast.Node
 		Queryer      ast.Expr
 		Exploder     ast.Node
+		Explode      ast.Node
 	}
 	type context struct {
 		Name             string
@@ -163,6 +164,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		defaultQueryParams []ast.Expr
 		statements         []queryFunctionContext
 		exploderName       = ast.NewIdent("exploder")
+		tmpName            = ast.NewIdent("tmp")
 		queryField         = astutil.Field(ast.NewIdent("string"), ast.NewIdent("query"))
 	)
 
@@ -181,21 +183,10 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		queryParameters = append(queryParameters, astutil.MapFieldsToNameExpr(t.Type)...)
 	} else {
 		defaultQueryParams = append(queryParameters, &ast.SliceExpr{
-			X: &ast.CallExpr{
-				Fun: exploderName,
-				Args: astutil.ExprList(&ast.SliceExpr{
-					X:    astutil.MapFieldsToNameExpr(t.Type)[0],
-					High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)},
-				}),
-				Ellipsis: token.Pos(1),
-			},
+			X: tmpName,
 		})
 		queryParameters = append(queryParameters, &ast.SliceExpr{
-			X: &ast.CallExpr{
-				Fun:      exploderName,
-				Args:     astutil.MapFieldsToNameExpr(t.Type),
-				Ellipsis: token.Pos(1),
-			},
+			X: tmpName,
 		})
 	}
 
@@ -210,6 +201,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 				Ellipsis: token.Pos(1),
 			},
 			Exploder: buildExploder(i, exploderName, t.Type, t.Selectors...),
+			Explode:  buildExploderAssign(tmpName, exploderName, astutil.MapFieldsToNameExpr(t.Type), t.Selectors...),
 		}
 
 		statements = append(statements, tmp)
@@ -219,6 +211,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Number:       t.Maximum,
 		BuiltinQuery: t.Builder(t.Maximum),
 		Exploder:     buildExploder(t.Maximum, exploderName, t.Type, t.Selectors...),
+		Explode:      buildExploderAssign(tmpName, exploderName, astutil.ExprList(&ast.SliceExpr{X: astutil.MapFieldsToNameExpr(t.Type)[0], High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)}}), t.Selectors...),
 		Queryer: &ast.CallExpr{
 			Fun:      &ast.SelectorExpr{X: ast.NewIdent(t.queryFunction.QueryerName), Sel: t.queryFunction.QueryerFunction},
 			Args:     defaultQueryParams,
@@ -238,6 +231,23 @@ func (t batchFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 
+func buildExploderAssign(tmpName, exploderName ast.Expr, exploderArg []ast.Expr, selectors ...*ast.Field) ast.Stmt {
+	if len(selectors) == 0 {
+		return nil
+	}
+
+	return astutil.Assign(
+		astutil.ExprList(tmpName),
+		token.DEFINE,
+		astutil.ExprList(
+			&ast.CallExpr{
+				Fun:      exploderName,
+				Args:     exploderArg,
+				Ellipsis: token.Pos(1),
+			},
+		),
+	)
+}
 func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field) ast.Stmt {
 	if len(selectors) == 0 {
 		return nil
@@ -278,6 +288,7 @@ func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field
 			},
 		},
 	}
+
 	return &ast.AssignStmt{
 		Tok: token.DEFINE,
 		Lhs: []ast.Expr{name},
@@ -325,11 +336,13 @@ const batchQueryFunc = `func {{.Name}}({{.Parameters | arguments}}) ({{ .Scanner
 	case {{ $ctx.Number }}:
 		{{ $ctx.BuiltinQuery | ast }}
 		{{ $ctx.Exploder | ast }}
+		{{ $ctx.Explode | ast }}
 		return {{ $.ScannerFunc | expr }}({{ $ctx.Queryer | expr }}), {{$.Type | name}}[len({{$.Type | name}})-1:]
 	{{- end }}
 	default:
 		{{ .DefaultStatement.BuiltinQuery | ast }}
 		{{ .DefaultStatement.Exploder | ast }}
+		{{ .DefaultStatement.Explode | ast }}
 		return {{ .ScannerFunc | expr }}({{ .DefaultStatement.Queryer | expr }}), {{.Type | name}}[{{.DefaultStatement.Number}}:]
 	}
 }

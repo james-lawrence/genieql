@@ -130,13 +130,13 @@ func findTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
 		taggedFiles TaggedFiles
 	)
 
-	ctx := build.Default
-	ctx.BuildTags = tags
 	normal, err := build.Default.Import(path, ".", build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err
 	}
 
+	ctx := build.Default
+	ctx.BuildTags = tags
 	tagged, err := ctx.Import(path, ".", build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err

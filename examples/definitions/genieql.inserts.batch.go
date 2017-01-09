@@ -4,4 +4,4 @@ package definitions
 
 import "bitbucket.org/jatone/genieql/sqlx"
 
-type example1BatchInsertFunction func(queryer sqlx.Queryer, p [100]Example1) NewExample1ScannerStatic
+type example1BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example1) NewExample1ScannerStatic
