@@ -3,6 +3,7 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
+	"log"
 )
 
 // ErrMissingDriver - returned when a driver has not been registered.
