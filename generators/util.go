@@ -214,7 +214,7 @@ func packageName(pkg *build.Package, x ast.Expr) string {
 	switch x := x.(type) {
 	case *ast.SelectorExpr:
 		// TODO
-		log.Println("imports", x.Sel.Name, pkg.Imports)
+		log.Println("imports", types.ExprString(x.X), x.Sel.Name, pkg.Imports)
 		panic("unimplemented code path: currently structures from other packages are not supported")
 	default:
 		return pkg.ImportPath
