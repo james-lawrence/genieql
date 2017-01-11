@@ -38,6 +38,13 @@ func MustLookupDriver(name string) Driver {
 	return driver
 }
 
+// PrintRegisteredDrivers print drivers in the registry, debugging utility.
+func PrintRegisteredDrivers() {
+	for key, _ := range map[string]Driver(drivers) {
+		log.Println("Driver", key)
+	}
+}
+
 // Driver - driver specific details.
 type Driver interface {
 	LookupNullableType(ast.Expr) ast.Expr
