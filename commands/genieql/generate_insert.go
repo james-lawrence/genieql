@@ -133,6 +133,8 @@ func (t *generateInsert) batchCmd(*kingpin.ParseContext) error {
 		}
 
 		functionsTypes := mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
+			// TODO: should be able to build query inserter here if I pass in the n and column info.
+			// TODO: extract defaults from comment.
 			return generators.NewBatchFunctionFromGenDecl(
 				ctx,
 				d,
