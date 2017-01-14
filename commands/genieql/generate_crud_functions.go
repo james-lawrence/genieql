@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/build"
 	"go/token"
 	"log"
@@ -32,6 +33,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		mapping genieql.MappingConfig
 		dialect genieql.Dialect
 		columns []genieql.ColumnInfo
+		fields  []*ast.Field
 		fset    = token.NewFileSet()
 		pkg     *build.Package
 	)
@@ -52,6 +54,10 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
+	if fields, _, err = mapping.MapFieldsToColumns(fset, pkg, columns...); err != nil {
+		return errors.Wrapf(err, "failed to locate fields for %s", t.packageType)
+	}
+
 	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}
 
 	scanner, err := genieql.NewUtils(fset).FindFunction(func(s string) bool {
@@ -69,7 +75,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 
 	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
 
-	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner)
+	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner, fields)
 
 	pg := printGenerator{
 		delegate: genieql.MultiGenerate(hg, cg),

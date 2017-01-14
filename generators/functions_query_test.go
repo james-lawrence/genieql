@@ -47,6 +47,10 @@ func (t testSearcher) FindUniqueType(f ast.Filter) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type not found")
 }
 
+func (t testSearcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
+	return []*ast.Field(nil), fmt.Errorf("not implemented")
+}
+
 var _ = ginkgo.Describe("Query Functions", func() {
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),

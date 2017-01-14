@@ -20,10 +20,10 @@ type mapper struct {
 }
 
 func (t *mapper) configure(app *kingpin.Application) *kingpin.CmdClause {
-	mapCmd := app.Command("map", "define a mapping configuration for a particular type/table combination")
+	mapCmd := app.Command("map", "define a mapping configuration for a particular type")
 	mapCmd.Flag("config", "configuration to use").Default("default.config").StringVar(&t.configuration)
-	mapCmd.Flag("include-table-prefix-aliases", "generate additional aliases with the table name prefixed i.e.) my_column -> my_table_my_column").
-		Default("true").BoolVar(&t.includeTablePrefixes)
+	// mapCmd.Flag("include-table-prefix-aliases", "generate additional aliases with the table name prefixed i.e.) my_column -> my_table_my_column").
+	// 	Default("true").BoolVar(&t.includeTablePrefixes)
 	mapCmd.Flag("mapping", "name to give the mapping").Default("default").StringVar(&t.name)
 	mapCmd.Arg("package.type", "location of type to work with github.com/soandso/package.MyType").Required().StringVar(&t.packageType)
 	mapCmd.Arg("transformations", "transformations (in left to right order) to apply to structure fields to map them to column names").

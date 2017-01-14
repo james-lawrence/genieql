@@ -100,12 +100,7 @@ func (t MappingConfig) Aliaser() Aliaser {
 
 // TypeFields returns the fields of underlying struct of the mapping.
 func (t MappingConfig) TypeFields(fset *token.FileSet, pkg *build.Package) ([]*ast.Field, error) {
-	typ, err := NewUtils(fset).FindUniqueType(FilterName(t.Type), pkg)
-	if err != nil {
-		return nil, err
-	}
-
-	return ExtractFields(typ).List, nil
+	return NewSearcher(fset, pkg).FindFieldsForType(ast.NewIdent(t.Type))
 }
 
 // ColumnInfo defined by the mapping.
@@ -137,19 +132,27 @@ func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, p
 }
 
 // MappedFields returns the fields that are mapped to columns.
-func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]*ast.Field, []*ast.Field, error) {
+func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package, ignoreColumnSet ...string) ([]*ast.Field, []*ast.Field, error) {
 	var (
 		err     error
-		fields  []*ast.Field
 		columns []ColumnInfo
+	)
+
+	if columns, err = t.ColumnInfo(dialect); err != nil {
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+	}
+
+	return t.MapFieldsToColumns(fset, pkg, columns...)
+}
+
+func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
+	var (
+		err    error
+		fields []*ast.Field
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
 		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
-	}
-
-	if columns, err = t.ColumnInfo(dialect); err != nil {
-		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
 	}
 
 	mFields, uFields := mapFields(columns, fields, t.Mapper().Aliasers...)

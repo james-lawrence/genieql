@@ -21,8 +21,8 @@ type dynamicScanner struct {
 
 func (t dynamicScanner) Options() []scannerOption {
 	return []scannerOption{
-		defaultScannerNameFormat("%sDynamicScanner"),
-		defaultRowScannerNameFormat("%sDynamicRowScanner"),
+		defaultScannerNameFormat("%sScanner"),
+		defaultRowScannerNameFormat("%sRowScanner"),
 		defaultInterfaceNameFormat("%sScanner"),
 		defaultInterfaceRowNameFormat("%sRowScanner"),
 		defaultErrScannerNameFormat("%sErrScanner"),

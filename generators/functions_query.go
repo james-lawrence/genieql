@@ -74,8 +74,17 @@ func QFOQueryerFunction(x *ast.Ident) QueryFunctionOption {
 
 // QFOParameters specify the parameters for the query function.
 func QFOParameters(params ...*ast.Field) QueryFunctionOption {
+	params = normalizeFieldNames(params...)
 	return func(qf *queryFunction) {
+		qf.QueryParameters = astutil.MapFieldsToNameExpr(params...)
 		qf.Parameters = params
+	}
+}
+
+// QFOTemplate sets the template for the query function
+func QFOTemplate(tmpl *template.Template) QueryFunctionOption {
+	return func(qf *queryFunction) {
+		qf.Template = tmpl
 	}
 }
 
@@ -197,7 +206,7 @@ func extractOptionsFromResult(util genieql.Searcher, field *ast.Field) (QueryFun
 // NewQueryFunction build a query function generator from the provided options.
 func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 	qf := queryFunction{
-		Template:    defaultQueryFuncTemplate,
+		Template:    defaultQueryFuncTemplate(),
 		Parameters:  []*ast.Field{},
 		QueryerName: defaultQueryParamName,
 		Queryer:     &ast.StarExpr{X: &ast.SelectorExpr{X: ast.NewIdent("sql"), Sel: ast.NewIdent("DB")}},
@@ -228,6 +237,7 @@ type queryFunction struct {
 	Queryer         ast.Expr
 	QueryerName     string
 	QueryerFunction *ast.Ident
+	QueryParameters []ast.Expr
 	Parameters      []*ast.Field
 	Template        *template.Template
 }
@@ -241,12 +251,14 @@ func (t *queryFunction) Apply(options ...QueryFunctionOption) *queryFunction {
 
 func (t queryFunction) Generate(dst io.Writer) error {
 	type context struct {
-		Name         string
-		ScannerFunc  ast.Expr
-		ScannerType  ast.Expr
-		BuiltinQuery ast.Node
-		Queryer      ast.Expr
-		Parameters   []*ast.Field
+		Name            string
+		ScannerFunc     ast.Expr
+		ScannerType     ast.Expr
+		BuiltinQuery    ast.Node
+		Exploders       []ast.Stmt
+		Queryer         ast.Expr
+		Parameters      []*ast.Field
+		QueryParameters []ast.Expr
 	}
 
 	var (
@@ -262,7 +274,8 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		queryParam,
 		t.Parameters...,
 	)
-	queryParameters = buildQueryParameters(queryParam, t.Parameters...)
+	queryParameters = buildQueryParameters(queryParam, t.QueryParameters...)
+
 	// if we're dealing with an ellipsis parameter function
 	// mark the CallExpr Ellipsis
 	// this should only be the case when t.Parameters ends with
@@ -292,7 +305,7 @@ func buildParameters(queryInParams bool, queryer, query *ast.Field, params ...*a
 		parameters []*ast.Field
 	)
 
-	params = normalizeFieldNames(params)
+	params = normalizeFieldNames(params...)
 	// [] -> [q sqlx.Queryer]
 	parameters = append(parameters, queryer)
 	// [q sqlx.Queryer] -> [q sqlx.Queryer, query string]
@@ -305,26 +318,29 @@ func buildParameters(queryInParams bool, queryer, query *ast.Field, params ...*a
 	return parameters
 }
 
-func buildQueryParameters(query *ast.Field, params ...*ast.Field) []ast.Expr {
-	params = normalizeFieldNames(params)
-	return append(astutil.MapFieldsToNameExpr(query), astutil.MapFieldsToNameExpr(params...)...)
+func buildQueryParameters(query *ast.Field, params ...ast.Expr) []ast.Expr {
+	return append(astutil.MapFieldsToNameExpr(query), params...)
 }
 
 var queryPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
 var queryRowPattern = astutil.TypePattern(astutil.Expr("*sql.Row"))
 
-var defaultQueryFuncTemplate = template.Must(template.New("query-function").Funcs(defaultQueryFuncMap).Parse(defaultQueryFunc))
-var defaultQueryFuncMap = template.FuncMap{
-	"expr":      types.ExprString,
-	"arguments": arguments,
-	"ast":       astPrint,
+func defaultQueryFuncTemplate() *template.Template {
+	const defaultQueryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
+		{{- .BuiltinQuery | ast }}
+		return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
+	}
+	`
+	var (
+		defaultQueryFuncMap = template.FuncMap{
+			"expr":      types.ExprString,
+			"arguments": arguments,
+			"ast":       astPrint,
+		}
+		defaultQueryFuncTemplate = template.Must(template.New("query-function").Funcs(defaultQueryFuncMap).Parse(defaultQueryFunc))
+	)
+	return defaultQueryFuncTemplate
 }
-
-const defaultQueryFunc = `func {{.Name}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
-	{{- .BuiltinQuery | ast }}
-	return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
-}
-`
 
 func isEllipsis(fields []*ast.Field) token.Pos {
 	var (

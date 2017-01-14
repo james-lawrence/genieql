@@ -70,17 +70,23 @@ func (t ColumnInfoSet) ColumnNames() []string {
 	return columns
 }
 
-// PrimaryKey - returns the primary key from the column set.
-func (t ColumnInfoSet) PrimaryKey() ColumnInfoSet {
-	var columns []ColumnInfo
-
+// Filter filters out columns in the set based on the filter function.
+func (t ColumnInfoSet) Filter(cut func(ColumnInfo) bool) ColumnInfoSet {
+	result := make([]ColumnInfo, 0, len(t))
 	for _, column := range t {
-		if column.PrimaryKey {
-			columns = append(columns, column)
+		if cut(column) {
+			result = append(result, column)
 		}
 	}
 
-	return ColumnInfoSet(columns)
+	return ColumnInfoSet(result)
+}
+
+// PrimaryKey - returns the primary key from the column set.
+func (t ColumnInfoSet) PrimaryKey() ColumnInfoSet {
+	return t.Filter(func(column ColumnInfo) bool {
+		return column.PrimaryKey
+	})
 }
 
 // AmbiguityCheck checks the provided columns for duplicated values.
@@ -110,6 +116,19 @@ func (t ColumnInfoSet) AmbiguityCheck() error {
 	}
 
 	return nil
+}
+
+// ColumnInfoFilterIgnore filter that ignores column with a name in the set.
+func ColumnInfoFilterIgnore(set ...string) func(ColumnInfo) bool {
+	return func(c ColumnInfo) bool {
+		for _, ignore := range set {
+			if ignore == c.Name {
+				return false
+			}
+		}
+
+		return true
+	}
 }
 
 func NewColumnInfoNameTransformer(aliasers ...Aliaser) ColumnInfoNameTransformer {

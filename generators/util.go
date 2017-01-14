@@ -63,7 +63,7 @@ func _arguments(xtransformer func(ast.Expr) ast.Expr, fields []*ast.Field) strin
 }
 
 // normalizes the names of the field.
-func normalizeFieldNames(fields []*ast.Field) []*ast.Field {
+func normalizeFieldNames(fields ...*ast.Field) []*ast.Field {
 	result := make([]*ast.Field, 0, len(fields))
 	for _, field := range fields {
 		result = append(result, astutil.Field(field.Type, normalizeIdent(field.Names)...))

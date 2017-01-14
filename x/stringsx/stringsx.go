@@ -25,6 +25,10 @@ func Contains(s string, v ...string) bool {
 
 // ToPrivate lowercases the first letter.
 func ToPrivate(s string) string {
+	if s == "" {
+		return ""
+	}
+
 	runes := []rune(s)
 	runes[0] = unicode.ToLower(runes[0])
 	return string(runes)

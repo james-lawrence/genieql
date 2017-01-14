@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"go/types"
 	"io"
 	"os"
 	"strings"
@@ -228,6 +229,7 @@ func SelectValues(node ast.Node) []FilteredValue {
 type Searcher interface {
 	FindFunction(f ast.Filter) (*ast.FuncDecl, error)
 	FindUniqueType(f ast.Filter) (*ast.TypeSpec, error)
+	FindFieldsForType(x ast.Expr) ([]*ast.Field, error)
 }
 
 func NewSearcher(fset *token.FileSet, pkgset ...*build.Package) Searcher {
@@ -245,6 +247,19 @@ func (t searcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
 
 func (t searcher) FindUniqueType(f ast.Filter) (*ast.TypeSpec, error) {
 	return NewUtils(t.fset).FindUniqueType(f, t.pkgset...)
+}
+
+func (t searcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
+	var (
+		err  error
+		spec *ast.TypeSpec
+	)
+
+	if spec, err = t.FindUniqueType(FilterName(types.ExprString(x))); err != nil {
+		return []*ast.Field(nil), err
+	}
+
+	return ExtractFields(spec).List, nil
 }
 
 type Utils interface {

@@ -13,7 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 )
 
-func NewFunctions(c genieql.Configuration, queryer string, details genieql.TableDetails, pkg, prefix string, scanner, uniqScanner *ast.FuncDecl) genieql.Generator {
+func NewFunctions(c genieql.Configuration, queryer string, details genieql.TableDetails, pkg, typ string, scanner, uniqScanner *ast.FuncDecl, fields []*ast.Field) genieql.Generator {
 	q, err := parser.ParseExpr(queryer)
 	if err != nil {
 		return genieql.NewErrGenerator(err)
@@ -22,20 +22,22 @@ func NewFunctions(c genieql.Configuration, queryer string, details genieql.Table
 	return funcGenerator{
 		TableDetails: details,
 		Package:      pkg,
-		Prefix:       prefix,
+		Type:         typ,
 		Scanner:      scanner,
 		UniqScanner:  uniqScanner,
 		Queryer:      q,
+		Fields:       fields,
 	}
 }
 
 type funcGenerator struct {
 	genieql.TableDetails
 	Package     string
-	Prefix      string
+	Type        string
 	Scanner     *ast.FuncDecl
 	UniqScanner *ast.FuncDecl
 	Queryer     ast.Expr
+	Fields      []*ast.Field
 }
 
 func (t funcGenerator) Generate(dst io.Writer) error {
@@ -47,9 +49,13 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 	query := t.TableDetails.Dialect.Insert(1, t.TableDetails.Table, names, []string{})
 	options := []generators.QueryFunctionOption{
 		queryerOption,
-		generators.QFOName(fmt.Sprintf("%sInsert", t.Prefix)),
+		generators.QFOName(fmt.Sprintf("%sInsert", t.Type)),
 		generators.QFOScanner(t.UniqScanner),
-		generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
+		generators.QFOExplodeStructParam(
+			astutil.Field(ast.NewIdent(t.Type), ast.NewIdent("arg1")),
+			t.Fields...,
+		),
+		// generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
 		generators.QFOBuiltinQueryFromString(query),
 	}
 
@@ -61,7 +67,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			queryerOption,
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOParameters(fieldFromColumnInfo(column)...),
-			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Prefix, snaker.SnakeToCamel(column.Name))),
+			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Type, snaker.SnakeToCamel(column.Name))),
 			generators.QFOScanner(t.Scanner),
 		}
 
@@ -74,7 +80,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Prefix)),
+			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
@@ -84,7 +90,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Prefix)),
+			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
@@ -94,7 +100,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			queryerOption,
 			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Prefix)),
+			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
@@ -89,17 +88,17 @@ func (t *scannerConfig) apply(*kingpin.ParseContext) error {
 	t.errScannerName = stringsx.DefaultIfBlank(t.errScannerName, fmt.Sprintf(t.defaultErrScannerNameFormat, typName))
 
 	if t.private {
-		t.scannerName = lowercaseFirstLetter(t.scannerName)
-		t.scannerRowName = lowercaseFirstLetter(t.scannerRowName)
-		t.interfaceName = lowercaseFirstLetter(t.interfaceName)
-		t.interfaceRowName = lowercaseFirstLetter(t.interfaceRowName)
-		t.errScannerName = lowercaseFirstLetter(t.errScannerName)
+		t.scannerName = stringsx.ToPrivate(t.scannerName)
+		t.scannerRowName = stringsx.ToPrivate(t.scannerRowName)
+		t.interfaceName = stringsx.ToPrivate(t.interfaceName)
+		t.interfaceRowName = stringsx.ToPrivate(t.interfaceRowName)
+		t.errScannerName = stringsx.ToPrivate(t.errScannerName)
 	} else {
-		t.scannerName = strings.Title(t.scannerName)
-		t.scannerRowName = strings.Title(t.scannerRowName)
-		t.interfaceName = strings.Title(t.interfaceName)
-		t.interfaceRowName = strings.Title(t.interfaceRowName)
-		t.errScannerName = strings.Title(t.errScannerName)
+		t.scannerName = stringsx.ToPublic(t.scannerName)
+		t.scannerRowName = stringsx.ToPublic(t.scannerRowName)
+		t.interfaceName = stringsx.ToPublic(t.interfaceName)
+		t.interfaceRowName = stringsx.ToPublic(t.interfaceRowName)
+		t.errScannerName = stringsx.ToPublic(t.errScannerName)
 	}
 
 	return nil

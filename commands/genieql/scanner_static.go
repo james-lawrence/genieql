@@ -21,11 +21,11 @@ type staticScanner struct {
 
 func (t staticScanner) Options() []scannerOption {
 	return []scannerOption{
-		defaultScannerNameFormat("%sStaticScanner"),
-		defaultRowScannerNameFormat("%sStaticRowScanner"),
+		defaultScannerNameFormat("%sScanner"),
+		defaultRowScannerNameFormat("%sRow"),
 		defaultInterfaceNameFormat("%sScanner"),
-		defaultInterfaceRowNameFormat("%sRowScanner"),
-		defaultErrScannerNameFormat("%sErrScanner"),
+		defaultInterfaceRowNameFormat("%sRow"),
+		defaultErrScannerNameFormat("%sErr"),
 	}
 }
 
