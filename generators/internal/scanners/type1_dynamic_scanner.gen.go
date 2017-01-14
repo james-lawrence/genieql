@@ -10,23 +10,23 @@ import (
 // genieql scanner dynamic --config=generators-test.config --output=type1_dynamic_scanner.gen.go bitbucket.org/jatone/genieql/generators/internal/scanners.Type1 type1
 // invoked by go generate @ scanners/type1.go line 7
 
-// NewType1DynamicScannerDynamic creates a scanner that operates on a dynamic
+// NewType1ScannerDynamic creates a scanner that operates on a dynamic
 // set of columns that can be returned in any subset/order.
-func NewType1DynamicScannerDynamic(rows *sql.Rows, err error) Type1Scanner {
+func NewType1ScannerDynamic(rows *sql.Rows, err error) Type1Scanner {
 	if err != nil {
 		return errType1Scanner{e: err}
 	}
 
-	return type1DynamicScannerDynamic{
+	return type1ScannerDynamic{
 		Rows: rows,
 	}
 }
 
-type type1DynamicScannerDynamic struct {
+type type1ScannerDynamic struct {
 	Rows *sql.Rows
 }
 
-func (t type1DynamicScannerDynamic) Scan(arg0 *Type1) error {
+func (t type1ScannerDynamic) Scan(arg0 *Type1) error {
 	const (
 		field10 = "field1"
 		field21 = "field2"
@@ -133,17 +133,17 @@ func (t type1DynamicScannerDynamic) Scan(arg0 *Type1) error {
 	return t.Rows.Err()
 }
 
-func (t type1DynamicScannerDynamic) Err() error {
+func (t type1ScannerDynamic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t type1DynamicScannerDynamic) Close() error {
+func (t type1ScannerDynamic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t type1DynamicScannerDynamic) Next() bool {
+func (t type1ScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }

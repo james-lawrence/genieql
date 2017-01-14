@@ -9,9 +9,9 @@ import (
 // genieql generate experimental crud -o postgresql.crud.functions.gen.go --table=example1 --scanner=NewExample1ScannerDynamic --unique-scanner=NewExample1ScannerStaticRow bitbucket.org/jatone/genieql/examples/definitions.Example1
 // invoked by go generate @ definitions/example.go line 6
 
-func Example1Insert(q *sql.DB, createdAt time.Time, id int, textField string, updatedAt time.Time, uuidField string) Example1ScannerStaticRow {
+func Example1Insert(q *sql.DB, arg1 Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES ($1,$2,$3,$4,$5) RETURNING created_at,id,text_field,updated_at,uuid_field`
-	return NewExample1ScannerStaticRow(q.QueryRow(query, createdAt, id, textField, updatedAt, uuidField))
+	return NewExample1ScannerStaticRow(q.QueryRow(query, arg1.CreatedAt, arg1.ID, arg1.TextField, arg1.UpdatedAt, arg1.UUIDField))
 }
 
 func Example1FindByCreatedAt(q *sql.DB, createdAt time.Time) Example1Scanner {

@@ -38,25 +38,25 @@ func (t errType1Scanner) Close() error {
 	return nil
 }
 
-const Type1StaticScannerStaticColumns = "field1,field2,field3,field4,field5,field6,field7,field8"
+const Type1ScannerStaticColumns = "field1,field2,field3,field4,field5,field6,field7,field8"
 
-// NewType1StaticScannerStatic creates a scanner that operates on a static
+// NewType1ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
-func NewType1StaticScannerStatic(rows *sql.Rows, err error) Type1Scanner {
+func NewType1ScannerStatic(rows *sql.Rows, err error) Type1Scanner {
 	if err != nil {
 		return errType1Scanner{e: err}
 	}
 
-	return type1StaticScannerStatic{
+	return type1ScannerStatic{
 		Rows: rows,
 	}
 }
 
-type type1StaticScannerStatic struct {
+type type1ScannerStatic struct {
 	Rows *sql.Rows
 }
 
-func (t type1StaticScannerStatic) Scan(arg0 *Type1) error {
+func (t type1ScannerStatic) Scan(arg0 *Type1) error {
 	var (
 		c0 sql.NullString
 		c1 sql.NullString
@@ -115,34 +115,34 @@ func (t type1StaticScannerStatic) Scan(arg0 *Type1) error {
 	return t.Rows.Err()
 }
 
-func (t type1StaticScannerStatic) Err() error {
+func (t type1ScannerStatic) Err() error {
 	return t.Rows.Err()
 }
 
-func (t type1StaticScannerStatic) Close() error {
+func (t type1ScannerStatic) Close() error {
 	if t.Rows == nil {
 		return nil
 	}
 	return t.Rows.Close()
 }
 
-func (t type1StaticScannerStatic) Next() bool {
+func (t type1ScannerStatic) Next() bool {
 	return t.Rows.Next()
 }
 
-// NewType1StaticScannerStaticRow creates a scanner that operates on a static
+// NewType1ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewType1StaticScannerStaticRow(row *sql.Row) Type1StaticScannerStaticRow {
-	return Type1StaticScannerStaticRow{
+func NewType1ScannerStaticRow(row *sql.Row) Type1ScannerStaticRow {
+	return Type1ScannerStaticRow{
 		row: row,
 	}
 }
 
-type Type1StaticScannerStaticRow struct {
+type Type1ScannerStaticRow struct {
 	row *sql.Row
 }
 
-func (t Type1StaticScannerStaticRow) Scan(arg0 *Type1) error {
+func (t Type1ScannerStaticRow) Scan(arg0 *Type1) error {
 	var (
 		c0 sql.NullString
 		c1 sql.NullString
