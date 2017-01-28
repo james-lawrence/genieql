@@ -45,18 +45,20 @@ func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 
 func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	var (
-		err  error
-		pkg  *build.Package
-		fset = token.NewFileSet()
+		err         error
+		taggedFiles TaggedFiles
+		config      genieql.Configuration
+		dialect     genieql.Dialect
+		pkg         *build.Package
+		fset        = token.NewFileSet()
 	)
 
-	if pkg, err = locatePackage(t.pkg); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "functions")
-	if err != nil {
-		log.Fatalln(err)
+	if taggedFiles, err = findTaggedFiles(t.pkg, "genieql", "generate", "functions"); err != nil {
+		return err
 	}
 
 	if len(taggedFiles.files) == 0 {
@@ -66,7 +68,12 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	g := []genieql.Generator{}
-	searcher := genieql.NewSearcher(fset, pkg)
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  config,
+		Dialect:        dialect,
+	}
 	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
@@ -74,7 +81,7 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 
 		functionsTypes := mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
 			return generators.NewQueryFunctionFromGenDecl(
-				searcher,
+				ctx,
 				d,
 			)
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
@@ -82,7 +89,7 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 		g = append(g, functionsTypes...)
 
 		functions := mapFuncDeclsToGenerator(func(d *ast.FuncDecl) genieql.Generator {
-			return generators.NewQueryFunctionFromFuncDecl(searcher, d)
+			return generators.NewQueryFunctionFromFuncDecl(ctx, d)
 		}, genieql.SelectFuncDecl(func(*ast.FuncDecl) bool { return true }, genieql.FindFunc(file)...)...)
 
 		g = append(g, functions...)
@@ -97,6 +104,7 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 

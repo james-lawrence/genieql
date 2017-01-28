@@ -77,6 +77,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, gen),
 	}
 

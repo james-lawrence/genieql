@@ -53,6 +53,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 	}
 	cg := crud.New(config, details, pkgName, typName)
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, cg),
 	}
 

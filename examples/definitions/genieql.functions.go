@@ -2,7 +2,7 @@
 
 package definitions
 
-import "bitbucket.org/jatone/genieql/sqlx"
+import "bitbucket.org/jatone/genieql/internal/sqlx"
 
 type customQueryFunction func(queryer sqlx.Queryer, x1, x2, x3 int) NewProfileScannerDynamic
 

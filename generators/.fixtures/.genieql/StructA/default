@@ -1,0 +1,8 @@
+package: .fixtures
+type: StructA
+includetableprefixes: false
+transformations:
+- uppercase
+renamemap: {}
+tableorquery: struct_a
+customquery: false

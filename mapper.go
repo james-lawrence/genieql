@@ -1,13 +1,14 @@
 package genieql
 
 import (
-	"fmt"
 	"go/ast"
 	"go/build"
 	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"bitbucket.org/jatone/genieql/astutil"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -211,22 +212,16 @@ func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]strin
 	matches := make([]string, 0, len(columns))
 	for idx, column := range columns {
 		var (
-			matched bool
-			err     error
+			matched *ast.Field
 		)
 
 		for _, field := range fields {
-			matched, err = MapFieldToColumn(column, idx, field, t.Aliasers...)
-			if err != nil {
-				return matches, err
-			}
-
-			if matched {
+			if matched = MapFieldToColumn(column, idx, field, t.Aliasers...); matched != nil {
 				break
 			}
 		}
 
-		if !matched {
+		if matched == nil {
 			matches = append(matches, column)
 			break
 		}
@@ -236,17 +231,13 @@ func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]strin
 }
 
 // MapFieldToColumn maps a column to a field based on the provided aliases.
-func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) (bool, error) {
-	if len(field.Names) != 1 {
-		return false, fmt.Errorf("field had more than 1 name")
-	}
-
-	fieldName := field.Names[0].Name
-	for _, aliaser := range aliases {
-		if aliaser.Alias(column) == fieldName {
-			return true, nil
+func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) *ast.Field {
+	for _, fieldName := range field.Names {
+		for _, aliaser := range aliases {
+			if aliaser.Alias(column) == fieldName.Name {
+				return astutil.Field(field.Type, fieldName)
+			}
 		}
 	}
-
-	return false, nil
+	return nil
 }

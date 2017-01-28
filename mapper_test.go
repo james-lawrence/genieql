@@ -29,9 +29,8 @@ var _ = Describe("Mapper", func() {
 
 		It("should return true if the column matches the field and its aliases", func() {
 			for _, example := range examples {
-				matchFound, err := MapFieldToColumn(example.column, example.offset, example.field, example.Aliaser)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(matchFound).To(BeTrue())
+				matchFound := MapFieldToColumn(example.column, example.offset, example.field, example.Aliaser)
+				Expect(matchFound).ToNot(BeNil())
 			}
 		})
 	})

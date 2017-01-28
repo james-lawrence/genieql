@@ -2,6 +2,6 @@
 
 package definitions
 
-import "bitbucket.org/jatone/genieql/sqlx"
+import "bitbucket.org/jatone/genieql/internal/sqlx"
 
 type example1BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example1) NewExample1ScannerStatic

@@ -59,8 +59,8 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		// cvt genieql.ColumnValueTransformer
 		qf queryFunction
 	)
-	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
-	qfoOptions, err := generatorFromFuncType(util, name, comment, ft)
+
+	qfoOptions, err := generatorFromFuncType(ctx, name, comment, ft)
 	if err != nil {
 		return genieql.NewErrGenerator(err)
 	}

@@ -21,10 +21,10 @@ const Preface = `
 
 // FormatOutput formats and resolves imports for the raw bytes representing a go
 // source file and writes them into the dst.
-func FormatOutput(dst io.Writer, raw []byte) error {
+func FormatOutput(dst io.Writer, filename string, raw []byte) error {
 	var err error
 
-	if raw, err = imports.Process("", raw, nil); err != nil {
+	if raw, err = imports.Process(filename, raw, nil); err != nil {
 		return errors.Wrap(err, "failed to add required imports")
 	}
 

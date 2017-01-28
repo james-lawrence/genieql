@@ -24,7 +24,7 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			Expect(NewExploderFunction(param, fields, options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localfile, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())

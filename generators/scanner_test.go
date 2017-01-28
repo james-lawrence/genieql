@@ -43,7 +43,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			}
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localdirectory, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("scanner int", `package example; type Int func(arg int)`, ".fixtures/scanners/int.go"),
@@ -71,7 +71,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			}
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localdirectory, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("scanner int without interface",

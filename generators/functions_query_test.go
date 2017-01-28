@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -51,7 +52,57 @@ func (t testSearcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
 	return []*ast.Field(nil), fmt.Errorf("not implemented")
 }
 
+type dialect struct{}
+
+func (t dialect) Insert(n int, table string, columns, defaults []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) Select(table string, columns, predicates []string) string {
+	return "SELECT QUERY"
+}
+
+func (t dialect) Update(table string, columns, predicates []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) Delete(table string, columns, predicates []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) ColumnValueTransformer() genieql.ColumnTransformer {
+	return nil
+}
+
+func (t dialect) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
+	switch table {
+	case "struct_a":
+		return []genieql.ColumnInfo{
+			{Name: "a", Type: "int"},
+			{Name: "b", Type: "int"},
+			{Name: "c", Type: "int"},
+			{Name: "d", Type: "bool"},
+			{Name: "e", Type: "bool"},
+			{Name: "f", Type: "bool"},
+		}, nil
+	default:
+		return []genieql.ColumnInfo(nil), nil
+	}
+}
+
+func (t dialect) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
+	return []genieql.ColumnInfo(nil), nil
+}
+
 var _ = ginkgo.Describe("Query Functions", func() {
+	pkg := &build.Package{
+		Name: "example",
+		Dir:  ".fixtures",
+	}
+	configuration := genieql.Configuration{
+		Location: ".fixtures/.genieql",
+	}
+
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{
@@ -85,19 +136,24 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
+			ctx := Context{
+				CurrentPackage: pkg,
+				FileSet:        fset,
+				Configuration:  configuration,
+				Dialect:        dialect{},
+			}
 
-			util := testSearcher{functions: []*ast.FuncDecl{exampleScanner, exampleRowScanner}}
 			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
 			Expect(err).ToNot(HaveOccurred())
 
 			buffer.WriteString("package example\n\n")
 			for _, decl := range genieql.FindTypes(file) {
-				gen := genieql.MultiGenerate(NewQueryFunctionFromGenDecl(util, decl, options...)...)
+				gen := genieql.MultiGenerate(NewQueryFunctionFromGenDecl(ctx, decl, options...)...)
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localfile, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -136,6 +192,16 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			"package example; type queryFunction5 func(q sqlx.Queryer, UUIDArgument int, CamelcaseArgument int, snakecase_argument int, UPPERCASE_ARGUMENT int, lowercase_argument int) StaticExampleRowScanner",
 			".fixtures/functions-query/output5.go",
 		),
+		Entry(
+			"example 6 - structure parameter",
+			"package example; type queryFunction8 func(q sqlx.Queryer, arg1 StructA) StaticExampleScanner",
+			".fixtures/functions-query/output8.go",
+		),
+		Entry(
+			"example 6 - structure parameter",
+			"package example; type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner",
+			".fixtures/functions-query/output9.go",
+		),
 	)
 
 	DescribeTable("build a query function from a function prototype",
@@ -143,19 +209,23 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
+			ctx := Context{
+				CurrentPackage: pkg,
+				FileSet:        fset,
+				Configuration:  configuration,
+			}
 
-			util := testSearcher{functions: []*ast.FuncDecl{exampleScanner, exampleRowScanner}}
 			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
 			Expect(err).ToNot(HaveOccurred())
 
 			buffer.WriteString("package example\n\n")
 			for _, decl := range genieql.FindFunc(file) {
-				gen := NewQueryFunctionFromFuncDecl(util, decl, options...)
+				gen := NewQueryFunctionFromFuncDecl(ctx, decl, options...)
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localdirectory, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -196,7 +266,7 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			Expect(NewQueryFunction(options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, localfile, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())

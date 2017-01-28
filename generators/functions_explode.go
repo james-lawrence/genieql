@@ -56,22 +56,25 @@ func NewExploderFunction(param *ast.Field, fields []*ast.Field, options ...Query
 
 // QFOExplodeStructParam explodes a structure parameter's fields in the query parameters.
 func QFOExplodeStructParam(param *ast.Field, fields ...*ast.Field) QueryFunctionOption {
-	selectors := make([]ast.Expr, 0, len(fields)*len(param.Names))
-	for _, param = range normalizeFieldNames(param) {
-		for _, name := range param.Names {
-			for _, field := range fields {
-				selectors = append(selectors, &ast.SelectorExpr{
-					X:   name,
-					Sel: astutil.MapFieldsToNameIdent(field)[0],
-				})
-			}
-		}
-	}
-
+	selectors := structureQueryParameters(normalizeFieldNames(param)[0], fields...)
 	return func(qf *queryFunction) {
 		qf.Parameters = append(qf.Parameters, param)
 		qf.QueryParameters = append(qf.QueryParameters, selectors...)
 	}
+}
+
+func structureQueryParameters(param *ast.Field, fields ...*ast.Field) []ast.Expr {
+	selectors := make([]ast.Expr, 0, len(fields)*len(param.Names))
+	for _, name := range param.Names {
+		for _, field := range fields {
+			selectors = append(selectors, &ast.SelectorExpr{
+				X:   name,
+				Sel: astutil.MapFieldsToNameIdent(field)[0],
+			})
+		}
+	}
+
+	return selectors
 }
 
 func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field) ast.Stmt {

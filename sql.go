@@ -6,6 +6,7 @@ import (
 	"go/parser"
 	"sort"
 
+	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
@@ -198,14 +199,16 @@ func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) (
 	uColumns := make([]ColumnInfo, 0, len(columns))
 
 	for _, column := range columns {
-		var mapped bool
+		var matched *ast.Field
 		for _, field := range fields {
-			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
-				mapped = true
-				mColumns = append(mColumns, column)
+			if matched = MapFieldToColumn(column.Name, 0, field, aliases...); matched != nil {
+				break
 			}
 		}
-		if !mapped {
+
+		if matched != nil {
+			mColumns = append(mColumns, column)
+		} else {
 			uColumns = append(uColumns, column)
 		}
 	}
@@ -218,19 +221,28 @@ func mapFields(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([
 		return []*ast.Field{}, fields
 	}
 
+	if len(columns) == 0 {
+		return []*ast.Field{}, fields
+	}
+
 	mFields := make([]*ast.Field, 0, len(fields))
 	uFields := make([]*ast.Field, 0, len(fields))
 
-	for _, field := range fields {
+	for _, field := range astutil.FlattenFields(fields...) {
+		var (
+			matched *ast.Field
+		)
+
 		for _, column := range columns {
-			var mapped bool
-			if matched, _ := MapFieldToColumn(column.Name, 0, field, aliases...); matched {
-				mapped = true
-				mFields = append(mFields, field)
+			if matched = MapFieldToColumn(column.Name, 0, field, aliases...); matched != nil {
+				break
 			}
-			if !mapped {
-				uFields = append(uFields, field)
-			}
+		}
+
+		if matched != nil {
+			mFields = append(mFields, matched)
+		} else {
+			uFields = append(uFields, field)
 		}
 	}
 

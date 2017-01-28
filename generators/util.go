@@ -188,6 +188,8 @@ func builtinType(x ast.Expr) bool {
 	}
 
 	switch name {
+	case "interface{}":
+		return true
 	case "time.Time":
 		return true
 	default:
@@ -196,7 +198,7 @@ func builtinType(x ast.Expr) bool {
 }
 
 // builtinParam converts a *ast.Field that represents a builtin type
-// (time.Time, int,float,bool, etc) into an array of ColumnMap.
+// (time.Time,int,float,bool, etc) into an array of ColumnMap.
 func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
@@ -210,6 +212,16 @@ func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	return columns, nil
 }
 
+func unwrapExpr(x ast.Expr) ast.Expr {
+	switch real := x.(type) {
+	case *ast.Ellipsis:
+		return real.Elt
+	case *ast.StarExpr:
+		return real.X
+	default:
+		return x
+	}
+}
 func packageName(pkg *build.Package, x ast.Expr) string {
 	switch x := x.(type) {
 	case *ast.SelectorExpr:

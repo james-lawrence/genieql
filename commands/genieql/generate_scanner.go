@@ -96,6 +96,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, g),
 	}
 
@@ -189,6 +190,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 

@@ -17,6 +17,6 @@ import (
 type Context struct {
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
-	genieql.Configuration
-	genieql.Dialect
+	Configuration  genieql.Configuration
+	Dialect        genieql.Dialect
 }

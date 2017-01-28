@@ -105,7 +105,7 @@ func columnInfo(ctx Context, param *ast.Field) ([]genieql.ColumnInfo, error) {
 }
 
 // builtinParamColumnInfo converts a *ast.Field that represents a builtin type
-// (time.Time, int,float,bool, etc) into an array of ColumnInfo.
+// (time.Time,int,float,bool, etc) into an array of ColumnInfo.
 func builtinParamColumnInfo(param *ast.Field) ([]genieql.ColumnInfo, error) {
 	columns := make([]genieql.ColumnInfo, 0, len(param.Names))
 	for _, name := range param.Names {
@@ -146,6 +146,32 @@ func mappedFields(ctx Context, param *ast.Field) ([]*ast.Field, error) {
 	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
 		return infos, err
 	}
+
 	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
 	return infos, err
+}
+
+func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnInfo, []*ast.Field, error) {
+	var (
+		err     error
+		infos   []*ast.Field
+		columns []genieql.ColumnInfo
+		m       genieql.MappingConfig
+	)
+
+	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(unwrapExpr(param.Type)), "default", &m); err != nil {
+		return columns, infos, err
+	}
+
+	if columns, err = m.ColumnInfo(ctx.Dialect); err != nil {
+		return columns, infos, err
+	}
+
+	infos, _, err = m.MapFieldsToColumns(
+		ctx.FileSet,
+		ctx.CurrentPackage,
+		genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(ignoreSet...))...,
+	)
+
+	return columns, infos, err
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/parser"
 	"go/token"
 	"log"
 	"os"
@@ -156,6 +157,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 
@@ -177,13 +179,15 @@ type insertQueryCmd struct {
 }
 
 func (t *insertQueryCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	cmd.Action(t.execute)
+
 	cmd.Flag(
 		"suffix",
 		"suffix for the name of the generated constant",
 	).Required().StringVar(&t.constSuffix)
 
 	cmd.Flag("column-constant", "controls column constant being output").Default("true").BoolVar(&t.emitColumnConstant)
-	cmd.Flag("explode-function", "controls explode function being output").Default("true").BoolVar(&t.emitColumnConstant)
+	cmd.Flag("explode-function", "controls explode function being output").Default("true").BoolVar(&t.emitExplodeFunction)
 
 	cmd.Flag("batch", "number of records to insert").Default("1").IntVar(&t.batch)
 
@@ -235,6 +239,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 
 	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
 	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", constName), dialect, t.defaults, columns)
+
 	ef := maybeGenerator(
 		t.emitExplodeFunction,
 		generators.NewExploderFunction(
@@ -245,6 +250,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	)
 	cg := crud.Insert(details).Build(t.batch, constName, t.defaults)
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
@@ -257,10 +263,12 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 
 type insertFunctionCmd struct {
 	*generateInsertConfig
-	functionName       string
-	scanner            string
-	packageType        string
-	emitColumnConstant bool
+	functionName        string
+	scanner             string
+	packageType         string
+	queryer             string
+	emitColumnConstant  bool
+	emitExplodeFunction bool
 }
 
 func (t *insertFunctionCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
@@ -271,8 +279,10 @@ func (t *insertFunctionCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause
 	).StringVar(&t.functionName)
 
 	cmd.Flag("column-constant", "controls column constant being output").Default("true").BoolVar(&t.emitColumnConstant)
-	cmd.Flag("scanner", "name of the scanner to use using the package.Type format").StringVar(&t.scanner)
+	cmd.Flag("explode-function", "controls explode function being output").Default("true").BoolVar(&t.emitExplodeFunction)
 
+	cmd.Flag("scanner", "name of the scanner to use using the package.Type format").StringVar(&t.scanner)
+	cmd.Flag("queryer", "selector expression representing the type that will execute the queryer").StringVar(&t.queryer)
 	cmd.Arg(
 		"package.Type",
 		"package prefixed structure we want to build the scanner/query for",
@@ -294,6 +304,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
 		pkg     *build.Package
+		queryer ast.Expr
 		fset    = token.NewFileSet()
 	)
 
@@ -309,6 +320,10 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 
 	mapping.CustomQuery = false
 	mapping.TableOrQuery = t.table
+
+	if queryer, err = parser.ParseExpr(t.queryer); err != nil {
+		return errors.Wrapf(err, "%s: is not a valid expression", t.queryer)
+	}
 
 	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
 		return err
@@ -339,23 +354,28 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 
 	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
 	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", functionName), dialect, t.defaults, columns)
-
+	ef := maybeGenerator(
+		t.emitExplodeFunction,
+		generators.NewExploderFunction(
+			astutil.Field(ast.NewIdent(typName), ast.NewIdent("arg1")),
+			fields,
+			generators.QFOName(fmt.Sprintf("%sExplode", functionName)),
+		),
+	)
 	cg := generators.NewQueryFunction(
 		generators.QFOName(functionName),
 		generators.QFOBuiltinQueryFromString(dialect.Insert(1, t.table, genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
 		generators.QFOScanner(scannerFunction),
 		generators.QFOExplodeStructParam(field, fields...),
+		generators.QFOQueryer("q", queryer),
 	)
 
 	pg := printGenerator{
-		delegate: genieql.MultiGenerate(hg, cc, cg),
+		pkg:      pkg,
+		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
-		log.Fatalln(err)
-	}
-
-	return nil
+	return commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags)
 }
 
 func maybeColumnConstants(enabled bool, name string, dialect genieql.Dialect, defaults []string, columns []genieql.ColumnInfo) genieql.Generator {

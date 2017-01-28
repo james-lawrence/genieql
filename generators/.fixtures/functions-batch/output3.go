@@ -3,7 +3,7 @@ package example
 import (
 	"errors"
 
-	"bitbucket.org/jatone/genieql/sqlx"
+	"bitbucket.org/jatone/genieql/internal/sqlx"
 )
 
 func batchFunction3(q sqlx.Queryer, i ...int) (ExampleScanner, []int) {

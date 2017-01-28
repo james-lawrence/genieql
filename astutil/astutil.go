@@ -162,6 +162,17 @@ func MapFieldsToNameExpr(args ...*ast.Field) []ast.Expr {
 	return result
 }
 
+// FlattenFields unnests a field with multiple names.
+func FlattenFields(args ...*ast.Field) []*ast.Field {
+	result := make([]*ast.Field, 0, len(args))
+	for _, f := range args {
+		for _, name := range f.Names {
+			result = append(result, Field(f.Type, name))
+		}
+	}
+	return result
+}
+
 // MapFieldsToNameIdent maps the set of fields to their names.
 func MapFieldsToNameIdent(args ...*ast.Field) []*ast.Ident {
 	result := make([]*ast.Ident, 0, len(args))

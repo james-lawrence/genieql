@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -72,12 +73,21 @@ func QFOQueryerFunction(x *ast.Ident) QueryFunctionOption {
 	}
 }
 
-// QFOParameters specify the parameters for the query function.
+// QFOParameters - DEPRECATED use QFOParameters2specify the parameters for the query function.
 func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 	params = normalizeFieldNames(params...)
 	return func(qf *queryFunction) {
 		qf.QueryParameters = astutil.MapFieldsToNameExpr(params...)
 		qf.Parameters = params
+	}
+}
+
+// QFOParameters2 specify the parameters for the query function.
+func QFOParameters2(p []*ast.Field, qp []ast.Expr) QueryFunctionOption {
+	p = normalizeFieldNames(p...)
+	return func(qf *queryFunction) {
+		qf.QueryParameters = qp
+		qf.Parameters = p
 	}
 }
 
@@ -89,17 +99,19 @@ func QFOTemplate(tmpl *template.Template) QueryFunctionOption {
 }
 
 // QFOFromComment extracts options from a ast.CommentGroup.
-func QFOFromComment(comments *ast.CommentGroup) ([]QueryFunctionOption, error) {
+func QFOFromComment(comments *ast.CommentGroup) ([]string, []QueryFunctionOption, error) {
 	const generalSection = `general`
 	const inlinedQueryOption = `inlined-query`
+	const defaultColumns = `default-columns`
 	var (
-		err     error
-		options []QueryFunctionOption
-		ini     *goini.INI
+		err       error
+		options   []QueryFunctionOption
+		defaulted []string
+		ini       *goini.INI
 	)
 
 	if ini, err = OptionsFromCommentGroup(comments); err != nil {
-		return options, err
+		return defaulted, options, err
 	}
 
 	if q, ok := ini.Get(inlinedQueryOption); ok {
@@ -110,7 +122,11 @@ func QFOFromComment(comments *ast.CommentGroup) ([]QueryFunctionOption, error) {
 		options = append(options, QFOBuiltinQuery(x))
 	}
 
-	return options, nil
+	if d, ok := ini.Get(defaultColumns); ok {
+		defaulted = strings.Split(d, ",")
+	}
+
+	return defaulted, options, nil
 }
 
 func maybeQFO(options []QueryFunctionOption, err error) genieql.Generator {
@@ -121,11 +137,13 @@ func maybeQFO(options []QueryFunctionOption, err error) genieql.Generator {
 	return NewQueryFunction(options...)
 }
 
-func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...QueryFunctionOption) ([]QueryFunctionOption, error) {
+func generatorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...QueryFunctionOption) ([]QueryFunctionOption, error) {
 	var (
-		err            error
-		commentOptions []QueryFunctionOption
-		scannerOption  QueryFunctionOption
+		err             error
+		defaulted       []string
+		queryer, params QueryFunctionOption
+		commentOptions  []QueryFunctionOption
+		scannerOption   QueryFunctionOption
 	)
 
 	// validations
@@ -137,9 +155,15 @@ func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.
 		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) requires a single function as the return value", name)
 	}
 
-	queryer, params := extractOptionsFromParams(ft.Params.List...)
-	if scannerOption, err = extractOptionsFromResult(util, ft.Results.List[0]); err != nil {
-		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) scanner option is invalid", name)
+	if defaulted, commentOptions, err = QFOFromComment(comment); err != nil {
+		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) comment options are invalid", name)
+	}
+
+	if queryer, params, err = extractOptionsFromParams(ctx, defaulted, ft.Params.List...); err != nil {
+		return []QueryFunctionOption(nil), errors.Wrapf(err, "function prototype (%s) parameters are invalid", name)
+	}
+	if scannerOption, err = extractOptionsFromResult(ctx, ft.Results.List[0]); err != nil {
+		return []QueryFunctionOption(nil), errors.Wrapf(err, "function prototype (%s) scanner option is invalid", name)
 	}
 
 	options := append(
@@ -150,20 +174,16 @@ func generatorFromFuncType(util genieql.Searcher, name *ast.Ident, comment *ast.
 		scannerOption,
 	)
 
-	if commentOptions, err = QFOFromComment(comment); err != nil {
-		return []QueryFunctionOption(nil), errors.Errorf("function prototype (%s) comment options are invalid", name)
-	}
-
 	return append(options, commentOptions...), nil
 }
 
 // NewQueryFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
-func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, options ...QueryFunctionOption) []genieql.Generator {
+func NewQueryFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, options ...QueryFunctionOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
-				g = append(g, maybeQFO(generatorFromFuncType(util, ts.Name, decl.Doc, ft, options...)))
+				g = append(g, maybeQFO(generatorFromFuncType(ctx, ts.Name, decl.Doc, ft, options...)))
 			}
 		}
 	}
@@ -172,9 +192,9 @@ func NewQueryFunctionFromGenDecl(util genieql.Searcher, decl *ast.GenDecl, optio
 }
 
 // NewQueryFunctionFromFuncDecl creates a function generator from the provided *ast.GenDecl
-func NewQueryFunctionFromFuncDecl(util genieql.Searcher, decl *ast.FuncDecl, options ...QueryFunctionOption) genieql.Generator {
+func NewQueryFunctionFromFuncDecl(ctx Context, decl *ast.FuncDecl, options ...QueryFunctionOption) genieql.Generator {
 	options = append(options, extractOptionsFromFunctionDecls(decl.Body)...)
-	return maybeQFO(generatorFromFuncType(util, decl.Name, decl.Doc, decl.Type, options...))
+	return maybeQFO(generatorFromFuncType(ctx, decl.Name, decl.Doc, decl.Type, options...))
 }
 
 func extractOptionsFromFunctionDecls(body *ast.BlockStmt) []QueryFunctionOption {
@@ -190,12 +210,34 @@ func extractOptionsFromFunctionDecls(body *ast.BlockStmt) []QueryFunctionOption 
 	return options
 }
 
-func extractOptionsFromParams(fields ...*ast.Field) (queryer, params QueryFunctionOption) {
+func extractOptionsFromParams(ctx Context, defaultedSet []string, fields ...*ast.Field) (QueryFunctionOption, QueryFunctionOption, error) {
+	var (
+		err          error
+		params       []*ast.Field
+		queryParams  []ast.Expr
+		mQueryParams []*ast.Field
+	)
 	queryerf, paramsf := fields[0], fields[1:]
-	return QFOQueryer(defaultQueryParamName, queryerf.Type), QFOParameters(paramsf...)
+
+	for _, param := range paramsf {
+		param = normalizeFieldNames(param)[0]
+		if builtinType(unwrapExpr(param.Type)) {
+			params = append(params, param)
+			queryParams = append(queryParams, astutil.MapFieldsToNameExpr(param)...)
+		} else {
+			if _, mQueryParams, err = mappedStructure(ctx, param, defaultedSet...); err != nil {
+				return nil, nil, err
+			}
+			params = append(params, param)
+			queryParams = append(queryParams, structureQueryParameters(param, mQueryParams...)...)
+		}
+	}
+
+	return QFOQueryer(defaultQueryParamName, queryerf.Type), QFOParameters2(params, queryParams), nil
 }
 
-func extractOptionsFromResult(util genieql.Searcher, field *ast.Field) (QueryFunctionOption, error) {
+func extractOptionsFromResult(ctx Context, field *ast.Field) (QueryFunctionOption, error) {
+	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
 	scanner, err := util.FindFunction(func(s string) bool {
 		return s == types.ExprString(field.Type)
 	})

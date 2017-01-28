@@ -58,6 +58,7 @@ func (t headerGenerator) Generate(dst io.Writer) error {
 }
 
 type printGenerator struct {
+	pkg      *build.Package
 	delegate genieql.Generator
 }
 
@@ -71,7 +72,7 @@ func (t printGenerator) Generate(dst io.Writer) error {
 		return err
 	}
 
-	if err = genieql.FormatOutput(&formatted, buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(&formatted, filepath.Join(t.pkg.Dir, "genieql.go"), buffer.Bytes()); err != nil {
 		return err
 	}
 

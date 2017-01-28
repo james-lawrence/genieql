@@ -72,7 +72,6 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 		generators.ScannerOptionInterfaceName(t.scanner.interfaceName),
 		generators.ScannerOptionParameters(&ast.FieldList{List: fields}),
 		generators.ScannerOptionOutputMode(generators.ModeDynamic),
-		// generators.ScannerOptionIgnoreSet(unmappedColumns...),
 	)
 
 	hg := headerGenerator{
@@ -82,6 +81,7 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, gen),
 	}
 

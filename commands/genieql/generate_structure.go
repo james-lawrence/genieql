@@ -84,6 +84,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		Dialect:        dialect,
 	}
 	pg := printGenerator{
+		pkg: pkg,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
@@ -191,6 +192,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
@@ -253,6 +255,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		Dialect:        dialect,
 	}
 	pg := printGenerator{
+		pkg: pkg,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
@@ -361,6 +364,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 	}
 
 	pg := printGenerator{
+		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 

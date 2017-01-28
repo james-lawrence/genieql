@@ -3,7 +3,8 @@ package postgresql_test
 import (
 	"database/sql"
 
-	"bitbucket.org/jatone/genieql/sqlxtest"
+	"bitbucket.org/jatone/genieql/xsqltest"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -22,12 +23,12 @@ var (
 )
 
 var _ = BeforeSuite(func() {
-	dbname, DB = sqlxtest.NewPostgresql(sqlxtest.TemplateDatabaseName)
+	dbname, DB = xsqltest.NewPostgresql(xsqltest.TemplateDatabaseName)
 })
 
 var _ = AfterSuite(func() {
 	Expect(DB.Close()).ToNot(HaveOccurred())
-	sqlxtest.DestroyPostgresql(sqlxtest.TemplateDatabaseName, dbname)
+	xsqltest.DestroyPostgresql(xsqltest.TemplateDatabaseName, dbname)
 })
 
 var _ = BeforeEach(func() {
