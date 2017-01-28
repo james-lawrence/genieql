@@ -37,10 +37,11 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 	builder := func(n int) ast.Decl {
 		return genieql.QueryLiteral("query", fmt.Sprintf("QUERY %d", n))
 	}
-	DescribeTable("batch function generator",
+	DescribeTable("batch insert scanner generator",
 		func(fixture string, maximum int, field *ast.Field, options ...BatchFunctionOption) {
 			var (
-				buffer, formatted bytes.Buffer
+				buffer    bytes.Buffer
+				formatted bytes.Buffer
 			)
 			buffer.WriteString("package example\n\n")
 			Expect(NewBatchFunction(maximum, field, options...).Generate(&buffer)).ToNot(HaveOccurred())
@@ -81,7 +82,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			"batch function (3) integers",
 			".fixtures/functions-batch/output3.go",
 			3,
-			astutil.Field(ast.NewIdent("int"), ast.NewIdent("i")),
+			astutil.Field(ast.NewIdent("custom"), ast.NewIdent("v")),
 			BatchFunctionQueryBuilder(builder),
 			BatchFunctionExploder(astutil.Field(ast.NewIdent("int"), ast.NewIdent("A")), astutil.Field(ast.NewIdent("int"), ast.NewIdent("B")), astutil.Field(ast.NewIdent("int"), ast.NewIdent("C"))),
 			BatchFunctionQFOptions(

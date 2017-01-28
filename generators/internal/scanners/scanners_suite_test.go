@@ -1,7 +1,7 @@
 package scanners_test
 
 import (
-	. "bitbucket.org/jatone/genieql/xsqltest"
+	. "bitbucket.org/jatone/genieql/internal/sqlxtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

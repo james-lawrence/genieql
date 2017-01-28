@@ -14,6 +14,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
 // BatchFunctionOption ...
@@ -115,7 +116,7 @@ func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOptio
 	b := batchFunction{
 		Maximum:  maximum,
 		Type:     typ,
-		Template: batchQueryFuncTemplate,
+		Template: batchInsertScannerTemplate,
 	}
 
 	for _, opt := range options {
@@ -149,7 +150,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Explode      ast.Node
 	}
 	type context struct {
-		Name             string
+		QueryFunction    queryFunction
 		ScannerType      ast.Expr
 		ScannerFunc      ast.Expr
 		Statements       []queryFunctionContext
@@ -220,7 +221,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 	}
 
 	ctx := context{
-		Name:             t.queryFunction.Name,
+		QueryFunction:    t.queryFunction,
 		Statements:       statements,
 		DefaultStatement: defaultStatement,
 		ScannerFunc:      t.queryFunction.ScannerDecl.Name,
@@ -231,7 +232,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 
-var batchQueryFuncTemplate = template.Must(template.New("batch-function").Funcs(batchQueryFuncMap).Parse(batchQueryFunc))
+var batchInsertScannerTemplate = template.Must(template.New("batch-function").Funcs(batchQueryFuncMap).Parse(batchScannerTemplate))
 var batchQueryFuncMap = template.FuncMap{
 	"expr":      types.ExprString,
 	"arguments": arguments,
@@ -240,24 +241,78 @@ var batchQueryFuncMap = template.FuncMap{
 	"name": func(f *ast.Field) ast.Expr {
 		return astutil.MapFieldsToNameExpr(f)[0]
 	},
+	"title":   stringsx.ToPublic,
+	"private": stringsx.ToPrivate,
 }
 
-const batchQueryFunc = `func {{.Name}}({{.Parameters | arguments}}) ({{ .ScannerType | expr }}, {{ .Type.Type | array | expr }}) {
+const batchScannerTemplate = `// New{{.QueryFunction.Name | title}} creates a scanner that inserts a batch of
+// records into the database.
+func New{{.QueryFunction.Name | title}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
+	return {{.QueryFunction.Name | private}}{
+		q: {{.QueryFunction.QueryerName}},
+		remaining: {{.Type | name }},
+	}
+}
+
+type {{.QueryFunction.Name | private}} struct {
+	q         {{.QueryFunction.Queryer | expr}}
+	remaining {{ .Type.Type | array | expr }}
+	scanner   {{ .ScannerType | expr }}
+}
+
+func (t *{{.QueryFunction.Name | private}}) Scan(dst *{{.Type.Type | expr}}) error {
+	return t.scanner.Scan(dst)
+}
+
+func (t *{{.QueryFunction.Name | private}}) Err() error {
+	if t.scanner == nil {
+		return nil
+	}
+
+	return t.scanner.Err()
+}
+
+func (t *{{.QueryFunction.Name | private}}) Close() error {
+	if t.scanner == nil {
+		return nil
+	}
+	return t.scanner.Close()
+}
+
+func (t *{{.QueryFunction.Name | private}}) Next() bool {
+	var (
+		advanced bool
+	)
+
+	if t.scanner != nil && t.scanner.Next() {
+		return true
+	}
+
+	// advance to the next check
+	if len(t.remaining) > 0 && t.Close() == nil {
+		t.scanner, t.remaining, advanced = t.advance(t.q, t.remaining...)
+		return advanced && t.scanner.Next()
+	}
+
+	return false
+}
+
+func (t *{{.QueryFunction.Name | private}}) advance(q sqlx.Queryer, {{.Type | name}} ...{{.Type.Type | expr}}) ({{ .ScannerType | expr }}, {{ .Type.Type | array | expr }}, bool) {
 	switch len({{.Type | name }}) {
 	case 0:
-		return {{ .ScannerFunc | expr }}(nil, errors.New("need at least 1 value to execute a batch query")), {{.Type | name}}
+		return nil, []{{.Type.Type | expr}}(nil), false
 	{{- range $ctx := .Statements }}
 	case {{ $ctx.Number }}:
 		{{ $ctx.BuiltinQuery | ast }}
 		{{ $ctx.Exploder | ast }}
 		{{ $ctx.Explode | ast }}
-		return {{ $.ScannerFunc | expr }}({{ $ctx.Queryer | expr }}), {{$.Type | name}}[len({{$.Type | name}})-1:]
+		return {{ $.ScannerFunc | expr }}({{ $ctx.Queryer | expr }}), {{$.Type.Type | array | expr}}(nil), true
 	{{- end }}
 	default:
 		{{ .DefaultStatement.BuiltinQuery | ast }}
 		{{ .DefaultStatement.Exploder | ast }}
 		{{ .DefaultStatement.Explode | ast }}
-		return {{ .ScannerFunc | expr }}({{ .DefaultStatement.Queryer | expr }}), {{.Type | name}}[{{.DefaultStatement.Number}}:]
+		return {{ .ScannerFunc | expr }}({{ .DefaultStatement.Queryer | expr }}), {{.Type | name}}[{{.DefaultStatement.Number}}:], true
 	}
 }
 `

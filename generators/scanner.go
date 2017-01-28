@@ -158,7 +158,9 @@ func newScanner(options ...ScannerOption) (scanner, error) {
 
 	// by default enable all modes
 	s := scanner{
-		Mode: ModeInterface | ModeStatic | ModeDynamic,
+		scannerConfig{
+			Mode: ModeInterface | ModeStatic | ModeDynamic,
+		},
 	}
 
 	for _, opt := range options {
@@ -172,7 +174,7 @@ func newScanner(options ...ScannerOption) (scanner, error) {
 	return s, err
 }
 
-type scanner struct {
+type scannerConfig struct {
 	Context
 	Driver        genieql.Driver
 	Name          string
@@ -180,6 +182,10 @@ type scanner struct {
 	Mode          mode
 	Fields        *ast.FieldList
 	ignoreSet     []string
+}
+
+type scanner struct {
+	scannerConfig
 }
 
 func (t scanner) Generate(dst io.Writer) error {
@@ -201,16 +207,8 @@ func (t scanner) Generate(dst io.Writer) error {
 		Parameters:    t.Fields.List,
 	}
 
-	for _, param := range t.Fields.List {
-		var (
-			columns []genieql.ColumnMap
-		)
-
-		if columns, err = t.columnMaps(param); err != nil {
-			return err
-		}
-
-		ctx.Columns = append(ctx.Columns, columns...)
+	if ctx.Columns, err = mapFields(t.Context, t.Fields.List, t.ignoreSet...); err != nil {
+		return err
 	}
 
 	lookupNullableTypes := composeLookupNullableType(DefaultLookupNullableType, t.Driver.LookupNullableType)
@@ -272,16 +270,34 @@ func (t scanner) Generate(dst io.Writer) error {
 	return nil
 }
 
-func (t scanner) columnMaps(param *ast.Field) ([]genieql.ColumnMap, error) {
+func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
+	result := make([]genieql.ColumnMap, 0, len(params))
+	for _, param := range params {
+		var (
+			err     error
+			columns []genieql.ColumnMap
+		)
+
+		if columns, err = mapColumns(ctx, param, ignoreSet...); err != nil {
+			return result, err
+		}
+
+		result = append(result, columns...)
+	}
+
+	return result, nil
+}
+
+func mapColumns(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
 	if builtinType(param.Type) {
 		return builtinParam(param)
 	}
-	return t.mappedParam(param)
+	return mapParam(ctx, param, ignoreSet...)
 }
 
 // mappedParam converts a *ast.Field that represents a struct into an array
 // of ColumnMap.
-func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
+func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
 	var (
 		err     error
 		m       genieql.MappingConfig
@@ -289,14 +305,14 @@ func (t scanner) mappedParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 		cMap    []genieql.ColumnMap
 	)
 
-	if m, columns, err = mappedParam(t.Context, param); err != nil {
+	if m, columns, err = mappedParam(ctx, param); err != nil {
 		return cMap, err
 	}
 	aliaser := m.Aliaser()
 
 	for _, arg := range param.Names {
 		for _, column := range columns {
-			if stringsx.Contains(column.Name, t.ignoreSet...) {
+			if stringsx.Contains(column.Name, ignoreSet...) {
 				continue
 			}
 

@@ -15,13 +15,13 @@ var _ = Describe("Genieql", func() {
 	Describe("FormatOutput", func() {
 		It("should format the code", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			Expect(FormatOutput(buffer, []byte(unformattedCode))).ToNot(HaveOccurred())
+			Expect(FormatOutput(buffer, localfile, []byte(unformattedCode))).ToNot(HaveOccurred())
 			Expect(buffer.String()).To(Equal(formattedCode))
 		})
 
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			err := errors.Cause(FormatOutput(buffer, []byte(invalidCode)))
+			err := errors.Cause(FormatOutput(buffer, "", []byte(invalidCode)))
 			Expect(err).To(MatchError("2:1: expected 'package', found 'func'"))
 		})
 	})
