@@ -139,11 +139,31 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 		}
 
 		functionsTypes := mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
+			var (
+				ok       bool
+				defaults []string
+				table    string
+			)
+			options, _ := generators.ParseCommentOptions(d.Doc)
+
+			if table, ok = generators.CommentOptionTable(options); !ok {
+				return []genieql.Generator{genieql.NewErrGenerator(errors.New("table is required for batch insert"))}
+			}
+
+			defaults, _ = generators.CommentOptionDefaultColumns(options)
+
 			// TODO: should be able to build query inserter here if I pass in the n and column info.
-			// TODO: extract defaults from comment.
+			builder := func(local string, n int, columns ...string) ast.Decl {
+				return genieql.QueryLiteral(
+					local,
+					ctx.Dialect.Insert(n, table, columns, defaults),
+				)
+			}
+
 			return generators.NewBatchFunctionFromGenDecl(
 				ctx,
 				d,
+				builder,
 			)
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
 
@@ -310,7 +330,6 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 
 	pkgName, typName := extractPackageType(t.packageType)
 	if _, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
-		log.Println("mapName", t.mapName)
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 

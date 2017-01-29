@@ -166,39 +166,39 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			QFOBuiltinQueryFromString(`SELECT * FROM example WHERE id = $1`),
 		),
 		Entry(
-			"example 1 - with static query function",
+			"example 2 - with static query function",
 			`package example
-// genieql.options: inlined-query=SELECT * FROM example WHERE id = $1
+// genieql.options: query-literal=SELECT * FROM example WHERE id = $1
 type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			".fixtures/functions-query/output1.go",
 		),
 		Entry(
-			"example 2 - allow provided query parameter",
+			"example 3 - allow provided query parameter",
 			"package example; type queryFunction2 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
 			".fixtures/functions-query/output2.go",
 		),
 		Entry(
-			"example 3 - alternate scanner function support",
+			"example 4 - alternate scanner function support",
 			"package example; type queryFunction3 func(q sqlx.Queryer, arg1 int) StaticExampleRowScanner",
 			".fixtures/functions-query/output3.go",
 		),
 		Entry(
-			"example 4 - ellipsis support",
+			"example 5 - ellipsis support",
 			"package example; type queryFunction4 func(q sqlx.Queryer, params ...interface{}) StaticExampleRowScanner",
 			".fixtures/functions-query/output4.go",
 		),
 		Entry(
-			"example 5 - normalized parameter names",
+			"example 6 - normalized parameter names",
 			"package example; type queryFunction5 func(q sqlx.Queryer, UUIDArgument int, CamelcaseArgument int, snakecase_argument int, UPPERCASE_ARGUMENT int, lowercase_argument int) StaticExampleRowScanner",
 			".fixtures/functions-query/output5.go",
 		),
 		Entry(
-			"example 6 - structure parameter",
+			"example 7 - structure parameter",
 			"package example; type queryFunction8 func(q sqlx.Queryer, arg1 StructA) StaticExampleScanner",
 			".fixtures/functions-query/output8.go",
 		),
 		Entry(
-			"example 6 - structure parameter",
+			"example 8 - structure parameter",
 			"package example; type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner",
 			".fixtures/functions-query/output9.go",
 		),

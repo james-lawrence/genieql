@@ -62,8 +62,8 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	if len(taggedFiles.files) == 0 {
-		log.Println("no files tagged, ignoring")
 		// nothing to do.
+		log.Println("no files tagged, ignoring")
 		return nil
 	}
 

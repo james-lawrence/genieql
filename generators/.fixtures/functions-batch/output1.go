@@ -5,7 +5,7 @@ import "bitbucket.org/jatone/genieql/internal/sqlx"
 // NewBatchFunction1 creates a scanner that inserts a batch of
 // records into the database.
 func NewBatchFunction1(q sqlx.Queryer, i ...int) ExampleScanner {
-	return batchFunction1{
+	return &batchFunction1{
 		q:         q,
 		remaining: i,
 	}

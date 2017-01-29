@@ -1,7 +1,6 @@
 package generators
 
 import (
-	"bufio"
 	"bytes"
 	"go/ast"
 	"go/build"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
-	"github.com/zieckey/goini"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -106,31 +104,6 @@ func astPrint(n ast.Node) (string, error) {
 	err := printer.Fprint(dst, fset, n)
 
 	return dst.String(), errors.Wrap(err, "failure to print ast")
-}
-
-// OptionsFromCommentGroup parses a configuration and converts it into an array of options.
-func OptionsFromCommentGroup(comments *ast.CommentGroup) (*goini.INI, error) {
-	const magicPrefix = `genieql.options:`
-
-	ini := goini.New()
-	ini.SetParseSection(true)
-	scanner := bufio.NewScanner(strings.NewReader(comments.Text()))
-	scanner.Split(bufio.ScanLines)
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		if !strings.HasPrefix(text, magicPrefix) {
-			continue
-		}
-
-		text = strings.TrimSpace(strings.TrimPrefix(text, magicPrefix))
-
-		if err := ini.Parse([]byte(text), "||", "="); err != nil {
-			return nil, errors.Wrap(err, "failed to parse comment configuration")
-		}
-	}
-
-	return ini, nil
 }
 
 func areArrayType(xs ...ast.Expr) bool {

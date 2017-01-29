@@ -1,12 +1,10 @@
 package generators
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"strconv"
 	"text/template"
 
@@ -41,13 +39,15 @@ func BatchFunctionExploder(sel ...*ast.Field) BatchFunctionOption {
 	}
 }
 
+type builder func(local string, n int, columns ...string) ast.Decl
+
 // NewBatchFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
-func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, options ...BatchFunctionOption) []genieql.Generator {
+func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, b builder, options ...BatchFunctionOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
-				g = append(g, batchGeneratorFromFuncType(ctx, ts.Name, decl.Doc, ft, options...))
+				g = append(g, batchGeneratorFromFuncType(ctx, ts.Name, decl.Doc, ft, b, options...))
 			}
 		}
 	}
@@ -55,51 +55,50 @@ func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, options ...Batc
 	return g
 }
 
-func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, poptions ...BatchFunctionOption) genieql.Generator {
+func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, b builder, poptions ...BatchFunctionOption) genieql.Generator {
 	var (
-		// cvt genieql.ColumnValueTransformer
-		qf queryFunction
+		err        error
+		qf         queryFunction
+		fields     []*ast.Field
+		columns    []genieql.ColumnInfo
+		qfoOptions []QueryFunctionOption
 	)
 
-	qfoOptions, err := generatorFromFuncType(ctx, name, comment, ft)
-	if err != nil {
-		return genieql.NewErrGenerator(err)
-	}
-	qf.Apply(qfoOptions...)
-
-	log.Println("parameters")
-	for _, param := range qf.Parameters {
-		log.Printf("%#v, %#v\n", param.Type, astutil.MapFieldsToNameExpr(param))
-	}
-
 	// validition...
-	if len(qf.Parameters) > 1 && areArrayType(astutil.MapFieldsToTypExpr(qf.Parameters...)...) {
+	if len(ft.Params.List[1:]) > 1 && areArrayType(astutil.MapFieldsToTypExpr(ft.Params.List[1:]...)...) {
 		return genieql.NewErrGenerator(errors.New("batch only supports a single array type parameter"))
 	}
 
-	max, elt, err := extractArrayInfo(qf.Parameters[0].Type.(*ast.ArrayType))
+	max, elt, err := extractArrayInfo(ft.Params.List[1].Type.(*ast.ArrayType))
 	if err != nil {
 		return genieql.NewErrGenerator(err)
 	}
-	field := astutil.Field(elt, qf.Parameters[0].Names...)
-
+	ft.Params.List[1] = astutil.Field(elt, ft.Params.List[1].Names...)
+	field := ft.Params.List[1]
 	if !builtinType(elt) && !selectType(elt) {
-		fields, err := mappedFields(ctx, field)
-		if err != nil {
+		if fields, err = mappedFields(ctx, field); err != nil {
 			return genieql.NewErrGenerator(errors.Wrap(err, "failed to map params"))
 		}
 
 		poptions = append(poptions, BatchFunctionExploder(fields...))
 	}
 
+	if qfoOptions, err = generatorFromFuncType(ctx, name, comment, ft); err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+	qf.Apply(qfoOptions...)
+
+	if _, columns, err = mappedParam(ctx, field); err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+
 	builder := func(n int) ast.Decl {
-		// TODO extract defaults from comment options.
-		// cvt.Transform(column genieql.ColumnInfo)
-		return genieql.QueryLiteral("query", fmt.Sprintf("QUERY %d", n))
+		return b("query", n, genieql.ColumnInfoSet(columns).ColumnNames()...)
 	}
 
 	poptions = append(
-		poptions, BatchFunctionQueryBuilder(builder),
+		poptions,
+		BatchFunctionQueryBuilder(builder),
 		BatchFunctionQFOptions(
 			QFOName(qf.Name),
 			QFOScanner(qf.ScannerDecl),
@@ -248,7 +247,7 @@ var batchQueryFuncMap = template.FuncMap{
 const batchScannerTemplate = `// New{{.QueryFunction.Name | title}} creates a scanner that inserts a batch of
 // records into the database.
 func New{{.QueryFunction.Name | title}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
-	return {{.QueryFunction.Name | private}}{
+	return &{{.QueryFunction.Name | private}}{
 		q: {{.QueryFunction.QueryerName}},
 		remaining: {{.Type | name }},
 	}

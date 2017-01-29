@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -73,7 +72,7 @@ func QFOQueryerFunction(x *ast.Ident) QueryFunctionOption {
 	}
 }
 
-// QFOParameters - DEPRECATED use QFOParameters2specify the parameters for the query function.
+// QFOParameters - DEPRECATED use QFOParameters2. specify the parameters for the query function.
 func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 	params = normalizeFieldNames(params...)
 	return func(qf *queryFunction) {
@@ -100,9 +99,6 @@ func QFOTemplate(tmpl *template.Template) QueryFunctionOption {
 
 // QFOFromComment extracts options from a ast.CommentGroup.
 func QFOFromComment(comments *ast.CommentGroup) ([]string, []QueryFunctionOption, error) {
-	const generalSection = `general`
-	const inlinedQueryOption = `inlined-query`
-	const defaultColumns = `default-columns`
 	var (
 		err       error
 		options   []QueryFunctionOption
@@ -110,21 +106,15 @@ func QFOFromComment(comments *ast.CommentGroup) ([]string, []QueryFunctionOption
 		ini       *goini.INI
 	)
 
-	if ini, err = OptionsFromCommentGroup(comments); err != nil {
+	if ini, err = ParseCommentOptions(comments); err != nil {
 		return defaulted, options, err
 	}
 
-	if q, ok := ini.Get(inlinedQueryOption); ok {
-		x := &ast.BasicLit{
-			Kind:  token.STRING,
-			Value: fmt.Sprintf("`%s`", q),
-		}
+	if x, ok := CommentOptionQuery(ini); ok {
 		options = append(options, QFOBuiltinQuery(x))
 	}
 
-	if d, ok := ini.Get(defaultColumns); ok {
-		defaulted = strings.Split(d, ",")
-	}
+	defaulted, _ = CommentOptionDefaultColumns(ini)
 
 	return defaulted, options, nil
 }

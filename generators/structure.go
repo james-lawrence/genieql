@@ -65,7 +65,7 @@ func StructOptionFromCommentGroup(comment *ast.CommentGroup) ([]StructOption, er
 	const renameSection = `rename.columns`
 
 	options := []StructOption{}
-	ini, err := OptionsFromCommentGroup(comment)
+	ini, err := ParseCommentOptions(comment)
 	if err != nil {
 		return options, err
 	}
