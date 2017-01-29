@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"strconv"
 	"text/template"
 
@@ -80,7 +79,7 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		if fields, err = mappedFields(ctx, field, ignoreSet...); err != nil {
 			return genieql.NewErrGenerator(errors.Wrap(err, "failed to map params"))
 		}
-		log.Println("number of fields", len(fields))
+
 		poptions = append(poptions, BatchFunctionExploder(fields...))
 	}
 
@@ -230,7 +229,6 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Type:             t.Type,
 	}
 
-	log.Printf("%#v\n", t.Selectors)
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 

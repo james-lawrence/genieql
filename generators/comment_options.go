@@ -40,7 +40,6 @@ func ParseCommentOptions(comments *ast.CommentGroup) (*goini.INI, error) {
 		ini.Merge(local, true)
 	}
 
-	log.Println("parsed", ini.GetAll())
 	return ini, nil
 }
 
