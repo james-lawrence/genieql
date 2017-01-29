@@ -151,8 +151,6 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 			}
 
 			defaults, _ = generators.CommentOptionDefaultColumns(options)
-
-			// TODO: should be able to build query inserter here if I pass in the n and column info.
 			builder := func(local string, n int, columns ...string) ast.Decl {
 				return genieql.QueryLiteral(
 					local,
@@ -164,6 +162,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 				ctx,
 				d,
 				builder,
+				defaults,
 			)
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
 

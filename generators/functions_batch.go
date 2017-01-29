@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"strconv"
 	"text/template"
 
@@ -42,12 +43,12 @@ func BatchFunctionExploder(sel ...*ast.Field) BatchFunctionOption {
 type builder func(local string, n int, columns ...string) ast.Decl
 
 // NewBatchFunctionFromGenDecl creates a function generator from the provided *ast.GenDecl
-func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, b builder, options ...BatchFunctionOption) []genieql.Generator {
+func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, b builder, defaults []string, options ...BatchFunctionOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs))
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
-				g = append(g, batchGeneratorFromFuncType(ctx, ts.Name, decl.Doc, ft, b, options...))
+				g = append(g, batchGeneratorFromFuncType(ctx, ts.Name, decl.Doc, ft, b, defaults, options...))
 			}
 		}
 	}
@@ -55,7 +56,7 @@ func NewBatchFunctionFromGenDecl(ctx Context, decl *ast.GenDecl, b builder, opti
 	return g
 }
 
-func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, b builder, poptions ...BatchFunctionOption) genieql.Generator {
+func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGroup, ft *ast.FuncType, b builder, ignoreSet []string, poptions ...BatchFunctionOption) genieql.Generator {
 	var (
 		err        error
 		qf         queryFunction
@@ -76,10 +77,10 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 	ft.Params.List[1] = astutil.Field(elt, ft.Params.List[1].Names...)
 	field := ft.Params.List[1]
 	if !builtinType(elt) && !selectType(elt) {
-		if fields, err = mappedFields(ctx, field); err != nil {
+		if fields, err = mappedFields(ctx, field, ignoreSet...); err != nil {
 			return genieql.NewErrGenerator(errors.Wrap(err, "failed to map params"))
 		}
-
+		log.Println("number of fields", len(fields))
 		poptions = append(poptions, BatchFunctionExploder(fields...))
 	}
 
@@ -149,13 +150,13 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Explode      ast.Node
 	}
 	type context struct {
+		Type             *ast.Field
 		QueryFunction    queryFunction
 		ScannerType      ast.Expr
 		ScannerFunc      ast.Expr
-		Statements       []queryFunctionContext
 		DefaultStatement queryFunctionContext
+		Statements       []queryFunctionContext
 		Parameters       []*ast.Field
-		Type             *ast.Field
 	}
 
 	var (
@@ -228,6 +229,8 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Parameters:       parameters,
 		Type:             t.Type,
 	}
+
+	log.Printf("%#v\n", t.Selectors)
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 

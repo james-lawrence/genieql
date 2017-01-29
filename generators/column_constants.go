@@ -136,7 +136,7 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 
 // converts a *ast.Field that represents a struct into a list of fields that map
 // to columns.
-func mappedFields(ctx Context, param *ast.Field) ([]*ast.Field, error) {
+func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Field, error) {
 	var (
 		err   error
 		infos []*ast.Field
@@ -147,7 +147,7 @@ func mappedFields(ctx Context, param *ast.Field) ([]*ast.Field, error) {
 		return infos, err
 	}
 
-	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage, ignoreSet...)
 	return infos, err
 }
 

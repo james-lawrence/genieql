@@ -143,7 +143,7 @@ func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *b
 		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
 	}
 
-	return t.MapFieldsToColumns(fset, pkg, columns...)
+	return t.MapFieldsToColumns(fset, pkg, ColumnInfoSet(columns).Filter(ColumnInfoFilterIgnore(ignoreColumnSet...))...)
 }
 
 func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {

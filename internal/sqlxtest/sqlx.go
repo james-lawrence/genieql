@@ -13,7 +13,7 @@ import (
 // TemplateDatabaseName template database name
 const TemplateDatabaseName string = "genieql_test_template"
 
-const dbtemplate string = "dbname=%s sslmode=disable port=5432"
+const dbtemplate string = "dbname=%s sslmode=disable"
 
 func generatePostgresql(name, template string) string {
 	return fmt.Sprintf("CREATE DATABASE \"%s\" TEMPLATE %s", name, template)
