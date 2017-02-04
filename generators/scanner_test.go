@@ -2,6 +2,7 @@ package generators_test
 
 import (
 	"bytes"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -18,9 +19,13 @@ import (
 )
 
 var _ = ginkgo.Describe("Scanner", func() {
+	pkg := &build.Package{
+		Name: "example",
+		Dir:  ".fixtures",
+	}
 	config := genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
+			filepath.Join(filepath.Join(localdirectory, ".fixtures", ".genieql"), "generators-test.config"),
 		),
 	)
 	genieql.RegisterDriver(config.Driver, noopDriver{})
@@ -36,7 +41,16 @@ var _ = ginkgo.Describe("Scanner", func() {
 
 			buffer.WriteString("package example\n\n")
 			for _, d := range genieql.SelectFuncType(genieql.FindTypes(node)...) {
-				for _, g := range ScannerFromGenDecl(d, ScannerOptionConfiguration(config)) {
+				gens := ScannerFromGenDecl(
+					d,
+					ScannerOptionContext(Context{
+						Configuration:  config,
+						CurrentPackage: pkg,
+						FileSet:        token.NewFileSet(),
+						Dialect:        dialect{},
+					}),
+				)
+				for _, g := range gens {
 					Expect(g.Generate(buffer)).ToNot(HaveOccurred())
 					buffer.WriteString("\n")
 				}
@@ -51,6 +65,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 		Entry("scanner time.Time", `package example; type Time func(arg time.Time)`, ".fixtures/scanners/time.go"),
 		Entry("scanner multipleParams", `package example; type MultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/scanners/multiple_params.go"),
 		Entry("scanner private mode", `package example; type privateInt func(arg int)`, ".fixtures/scanners/private_int.go"),
+		PEntry("scanner using structure", `package example; type privateInt func(arg StructA)`, ".fixtures/scanners/private_int.go"),
 	)
 
 	DescribeTable("should build scanners with only the specified outputs",

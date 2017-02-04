@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"bitbucket.org/jatone/genieql"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -55,4 +57,46 @@ func panicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type dialect struct{}
+
+func (t dialect) Insert(n int, table string, columns, defaults []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) Select(table string, columns, predicates []string) string {
+	return "SELECT QUERY"
+}
+
+func (t dialect) Update(table string, columns, predicates []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) Delete(table string, columns, predicates []string) string {
+	return "INSERT QUERY"
+}
+
+func (t dialect) ColumnValueTransformer() genieql.ColumnTransformer {
+	return nil
+}
+
+func (t dialect) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
+	switch table {
+	case "struct_a":
+		return []genieql.ColumnInfo{
+			{Name: "a", Type: "int"},
+			{Name: "b", Type: "int"},
+			{Name: "c", Type: "int"},
+			{Name: "d", Type: "bool"},
+			{Name: "e", Type: "bool"},
+			{Name: "f", Type: "bool"},
+		}, nil
+	default:
+		return []genieql.ColumnInfo(nil), nil
+	}
+}
+
+func (t dialect) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
+	return []genieql.ColumnInfo(nil), nil
 }

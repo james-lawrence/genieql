@@ -52,48 +52,6 @@ func (t testSearcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
 	return []*ast.Field(nil), fmt.Errorf("not implemented")
 }
 
-type dialect struct{}
-
-func (t dialect) Insert(n int, table string, columns, defaults []string) string {
-	return "INSERT QUERY"
-}
-
-func (t dialect) Select(table string, columns, predicates []string) string {
-	return "SELECT QUERY"
-}
-
-func (t dialect) Update(table string, columns, predicates []string) string {
-	return "INSERT QUERY"
-}
-
-func (t dialect) Delete(table string, columns, predicates []string) string {
-	return "INSERT QUERY"
-}
-
-func (t dialect) ColumnValueTransformer() genieql.ColumnTransformer {
-	return nil
-}
-
-func (t dialect) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
-	switch table {
-	case "struct_a":
-		return []genieql.ColumnInfo{
-			{Name: "a", Type: "int"},
-			{Name: "b", Type: "int"},
-			{Name: "c", Type: "int"},
-			{Name: "d", Type: "bool"},
-			{Name: "e", Type: "bool"},
-			{Name: "f", Type: "bool"},
-		}, nil
-	default:
-		return []genieql.ColumnInfo(nil), nil
-	}
-}
-
-func (t dialect) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
-	return []genieql.ColumnInfo(nil), nil
-}
-
 var _ = ginkgo.Describe("Query Functions", func() {
 	pkg := &build.Package{
 		Name: "example",
