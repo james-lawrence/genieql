@@ -14,15 +14,14 @@ import (
 
 var _ = Describe("Mapper", func() {
 	DescribeTable("MapFieldToColumn",
-		func(column string, field *ast.Field, offset int, aliaser Aliaser) {
-			matchFound := MapFieldToColumn(column, offset, field, aliaser)
+		func(column string, field *ast.Field, aliaser Aliaser) {
+			matchFound := MapFieldToColumn(column, field, aliaser)
 			Expect(matchFound).ToNot(BeNil())
 		},
 		Entry(
 			"example 1 - simple match",
 			"column1",
 			astutil.Field(ast.NewIdent("int"), ast.NewIdent("Column1")),
-			0,
 			AliasStrategyCamelcase,
 		),
 	)

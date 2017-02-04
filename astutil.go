@@ -196,6 +196,7 @@ func SelectFuncType(decls ...*ast.GenDecl) []*ast.GenDecl {
 	return result
 }
 
+// FilteredValue ...
 type FilteredValue struct {
 	Ident *ast.Ident
 	Value ast.Expr
@@ -226,6 +227,7 @@ func SelectValues(node ast.Node) []FilteredValue {
 	return v.values
 }
 
+// Searcher utility functions for searching for declarations within a set of packages.
 type Searcher interface {
 	FindFunction(f ast.Filter) (*ast.FuncDecl, error)
 	FindUniqueType(f ast.Filter) (*ast.TypeSpec, error)

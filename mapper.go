@@ -200,7 +200,7 @@ func Map(configFile, name string, m MappingConfig) error {
 }
 
 // MapFieldToColumn maps a column to a field based on the provided aliases.
-func MapFieldToColumn(column string, colIdx int, field *ast.Field, aliases ...Aliaser) *ast.Field {
+func MapFieldToColumn(column string, field *ast.Field, aliases ...Aliaser) *ast.Field {
 	for _, fieldName := range field.Names {
 		for _, aliaser := range aliases {
 			if aliaser.Alias(column) == fieldName.Name {
