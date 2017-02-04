@@ -4,7 +4,9 @@ import (
 	"go/ast"
 	"go/build"
 	"go/token"
+	"go/types"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -95,23 +97,26 @@ func (t MappingConfig) TypeFields(fset *token.FileSet, pkg *build.Package) ([]*a
 }
 
 // MappedColumnInfo returns the mapped and unmapped columns for the mapping.
-func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
+func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
 	var (
-		err    error
-		fields []*ast.Field
+		err     error
+		fields  []*ast.Field
+		columns []ColumnInfo
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
 		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
 	}
 
-	// if columns, err = t.ColumnInfo(dialect); err != nil {
-	// 	// err = errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
-	// 	// log.Println(err)
-	// 	return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
-	// }
+	columns = t.Columns
+	// if no columns are defined for the mapping lets load generate it from
+	if len(columns) == 0 {
+		log.Println(errors.Wrapf(err, "no defined columns for: %s.%s generating fake columns", t.Package, t.Type))
+		// for now just support the CamelCase -> snakecase.
+		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
+	}
 
-	mColumns, uColumns := mapColumns(t.Columns, fields, t.Aliaser())
+	mColumns, uColumns := mapColumns(columns, fields, t.Aliaser())
 	return mColumns, uColumns, nil
 }
 
@@ -181,4 +186,22 @@ func MapFieldToColumn(column string, field *ast.Field, aliases ...Aliaser) *ast.
 		}
 	}
 	return nil
+}
+
+// GenerateFakeColumnInfo generate fake column info from a structure.
+func GenerateFakeColumnInfo(d Driver, aliaser Aliaser, fields ...*ast.Field) []ColumnInfo {
+	results := make([]ColumnInfo, 0, len(fields))
+	for _, field := range fields {
+		_, nullable := d.NullableType(field.Type, ast.NewIdent(""))
+		for _, name := range field.Names {
+			results = append(results, ColumnInfo{
+				Name:       aliaser.Alias(name.Name),
+				Nullable:   nullable,
+				PrimaryKey: false,
+				Type:       types.ExprString(field.Type),
+			})
+		}
+	}
+
+	return results
 }

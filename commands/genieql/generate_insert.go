@@ -226,8 +226,10 @@ func (t *insertQueryCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	var (
 		err     error
+		config  genieql.Configuration
 		mapping genieql.MappingConfig
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
 		pkg     *build.Package
@@ -235,9 +237,14 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	)
 
 	pkgName, typName := extractPackageType(t.packageType)
-	if _, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
 	}
+
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return err
+	}
+
 	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
@@ -248,7 +255,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 
 	mapping.Apply(genieql.MCOColumns(columns...))
 
-	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, pkg); err != nil {
 		return err
 	}
 
@@ -321,8 +328,10 @@ func (t *insertFunctionCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause
 func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 	var (
 		err     error
+		config  genieql.Configuration
 		mapping genieql.MappingConfig
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
 		pkg     *build.Package
@@ -331,8 +340,12 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 	)
 
 	pkgName, typName := extractPackageType(t.packageType)
-	if _, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
+	}
+
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return err
 	}
 
 	if pkg, err = locatePackage(pkgName); err != nil {
@@ -349,7 +362,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		return errors.Wrapf(err, "%s: is not a valid expression", t.queryer)
 	}
 
-	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, pkg); err != nil {
 		return err
 	}
 	onlyMap := genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))

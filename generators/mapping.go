@@ -12,16 +12,21 @@ import (
 // of ColumnMap.
 func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieql.ColumnInfo, error) {
 	var (
-		err   error
-		infos []genieql.ColumnInfo
-		m     genieql.MappingConfig
+		err    error
+		infos  []genieql.ColumnInfo
+		driver genieql.Driver
+		m      genieql.MappingConfig
 	)
 
 	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
 		return m, infos, err
 	}
 
-	infos, _, err = m.MappedColumnInfo(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	if driver, err = genieql.LookupDriver(ctx.Configuration.Driver); err != nil {
+		return m, infos, err
+	}
+
+	infos, _, err = m.MappedColumnInfo(driver, ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
 	return m, infos, err
 }
 

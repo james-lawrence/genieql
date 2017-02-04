@@ -32,6 +32,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		config  genieql.Configuration
 		mapping genieql.MappingConfig
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
 		fset    = token.NewFileSet()
@@ -47,13 +48,17 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return err
+	}
+
 	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
 		return err
 	}
 
 	mapping.Apply(genieql.MCOColumns(columns...))
 
-	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, pkg); err != nil {
 		return err
 	}
 

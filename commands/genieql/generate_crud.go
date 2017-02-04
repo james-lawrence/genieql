@@ -26,6 +26,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		err     error
 		config  genieql.Configuration
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		mapping genieql.MappingConfig
 		columns []genieql.ColumnInfo
 		pkg     *build.Package
@@ -40,7 +41,11 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return err
+	}
+
+	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, pkg); err != nil {
 		return err
 	}
 
