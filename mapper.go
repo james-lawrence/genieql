@@ -10,8 +10,8 @@ import (
 
 	"bitbucket.org/jatone/genieql/astutil"
 
+	"github.com/go-yaml/yaml"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // MappingConfigOption (MCO) options for building MappingConfigs.

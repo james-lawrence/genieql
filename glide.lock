@@ -1,12 +1,16 @@
-hash: 459c29c56cf1ea886d64290922eb2bf3862e513c821ab8bf3799883a419d4266
-updated: 2016-09-11T14:59:14.349783576-04:00
+hash: a2ad7454102ed1d16a306b1448480fa4b8173e928dbac8456f0cb792054ca880
+updated: 2017-02-04T14:08:57.915869136-05:00
 imports:
+- name: github.com/alecthomas/kingpin
+  version: 7b7c3e10c746bb718299261d2093286e5e38e04c
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+- name: github.com/go-yaml/yaml
+  version: 4c78c975fe7c825c6d1466c42be594d1d6f3aba6
 - name: github.com/jackc/pgx
   version: 0c7277fe15359549b236292644f4ad7eff753544
 - name: github.com/lib/pq
@@ -26,10 +30,38 @@ imports:
 - name: golang.org/x/tools
   version: 86ad1193da6aba71355e71191641b9cfb26daa67
   subpackages:
-  - imports
   - go/ast/astutil
-- name: gopkg.in/alecthomas/kingpin.v2
-  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
-- name: gopkg.in/yaml.v2
-  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+  - imports
+testImports:
+- name: github.com/onsi/ginkgo
+  version: ac3d45ddd7ef5c4d7fc4d037b615a81f4d67981e
+  subpackages:
+  - config
+  - extensions/table
+  - internal/codelocation
+  - internal/containernode
+  - internal/failer
+  - internal/leafnodes
+  - internal/remote
+  - internal/spec
+  - internal/specrunner
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - types
+- name: github.com/onsi/gomega
+  version: c72df929b80ef4930aaa75d5e486887ff2f3e06a
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/oraclematcher
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types

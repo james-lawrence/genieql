@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-yaml/yaml"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // ErrRequireHostAndPort currently require both host and port to be specified.

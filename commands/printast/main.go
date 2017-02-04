@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 func main() {

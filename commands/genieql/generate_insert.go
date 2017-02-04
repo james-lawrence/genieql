@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"

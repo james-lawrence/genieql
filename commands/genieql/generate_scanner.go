@@ -13,7 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/generators"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 // GenerateScanner root command for generating scanners.

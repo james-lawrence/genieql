@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	kingpin "github.com/alecthomas/kingpin"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"

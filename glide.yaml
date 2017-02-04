@@ -5,12 +5,13 @@ import:
 - package: golang.org/x/tools
   subpackages:
   - imports
-- package: gopkg.in/alecthomas/kingpin.v2
-- package: gopkg.in/yaml.v2
 - package: github.com/satori/go.uuid
 - package: github.com/jackc/pgx
 - package: github.com/pkg/errors
 - package: github.com/zieckey/goini
 - package: github.com/mattn/go-sqlite3
+- package: github.com/go-yaml/yaml
+- package: github.com/alecthomas/kingpin
 testImport:
 - package: github.com/onsi/ginkgo
+- package: github.com/onsi/gomega

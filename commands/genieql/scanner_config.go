@@ -5,7 +5,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 type scannerOption func(c *scannerConfig)

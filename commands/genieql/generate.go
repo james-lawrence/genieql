@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 type generate struct {

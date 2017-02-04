@@ -14,7 +14,7 @@ import (
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
 	"github.com/serenize/snaker"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 // GenerateStructure root command for generating structures.

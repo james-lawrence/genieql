@@ -3,7 +3,7 @@ package main
 import (
 	"path/filepath"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 
 	"bitbucket.org/jatone/genieql"
 )
