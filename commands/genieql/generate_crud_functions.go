@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/alecthomas/kingpin"
+	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
@@ -50,7 +50,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 	mapping.CustomQuery = false
 	mapping.TableOrQuery = t.table
 
-	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err
 	}
 

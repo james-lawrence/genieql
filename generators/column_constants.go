@@ -130,7 +130,7 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		return m, infos, err
 	}
 
-	infos, _, err = m.MappedColumnInfo2(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	infos, _, err = m.MappedColumnInfo(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
 	return m, infos, err
 }
 

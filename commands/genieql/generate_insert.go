@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/alecthomas/kingpin"
+	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -245,7 +245,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	mapping.CustomQuery = false
 	mapping.TableOrQuery = t.table
 
-	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err
 	}
 
@@ -343,7 +343,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		return errors.Wrapf(err, "%s: is not a valid expression", t.queryer)
 	}
 
-	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err
 	}
 	onlyMap := genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))

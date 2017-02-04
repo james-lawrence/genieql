@@ -40,7 +40,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if columns, _, err = mapping.MappedColumnInfo2(dialect, fset, pkg); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err
 	}
 

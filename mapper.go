@@ -112,8 +112,8 @@ func (t MappingConfig) ColumnInfo(dialect Dialect) ([]ColumnInfo, error) {
 	return dialect.ColumnInformationForTable(t.TableOrQuery)
 }
 
-// MappedColumnInfo2 returns the mapped and unmapped columns for the mapping.
-func (t MappingConfig) MappedColumnInfo2(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
+// MappedColumnInfo returns the mapped and unmapped columns for the mapping.
+func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
 	var (
 		err     error
 		fields  []*ast.Field
