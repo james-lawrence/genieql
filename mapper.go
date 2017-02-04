@@ -63,13 +63,13 @@ func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
 
 // MappingConfig TODO...
 type MappingConfig struct {
-	Package              string
-	Type                 string
-	IncludeTablePrefixes bool // deprecated
-	Transformations      []string
-	RenameMap            map[string]string
-	TableOrQuery         string
-	CustomQuery          bool
+	Package         string
+	Type            string
+	Transformations []string
+	RenameMap       map[string]string
+	Columns         []ColumnInfo
+	TableOrQuery    string
+	CustomQuery     bool
 }
 
 // Apply the options to the current MappingConfig
@@ -77,11 +77,6 @@ func (t *MappingConfig) Apply(options ...MappingConfigOption) {
 	for _, opt := range options {
 		opt(t)
 	}
-}
-
-// Mapper ...
-func (t MappingConfig) Mapper() Mapper {
-	return Mapper{Aliasers: []Aliaser{AliaserBuilder(t.Transformations...)}}
 }
 
 // Aliaser ...
@@ -125,10 +120,12 @@ func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, pk
 	}
 
 	if columns, err = t.ColumnInfo(dialect); err != nil {
+		// err = errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+		// log.Println(err)
 		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
 	}
 
-	mColumns, uColumns := mapColumns(columns, fields, t.Mapper().Aliasers...)
+	mColumns, uColumns := mapColumns(columns, fields, t.Aliaser())
 	return mColumns, uColumns, nil
 }
 
@@ -156,7 +153,7 @@ func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Packag
 		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
 	}
 
-	mFields, uFields := mapFields(columns, fields, t.Mapper().Aliasers...)
+	mFields, uFields := mapFields(columns, fields, t.Aliaser())
 	return mFields, uFields, nil
 }
 
@@ -200,34 +197,6 @@ func Map(configFile, name string, m MappingConfig) error {
 	}
 
 	return WriteMapper(config, name, m)
-}
-
-// Mapper responsible for mapping a result row to a structure.
-type Mapper struct {
-	Aliasers []Aliaser
-}
-
-// UnmappedColumns returns the columns that do not map to a field.
-func (t Mapper) UnmappedColumns(fields []*ast.Field, columns ...string) ([]string, error) {
-	matches := make([]string, 0, len(columns))
-	for idx, column := range columns {
-		var (
-			matched *ast.Field
-		)
-
-		for _, field := range fields {
-			if matched = MapFieldToColumn(column, idx, field, t.Aliasers...); matched != nil {
-				break
-			}
-		}
-
-		if matched == nil {
-			matches = append(matches, column)
-			break
-		}
-	}
-
-	return matches, nil
 }
 
 // MapFieldToColumn maps a column to a field based on the provided aliases.

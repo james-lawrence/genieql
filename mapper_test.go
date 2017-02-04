@@ -34,29 +34,4 @@ var _ = Describe("Mapper", func() {
 			}
 		})
 	})
-
-	Describe("MapColumns", func() {
-		examples := []struct {
-			arg     *ast.Ident
-			columns []string
-			fields  []*ast.Field
-		}{
-			{
-				arg:     &ast.Ident{Name: "arg0"},
-				columns: []string{"column1", "column2"},
-				fields: []*ast.Field{
-					&ast.Field{Names: []*ast.Ident{&ast.Ident{Name: "Column1"}}, Type: &ast.Ident{Name: "int"}},
-				},
-			},
-		}
-		It("should return mapped columns for the given fields", func() {
-			for _, example := range examples {
-				columnMaps, err := Mapper{Aliasers: []Aliaser{AliasStrategySnakecase}}.UnmappedColumns(example.fields, example.columns...)
-				Expect(err).ToNot(HaveOccurred())
-				for idx, m := range columnMaps {
-					Expect(m).To(Equal(example.columns[idx]))
-				}
-			}
-		})
-	})
 })
