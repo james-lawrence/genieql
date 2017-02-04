@@ -177,6 +177,9 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
 			return generators.StructureFromGenDecl(
 				decl,
+				func(table string) generators.StructOption {
+					return generators.StructOptionTableStrategy(table)
+				},
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
 					genieql.MCOPackage(pkg.ImportPath),
@@ -347,6 +350,9 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
 			return generators.StructureFromGenDecl(
 				decl,
+				func(query string) generators.StructOption {
+					return generators.StructOptionQueryStrategy(query)
+				},
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
 					genieql.MCOPackage(pkg.ImportPath),

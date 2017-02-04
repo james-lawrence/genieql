@@ -1,13 +1,10 @@
 package generators
 
 import (
-	"fmt"
 	"go/ast"
 	"go/types"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
@@ -106,10 +103,6 @@ func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.Col
 	}
 	aliaser := m.Aliaser()
 
-	fmt.Printf("type: %T\n", param.Type)
-	fields, err := genieql.ResolveTypeFields(param.Type, ctx.FileSet, ctx.CurrentPackage)
-	log.Println(astutil.MapFieldsToNameExpr(fields...), err)
-	// ctx.Dialect.
 	for _, arg := range param.Names {
 		for _, column := range columns {
 			if stringsx.Contains(column.Name, ignoreSet...) {

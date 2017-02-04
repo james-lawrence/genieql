@@ -31,7 +31,7 @@ var _ = ginkgo.Describe("Structure", func() {
 	panicOnError(err)
 
 	DescribeTable("build a structure based on the definition file",
-		func(definition, fixture string, options ...StructOption) {
+		func(definition, fixture string, builder func(string) StructOption, options ...StructOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
@@ -41,7 +41,7 @@ var _ = ginkgo.Describe("Structure", func() {
 
 			buffer.WriteString("package example\n\n")
 			for _, d := range genieql.FindConstants(node) {
-				for _, g := range StructureFromGenDecl(d, options...) {
+				for _, g := range StructureFromGenDecl(d, builder, options...) {
 					Expect(g.Generate(buffer)).ToNot(HaveOccurred())
 					buffer.WriteString("\n")
 				}
@@ -55,8 +55,10 @@ var _ = ginkgo.Describe("Structure", func() {
 			"type1 structure",
 			`package example; const MyStruct = "type1"`,
 			".fixtures/structures/type1.go",
+			func(table string) StructOption {
+				return StructOptionTableStrategy(table)
+			},
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionTableStrategy("type1"),
 		),
 		Entry(
 			"type1 structure with configuration",
@@ -67,20 +69,22 @@ var _ = ginkgo.Describe("Structure", func() {
 const Lowercase = "type1"
 `,
 			".fixtures/structures/type1_configuration.go",
+			func(table string) StructOption {
+				return StructOptionTableStrategy(table)
+			},
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionTableStrategy("table1"),
 		),
 	)
 
 	DescribeTable("not build a structure when there are problems with the definition file",
-		func(definition, expectedErr string, options ...StructOption) {
+		func(definition, expectedErr string, builder func(string) StructOption, options ...StructOption) {
 			fset := token.NewFileSet()
 
 			node, err := parser.ParseFile(fset, "example", definition, parser.ParseComments)
 			Expect(err).ToNot(HaveOccurred())
 
 			for _, d := range genieql.FindConstants(node) {
-				for _, g := range StructureFromGenDecl(d, options...) {
+				for _, g := range StructureFromGenDecl(d, builder, options...) {
 					Expect(g.Generate(ioutil.Discard)).To(MatchError(expectedErr))
 				}
 			}
@@ -92,8 +96,10 @@ const Lowercase = "type1"
 const Lowercase = "type1"
 `,
 			"failed to parse comment configuration: Came accross an error : general is NOT a valid key/value pair",
+			func(table string) StructOption {
+				return StructOptionTableStrategy(table)
+			},
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionTableStrategy("type1"),
 		),
 	)
 })

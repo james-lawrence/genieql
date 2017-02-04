@@ -114,7 +114,7 @@ func NewStructure(opts ...StructOption) genieql.Generator {
 }
 
 // StructureFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
-func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.Generator {
+func StructureFromGenDecl(decl *ast.GenDecl, columnStrategyBuilder func(string) StructOption, options ...StructOption) []genieql.Generator {
 	var (
 		err        error
 		configOpts []StructOption
@@ -134,7 +134,8 @@ func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.
 
 	for _, vs := range specs {
 		m := mapStructureToGenerator{
-			options: configOpts,
+			options:               configOpts,
+			columnStrategyBuilder: columnStrategyBuilder,
 		}
 		g = append(g, m.Map(vs)...)
 	}
@@ -197,21 +198,21 @@ type {{.Name}} struct {
 }
 
 type mapStructureToGenerator struct {
-	Context
-	options []StructOption
+	columnStrategyBuilder func(string) StructOption
+	options               []StructOption
 }
 
 func (t mapStructureToGenerator) Map(vs *ast.ValueSpec) []genieql.Generator {
 	dst := make([]genieql.Generator, 0, len(vs.Names))
 
 	for idx := range vs.Names {
-		tablename := strings.Trim(types.ExprString(vs.Values[idx]), "\"")
+		tableOrQuery := strings.Trim(types.ExprString(vs.Values[idx]), "\"")
 		s := NewStructure(
 			append(t.options,
 				StructOptionName(
 					vs.Names[idx].Name,
 				),
-				StructOptionTableStrategy(tablename),
+				t.columnStrategyBuilder(tableOrQuery),
 			)...,
 		)
 		dst = append(dst, s)

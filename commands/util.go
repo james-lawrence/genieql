@@ -35,7 +35,7 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	)
 
 	if err = g.Generate(buffer); err != nil {
-		log.Printf("failed to generate: %+v\n", err)
+		log.Printf("%s: failed to generate: %+v\n", genieql.PrintDebug(), err)
 		return err
 	}
 
