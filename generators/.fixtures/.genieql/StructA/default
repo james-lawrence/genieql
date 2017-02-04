@@ -1,8 +1,18 @@
 package: .fixtures
 type: StructA
-includetableprefixes: false
 transformations:
 - uppercase
 renamemap: {}
-tableorquery: struct_a
-customquery: false
+columns:
+- name: a
+  type: int
+- name: b
+  type: int
+- name: c
+  type: int
+- name: d
+  type: bool
+- name: e
+  type: bool
+- name: f
+  type: bool

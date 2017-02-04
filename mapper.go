@@ -23,33 +23,30 @@ func MCOPackage(p string) MappingConfigOption {
 	}
 }
 
-func MCOColumnInfo(q string) MappingConfigOption {
-	return func(mc *MappingConfig) {
-		mc.TableOrQuery = q
-	}
-}
-
-func MCOCustom(custom bool) MappingConfigOption {
-	return func(mc *MappingConfig) {
-		mc.CustomQuery = custom
-	}
-}
-
 func MCOTransformations(t ...string) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.Transformations = t
 	}
 }
 
+// MCORenameMap rename mapping.
 func MCORenameMap(m map[string]string) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.RenameMap = m
 	}
 }
 
+// MCOType set the type of the mapping.
 func MCOType(t string) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.Type = t
+	}
+}
+
+// MCOColumns set the default columns for the mapping.
+func MCOColumns(columns ...ColumnInfo) MappingConfigOption {
+	return func(mc *MappingConfig) {
+		mc.Columns = columns
 	}
 }
 
@@ -68,8 +65,6 @@ type MappingConfig struct {
 	Transformations []string
 	RenameMap       map[string]string
 	Columns         []ColumnInfo
-	TableOrQuery    string
-	CustomQuery     bool
 }
 
 // Apply the options to the current MappingConfig
@@ -99,48 +94,34 @@ func (t MappingConfig) TypeFields(fset *token.FileSet, pkg *build.Package) ([]*a
 	return NewSearcher(fset, pkg).FindFieldsForType(ast.NewIdent(t.Type))
 }
 
-// ColumnInfo defined by the mapping.
-func (t MappingConfig) ColumnInfo(dialect Dialect) ([]ColumnInfo, error) {
-	if t.CustomQuery {
-		return dialect.ColumnInformationForQuery(t.TableOrQuery)
-	}
-	return dialect.ColumnInformationForTable(t.TableOrQuery)
-}
-
 // MappedColumnInfo returns the mapped and unmapped columns for the mapping.
 func (t MappingConfig) MappedColumnInfo(dialect Dialect, fset *token.FileSet, pkg *build.Package) ([]ColumnInfo, []ColumnInfo, error) {
 	var (
-		err     error
-		fields  []*ast.Field
-		columns []ColumnInfo
+		err    error
+		fields []*ast.Field
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
 		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
 	}
 
-	if columns, err = t.ColumnInfo(dialect); err != nil {
-		// err = errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
-		// log.Println(err)
-		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
-	}
+	// if columns, err = t.ColumnInfo(dialect); err != nil {
+	// 	// err = errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+	// 	// log.Println(err)
+	// 	return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
+	// }
 
-	mColumns, uColumns := mapColumns(columns, fields, t.Aliaser())
+	mColumns, uColumns := mapColumns(t.Columns, fields, t.Aliaser())
 	return mColumns, uColumns, nil
 }
 
 // MappedFields returns the fields that are mapped to columns.
 func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package, ignoreColumnSet ...string) ([]*ast.Field, []*ast.Field, error) {
-	var (
-		err     error
-		columns []ColumnInfo
+	return t.MapFieldsToColumns(
+		fset,
+		pkg,
+		ColumnInfoSet(t.Columns).Filter(ColumnInfoFilterIgnore(ignoreColumnSet...))...,
 	)
-
-	if columns, err = t.ColumnInfo(dialect); err != nil {
-		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup columns: %s.%s using %s", t.Package, t.Type, t.TableOrQuery)
-	}
-
-	return t.MapFieldsToColumns(fset, pkg, ColumnInfoSet(columns).Filter(ColumnInfoFilterIgnore(ignoreColumnSet...))...)
 }
 
 func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
@@ -186,16 +167,7 @@ func ReadMapper(config Configuration, pkg, typ, name string, m *MappingConfig) e
 }
 
 // Map TODO...
-func Map(configFile, name string, m MappingConfig) error {
-	var config = Configuration{
-		Location: filepath.Dir(configFile),
-		Name:     filepath.Base(configFile),
-	}
-
-	if err := ReadConfiguration(&config); err != nil {
-		return err
-	}
-
+func Map(config Configuration, name string, m MappingConfig) error {
 	return WriteMapper(config, name, m)
 }
 

@@ -51,6 +51,26 @@ func loadPackageContext(configName, pkg string, fset *token.FileSet) (genieql.Co
 	return config, dialect, bpkg, err
 }
 
+func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) {
+	var (
+		err           error
+		configuration genieql.Configuration
+		dialect       genieql.Dialect
+	)
+
+	configuration = genieql.MustReadConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), config),
+		),
+	)
+
+	if dialect, err = genieql.LookupDialect(configuration); err != nil {
+		return configuration, dialect, err
+	}
+
+	return configuration, dialect, err
+}
+
 func loadMappingContext(config, pkg, typ, mName string) (genieql.Configuration, genieql.Dialect, genieql.MappingConfig, error) {
 	var (
 		err           error

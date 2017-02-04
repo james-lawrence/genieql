@@ -47,8 +47,11 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	mapping.CustomQuery = false
-	mapping.TableOrQuery = t.table
+	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+		return err
+	}
+
+	mapping.Apply(genieql.MCOColumns(columns...))
 
 	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err

@@ -28,18 +28,32 @@ func StructOptionAliasStrategy(mcp genieql.MappingConfigOption) StructOption {
 	}
 }
 
+// StructOptionColumnsStrategy strategy for resolving column info for the structure.
+func StructOptionColumnsStrategy(strategy columnsStrategy) StructOption {
+	return func(s *structure) {
+		s.columns = strategy
+	}
+}
+
+// StructOptionTableStrategy convience function for creating a table based structure.
+func StructOptionTableStrategy(table string) StructOption {
+	return StructOptionColumnsStrategy(func(d genieql.Dialect) ([]genieql.ColumnInfo, error) {
+		return d.ColumnInformationForTable(table)
+	})
+}
+
+// StructOptionQueryStrategy convience function for creating a query based structure.
+func StructOptionQueryStrategy(query string) StructOption {
+	return StructOptionColumnsStrategy(func(d genieql.Dialect) ([]genieql.ColumnInfo, error) {
+		return d.ColumnInformationForQuery(query)
+	})
+}
+
 // StructOptionRenameMap provides explicit rename mappings when
 // generating the struct's field names.
 func StructOptionRenameMap(m map[string]string) StructOption {
 	return func(s *structure) {
 		s.renameMap = genieql.MCORenameMap(m)
-	}
-}
-
-// StructOptionFieldsQuery sets the query to determine the fields of the structure.
-func StructOptionFieldsQuery(q string) StructOption {
-	return func(s *structure) {
-		s.query = genieql.MCOColumnInfo(q)
 	}
 }
 
@@ -128,12 +142,13 @@ func StructureFromGenDecl(decl *ast.GenDecl, options ...StructOption) []genieql.
 	return g
 }
 
+type columnsStrategy func(genieql.Dialect) ([]genieql.ColumnInfo, error)
 type structure struct {
 	Context
 	Name           string
+	columns        columnsStrategy
 	aliaser        genieql.MappingConfigOption
 	renameMap      genieql.MappingConfigOption
-	query          genieql.MappingConfigOption
 	mappingOptions []genieql.MappingConfigOption
 }
 
@@ -148,20 +163,32 @@ type {{.Name}} struct {
 		Name    string
 		Columns []genieql.ColumnInfo
 	}
+	var (
+		err     error
+		columns []genieql.ColumnInfo
+	)
 
-	mapping := genieql.NewMappingConfig(append(t.mappingOptions, t.renameMap, t.aliaser, t.query, genieql.MCOType(t.Name))...)
-	if err := t.Context.Configuration.WriteMap("default", mapping); err != nil {
+	if columns, err = t.columns(t.Context.Dialect); err != nil {
 		return err
 	}
 
-	columns, err := mapping.ColumnInfo(t.Context.Dialect)
-	if err != nil {
+	mapping := genieql.NewMappingConfig(
+		append(
+			t.mappingOptions,
+			t.renameMap,
+			t.aliaser,
+			genieql.MCOColumns(columns...),
+			genieql.MCOType(t.Name),
+		)...,
+	)
+
+	if err = t.Context.Configuration.WriteMap("default", mapping); err != nil {
 		return err
 	}
 
 	ctx := context{
 		Name:    t.Name,
-		Columns: columns,
+		Columns: mapping.Columns,
 	}
 
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
@@ -170,6 +197,7 @@ type {{.Name}} struct {
 }
 
 type mapStructureToGenerator struct {
+	Context
 	options []StructOption
 }
 
@@ -183,7 +211,7 @@ func (t mapStructureToGenerator) Map(vs *ast.ValueSpec) []genieql.Generator {
 				StructOptionName(
 					vs.Names[idx].Name,
 				),
-				StructOptionFieldsQuery(tablename),
+				StructOptionTableStrategy(tablename),
 			)...,
 		)
 		dst = append(dst, s)

@@ -57,6 +57,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		Name: "example",
 		Dir:  ".fixtures",
 	}
+
 	configuration := genieql.Configuration{
 		Location: ".fixtures/.genieql",
 	}

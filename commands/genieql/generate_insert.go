@@ -242,8 +242,11 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	mapping.CustomQuery = false
-	mapping.TableOrQuery = t.table
+	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+		return err
+	}
+
+	mapping.Apply(genieql.MCOColumns(columns...))
 
 	if columns, _, err = mapping.MappedColumnInfo(dialect, fset, pkg); err != nil {
 		return err
@@ -336,8 +339,11 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		return err
 	}
 
-	mapping.CustomQuery = false
-	mapping.TableOrQuery = t.table
+	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+		return err
+	}
+
+	mapping.Apply(genieql.MCOColumns(columns...))
 
 	if queryer, err = parser.ParseExpr(t.queryer); err != nil {
 		return errors.Wrapf(err, "%s: is not a valid expression", t.queryer)

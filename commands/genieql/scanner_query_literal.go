@@ -22,10 +22,13 @@ type queryLiteral struct {
 func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	var (
 		err           error
+		query         string
+		columns       []genieql.ColumnInfo
 		config        genieql.Configuration
 		dialect       genieql.Dialect
 		mappingConfig genieql.MappingConfig
 		pkg           *build.Package
+		pkgset        []*ast.Package
 		fset          = token.NewFileSet()
 	)
 	pkgName, typName := extractPackageType(t.scanner.packageType)
@@ -38,21 +41,21 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	pkgset, err := genieql.NewUtils(fset).ParsePackages(pkg)
-	if err != nil {
-		log.Fatalln(err)
+	if pkgset, err = genieql.NewUtils(fset).ParsePackages(pkg); err != nil {
+		return err
 	}
 
-	query, err := genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkgset...)
-	if err != nil {
-		log.Fatalln(err)
+	if query, err = genieql.RetrieveBasicLiteralString(genieql.FilterName(queryConstName), pkgset...); err != nil {
+		return err
 	}
 
+	if columns, err = dialect.ColumnInformationForQuery(query); err != nil {
+		return err
+	}
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
 	(&mappingConfig).Apply(
-		genieql.MCOColumnInfo(query),
-		genieql.MCOCustom(true),
+		genieql.MCOColumns(columns...),
 	)
 
 	if err = config.WriteMap(t.scanner.mapName, mappingConfig); err != nil {

@@ -62,28 +62,40 @@ func Bootstrap(options ...ConfigurationOption) error {
 
 // WriteConfiguration writes the genieql configuration file to the specified path.
 func WriteConfiguration(config Configuration) error {
-	d, err := yaml.Marshal(config)
-	if err != nil {
-		return err
+	var (
+		err error
+		raw []byte
+	)
+
+	if raw, err = yaml.Marshal(config); err != nil {
+		return errors.Wrap(err, "failed to serialize configuration to yaml")
 	}
 
-	return ioutil.WriteFile(filepath.Join(config.Location, config.Name), d, 0666)
+	return errors.Wrap(ioutil.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
 // ReadConfiguration reads the genieql configuration file to the specified path.
 func ReadConfiguration(config *Configuration) error {
-	raw, err := ioutil.ReadFile(filepath.Join(config.Location, config.Name))
-	if err != nil {
-		return err
+	var (
+		err error
+		raw []byte
+	)
+	if raw, err = ioutil.ReadFile(filepath.Join(config.Location, config.Name)); err != nil {
+		return errors.Wrap(err, "failed to read configuration file")
 	}
-	return yaml.Unmarshal(raw, config)
+
+	return errors.Wrap(yaml.Unmarshal(raw, config), "failed to parse configuration file")
 }
 
 // MustConfiguration builds a configuration from the provided options.
 func MustConfiguration(options ...ConfigurationOption) Configuration {
-	c, e := NewConfiguration(options...)
-	if e != nil {
-		log.Fatalln(e)
+	var (
+		err error
+		c   Configuration
+	)
+
+	if c, err = NewConfiguration(options...); err != nil {
+		log.Fatalf("%+v\n", err)
 	}
 
 	return c
@@ -94,7 +106,7 @@ func MustConfiguration(options ...ConfigurationOption) Configuration {
 func MustReadConfiguration(options ...ConfigurationOption) Configuration {
 	c := MustConfiguration(options...)
 	if e := ReadConfiguration(&c); e != nil {
-		log.Fatalln(e)
+		log.Fatalf("%+v\n", e)
 	}
 	return c
 }

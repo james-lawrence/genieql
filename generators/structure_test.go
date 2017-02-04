@@ -56,10 +56,7 @@ var _ = ginkgo.Describe("Structure", func() {
 			`package example; const MyStruct = "type1"`,
 			".fixtures/structures/type1.go",
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionMappingConfigOptions(
-				genieql.MCOCustom(false),
-				genieql.MCOColumnInfo("type1"),
-			),
+			StructOptionTableStrategy("type1"),
 		),
 		Entry(
 			"type1 structure with configuration",
@@ -71,10 +68,7 @@ const Lowercase = "type1"
 `,
 			".fixtures/structures/type1_configuration.go",
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionMappingConfigOptions(
-				genieql.MCOCustom(false),
-				genieql.MCOColumnInfo("type1"),
-			),
+			StructOptionTableStrategy("table1"),
 		),
 	)
 
@@ -99,10 +93,7 @@ const Lowercase = "type1"
 `,
 			"failed to parse comment configuration: Came accross an error : general is NOT a valid key/value pair",
 			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
-			StructOptionMappingConfigOptions(
-				genieql.MCOCustom(false),
-				genieql.MCOColumnInfo("type1"),
-			),
+			StructOptionTableStrategy("type1"),
 		),
 	)
 })

@@ -26,7 +26,7 @@ func main() {
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	bootstrapCmd := bootstrap.configure(app)
-	mapCmd := mapper.configure(app)
+	mapper.configure(app)
 	generator.configure(app)
 	scanner.configure(app)
 
@@ -45,10 +45,6 @@ func main() {
 	switch cmd {
 	case bootstrapCmd.FullCommand():
 		if err := bootstrap.Bootstrap(); err != nil {
-			log.Fatalln(err)
-		}
-	case mapCmd.FullCommand():
-		if err := mapper.Map(); err != nil {
 			log.Fatalln(err)
 		}
 	}

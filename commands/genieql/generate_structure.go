@@ -13,8 +13,8 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 
-	"github.com/serenize/snaker"
 	"github.com/alecthomas/kingpin"
+	"github.com/serenize/snaker"
 )
 
 // GenerateStructure root command for generating structures.
@@ -68,12 +68,18 @@ func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause 
 func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 	var (
 		err           error
+		columns       []genieql.ColumnInfo
 		configuration genieql.Configuration
 		dialect       genieql.Dialect
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
+
 	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+		return err
+	}
+
+	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
 		return err
 	}
 
@@ -91,8 +97,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.table)),
 			),
 			generators.StructOptionMappingConfigOptions(
-				genieql.MCOCustom(false),
-				genieql.MCOColumnInfo(t.table),
+				genieql.MCOColumns(columns...),
 				genieql.MCOPackage(pkg.ImportPath),
 			),
 		),
@@ -103,7 +108,6 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 
 // GenerateTableConstants creates a genieql mappings for the tables defined in the specified package.
 type GenerateTableConstants struct {
-	table      string
 	typeName   string
 	pkg        string
 	configName string
@@ -175,7 +179,6 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 				decl,
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
-					genieql.MCOCustom(false),
 					genieql.MCOPackage(pkg.ImportPath),
 				),
 			)
@@ -258,11 +261,8 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		pkg: pkg,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
-			generators.StructOptionName(
-				stringsx.DefaultIfBlank(t.typeName, snaker.SnakeToCamel(t.query)),
-			),
+			generators.StructOptionName(t.typeName),
 			generators.StructOptionMappingConfigOptions(
-				genieql.MCOCustom(true),
 				genieql.MCOPackage(pkg.ImportPath),
 			),
 		),
@@ -349,7 +349,6 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 				decl,
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
-					genieql.MCOCustom(true),
 					genieql.MCOPackage(pkg.ImportPath),
 				),
 			)

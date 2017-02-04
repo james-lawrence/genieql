@@ -23,6 +23,7 @@ type defaultScanner struct {
 func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 	var (
 		err           error
+		columns       []genieql.ColumnInfo
 		config        genieql.Configuration
 		dialect       genieql.Dialect
 		mappingConfig genieql.MappingConfig
@@ -38,10 +39,14 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
+	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+		return err
+	}
+
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
 	mappingConfig.Apply(
-		genieql.MCOColumnInfo(t.table),
+		genieql.MCOColumns(columns...),
 	)
 
 	if err = config.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
