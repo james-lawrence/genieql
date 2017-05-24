@@ -22,6 +22,7 @@ import (
 )
 
 type generateInsertConfig struct {
+	buildInfo
 	configName string
 	pkg        string
 	output     string
@@ -236,7 +237,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	pkgName, typName := extractPackageType(t.packageType)
+	pkgName, typName := t.extractPackageType(t.packageType)
 	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
 	}
@@ -266,7 +267,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}
 	constName := fmt.Sprintf("%sInsert%s", typName, t.constSuffix)
 
-	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
+	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", constName), dialect, t.defaults, columns)
 
 	ef := maybeGenerator(
@@ -314,7 +315,7 @@ func (t *insertFunctionCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause
 	cmd.Flag("queryer", "selector expression representing the type that will execute the queryer").StringVar(&t.queryer)
 	cmd.Arg(
 		"package.Type",
-		"package prefixed structure we want to build the scanner/query for",
+		"the type we want to build the scanner/query for, can optionally be prefixed with a package",
 	).Required().StringVar(&t.packageType)
 
 	cmd.Arg(
@@ -339,7 +340,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	pkgName, typName := extractPackageType(t.packageType)
+	pkgName, typName := t.extractPackageType(t.packageType)
 	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
@@ -389,7 +390,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 
 	field := astutil.Field(ast.NewIdent(typName), ast.NewIdent("arg1"))
 
-	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
+	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", functionName), dialect, t.defaults, columns)
 	ef := maybeGenerator(
 		t.emitExplodeFunction,

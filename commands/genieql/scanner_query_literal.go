@@ -31,12 +31,12 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		pkgset        []*ast.Package
 		fset          = token.NewFileSet()
 	)
-	pkgName, typName := extractPackageType(t.scanner.packageType)
+	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
 	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkgName, typName, t.scanner.mapName); err != nil {
 		return err
 	}
 
-	queryPkgName, queryConstName := extractPackageType(t.queryLiteral)
+	queryPkgName, queryConstName := t.scanner.extractPackageType(t.queryLiteral)
 	if pkg, err = locatePackage(queryPkgName); err != nil {
 		return err
 	}

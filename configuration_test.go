@@ -66,7 +66,7 @@ var _ = Describe("Configuration", func() {
 				ConfigurationOptionDriver("github.com/lib/pq"),
 				ConfigurationOptionDatabase(uri),
 			)
-			Expect(err.Error()).To(Equal("strconv.ParseInt: parsing \"abc1\": invalid syntax"))
+			Expect(err.Error()).To(Equal("strconv.Atoi: parsing \"abc1\": invalid syntax"))
 		})
 	})
 

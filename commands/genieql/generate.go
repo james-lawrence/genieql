@@ -10,18 +10,33 @@ import (
 )
 
 type generate struct {
+	buildInfo
 }
 
 func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	cmd := app.Command("generate", "generate sql queries")
 	x := cmd.Command("experimental", "experimental generation commands")
-
-	(&generateCrud{}).configure(cmd)
-	(&generateInsert{}).configure(cmd)
-	(&GenerateStructure{}).configure(x)
-	(&GenerateScanner{}).configure(x)
-	(&generateCRUDFunctions{}).configure(x)
-	(&generateFunctionTypes{}).configure(x)
+	gic := generateInsertConfig{
+		buildInfo: t.buildInfo,
+	}
+	(&generateCrud{
+		buildInfo: t.buildInfo,
+	}).configure(cmd)
+	(&generateInsert{
+		generateInsertConfig: gic,
+	}).configure(cmd)
+	(&GenerateStructure{
+		buildInfo: t.buildInfo,
+	}).configure(x)
+	(&GenerateScanner{
+		buildInfo: t.buildInfo,
+	}).configure(x)
+	(&generateCRUDFunctions{
+		buildInfo: t.buildInfo,
+	}).configure(x)
+	(&generateFunctionTypes{
+		buildInfo: t.buildInfo,
+	}).configure(x)
 
 	return cmd
 }

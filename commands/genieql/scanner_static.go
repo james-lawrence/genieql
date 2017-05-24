@@ -39,7 +39,7 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	pkgName, typName := extractPackageType(t.scanner.packageType)
+	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
 	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkgName, typName, t.scanner.mapName); err != nil {
 		return err
 	}

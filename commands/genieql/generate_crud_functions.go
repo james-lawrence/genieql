@@ -16,6 +16,7 @@ import (
 )
 
 type generateCRUDFunctions struct {
+	buildInfo
 	configName  string
 	packageType string
 	mapName     string
@@ -39,7 +40,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		pkg     *build.Package
 	)
 
-	pkgName, typName := extractPackageType(t.packageType)
+	pkgName, typName := t.extractPackageType(t.packageType)
 	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return errors.Wrap(err, t.uniqScanner)
 	}
 
-	hg := newHeaderGenerator(fset, t.packageType, os.Args[1:]...)
+	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 
 	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner, fields)
 

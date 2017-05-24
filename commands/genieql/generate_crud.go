@@ -14,6 +14,7 @@ import (
 )
 
 type generateCrud struct {
+	buildInfo
 	configName  string
 	packageType string
 	mapName     string
@@ -32,7 +33,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		pkg     *build.Package
 		fset    = token.NewFileSet()
 	)
-	pkgName, typName := extractPackageType(t.packageType)
+	pkgName, typName := t.extractPackageType(t.packageType)
 	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
 	}
