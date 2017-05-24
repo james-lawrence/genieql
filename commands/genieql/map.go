@@ -9,6 +9,7 @@ import (
 // qlgenie map --name="mymapping" --config="example.glgenie" {Package}.{Type} snakecase lowercase
 // qlgenie map {package}.{type} snakecase lowercase
 type mapper struct {
+	buildInfo
 	configuration   string
 	packageType     string
 	name            string
@@ -53,7 +54,7 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 		}
 	}
 
-	pkg, typ := extractPackageType(t.packageType)
+	pkg, typ := t.extractPackageType(t.packageType)
 	m := genieql.MappingConfig{
 		Package:         pkg,
 		Type:            typ,

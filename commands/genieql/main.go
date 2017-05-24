@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
 	"github.com/alecthomas/kingpin"
 
@@ -19,10 +18,19 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	bi := mustBuildInfo()
+
 	bootstrap := &bootstrap{}
-	mapper := &mapper{}
-	generator := &generate{}
-	scanner := &scanners{}
+	mapper := &mapper{
+		buildInfo: bi,
+	}
+	generator := &generate{
+		buildInfo: bi,
+	}
+	scanner := &scanners{
+		buildInfo: bi,
+	}
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	bootstrapCmd := bootstrap.configure(app)
@@ -48,11 +56,4 @@ func main() {
 			log.Fatalln(err)
 		}
 	}
-}
-
-func extractPackageType(s string) (string, string) {
-	if i := strings.LastIndex(s, "."); i > -1 {
-		return s[:i], s[i+1:]
-	}
-	return "", ""
 }

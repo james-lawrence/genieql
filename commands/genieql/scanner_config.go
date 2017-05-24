@@ -41,6 +41,7 @@ func defaultErrScannerNameFormat(format string) scannerOption {
 }
 
 type scannerConfig struct {
+	buildInfo
 	defaultScannerNameFormat      string
 	defaultRowScannerNameFormat   string
 	defaultInterfaceNameFormat    string
@@ -79,7 +80,7 @@ func (t *scannerConfig) configure(cmd *kingpin.CmdClause, opts ...scannerOption)
 }
 
 func (t *scannerConfig) apply(*kingpin.ParseContext) error {
-	_, typName := extractPackageType(t.packageType)
+	_, typName := t.extractPackageType(t.packageType)
 
 	t.scannerName = stringsx.DefaultIfBlank(t.scannerName, fmt.Sprintf(t.defaultScannerNameFormat, typName))
 	t.scannerRowName = stringsx.DefaultIfBlank(t.scannerRowName, fmt.Sprintf(t.defaultRowScannerNameFormat, typName))

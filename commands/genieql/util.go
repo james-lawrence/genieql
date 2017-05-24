@@ -29,12 +29,12 @@ func lowercaseFirstLetter(s string) string {
 	return string(unicode.ToLower(r)) + s[n:]
 }
 
-func newHeaderGenerator(fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
+func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
 	var (
 		err error
 		pkg *build.Package
 	)
-	name, _ := extractPackageType(pkgtype)
+	name, _ := bi.extractPackageType(pkgtype)
 
 	if pkg, err = genieql.LocatePackage(name, build.Default, genieql.StrictPackageName(filepath.Base(name))); err != nil {
 		return genieql.NewErrGenerator(errors.Wrapf(err, "failed to locate package: %s", name))

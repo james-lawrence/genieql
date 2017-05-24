@@ -15,6 +15,7 @@ import (
 )
 
 type generateFunctionTypes struct {
+	buildInfo
 	configName string
 	output     string
 	pkg        string

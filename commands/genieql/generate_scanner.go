@@ -17,7 +17,9 @@ import (
 )
 
 // GenerateScanner root command for generating scanners.
-type GenerateScanner struct{}
+type GenerateScanner struct {
+	buildInfo
+}
 
 func (t *GenerateScanner) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	scanner := cmd.Command("scanners", "commands for generating scanners")

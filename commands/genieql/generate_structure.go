@@ -18,7 +18,9 @@ import (
 )
 
 // GenerateStructure root command for generating structures.
-type GenerateStructure struct{}
+type GenerateStructure struct {
+	buildInfo
+}
 
 func (t *GenerateStructure) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	structure := cmd.Command("structure", "commands for generating structs from databases")
