@@ -58,7 +58,7 @@ type DialectFactory interface {
 type Dialect interface {
 	Insert(n int, table string, columns, defaults []string) string
 	Select(table string, columns, predicates []string) string
-	Update(table string, columns, predicates []string) string
+	Update(table string, columns, predicates, returning []string) string
 	Delete(table string, columns, predicates []string) string
 	ColumnValueTransformer() ColumnTransformer
 	ColumnInformationForTable(table string) ([]ColumnInfo, error)

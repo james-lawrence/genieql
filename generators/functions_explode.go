@@ -63,6 +63,12 @@ func QFOExplodeStructParam(param *ast.Field, fields ...*ast.Field) QueryFunction
 	}
 }
 
+// StructureQueryParameters - generates QueryParameters for the given struct and its component
+// fields.
+func StructureQueryParameters(param *ast.Field, fields ...*ast.Field) []ast.Expr {
+	return structureQueryParameters(param, fields...)
+}
+
 func structureQueryParameters(param *ast.Field, fields ...*ast.Field) []ast.Expr {
 	selectors := make([]ast.Expr, 0, len(fields)*len(param.Names))
 	for _, name := range param.Names {

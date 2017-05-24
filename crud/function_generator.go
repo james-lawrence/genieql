@@ -13,13 +13,15 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 )
 
-func NewFunctions(c genieql.Configuration, queryer string, details genieql.TableDetails, pkg, typ string, scanner, uniqScanner *ast.FuncDecl, fields []*ast.Field) genieql.Generator {
+func NewFunctions(ctx generators.Context, mapper genieql.MappingConfig, queryer string, details genieql.TableDetails, pkg, typ string, scanner, uniqScanner *ast.FuncDecl, fields []*ast.Field) genieql.Generator {
 	q, err := parser.ParseExpr(queryer)
 	if err != nil {
 		return genieql.NewErrGenerator(err)
 	}
 
 	return funcGenerator{
+		ctx:          ctx,
+		mapper:       mapper,
 		TableDetails: details,
 		Package:      pkg,
 		Type:         typ,
@@ -32,6 +34,8 @@ func NewFunctions(c genieql.Configuration, queryer string, details genieql.Table
 
 type funcGenerator struct {
 	genieql.TableDetails
+	ctx         generators.Context
+	mapper      genieql.MappingConfig
 	Package     string
 	Type        string
 	Scanner     *ast.FuncDecl
@@ -55,7 +59,6 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			astutil.Field(ast.NewIdent(t.Type), ast.NewIdent("arg1")),
 			t.Fields...,
 		),
-		// generators.QFOParameters(fieldFromColumnInfo(t.TableDetails.Columns...)...),
 		generators.QFOBuiltinQueryFromString(query),
 	}
 
@@ -84,17 +87,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOScanner(t.UniqScanner),
 		}
 		mg = append(mg, generators.NewQueryFunction(options...))
-
-		query = t.TableDetails.Dialect.Update(t.TableDetails.Table, names, naturalKey.ColumnNames())
-		options = []generators.QueryFunctionOption{
-			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
-			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Type)),
-			generators.QFOScanner(t.UniqScanner),
-		}
-		mg = append(mg, generators.NewQueryFunction(options...))
-
+		mg = append(mg, t.updateFunc(queryerOption, naturalKey, names))
 		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
@@ -107,6 +100,31 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 	}
 
 	return genieql.MultiGenerate(mg...).Generate(dst)
+}
+
+func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, naturalKey genieql.ColumnInfoSet, names []string) genieql.Generator {
+	otherColumns := genieql.ColumnInfoSet(t.TableDetails.Columns).Filter(genieql.NotPrimaryKeyFilter)
+	updateFields, _, err := t.mapper.MappedFields(t.ctx.Dialect, t.ctx.FileSet, t.ctx.CurrentPackage, naturalKey.ColumnNames()...)
+	if err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+	updateParam := astutil.Field(ast.NewIdent(t.Type), ast.NewIdent("update"))
+	query := t.TableDetails.Dialect.Update(t.TableDetails.Table, otherColumns.ColumnNames(), naturalKey.ColumnNames(), names)
+	options := []generators.QueryFunctionOption{
+		queryerOption,
+		generators.QFOParameters2(
+			append(fieldFromColumnInfo(naturalKey...), updateParam),
+			append(
+				generators.StructureQueryParameters(updateParam, updateFields...),
+				astutil.MapFieldsToNameExpr(fieldFromColumnInfo(naturalKey...)...)...,
+			),
+		),
+		generators.QFOBuiltinQueryFromString(query),
+		generators.QFOName(fmt.Sprintf("%sUpdateByID", t.Type)),
+		generators.QFOScanner(t.UniqScanner),
+	}
+
+	return generators.NewQueryFunction(options...)
 }
 
 func fieldFromColumnInfo(infos ...genieql.ColumnInfo) []*ast.Field {

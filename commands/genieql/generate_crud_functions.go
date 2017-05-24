@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
+	"bitbucket.org/jatone/genieql/generators"
 )
 
 type generateCRUDFunctions struct {
@@ -82,9 +83,16 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return errors.Wrap(err, t.uniqScanner)
 	}
 
+	ctx := generators.Context{
+		CurrentPackage: pkg,
+		FileSet:        fset,
+		Configuration:  config,
+		Dialect:        dialect,
+	}
+
 	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 
-	cg := crud.NewFunctions(config, t.queryer, details, pkgName, typName, scanner, uniqScanner, fields)
+	cg := crud.NewFunctions(ctx, mapping, t.queryer, details, pkgName, typName, scanner, uniqScanner, fields)
 
 	pg := printGenerator{
 		pkg:      pkg,

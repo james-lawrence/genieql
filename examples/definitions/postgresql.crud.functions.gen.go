@@ -44,9 +44,9 @@ func Example1FindByKey(q *sql.DB, id int) Example1ScannerStaticRow {
 	return NewExample1ScannerStaticRow(q.QueryRow(query, id))
 }
 
-func Example1UpdateByID(q *sql.DB, id int) Example1ScannerStaticRow {
-	const query = `UPDATE example1 SET created_at = $1, id = $2, text_field = $3, updated_at = $4, uuid_field = $5 WHERE id = $6 RETURNING created_at,id,text_field,updated_at,uuid_field`
-	return NewExample1ScannerStaticRow(q.QueryRow(query, id))
+func Example1UpdateByID(q *sql.DB, id int, update Example1) Example1ScannerStaticRow {
+	const query = `UPDATE example1 SET created_at = $1, text_field = $2, updated_at = $3, uuid_field = $4 WHERE id = $5 RETURNING created_at,id,text_field,updated_at,uuid_field`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, update.CreatedAt, update.TextField, update.UpdatedAt, update.UUIDField, id))
 }
 
 func Example1DeleteByID(q *sql.DB, id int) Example1ScannerStaticRow {

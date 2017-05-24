@@ -64,7 +64,7 @@ func (t testDialect) Select(table string, columns, predicates []string) string {
 	return t.selectq
 }
 
-func (t testDialect) Update(table string, columns, predicates []string) string {
+func (t testDialect) Update(table string, columns, predicates, returning []string) string {
 	return t.updateq
 }
 

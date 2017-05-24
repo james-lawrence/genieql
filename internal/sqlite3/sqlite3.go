@@ -55,7 +55,7 @@ func (t dialectImplementation) Select(table string, columns, predicates []string
 	return Select(table, columns, predicates)
 }
 
-func (t dialectImplementation) Update(table string, columns, predicates []string) string {
+func (t dialectImplementation) Update(table string, columns, predicates, returning []string) string {
 	return Update(table, columns, predicates)
 }
 

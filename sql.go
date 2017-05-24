@@ -85,9 +85,23 @@ func (t ColumnInfoSet) Filter(cut func(ColumnInfo) bool) ColumnInfoSet {
 
 // PrimaryKey - returns the primary key from the column set.
 func (t ColumnInfoSet) PrimaryKey() ColumnInfoSet {
-	return t.Filter(func(column ColumnInfo) bool {
-		return column.PrimaryKey
-	})
+	return t.Filter(PrimaryKeyFilter)
+}
+
+// PrimaryKeyFilter - selects ColumnInfo which are part of the primary key.
+func PrimaryKeyFilter(column ColumnInfo) bool {
+	return column.PrimaryKey
+}
+
+// NotPrimaryKeyFilter - inverse of PrimaryKeyFilter
+func NotPrimaryKeyFilter(column ColumnInfo) bool {
+	return columnInfoNotFilter(PrimaryKeyFilter)(column)
+}
+
+func columnInfoNotFilter(x func(ColumnInfo) bool) func(ColumnInfo) bool {
+	return func(c ColumnInfo) bool {
+		return !x(c)
+	}
 }
 
 // AmbiguityCheck checks the provided columns for duplicated values.

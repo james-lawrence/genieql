@@ -35,7 +35,7 @@ type Update genieql.TableDetails
 func (t Update) Build(name string, predicates []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
 		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
-		query := t.Dialect.Update(t.Table, names, predicates)
+		query := t.Dialect.Update(t.Table, names, predicates, names)
 		return emit(dst, name, query)
 	})
 }
