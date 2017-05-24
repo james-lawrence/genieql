@@ -69,7 +69,7 @@ func (t dialect) Select(table string, columns, predicates []string) string {
 	return "SELECT QUERY"
 }
 
-func (t dialect) Update(table string, columns, predicates []string) string {
+func (t dialect) Update(table string, columns, predicates, returning []string) string {
 	return "INSERT QUERY"
 }
 

@@ -40,10 +40,10 @@ func Select(table string, columns, predicates []string) string {
 }
 
 // Update generate an update query.
-func Update(table string, columns, predicates []string) string {
+func Update(table string, columns, predicates, returning []string) string {
 	updates, offset := predicate(1, columns...)
 	clauses, _ := predicate(offset, predicates...)
-	columnOrder := strings.Join(columns, ",")
+	columnOrder := strings.Join(returning, ",")
 	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "), columnOrder)
 }
 

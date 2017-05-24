@@ -59,7 +59,7 @@ var _ = Describe("Postgresql", func() {
 		})
 
 		It("should support update queries", func() {
-			q := NewDialect(DB).Update("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+			q := NewDialect(DB).Update("table", []string{"c1", "c2", "c2"}, []string{"c1"}, []string{"c1", "c2", "c2"})
 			Expect(q).To(Equal("UPDATE table SET c1 = $1, c2 = $2, c2 = $3 WHERE c1 = $4 RETURNING c1,c2,c2"))
 		})
 

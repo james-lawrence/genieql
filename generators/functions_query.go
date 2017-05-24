@@ -85,8 +85,8 @@ func QFOParameters(params ...*ast.Field) QueryFunctionOption {
 func QFOParameters2(p []*ast.Field, qp []ast.Expr) QueryFunctionOption {
 	p = normalizeFieldNames(p...)
 	return func(qf *queryFunction) {
-		qf.QueryParameters = qp
 		qf.Parameters = p
+		qf.QueryParameters = qp
 	}
 }
 
@@ -152,6 +152,7 @@ func generatorFromFuncType(ctx Context, name *ast.Ident, comment *ast.CommentGro
 	if queryer, params, err = extractOptionsFromParams(ctx, defaulted, ft.Params.List...); err != nil {
 		return []QueryFunctionOption(nil), errors.Wrapf(err, "function prototype (%s) parameters are invalid", name)
 	}
+
 	if scannerOption, err = extractOptionsFromResult(ctx, ft.Results.List[0]); err != nil {
 		return []QueryFunctionOption(nil), errors.Wrapf(err, "function prototype (%s) scanner option is invalid", name)
 	}
