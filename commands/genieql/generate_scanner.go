@@ -23,13 +23,18 @@ type GenerateScanner struct {
 
 func (t *GenerateScanner) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	scanner := cmd.Command("scanners", "commands for generating scanners")
-	(&generateScannerCLI{}).configure(scanner).Default()
-	(&generateScannerTypes{}).configure(scanner)
+	(&generateScannerCLI{
+		buildInfo: t.buildInfo,
+	}).configure(scanner).Default()
+	(&generateScannerTypes{
+		buildInfo: t.buildInfo,
+	}).configure(scanner)
 
 	return scanner
 }
 
 type generateScannerCLI struct {
+	buildInfo
 	scanner    string
 	configName string
 	output     string
@@ -37,24 +42,12 @@ type generateScannerCLI struct {
 }
 
 func (t *generateScannerCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		t.pkg = pkg.ImportPath
-	}
-
 	cli := cmd.Command("cli", "generates a scanner from the provided expression").Action(t.execute)
 	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("scanner", "definition of the scanner, must be a valid go expression").StringVar(&t.scanner)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	cli.Flag("package", "package to search for constant definitions").StringVar(&t.pkg)
+	cli.Flag("package", "package to search for constant definitions").
+		Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return cli
 }
@@ -110,29 +103,18 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 }
 
 type generateScannerTypes struct {
+	buildInfo
 	configName string
 	output     string
 	pkg        string
 }
 
 func (t *generateScannerTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		t.pkg = pkg.ImportPath
-	}
-
 	c := cmd.Command("types", "generates a scanner from the provided expression").Action(t.execute)
 	c.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	c.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	c.Flag("package", "package to search for constant definitions").StringVar(&t.pkg)
+	c.Flag("package", "package to search for constant definitions").
+		Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return c
 }

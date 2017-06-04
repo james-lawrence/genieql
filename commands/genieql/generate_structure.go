@@ -26,15 +26,22 @@ func (t *GenerateStructure) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause
 	structure := cmd.Command("structure", "commands for generating structs from databases")
 	tables := structure.Command("table", "commands for generating from tables")
 	queries := structure.Command("query", "commands for generating from queries")
-	(&GenerateTableCLI{}).configure(tables).Default()
-	(&GenerateTableConstants{}).configure(tables)
-	(&GenerateQueryConstants{}).configure(queries)
+	(&GenerateTableCLI{
+		buildInfo: t.buildInfo,
+	}).configure(tables).Default()
+	(&GenerateTableConstants{
+		buildInfo: t.buildInfo,
+	}).configure(tables)
+	(&GenerateQueryConstants{
+		buildInfo: t.buildInfo,
+	}).configure(queries)
 
 	return structure
 }
 
 // GenerateTableCLI creates a genieql mapping for the table specified from the command line.
 type GenerateTableCLI struct {
+	buildInfo
 	table      string
 	typeName   string
 	output     string
@@ -43,26 +50,12 @@ type GenerateTableCLI struct {
 }
 
 func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-		pkg *build.Package
-	)
-
 	cli := cmd.Command("cli", "generates a structure for the provided options and table").Action(t.execute)
 	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	cli.Flag("package", "package").StringVar(&t.pkg)
+	cli.Flag("package", "package").Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 	cli.Arg("table", "name of the table to generate the mapping from").Required().StringVar(&t.table)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg = currentPackage(wd); pkg == nil {
-		t.pkg = pkg.ImportPath
-	}
 
 	return cli
 }
@@ -110,6 +103,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 
 // GenerateTableConstants creates a genieql mappings for the tables defined in the specified package.
 type GenerateTableConstants struct {
+	buildInfo
 	typeName   string
 	pkg        string
 	configName string
@@ -117,24 +111,11 @@ type GenerateTableConstants struct {
 }
 
 func (t *GenerateTableConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
 	constants := cmd.Command("constants", "generates structures for the tables defined in the specified file").Action(t.execute)
 	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	constants.Arg("package", "package to search for constant definitions").StringVar(&t.pkg)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		t.pkg = pkg.ImportPath
-	}
+	constants.Arg("package", "package to search for constant definitions").Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return cmd
 }
@@ -213,6 +194,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 
 // GenerateQueryCLI creates a struct from the query specified from the command line.
 type GenerateQueryCLI struct {
+	buildInfo
 	query      string
 	typeName   string
 	output     string
@@ -221,25 +203,13 @@ type GenerateQueryCLI struct {
 }
 
 func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
 	cli := cmd.Command("cli", "generates a structure for the provided options and query").Action(t.execute)
 	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	cli.Flag("package", "package to look for the type within").StringVar(&t.pkg)
+	cli.Flag("package", "package to look for the type within").
+		Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 	cli.Arg("query", "query to generate the mapping from").Required().StringVar(&t.query)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg == nil {
-		t.pkg = pkg.ImportPath
-	}
 
 	return cli
 }
@@ -283,6 +253,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 // GenerateQueryConstants generates structures from the defined constant within
 // a file tagged with `//+build genieql,generate,structure,query`.
 type GenerateQueryConstants struct {
+	buildInfo
 	table      string
 	typeName   string
 	pkg        string
@@ -291,25 +262,12 @@ type GenerateQueryConstants struct {
 }
 
 func (t *GenerateQueryConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err     error
-		wd      string
-		pkgPath string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		pkgPath = pkg.ImportPath
-	}
-
 	constants := cmd.Command("constants", "generates structures for the queries defined in the specified file").Action(t.execute)
 	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	constants.Arg("package", "package to search for constant definitions").Default(pkgPath).StringVar(&t.pkg)
+	constants.Arg("package", "package to search for constant definitions").
+		Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return cmd
 }

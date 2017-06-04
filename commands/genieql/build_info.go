@@ -10,18 +10,15 @@ import (
 func newBuildInfo() (bi buildInfo, err error) {
 	var (
 		workingDir string
-		currentPKG *build.Package
 	)
 
 	if workingDir, err = os.Getwd(); err != nil {
 		return bi, err
 	}
 
-	currentPKG = currentPackage(workingDir)
-
 	return buildInfo{
 		WorkingDir: workingDir,
-		CurrentPKG: currentPKG,
+		CurrentPKG: currentPackage(workingDir),
 	}, nil
 }
 
@@ -39,8 +36,9 @@ func mustBuildInfo() buildInfo {
 }
 
 type buildInfo struct {
-	WorkingDir string
-	CurrentPKG *build.Package
+	DebugEnabled bool
+	WorkingDir   string
+	CurrentPKG   *build.Package
 }
 
 func (t buildInfo) extractPackageType(s string) (string, string) {
@@ -48,4 +46,24 @@ func (t buildInfo) extractPackageType(s string) (string, string) {
 		return s[:i], s[i+1:]
 	}
 	return t.CurrentPKG.ImportPath, s
+}
+
+// CurrentPackageDir returns the directory of the current package if any.
+// returns an empty string otherwise.
+func (t buildInfo) CurrentPackageDir() string {
+	if t.CurrentPKG != nil {
+		return t.CurrentPKG.Dir
+	}
+
+	return ""
+}
+
+// CurrentPackageImport returns the import path for the current package if any.
+// returns an empty string otherwise.
+func (t buildInfo) CurrentPackageImport() string {
+	if t.CurrentPKG != nil {
+		return t.CurrentPKG.ImportPath
+	}
+
+	return ""
 }

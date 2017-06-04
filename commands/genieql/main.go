@@ -3,25 +3,41 @@ package main
 import (
 	"log"
 	"os"
+	"runtime"
+	"runtime/debug"
 
 	"github.com/alecthomas/kingpin"
-
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 
 	// register the postgresql dialect
 	"bitbucket.org/jatone/genieql"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	"bitbucket.org/jatone/genieql/x/stringsx"
 
 	// register the drivers
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 )
 
 func main() {
+	defer func() {
+		r := recover()
+		switch err := r.(type) {
+		case runtime.Error:
+			log.Println(genieql.PrintDebug())
+			log.Fatalln(string(debug.Stack()))
+		case error:
+			log.Fatalln(errors.Wrap(err, genieql.PrintDebug()))
+		}
+	}()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	bi := mustBuildInfo()
 
-	bootstrap := &bootstrap{}
+	bootstrap := &bootstrap{
+		buildInfo: bi,
+	}
 	mapper := &mapper{
 		buildInfo: bi,
 	}
@@ -33,27 +49,21 @@ func main() {
 	}
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
-	bootstrapCmd := bootstrap.configure(app)
+	app.Flag("debug", "enable debug logging").BoolVar(&bi.DebugEnabled)
+
+	bootstrap.configure(app)
 	mapper.configure(app)
 	generator.configure(app)
 	scanner.configure(app)
 
-	if os.Getenv("DEBUGPANIC") != "" {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Println(r)
-				log.Fatalln("panic debug", genieql.PrintDebug())
-				panic(r)
-			}
-		}()
-	}
-
-	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	switch cmd {
-	case bootstrapCmd.FullCommand():
-		if err := bootstrap.Bootstrap(); err != nil {
-			log.Fatalln(err)
+	if cmd, err := app.Parse(os.Args[1:]); err != nil {
+		fmts := "%s\n"
+		if bi.DebugEnabled {
+			log.Println(genieql.PrintDebug())
+			fmts = "%+v\n"
 		}
+
+		log.Fatalf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, "parsing failed")))
 	}
+
 }

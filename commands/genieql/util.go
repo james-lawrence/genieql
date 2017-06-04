@@ -119,7 +119,7 @@ func (t TaggedFiles) IsTagged(name string) bool {
 func currentPackage(dir string) *build.Package {
 	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
 	if err != nil {
-		log.Println("failed to load package for", dir)
+		log.Printf("failed to load package for %s %v\n", dir, errors.Wrap(err, ""))
 	}
 
 	return pkg

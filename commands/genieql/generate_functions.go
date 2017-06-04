@@ -22,24 +22,11 @@ type generateFunctionTypes struct {
 }
 
 func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		t.pkg = pkg.ImportPath
-	}
-
 	functions := cmd.Command("functions", "commands for generating functions")
 	c := functions.Command("types", "generates functions defined by function types within a package").Action(t.execute)
 	c.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	c.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	c.Flag("package", "package to search for definitions").StringVar(&t.pkg)
+	c.Flag("package", "package to search for definitions").Default(t.buildInfo.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return c
 }

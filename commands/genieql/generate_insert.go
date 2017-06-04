@@ -24,7 +24,6 @@ import (
 type generateInsertConfig struct {
 	buildInfo
 	configName string
-	pkg        string
 	output     string
 	mapName    string
 	table      string
@@ -36,19 +35,6 @@ type generateInsert struct {
 }
 
 func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	var (
-		err error
-		wd  string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if pkg := currentPackage(wd); pkg != nil {
-		t.generateInsertConfig.pkg = pkg.ImportPath
-	}
-
 	insert := cmd.Command("insert", "generate more complicated insert queries")
 	insert.Flag(
 		"config",
@@ -86,6 +72,7 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 
 type insertBatchCmd struct {
 	*generateInsertConfig
+	pkg                string
 	emitColumnConstant bool
 	batch              int
 }
@@ -97,7 +84,7 @@ func (t *insertBatchCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	cmd.Arg(
 		"package",
 		"package to search for definitions",
-	).Default(t.pkg).StringVar(&t.pkg)
+	).Default(t.CurrentPackageImport()).StringVar(&t.pkg)
 
 	return cmd
 }
