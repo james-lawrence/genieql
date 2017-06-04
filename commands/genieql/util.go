@@ -8,8 +8,6 @@ import (
 	"io"
 	"log"
 	"path/filepath"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/pkg/errors"
 
@@ -19,14 +17,6 @@ import (
 func locatePackage(pkg string) (*build.Package, error) {
 	bpkg, err := genieql.LocatePackage(pkg, build.Default, genieql.StrictPackageName(filepath.Base(pkg)))
 	return bpkg, errors.Wrapf(err, "failed to locate package: %s", pkg)
-}
-
-func lowercaseFirstLetter(s string) string {
-	if s == "" {
-		return ""
-	}
-	r, n := utf8.DecodeRuneInString(s)
-	return string(unicode.ToLower(r)) + s[n:]
 }
 
 func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
@@ -72,7 +62,7 @@ func (t printGenerator) Generate(dst io.Writer) error {
 		return err
 	}
 
-	if err = genieql.FormatOutput(&formatted, filepath.Join(t.pkg.Dir, "genieql.go"), buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(&formatted, "genieql.go", buffer.Bytes()); err != nil {
 		return err
 	}
 
