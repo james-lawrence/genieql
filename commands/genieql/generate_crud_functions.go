@@ -14,6 +14,7 @@ import (
 	"bitbucket.org/jatone/genieql/commands"
 	"bitbucket.org/jatone/genieql/crud"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
 type generateCRUDFunctions struct {
@@ -92,7 +93,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 
 	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 
-	cg := crud.NewFunctions(ctx, mapping, t.queryer, details, pkgName, typName, scanner, uniqScanner, fields)
+	cg := crud.NewFunctions(ctx, mapping, stringsx.DefaultIfBlank(t.queryer, config.Queryer), details, pkgName, typName, scanner, uniqScanner, fields)
 
 	pg := printGenerator{
 		pkg:      pkg,
@@ -139,9 +140,14 @@ func (t *generateCRUDFunctions) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 	).Required().StringVar(&t.uniqScanner)
 
 	crud.Flag(
-		"queryer-type",
+		"queryer",
 		"the type that executes queries, its the first argument to any generated functions",
-	).Default("*sql.DB").StringVar(&t.queryer)
+	).StringVar(&t.queryer)
+
+	crud.Flag(
+		"queryer-type",
+		"DEPRECATED use queryer",
+	).StringVar(&t.queryer)
 
 	crud.Arg(
 		"package.Type",

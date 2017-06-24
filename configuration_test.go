@@ -21,6 +21,7 @@ var _ = Describe("Configuration", func() {
 			config, err := NewConfiguration(
 				ConfigurationOptionDriver("github.com/lib/pq"),
 				ConfigurationOptionDatabase(uri),
+				ConfigurationOptionQueryer("sqlx.Queryer"),
 			)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(config.Driver).To(Equal("github.com/lib/pq"))
@@ -30,6 +31,7 @@ var _ = Describe("Configuration", func() {
 			Expect(config.Port).To(Equal(5432))
 			Expect(config.Username).To(Equal("soandso"))
 			Expect(config.Password).To(Equal("password"))
+			Expect(config.Queryer).To(Equal("sqlx.Queryer"))
 		})
 
 		It("should properly extract a URI without a password", func() {
@@ -170,6 +172,7 @@ const exampleBootstrapConfiguration = `location: %s
 name: dummy.config
 dialect: postgres
 driver: github.com/lib/pq
+queryer: '*sql.DB'
 connectionurl: postgres://soandso:password@localhost:5432/databasename?sslmode=disable
 host: localhost
 port: 5432

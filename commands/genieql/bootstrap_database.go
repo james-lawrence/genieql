@@ -19,6 +19,7 @@ type bootstrapDatabase struct {
 	outputfile     string
 	dburi          *url.URL
 	driver         string
+	queryer        string
 }
 
 func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
@@ -27,6 +28,7 @@ func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
 		genieql.ConfigurationOptionLocation(filepath.Join(t.outputfilepath, t.outputfile)),
 		genieql.ConfigurationOptionDriver(t.driver),
 		genieql.ConfigurationOptionDatabase(t.dburi),
+		genieql.ConfigurationOptionQueryer(t.queryer),
 	)
 }
 
@@ -35,6 +37,7 @@ func (t *bootstrapDatabase) configure(bootstrap *kingpin.CmdClause) *kingpin.Cmd
 	bootstrap.Flag("output-file", "filename of the configuration directory").Default("default.config").StringVar(&t.outputfile)
 	bootstrap.Flag("driver", "name of the underlying driver for the database, usually the import url").
 		Default("github.com/lib/pq").StringVar(&t.driver)
+	bootstrap.Flag("queryer", "the default queryer to use").Default("*sql.DB").StringVar(&t.queryer)
 	bootstrap.Arg("uri", "uri for the database qlgenie will work with").Required().URLVar(&t.dburi)
 	bootstrap.Action(t.Bootstrap)
 

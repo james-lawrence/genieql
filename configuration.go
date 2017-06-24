@@ -24,6 +24,7 @@ type Configuration struct {
 	Name          string
 	Dialect       string
 	Driver        string
+	Queryer       string
 	ConnectionURL string
 	Host          string
 	Port          int
@@ -114,7 +115,9 @@ func MustReadConfiguration(options ...ConfigurationOption) Configuration {
 // NewConfiguration builds a configuration from the provided options.
 func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 	var (
-		config Configuration
+		config = Configuration{
+			Queryer: "*sql.DB",
+		}
 	)
 
 	for _, opt := range options {
@@ -133,6 +136,14 @@ type ConfigurationOption func(*Configuration) error
 func ConfigurationOptionLocation(path string) ConfigurationOption {
 	return func(c *Configuration) error {
 		c.Location, c.Name = filepath.Dir(path), filepath.Base(path)
+		return nil
+	}
+}
+
+// ConfigurationOptionQueryer specify the default queryer to use.
+func ConfigurationOptionQueryer(queryer string) ConfigurationOption {
+	return func(c *Configuration) error {
+		c.Queryer = queryer
 		return nil
 	}
 }

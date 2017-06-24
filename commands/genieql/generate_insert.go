@@ -346,7 +346,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 
 	mapping.Apply(genieql.MCOColumns(columns...))
 
-	if queryer, err = parser.ParseExpr(t.queryer); err != nil {
+	if queryer, err = parser.ParseExpr(stringsx.DefaultIfBlank(t.queryer, config.Queryer)); err != nil {
 		return errors.Wrapf(err, "%s: is not a valid expression", t.queryer)
 	}
 

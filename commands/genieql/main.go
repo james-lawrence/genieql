@@ -59,11 +59,10 @@ func main() {
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {
 		fmts := "%s\n"
 		if bi.DebugEnabled {
-			log.Println(genieql.PrintDebug())
 			fmts = "%+v\n"
 		}
-
-		log.Fatalf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, "parsing failed")))
+		log.Printf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, "parsing failed")))
+		log.Fatalln(genieql.PrintDebug())
 	}
 
 }
