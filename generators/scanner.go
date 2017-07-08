@@ -14,6 +14,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/x/stringsx"
 )
 
@@ -211,8 +212,8 @@ func (t scanner) Generate(dst io.Writer) error {
 		return err
 	}
 
-	lookupNullableTypes := composeLookupNullableType(DefaultLookupNullableType, t.Driver.LookupNullableType)
-	nullableTypes := composeNullableType(DefaultNullableTypes, t.Driver.NullableType)
+	lookupNullableTypes := composeLookupNullableType(drivers.DefaultLookupNullableType, t.Driver.LookupNullableType)
+	nullableTypes := composeNullableType(drivers.DefaultNullableTypes, t.Driver.NullableType)
 
 	funcMap := template.FuncMap{
 		"expr":       types.ExprString,

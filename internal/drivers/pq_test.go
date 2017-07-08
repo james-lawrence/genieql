@@ -19,8 +19,8 @@ var _ = Describe("pq", func() {
 		nullableTypeTest(genieql.MustLookupDriver(PQ).NullableType),
 		Entry("int", "int", false, "int"),
 		Entry("int pointer", "*int", false, "*int"),
-		Entry("time", "time.Time", true, "nullableType.Time"),
-		Entry("time pointer", "*time.Time", true, "nullableType.Time"),
+		Entry("time", "time.Time", true, "localVariable.Time"),
+		Entry("time pointer", "*time.Time", true, "localVariable.Time"),
 	)
 
 	DescribeTable("pqLookupNullableType",

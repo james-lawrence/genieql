@@ -20,7 +20,7 @@ func TestDriver(t *testing.T) {
 func nullableTypeTest(nullableType genieql.NullableType) func(typs string, nullable bool, exprs string) {
 	return func(typs string, nullable bool, exprs string) {
 		typ := MustParseExpr(typs)
-		driverNullableType := MustParseExpr("nullableType")
+		driverNullableType := MustParseExpr("localVariable")
 		evaluated, nullable := nullableType(typ, driverNullableType)
 		Expect(nullable).To(Equal(nullable))
 		Expect(types.ExprString(evaluated)).To(Equal(exprs))
