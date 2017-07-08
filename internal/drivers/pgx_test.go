@@ -46,7 +46,7 @@ var _ = Describe("pgx", func() {
 		Entry("float64", "float64", "pgx.NullFloat64"),
 		Entry("string pointer", "*string", "pgx.NullString"),
 		Entry("string", "string", "pgx.NullString"),
-		Entry("int 16", "*int16", "pgx.NullInt16"),
+		Entry("int 16 pointer", "*int16", "pgx.NullInt16"),
 		Entry("int 16", "int16", "pgx.NullInt16"),
 		Entry("int 32 pointer", "*int32", "pgx.NullInt32"),
 		Entry("int32", "int32", "pgx.NullInt32"),
