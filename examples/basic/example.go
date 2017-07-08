@@ -9,7 +9,7 @@ import "time"
 //go:generate genieql scanner dynamic --output=example_dynamic_scanner.gen.go example example3
 //go:generate genieql generate crud --output=example_crud_queries.gen.go example example3
 //go:generate genieql generate insert --output=example_insert_queries.gen.go example example3 --suffix=WithDefaults --default=updated --default=created
-//go:generate genieql generate experimental crud --output=example_crud_functions.gen.go --table=example3 --queryer-type=sqlx.Queryer --unique-scanner=NewExampleScannerStaticRow --scanner=NewExampleScannerStatic example
+//go:generate genieql generate experimental crud --output=example_crud_functions.gen.go --table=example3 --unique-scanner=NewExampleScannerStaticRow --scanner=NewExampleScannerStatic example
 
 type example struct {
 	ID      int
