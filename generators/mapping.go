@@ -18,7 +18,7 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		m      genieql.MappingConfig
 	)
 
-	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(determineType(param.Type)), "default", &m); err != nil {
 		return m, infos, err
 	}
 
@@ -39,7 +39,7 @@ func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Fi
 		m     genieql.MappingConfig
 	)
 
-	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
 		return infos, err
 	}
 
@@ -55,7 +55,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		m       genieql.MappingConfig
 	)
 
-	if err = ctx.Configuration.ReadMap(packageName(ctx.CurrentPackage, param.Type), types.ExprString(unwrapExpr(param.Type)), "default", &m); err != nil {
+	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(unwrapExpr(param.Type)), "default", &m); err != nil {
 		return columns, infos, err
 	}
 

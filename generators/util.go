@@ -3,11 +3,11 @@ package generators
 import (
 	"bytes"
 	"go/ast"
-	"go/build"
+	"go/parser"
 	"go/printer"
 	"go/token"
 	"go/types"
-	"log"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -195,13 +195,36 @@ func unwrapExpr(x ast.Expr) ast.Expr {
 		return x
 	}
 }
-func packageName(pkg *build.Package, x ast.Expr) string {
+
+func determineType(x ast.Expr) ast.Expr {
+	if x, ok := x.(*ast.SelectorExpr); ok {
+		return x.Sel
+	}
+
+	return x
+}
+
+func importPath(ctx Context, x ast.Expr) string {
 	switch x := x.(type) {
 	case *ast.SelectorExpr:
-		// TODO
-		log.Println("imports", types.ExprString(x.X), x.Sel.Name, pkg.Imports)
-		panic("unimplemented code path: currently structures from other packages are not supported")
+		importSelector := func(is *ast.ImportSpec) string {
+			if is.Name == nil {
+				return filepath.Base(strings.Trim(is.Path.Value, "\""))
+			}
+			return is.Name.Name
+		}
+		if src, err := parser.ParseFile(ctx.FileSet, ctx.FileSet.File(x.Pos()).Name(), nil, parser.ImportsOnly); err != nil {
+			panic(errors.Wrap(err, "failed to read the source file while determining import"))
+		} else {
+			for _, imp := range src.Imports {
+				if importSelector(imp) == types.ExprString(x.X) {
+					return filepath.Dir(strings.Trim(imp.Path.Value, "\""))
+				}
+			}
+
+			panic("failed to match selector with import")
+		}
 	default:
-		return pkg.ImportPath
+		return ctx.CurrentPackage.ImportPath
 	}
 }

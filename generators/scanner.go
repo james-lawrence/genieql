@@ -25,11 +25,17 @@ func (t mode) Enabled(o mode) bool {
 	return t&o != 0
 }
 
+func (t mode) Disabled(o mode) bool {
+	return t&o == 0
+}
+
 const (
 	// ModeInterface - output the scanner interface.
 	ModeInterface mode = 1 << iota
 	// ModeStatic - output the static scanner.
 	ModeStatic
+	// ModeStaticDisableColumns - do not output the columns for the static scanner.
+	ModeStaticDisableColumns
 	// ModeDynamic - output the dynamic scanner.
 	ModeDynamic
 )
@@ -102,6 +108,14 @@ func ScannerOptionOutputMode(m mode) ScannerOption {
 	}
 }
 
+// ScannerOptionEnableMode enable the output mode.
+func ScannerOptionEnableMode(m mode) ScannerOption {
+	return func(s *scanner) error {
+		s.Mode = s.Mode | m
+		return nil
+	}
+}
+
 // ScannerOptionInterfaceName DEPRECATED only used for old functions.
 func ScannerOptionInterfaceName(n string) ScannerOption {
 	return func(s *scanner) error {
@@ -133,7 +147,7 @@ func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []g
 
 				if len(ft.Params.List) > 1 && !allBuiltinTypes(astutil.MapFieldsToTypExpr(ft.Params.List...)...) {
 					log.Println("multiple structures detected disabling dynamic scanner output for", ts.Name.Name, types.ExprString(ft), ":", genieql.PrintDebug())
-					options = append(options, ScannerOptionOutputMode(ModeInterface|ModeStatic))
+					options = append(options, ScannerOptionOutputMode(ModeInterface|ModeStatic|ModeStaticDisableColumns))
 				}
 
 				options = append(options, providedOptions...)
@@ -242,14 +256,17 @@ func (t scanner) Generate(dst io.Writer) error {
 	}
 
 	if t.Mode.Enabled(ModeStatic) {
-		cc := NewColumnConstantFromFieldList(
-			t.Context,
-			fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
-			genieql.NewColumnInfoNameTransformer(),
-			t.Fields,
-		)
-		if err = cc.Generate(dst); err != nil {
-			return err
+		// If column constant is explicitly disabled do not enable it.
+		if t.Mode.Disabled(ModeStaticDisableColumns) {
+			cc := NewColumnConstantFromFieldList(
+				t.Context,
+				fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
+				genieql.NewColumnInfoNameTransformer(),
+				t.Fields,
+			)
+			if err = cc.Generate(dst); err != nil {
+				return err
+			}
 		}
 
 		tmpl = template.Must(template.New("static").Funcs(funcMap).Parse(staticScanner))
