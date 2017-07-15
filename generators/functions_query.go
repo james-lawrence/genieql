@@ -72,21 +72,22 @@ func QFOQueryerFunction(x *ast.Ident) QueryFunctionOption {
 	}
 }
 
-// QFOParameters - DEPRECATED use QFOParameters2. specify the parameters for the query function.
-func QFOParameters(params ...*ast.Field) QueryFunctionOption {
-	params = normalizeFieldNames(params...)
-	return func(qf *queryFunction) {
-		qf.QueryParameters = astutil.MapFieldsToNameExpr(params...)
-		qf.Parameters = params
-	}
-}
-
-// QFOParameters2 specify the parameters for the query function.
-func QFOParameters2(p []*ast.Field, qp []ast.Expr) QueryFunctionOption {
+// QFOParameters specify the parameters for the query function.
+func QFOParameters(p []*ast.Field, qp []ast.Expr) QueryFunctionOption {
 	p = normalizeFieldNames(p...)
 	return func(qf *queryFunction) {
 		qf.Parameters = p
 		qf.QueryParameters = qp
+	}
+}
+
+// QFOSharedParameters - alternate to QFOSharedParameters, use when the all params to the function
+// are also the params to the query.
+func QFOSharedParameters(params ...*ast.Field) QueryFunctionOption {
+	params = normalizeFieldNames(params...)
+	return func(qf *queryFunction) {
+		qf.Parameters = params
+		qf.QueryParameters = astutil.MapFieldsToNameExpr(params...)
 	}
 }
 
@@ -224,7 +225,7 @@ func extractOptionsFromParams(ctx Context, defaultedSet []string, fields ...*ast
 		}
 	}
 
-	return QFOQueryer(defaultQueryParamName, queryerf.Type), QFOParameters2(params, queryParams), nil
+	return QFOQueryer(defaultQueryParamName, queryerf.Type), QFOParameters(params, queryParams), nil
 }
 
 func extractOptionsFromResult(ctx Context, field *ast.Field) (QueryFunctionOption, error) {

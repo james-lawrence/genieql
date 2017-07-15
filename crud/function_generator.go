@@ -69,7 +69,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOParameters(fieldFromColumnInfo(column)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(column)...),
 			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Type, snaker.SnakeToCamel(column.Name))),
 			generators.QFOScanner(t.Scanner),
 		}
@@ -81,7 +81,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
@@ -91,7 +91,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOParameters(fieldFromColumnInfo(naturalKey...)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
@@ -112,7 +112,7 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 	query := t.TableDetails.Dialect.Update(t.TableDetails.Table, otherColumns.ColumnNames(), naturalKey.ColumnNames(), names)
 	options := []generators.QueryFunctionOption{
 		queryerOption,
-		generators.QFOParameters2(
+		generators.QFOParameters(
 			append(fieldFromColumnInfo(naturalKey...), updateParam),
 			append(
 				generators.StructureQueryParameters(updateParam, updateFields...),

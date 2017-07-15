@@ -122,7 +122,7 @@ func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOptio
 		opt(&b)
 	}
 
-	b.queryFunction.Apply(QFOParameters(&ast.Field{
+	b.queryFunction.Apply(QFOSharedParameters(&ast.Field{
 		Names: typ.Names,
 		Type:  &ast.Ellipsis{Elt: typ.Type},
 	}))
