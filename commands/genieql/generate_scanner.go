@@ -43,7 +43,7 @@ type generateScannerCLI struct {
 
 func (t *generateScannerCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	cli := cmd.Command("cli", "generates a scanner from the provided expression").Action(t.execute)
-	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("scanner", "definition of the scanner, must be a valid go expression").StringVar(&t.scanner)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
 	cli.Flag("package", "package to search for constant definitions").
