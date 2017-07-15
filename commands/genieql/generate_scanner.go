@@ -111,7 +111,7 @@ type generateScannerTypes struct {
 
 func (t *generateScannerTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	c := cmd.Command("types", "generates a scanner from the provided expression").Action(t.execute)
-	c.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	c.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	c.Flag("output", "output filename").Short('o').StringVar(&t.output)
 	c.Flag("package", "package to search for constant definitions").
 		Default(t.CurrentPackageImport()).StringVar(&t.pkg)

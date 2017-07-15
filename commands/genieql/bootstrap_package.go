@@ -29,7 +29,7 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			err error
 			pkg *build.Package
 		)
-
+		log.Println("importPath", importPath)
 		if pkg, err = genieql.LocatePackage(importPath, build.Default, nil); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue

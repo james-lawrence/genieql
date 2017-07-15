@@ -51,7 +51,7 @@ type GenerateTableCLI struct {
 
 func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	cli := cmd.Command("cli", "generates a structure for the provided options and table").Action(t.execute)
-	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
 	cli.Flag("package", "package").Default(t.CurrentPackageImport()).StringVar(&t.pkg)
@@ -112,7 +112,7 @@ type GenerateTableConstants struct {
 
 func (t *GenerateTableConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	constants := cmd.Command("constants", "generates structures for the tables defined in the specified file").Action(t.execute)
-	constants.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	constants.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	constants.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	constants.Flag("output", "output filename").Short('o').StringVar(&t.output)
 	constants.Arg("package", "package to search for constant definitions").Default(t.CurrentPackageImport()).StringVar(&t.pkg)
@@ -204,7 +204,7 @@ type GenerateQueryCLI struct {
 
 func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	cli := cmd.Command("cli", "generates a structure for the provided options and query").Action(t.execute)
-	cli.Flag("configName", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
+	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
 	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
 	cli.Flag("package", "package to look for the type within").
