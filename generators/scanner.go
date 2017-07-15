@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"strings"
 	"text/template"
 
@@ -125,12 +126,17 @@ func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []g
 	for _, spec := range decl.Specs {
 		if ts, ok := spec.(*ast.TypeSpec); ok {
 			if ft, ok := ts.Type.(*ast.FuncType); ok {
-				options := append(
-					providedOptions,
+				options := []ScannerOption{
 					ScannerOptionName(ts.Name.Name),
 					ScannerOptionParameters(ft.Params),
-				)
+				}
 
+				if len(ft.Params.List) > 1 && !allBuiltinTypes(astutil.MapFieldsToTypExpr(ft.Params.List...)...) {
+					log.Println("multiple structures detected disabling dynamic scanner output for", ts.Name.Name, types.ExprString(ft), ":", genieql.PrintDebug())
+					options = append(options, ScannerOptionOutputMode(ModeInterface|ModeStatic))
+				}
+
+				options = append(options, providedOptions...)
 				options = append(options, ScannerOptionsFromComment(decl.Doc)...)
 				g = append(g, NewScanner(options...))
 			}
