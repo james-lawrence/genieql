@@ -2,7 +2,9 @@ package generators
 
 import (
 	"go/ast"
+	"go/build"
 	"go/types"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/x/stringsx"
@@ -16,9 +18,10 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		infos  []genieql.ColumnInfo
 		driver genieql.Driver
 		m      genieql.MappingConfig
+		pkg    *build.Package
 	)
-
-	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(determineType(param.Type)), "default", &m); err != nil {
+	ipath := importPath(ctx, param.Type)
+	if err = ctx.Configuration.ReadMap(ipath, types.ExprString(determineType(param.Type)), "default", &m); err != nil {
 		return m, infos, err
 	}
 
@@ -26,7 +29,15 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		return m, infos, err
 	}
 
-	infos, _, err = m.MappedColumnInfo(driver, ctx.Dialect, ctx.FileSet, ctx.CurrentPackage)
+	if ipath == ctx.CurrentPackage.ImportPath {
+		pkg = ctx.CurrentPackage
+	} else {
+		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+			return m, infos, err
+		}
+	}
+
+	infos, _, err = m.MappedColumnInfo(driver, ctx.Dialect, ctx.FileSet, pkg)
 	return m, infos, err
 }
 
@@ -37,13 +48,23 @@ func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Fi
 		err   error
 		infos []*ast.Field
 		m     genieql.MappingConfig
+		pkg   *build.Package
 	)
 
-	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(param.Type), "default", &m); err != nil {
+	ipath := importPath(ctx, param.Type)
+	if err = ctx.Configuration.ReadMap(ipath, types.ExprString(param.Type), "default", &m); err != nil {
 		return infos, err
 	}
 
-	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, ctx.CurrentPackage, ignoreSet...)
+	if ipath == ctx.CurrentPackage.ImportPath {
+		pkg = ctx.CurrentPackage
+	} else {
+		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+			return infos, err
+		}
+	}
+
+	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, pkg, ignoreSet...)
 	return infos, err
 }
 

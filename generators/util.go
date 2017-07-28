@@ -218,7 +218,7 @@ func importPath(ctx Context, x ast.Expr) string {
 		} else {
 			for _, imp := range src.Imports {
 				if importSelector(imp) == types.ExprString(x.X) {
-					return filepath.Dir(strings.Trim(imp.Path.Value, "\""))
+					return strings.Trim(imp.Path.Value, "\"")
 				}
 			}
 
