@@ -19,7 +19,7 @@ func OIDToType(oid int) ast.Expr {
 		return astutil.Expr("time.Time")
 	case pgtype.Int2OID, pgtype.Int4OID, pgtype.Int8OID:
 		return astutil.Expr("int")
-	case pgtype.TextOID, pgtype.VarcharOID, pgtype.JSONOID, pgtype.JSONBOID:
+	case pgtype.TextOID, pgtype.VarcharOID, pgtype.JSONOID:
 		return astutil.Expr("string")
 	// TODO - properly handle json: case pgtype.JSONOID, pgtype.JSONBOID:
 	case pgtype.ByteaOID:

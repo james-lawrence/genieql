@@ -3,7 +3,7 @@ package internal_test
 import (
 	"go/types"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pgtype"
 
 	. "bitbucket.org/jatone/genieql/internal/postgresql/internal"
 	. "github.com/onsi/ginkgo"
@@ -19,21 +19,22 @@ var _ = Describe("Postgresql", func() {
 				Equal(typ), "unknown expression type(%T) for example expected %s\n", expr, typ,
 			)
 		},
-		Entry("handle booleans", pgx.BoolOid, "bool"),
-		Entry("handle text", pgx.TextOid, "string"),
-		Entry("handle varchar", pgx.VarcharOid, "string"),
-		Entry("handle inet", pgx.InetOid, "string"),
-		Entry("handle uuid", pgx.UuidOid, "string"),
-		Entry("handle dates", pgx.DateOid, "time.Time"),
-		Entry("handle timestamps with timezone", pgx.TimestampTzOid, "time.Time"),
-		Entry("handle timestamps", pgx.TimestampOid, "time.Time"),
-		Entry("handle int20", pgx.Int2Oid, "int"),
-		Entry("handle int40", pgx.Int4Oid, "int"),
-		Entry("handle int80", pgx.Int8Oid, "int"),
-		Entry("handle float32", pgx.Float4Oid, "float32"),
-		Entry("handle float64", pgx.Float8Oid, "float64"),
-		Entry("handle byte arrays", pgx.ByteaOid, "[]byte"),
-		Entry("handle name", 19, "string"),
-		Entry("handle OID", pgx.OidOid, "int"),
+		Entry("handle booleans", pgtype.BoolOID, "bool"),
+		Entry("handle text", pgtype.TextOID, "string"),
+		Entry("handle varchar", pgtype.VarcharOID, "string"),
+		Entry("handle inet", pgtype.InetOID, "string"),
+		Entry("handle uuid", pgtype.UUIDOID, "string"),
+		Entry("handle dates", pgtype.DateOID, "time.Time"),
+		Entry("handle timestamps with timezone", pgtype.TimestamptzOID, "time.Time"),
+		Entry("handle timestamps", pgtype.TimestampOID, "time.Time"),
+		Entry("handle int20", pgtype.Int2OID, "int"),
+		Entry("handle int40", pgtype.Int4OID, "int"),
+		Entry("handle int80", pgtype.Int8OID, "int"),
+		Entry("handle float32", pgtype.Float4OID, "float32"),
+		Entry("handle float64", pgtype.Float8OID, "float64"),
+		Entry("handle float64", pgtype.NumericOID, "float64"),
+		Entry("handle byte arrays", pgtype.ByteaOID, "[]byte"),
+		Entry("handle name", pgtype.NameOID, "string"),
+		Entry("handle OID", pgtype.OIDOID, "int"),
 	)
 })
