@@ -21,7 +21,8 @@ func OIDToType(oid int) ast.Expr {
 		return astutil.Expr("int")
 	case pgtype.TextOID, pgtype.VarcharOID, pgtype.JSONOID:
 		return astutil.Expr("string")
-	// TODO: case pgtype.JSONOID, pgtype.JSONBOID:
+	case pgtype.JSONBOID: // beta OID.
+		return astutil.Expr("json.RawMessage")
 	case pgtype.ByteaOID:
 		return astutil.Expr("[]byte")
 	case pgtype.Float4OID:
