@@ -3,37 +3,38 @@ package internal
 import (
 	"go/ast"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pgtype"
 
 	"bitbucket.org/jatone/genieql/astutil"
 )
 
-const nameOID = 19
-
 // OIDToType maps object id to golang types.
 func OIDToType(oid int) ast.Expr {
 	switch oid {
-	case pgx.BoolOid:
+	case pgtype.BoolOID:
 		return astutil.Expr("bool")
-	case pgx.UuidOid:
+	case pgtype.UUIDOID:
 		return astutil.Expr("string")
-	case pgx.TimestampTzOid, pgx.TimestampOid, pgx.DateOid:
+	case pgtype.TimestamptzOID, pgtype.TimestampOID, pgtype.DateOID:
 		return astutil.Expr("time.Time")
-	case pgx.Int2Oid, pgx.Int4Oid, pgx.Int8Oid:
+	case pgtype.Int2OID, pgtype.Int4OID, pgtype.Int8OID:
 		return astutil.Expr("int")
-	case pgx.TextOid, pgx.VarcharOid, pgx.JsonOid:
+	case pgtype.TextOID, pgtype.VarcharOID, pgtype.JSONOID:
 		return astutil.Expr("string")
-	case pgx.ByteaOid:
+	// TODO: case pgtype.JSONOID, pgtype.JSONBOID:
+	case pgtype.ByteaOID:
 		return astutil.Expr("[]byte")
-	case pgx.Float4Oid:
+	case pgtype.Float4OID:
 		return astutil.Expr("float32")
-	case pgx.Float8Oid:
+	case pgtype.Float8OID, pgtype.NumericOID:
+		// NumericOID is technically wrong but since the stdlib doesn't have a numeric
+		// representation we push it to float64.
 		return astutil.Expr("float64")
-	case pgx.InetOid:
+	case pgtype.InetOID:
 		return astutil.Expr("string")
-	case pgx.OidOid:
+	case pgtype.OIDOID:
 		return astutil.Expr("int")
-	case nameOID:
+	case pgtype.NameOID:
 		return astutil.Expr("string")
 	default:
 		return nil

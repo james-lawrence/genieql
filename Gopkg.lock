@@ -27,8 +27,16 @@
 
 [[projects]]
   name = "github.com/jackc/pgx"
-  packages = ["."]
-  revision = "cd0c4c491610896633e16f8f3d91d6a8d1375b25"
+  packages = [
+    ".",
+    "chunkreader",
+    "internal/sanitize",
+    "pgio",
+    "pgproto3",
+    "pgtype"
+  ]
+  revision = "da3231b0b66e2e74cdb779f1d46c5e958ba8be27"
+  version = "v3.1.0"
 
 [[projects]]
   name = "github.com/lib/pq"
