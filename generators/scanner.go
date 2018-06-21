@@ -261,7 +261,7 @@ func (t scanner) Generate(dst io.Writer) error {
 			cc := NewColumnConstantFromFieldList(
 				t.Context,
 				fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
-				genieql.NewColumnInfoNameTransformer(),
+				t.Dialect.ColumnNameTransformer(),
 				t.Fields,
 			)
 			if err = cc.Generate(dst); err != nil {

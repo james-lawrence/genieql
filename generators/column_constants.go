@@ -4,9 +4,9 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
-	"html/template"
 	"io"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 
@@ -82,7 +82,7 @@ func (t constants) Generate(dst io.Writer) error {
 	return errors.Wrap(err, "")
 }
 
-const columnConstantsTemplate = `const {{.Name}} = "{{ .Columns | transform | columns}}"`
+const columnConstantsTemplate = `const {{.Name}} = ` + "`{{ .Columns | transform | columns}}`"
 
 type transformer struct {
 	genieql.ColumnTransformer
@@ -91,7 +91,8 @@ type transformer struct {
 func (t transformer) transform(m []genieql.ColumnInfo) []string {
 	s := make([]string, 0, len(m))
 	for _, c := range m {
-		s = append(s, t.ColumnTransformer.Transform(c))
+		tmp := t.ColumnTransformer.Transform(c)
+		s = append(s, tmp)
 	}
 	return s
 }

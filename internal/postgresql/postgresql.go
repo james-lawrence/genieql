@@ -71,6 +71,10 @@ func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransforme
 	return &columnValueTransformer{}
 }
 
+func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer {
+	return genieql.NewColumnInfoNameTransformer(`"`)
+}
+
 func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
 	return columnInformation(t.db, columnInformationQuery, table)

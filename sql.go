@@ -146,16 +146,17 @@ func ColumnInfoFilterIgnore(set ...string) func(ColumnInfo) bool {
 	}
 }
 
-func NewColumnInfoNameTransformer(aliasers ...Aliaser) ColumnInfoNameTransformer {
-	return ColumnInfoNameTransformer{Aliaser: AliaserChain(aliasers...)}
+func NewColumnInfoNameTransformer(q string, aliasers ...Aliaser) ColumnInfoNameTransformer {
+	return ColumnInfoNameTransformer{Quote: q, Aliaser: AliaserChain(aliasers...)}
 }
 
 type ColumnInfoNameTransformer struct {
+	Quote string
 	Aliaser
 }
 
 func (t ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
-	return t.Aliaser.Alias(column.Name)
+	return t.Quote + t.Aliaser.Alias(column.Name) + t.Quote
 }
 
 type ColumnValueTransformer struct {

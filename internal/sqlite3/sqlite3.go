@@ -68,6 +68,11 @@ func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransforme
 	return genieql.ColumnInfoNameTransformer{}
 }
 
+func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer {
+	// TODO
+	return genieql.NewColumnInfoNameTransformer("")
+}
+
 func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `PRAGMA table_info('%s')`
 	return columnInformation(t.db, columnInformationQuery, table)

@@ -73,7 +73,11 @@ func (t testDialect) Delete(table string, columns, predicates []string) string {
 }
 
 func (t testDialect) ColumnValueTransformer() ColumnTransformer {
-	return NewColumnInfoNameTransformer()
+	return NewColumnInfoNameTransformer("")
+}
+
+func (t testDialect) ColumnNameTransformer() ColumnTransformer {
+	return NewColumnInfoNameTransformer("")
 }
 
 func (t testDialect) ColumnInformationForQuery(query string) ([]ColumnInfo, error) {

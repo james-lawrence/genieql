@@ -28,14 +28,14 @@ func Insert(n int, table string, columns, defaulted []string) string {
 		p, offset = placeholders(offset, selectPlaceholder(columns, defaulted))
 		values = append(values, fmt.Sprintf("(%s)", strings.Join(p, ",")))
 	}
-	columnOrder := strings.Join(columns, ",")
+	columnOrder := strings.Join(quotedColumns(columns...), ",")
 	return fmt.Sprintf(insertTmpl, table, columnOrder, strings.Join(values, ","), columnOrder)
 }
 
 // Select generate a select query.
 func Select(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
-	columnOrder := strings.Join(columns, ",")
+	columnOrder := strings.Join(quotedColumns(columns...), ",")
 	return fmt.Sprintf(selectByFieldTmpl, columnOrder, table, strings.Join(clauses, " AND "))
 }
 
@@ -43,20 +43,20 @@ func Select(table string, columns, predicates []string) string {
 func Update(table string, columns, predicates, returning []string) string {
 	updates, offset := predicate(1, columns...)
 	clauses, _ := predicate(offset, predicates...)
-	columnOrder := strings.Join(returning, ",")
+	columnOrder := strings.Join(quotedColumns(columns...), ",")
 	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "), columnOrder)
 }
 
 // Delete generate a delete query.
 func Delete(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
-	columnOrder := strings.Join(columns, ",")
+	columnOrder := strings.Join(quotedColumns(columns...), ",")
 	return fmt.Sprintf(deleteTmpl, table, strings.Join(clauses, " AND "), columnOrder)
 }
 
 func predicate(offset int, predicates ...string) ([]string, int) {
 	clauses := make([]string, 0, len(predicates))
-	for idx, predicate := range predicates {
+	for idx, predicate := range quotedColumns(predicates...) {
 		clauses = append(clauses, fmt.Sprintf("%s = $%d", predicate, offset+idx))
 	}
 
@@ -94,6 +94,14 @@ func selectPlaceholder(columns, defaults []string) []placeholder {
 	}
 
 	return placeholders
+}
+
+func quotedColumns(columns ...string) []string {
+	results := make([]string, 0, len(columns))
+	for _, c := range columns {
+		results = append(results, `"`+c+`"`)
+	}
+	return results
 }
 
 type placeholder interface {

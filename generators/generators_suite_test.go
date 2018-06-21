@@ -81,6 +81,10 @@ func (t dialect) ColumnValueTransformer() genieql.ColumnTransformer {
 	return nil
 }
 
+func (t dialect) ColumnNameTransformer() genieql.ColumnTransformer {
+	return genieql.NewColumnInfoNameTransformer("")
+}
+
 func (t dialect) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
 	switch table {
 	case "struct_a":

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql/astutil"
-
 	"github.com/go-yaml/yaml"
 	"github.com/pkg/errors"
 )
