@@ -30,7 +30,7 @@ func (t errInt) Close() error {
 	return nil
 }
 
-const IntStaticColumns = "arg"
+const IntStaticColumns = `arg`
 
 // NewIntStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

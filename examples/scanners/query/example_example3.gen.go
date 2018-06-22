@@ -6,7 +6,7 @@ import "database/sql"
 // genieql scanner query-literal --output=example_example3.gen.go example query
 // invoked by go generate @ query/example.go line 8
 
-const ExampleQueryScannerStaticColumns = ""
+const ExampleQueryScannerStaticColumns = ``
 
 // NewExampleQueryScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

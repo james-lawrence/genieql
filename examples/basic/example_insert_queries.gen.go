@@ -4,10 +4,10 @@ package basic
 // genieql generate insert --output=example_insert_queries.gen.go example example3 --suffix=WithDefaults --default=updated --default=created
 // invoked by go generate @ basic/example.go line 11
 
-const exampleInsertWithDefaultsStaticColumns = "DEFAULT,$1,$2,DEFAULT"
+const exampleInsertWithDefaultsStaticColumns = `DEFAULT,$1,$2,DEFAULT`
 
 func exampleInsertWithDefaultsExplode(arg1 *example) []interface{} {
 	return []interface{}{arg1.ID, arg1.Email}
 }
 
-const exampleInsertWithDefaults = `INSERT INTO example3 (created,email,id,updated) VALUES (DEFAULT,$1,$2,DEFAULT) RETURNING created,email,id,updated`
+const exampleInsertWithDefaults = `INSERT INTO example3 ("created","email","id","updated") VALUES (DEFAULT,$1,$2,DEFAULT) RETURNING "created","email","id","updated"`

@@ -31,7 +31,7 @@ var _ = ginkgo.Describe("ColumnConstants", func() {
 				},
 			},
 			genieql.NewColumnInfoNameTransformer(""),
-			"const constant = \"col1,col2\"\n",
+			"const constant = `col1,col2`\n",
 		),
 	)
 })

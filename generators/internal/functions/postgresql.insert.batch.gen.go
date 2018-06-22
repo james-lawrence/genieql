@@ -63,7 +63,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 	case 0:
 		return nil, []Example1(nil), false
 	case 1:
-		const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2) RETURNING created_at,id,text_field,updated_at,uuid_field`
+		const query = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2) RETURNING "created_at","id","text_field","updated_at","uuid_field"`
 		exploder := func(p ...Example1) (r [2]interface{}) {
 			for idx, v := range p[:1] {
 				r[idx*2+0], r[idx*2+1] = v.TextField, v.UUIDField
@@ -73,7 +73,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		tmp := exploder(p...)
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 2:
-		const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4) RETURNING created_at,id,text_field,updated_at,uuid_field`
+		const query = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4) RETURNING "created_at","id","text_field","updated_at","uuid_field"`
 		exploder := func(p ...Example1) (r [4]interface{}) {
 			for idx, v := range p[:2] {
 				r[idx*2+0], r[idx*2+1] = v.TextField, v.UUIDField
@@ -83,7 +83,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		tmp := exploder(p...)
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 3:
-		const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6) RETURNING created_at,id,text_field,updated_at,uuid_field`
+		const query = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6) RETURNING "created_at","id","text_field","updated_at","uuid_field"`
 		exploder := func(p ...Example1) (r [6]interface{}) {
 			for idx, v := range p[:3] {
 				r[idx*2+0], r[idx*2+1] = v.TextField, v.UUIDField
@@ -93,7 +93,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		tmp := exploder(p...)
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 4:
-		const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6),(DEFAULT,DEFAULT,$7,DEFAULT,$8) RETURNING created_at,id,text_field,updated_at,uuid_field`
+		const query = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6),(DEFAULT,DEFAULT,$7,DEFAULT,$8) RETURNING "created_at","id","text_field","updated_at","uuid_field"`
 		exploder := func(p ...Example1) (r [8]interface{}) {
 			for idx, v := range p[:4] {
 				r[idx*2+0], r[idx*2+1] = v.TextField, v.UUIDField
@@ -103,7 +103,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		tmp := exploder(p...)
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	default:
-		const query = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6),(DEFAULT,DEFAULT,$7,DEFAULT,$8),(DEFAULT,DEFAULT,$9,DEFAULT,$10) RETURNING created_at,id,text_field,updated_at,uuid_field`
+		const query = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,$1,DEFAULT,$2),(DEFAULT,DEFAULT,$3,DEFAULT,$4),(DEFAULT,DEFAULT,$5,DEFAULT,$6),(DEFAULT,DEFAULT,$7,DEFAULT,$8),(DEFAULT,DEFAULT,$9,DEFAULT,$10) RETURNING "created_at","id","text_field","updated_at","uuid_field"`
 		exploder := func(p ...Example1) (r [10]interface{}) {
 			for idx, v := range p[:5] {
 				r[idx*2+0], r[idx*2+1] = v.TextField, v.UUIDField

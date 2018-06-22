@@ -38,7 +38,7 @@ func (t errExample1Scanner) Close() error {
 	return nil
 }
 
-const Example1ScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field"
+const Example1ScannerStaticColumns = `"created_at","id","text_field","updated_at","uuid_field"`
 
 // NewExample1ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
@@ -304,7 +304,7 @@ func (t errExample2Scanner) Close() error {
 	return nil
 }
 
-const Example2ScannerStaticColumns = "bool_field,created_at,text_field,updated_at,uuid_field"
+const Example2ScannerStaticColumns = `"bool_field","created_at","text_field","updated_at","uuid_field"`
 
 // NewExample2ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

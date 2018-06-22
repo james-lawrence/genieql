@@ -69,6 +69,22 @@ func normalizeFieldNames(fields ...*ast.Field) []*ast.Field {
 	return result
 }
 
+func mapFieldNames(m func(*ast.Field) *ast.Field, fields ...*ast.Field) []*ast.Field {
+	result := make([]*ast.Field, 0, len(fields))
+	for _, field := range fields {
+		result = append(result, m(field))
+	}
+	return result
+}
+
+func mapIdent(m func(*ast.Ident) *ast.Ident, args ...*ast.Ident) []*ast.Ident {
+	result := make([]*ast.Ident, 0, len(args))
+	for _, f := range args {
+		result = append(result, m(f))
+	}
+	return result
+}
+
 // normalize's the idents.
 func normalizeIdent(idents []*ast.Ident) []*ast.Ident {
 	result := make([]*ast.Ident, 0, len(idents))

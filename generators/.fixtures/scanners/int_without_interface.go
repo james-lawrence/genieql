@@ -2,7 +2,7 @@ package example
 
 import "database/sql"
 
-const IntNoInterfaceStaticColumns = "arg"
+const IntNoInterfaceStaticColumns = `arg`
 
 // NewIntNoInterfaceStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

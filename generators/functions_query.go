@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -340,6 +341,13 @@ func buildParameters(queryInParams bool, queryer, query *ast.Field, params ...*a
 	)
 
 	params = normalizeFieldNames(params...)
+	// ensure no parameters have the name of the query constant.
+	params = mapFieldNames(func(f *ast.Field) *ast.Field {
+		names := mapIdent(func(i *ast.Ident) *ast.Ident {
+			return ast.NewIdent(strings.Replace(i.Name, "query", "__query__", 1))
+		}, f.Names...)
+		return astutil.Field(f.Type, names...)
+	}, params...)
 	// [] -> [q sqlx.Queryer]
 	parameters = append(parameters, queryer)
 	// [q sqlx.Queryer] -> [q sqlx.Queryer, query string]

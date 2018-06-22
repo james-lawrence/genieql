@@ -4,10 +4,10 @@ package functions
 // genieql generate insert --suffix=WithDefaults -o postgresql.insert.gen.go --default=id --default=text_field --default=created_at --default=updated_at Example1 example1
 // invoked by go generate @ functions/functions.go line 7
 
-const Example1InsertWithDefaultsStaticColumns = "DEFAULT,DEFAULT,DEFAULT,DEFAULT,$1"
+const Example1InsertWithDefaultsStaticColumns = `DEFAULT,DEFAULT,DEFAULT,DEFAULT,$1`
 
 func Example1InsertWithDefaultsExplode(arg1 *Example1) []interface{} {
 	return []interface{}{arg1.UUIDField}
 }
 
-const Example1InsertWithDefaults = `INSERT INTO example1 (created_at,id,text_field,updated_at,uuid_field) VALUES (DEFAULT,DEFAULT,DEFAULT,DEFAULT,$1) RETURNING created_at,id,text_field,updated_at,uuid_field`
+const Example1InsertWithDefaults = `INSERT INTO example1 ("created_at","id","text_field","updated_at","uuid_field") VALUES (DEFAULT,DEFAULT,DEFAULT,DEFAULT,$1) RETURNING "created_at","id","text_field","updated_at","uuid_field"`

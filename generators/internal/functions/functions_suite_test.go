@@ -26,8 +26,12 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	Expect(DB.Close()).ToNot(HaveOccurred())
-	DestroyPostgresql(TemplateDatabaseName, dbname)
+	if DB != nil {
+		Expect(DB.Close()).ToNot(HaveOccurred())
+	}
+	if len(dbname) > 0 {
+		DestroyPostgresql(TemplateDatabaseName, dbname)
+	}
 })
 
 var _ = BeforeEach(func() {

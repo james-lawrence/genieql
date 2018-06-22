@@ -39,7 +39,7 @@ func (t errProfileScanner) Close() error {
 	return nil
 }
 
-const ProfileScannerStaticColumns = "i1,i2,b1,t1"
+const ProfileScannerStaticColumns = `"i1","i2","b1","t1"`
 
 // NewProfileScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
@@ -284,7 +284,7 @@ func (t errExample1Scanner) Close() error {
 	return nil
 }
 
-const Example1ScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field"
+const Example1ScannerStaticColumns = `"created_at","id","text_field","updated_at","uuid_field"`
 
 // NewExample1ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.
@@ -549,8 +549,6 @@ func (t errComboScanner) Err() error {
 func (t errComboScanner) Close() error {
 	return nil
 }
-
-const ComboScannerStaticColumns = "created_at,id,text_field,updated_at,uuid_field,bool_field,created_at,text_field,updated_at,uuid_field"
 
 // NewComboScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

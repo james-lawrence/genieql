@@ -30,7 +30,7 @@ func (t errMultipleParam) Close() error {
 	return nil
 }
 
-const MultipleParamStaticColumns = "arg1,arg2,arg3,arg4"
+const MultipleParamStaticColumns = `arg1,arg2,arg3,arg4`
 
 // NewMultipleParamStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

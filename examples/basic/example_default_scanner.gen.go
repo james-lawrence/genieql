@@ -38,7 +38,7 @@ func (t errExampleScanner) Close() error {
 	return nil
 }
 
-const ExampleScannerStaticColumns = "created,email,id,updated"
+const ExampleScannerStaticColumns = `"created","email","id","updated"`
 
 // NewExampleScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

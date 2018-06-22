@@ -66,25 +66,27 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 		c5  sql.NullInt64
 		c6  pq.NullTime
 		c7  pq.NullTime
-		c8  sql.NullString
+		c8  sql.NullInt64
 		c9  sql.NullString
-		c10 sql.NullBool
+		c10 sql.NullString
 		c11 sql.NullBool
-		c12 sql.NullInt64
+		c12 sql.NullBool
 		c13 sql.NullInt64
-		c14 pq.NullTime
+		c14 sql.NullInt64
 		c15 pq.NullTime
-		c16 sql.NullString
-		c17 sql.NullString
-		c18 sql.NullBool
-		c19 sql.NullBool
-		c20 sql.NullInt64
-		c21 sql.NullInt64
-		c22 pq.NullTime
-		c23 pq.NullTime
+		c16 pq.NullTime
+		c17 sql.NullInt64
+		c18 sql.NullString
+		c19 sql.NullString
+		c20 sql.NullBool
+		c21 sql.NullBool
+		c22 sql.NullInt64
+		c23 sql.NullInt64
+		c24 pq.NullTime
+		c25 pq.NullTime
 	)
 
-	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23); err != nil {
+	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23, &c24, &c25); err != nil {
 		return err
 	}
 
@@ -129,82 +131,92 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 	}
 
 	if c8.Valid {
-		tmp := c8.String
-		t2.Field1 = tmp
+		tmp := int(c8.Int64)
+		t1.Unmappedfield = tmp
 	}
 
 	if c9.Valid {
 		tmp := c9.String
-		t2.Field2 = &tmp
+		t2.Field1 = tmp
 	}
 
 	if c10.Valid {
-		tmp := c10.Bool
-		t2.Field3 = tmp
+		tmp := c10.String
+		t2.Field2 = &tmp
 	}
 
 	if c11.Valid {
 		tmp := c11.Bool
-		t2.Field4 = &tmp
+		t2.Field3 = tmp
 	}
 
 	if c12.Valid {
-		tmp := int(c12.Int64)
-		t2.Field5 = tmp
+		tmp := c12.Bool
+		t2.Field4 = &tmp
 	}
 
 	if c13.Valid {
 		tmp := int(c13.Int64)
-		t2.Field6 = &tmp
+		t2.Field5 = tmp
 	}
 
 	if c14.Valid {
-		tmp := c14.Time
-		t2.Field7 = tmp
+		tmp := int(c14.Int64)
+		t2.Field6 = &tmp
 	}
 
 	if c15.Valid {
 		tmp := c15.Time
-		t2.Field8 = &tmp
+		t2.Field7 = tmp
 	}
 
 	if c16.Valid {
-		tmp := c16.String
-		t3.Field1 = tmp
+		tmp := c16.Time
+		t2.Field8 = &tmp
 	}
 
 	if c17.Valid {
-		tmp := c17.String
-		t3.Field2 = &tmp
+		tmp := int(c17.Int64)
+		t2.Unmappedfield = tmp
 	}
 
 	if c18.Valid {
-		tmp := c18.Bool
-		t3.Field3 = tmp
+		tmp := c18.String
+		t3.Field1 = tmp
 	}
 
 	if c19.Valid {
-		tmp := c19.Bool
-		t3.Field4 = &tmp
+		tmp := c19.String
+		t3.Field2 = &tmp
 	}
 
 	if c20.Valid {
-		tmp := int(c20.Int64)
-		t3.Field5 = tmp
+		tmp := c20.Bool
+		t3.Field3 = tmp
 	}
 
 	if c21.Valid {
-		tmp := int(c21.Int64)
-		t3.Field6 = &tmp
+		tmp := c21.Bool
+		t3.Field4 = &tmp
 	}
 
 	if c22.Valid {
-		tmp := c22.Time
-		t3.Field7 = tmp
+		tmp := int(c22.Int64)
+		t3.Field5 = tmp
 	}
 
 	if c23.Valid {
-		tmp := c23.Time
+		tmp := int(c23.Int64)
+		t3.Field6 = &tmp
+	}
+
+	if c24.Valid {
+		tmp := c24.Time
+		t3.Field7 = tmp
+	}
+
+	if c25.Valid {
+		tmp := c25.Time
 		t3.Field8 = &tmp
 	}
 
@@ -248,25 +260,27 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 		c5  sql.NullInt64
 		c6  pq.NullTime
 		c7  pq.NullTime
-		c8  sql.NullString
+		c8  sql.NullInt64
 		c9  sql.NullString
-		c10 sql.NullBool
+		c10 sql.NullString
 		c11 sql.NullBool
-		c12 sql.NullInt64
+		c12 sql.NullBool
 		c13 sql.NullInt64
-		c14 pq.NullTime
+		c14 sql.NullInt64
 		c15 pq.NullTime
-		c16 sql.NullString
-		c17 sql.NullString
-		c18 sql.NullBool
-		c19 sql.NullBool
-		c20 sql.NullInt64
-		c21 sql.NullInt64
-		c22 pq.NullTime
-		c23 pq.NullTime
+		c16 pq.NullTime
+		c17 sql.NullInt64
+		c18 sql.NullString
+		c19 sql.NullString
+		c20 sql.NullBool
+		c21 sql.NullBool
+		c22 sql.NullInt64
+		c23 sql.NullInt64
+		c24 pq.NullTime
+		c25 pq.NullTime
 	)
 
-	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23); err != nil {
+	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23, &c24, &c25); err != nil {
 		return err
 	}
 
@@ -311,82 +325,92 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 	}
 
 	if c8.Valid {
-		tmp := c8.String
-		t2.Field1 = tmp
+		tmp := int(c8.Int64)
+		t1.Unmappedfield = tmp
 	}
 
 	if c9.Valid {
 		tmp := c9.String
-		t2.Field2 = &tmp
+		t2.Field1 = tmp
 	}
 
 	if c10.Valid {
-		tmp := c10.Bool
-		t2.Field3 = tmp
+		tmp := c10.String
+		t2.Field2 = &tmp
 	}
 
 	if c11.Valid {
 		tmp := c11.Bool
-		t2.Field4 = &tmp
+		t2.Field3 = tmp
 	}
 
 	if c12.Valid {
-		tmp := int(c12.Int64)
-		t2.Field5 = tmp
+		tmp := c12.Bool
+		t2.Field4 = &tmp
 	}
 
 	if c13.Valid {
 		tmp := int(c13.Int64)
-		t2.Field6 = &tmp
+		t2.Field5 = tmp
 	}
 
 	if c14.Valid {
-		tmp := c14.Time
-		t2.Field7 = tmp
+		tmp := int(c14.Int64)
+		t2.Field6 = &tmp
 	}
 
 	if c15.Valid {
 		tmp := c15.Time
-		t2.Field8 = &tmp
+		t2.Field7 = tmp
 	}
 
 	if c16.Valid {
-		tmp := c16.String
-		t3.Field1 = tmp
+		tmp := c16.Time
+		t2.Field8 = &tmp
 	}
 
 	if c17.Valid {
-		tmp := c17.String
-		t3.Field2 = &tmp
+		tmp := int(c17.Int64)
+		t2.Unmappedfield = tmp
 	}
 
 	if c18.Valid {
-		tmp := c18.Bool
-		t3.Field3 = tmp
+		tmp := c18.String
+		t3.Field1 = tmp
 	}
 
 	if c19.Valid {
-		tmp := c19.Bool
-		t3.Field4 = &tmp
+		tmp := c19.String
+		t3.Field2 = &tmp
 	}
 
 	if c20.Valid {
-		tmp := int(c20.Int64)
-		t3.Field5 = tmp
+		tmp := c20.Bool
+		t3.Field3 = tmp
 	}
 
 	if c21.Valid {
-		tmp := int(c21.Int64)
-		t3.Field6 = &tmp
+		tmp := c21.Bool
+		t3.Field4 = &tmp
 	}
 
 	if c22.Valid {
-		tmp := c22.Time
-		t3.Field7 = tmp
+		tmp := int(c22.Int64)
+		t3.Field5 = tmp
 	}
 
 	if c23.Valid {
-		tmp := c23.Time
+		tmp := int(c23.Int64)
+		t3.Field6 = &tmp
+	}
+
+	if c24.Valid {
+		tmp := c24.Time
+		t3.Field7 = tmp
+	}
+
+	if c25.Valid {
+		tmp := c25.Time
 		t3.Field8 = &tmp
 	}
 

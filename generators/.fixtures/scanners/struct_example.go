@@ -30,7 +30,7 @@ func (t errStructExample) Close() error {
 	return nil
 }
 
-const StructExampleStaticColumns = "a,b,c,d,e,f"
+const StructExampleStaticColumns = `a,b,c,d,e,f`
 
 // NewStructExampleStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

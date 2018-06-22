@@ -30,7 +30,7 @@ func (t errPrivateInt) Close() error {
 	return nil
 }
 
-const PrivateIntStaticColumns = "arg"
+const PrivateIntStaticColumns = `arg`
 
 // NewPrivateIntStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

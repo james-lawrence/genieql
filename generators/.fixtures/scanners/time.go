@@ -33,7 +33,7 @@ func (t errTime) Close() error {
 	return nil
 }
 
-const TimeStaticColumns = "arg"
+const TimeStaticColumns = `arg`
 
 // NewTimeStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

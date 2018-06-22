@@ -30,7 +30,7 @@ func (t errIntNoDynamic) Close() error {
 	return nil
 }
 
-const IntNoDynamicStaticColumns = "arg"
+const IntNoDynamicStaticColumns = `arg`
 
 // NewIntNoDynamicStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

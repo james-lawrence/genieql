@@ -76,10 +76,14 @@ var _ = ginkgo.Describe("Scanner", func() {
 
 			node, err := parser.ParseFile(fset, "example", definition, 0)
 			Expect(err).ToNot(HaveOccurred())
+			soc := ScannerOptionContext(Context{
+				Configuration: config,
+				Dialect:       dialect{},
+			})
 
 			buffer.WriteString("package example\n\n")
 			for _, d := range genieql.SelectFuncType(genieql.FindTypes(node)...) {
-				for _, g := range ScannerFromGenDecl(d, append(options, ScannerOptionConfiguration(config))...) {
+				for _, g := range ScannerFromGenDecl(d, append(options, soc)...) {
 					Expect(g.Generate(buffer)).ToNot(HaveOccurred())
 					buffer.WriteString("\n")
 				}

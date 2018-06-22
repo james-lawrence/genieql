@@ -34,7 +34,7 @@ func (t errType1Scanner) Close() error {
 	return nil
 }
 
-const Type1ScannerStaticColumns = "field1,field2,field3,field4,field5,field6,field7,field8,unmappedfield"
+const Type1ScannerStaticColumns = `"field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield"`
 
 // NewType1ScannerStatic creates a scanner that operates on a static
 // set of columns that are always returned in the same order.

@@ -78,7 +78,7 @@ func (t dialect) Delete(table string, columns, predicates []string) string {
 }
 
 func (t dialect) ColumnValueTransformer() genieql.ColumnTransformer {
-	return nil
+	return genieql.NewColumnInfoNameTransformer("")
 }
 
 func (t dialect) ColumnNameTransformer() genieql.ColumnTransformer {
