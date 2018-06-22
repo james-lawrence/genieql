@@ -161,6 +161,13 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			"package example; type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner",
 			".fixtures/functions-query/output9.go",
 		),
+		Entry(
+			"example 9 - parameter named query",
+			`package example
+// genieql.options: query-literal=SELECT * FROM example WHERE id = $1
+type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
+			".fixtures/functions-query/output10.go",
+		),
 	)
 
 	DescribeTable("build a query function from a function prototype",

@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -47,14 +46,8 @@ func QFOBuiltinQueryFromString(q string) QueryFunctionOption {
 // QFOBuiltinQuery force the query function to only execute the specified
 // query.
 func QFOBuiltinQuery(x ast.Expr) QueryFunctionOption {
-	const name = "query"
 	return func(qf *queryFunction) {
-		switch x.(type) {
-		case *ast.BasicLit:
-			qf.BuiltinQuery = genieql.QueryLiteral2(token.CONST, name, x)
-		default:
-			qf.BuiltinQuery = genieql.QueryLiteral2(token.VAR, name, x)
-		}
+		qf.BuiltinQuery = x
 	}
 }
 
@@ -268,7 +261,7 @@ func NewQueryFunction(options ...QueryFunctionOption) genieql.Generator {
 type queryFunction struct {
 	Name            string
 	ScannerDecl     *ast.FuncDecl
-	BuiltinQuery    ast.Decl
+	BuiltinQuery    ast.Expr
 	Queryer         ast.Expr
 	QueryerName     string
 	QueryerFunction *ast.Ident
@@ -285,6 +278,24 @@ func (t *queryFunction) Apply(options ...QueryFunctionOption) *queryFunction {
 }
 
 func (t queryFunction) Generate(dst io.Writer) error {
+	const (
+		defaultQueryName  = "query"
+		fallbackQueryName = "__gqlquery__"
+	)
+
+	qliteral := func(name string, x ast.Expr) ast.Decl {
+		if x == nil {
+			return nil
+		}
+
+		switch x.(type) {
+		case *ast.BasicLit:
+			return genieql.QueryLiteral2(token.CONST, name, x)
+		default:
+			return genieql.QueryLiteral2(token.VAR, name, x)
+		}
+	}
+
 	type context struct {
 		Name            string
 		ScannerFunc     ast.Expr
@@ -300,16 +311,24 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		parameters      []*ast.Field
 		queryParameters []ast.Expr
 		query           *ast.CallExpr
-		queryParam      = astutil.Field(ast.NewIdent("string"), ast.NewIdent("query"))
+		queryParam      = ast.NewIdent(defaultQueryName)
 	)
+	// astutil.Field(ast.NewIdent("string"), ast.NewIdent(fallbackQueryName))
+	// if any of the parameters have the same name as the queryParam use a fallback.
+	for _, p := range astutil.MapExprToString(t.QueryParameters...) {
+		if p == defaultQueryName {
+			queryParam = ast.NewIdent(fallbackQueryName)
+			break
+		}
+	}
 
 	parameters = buildParameters(
 		t.BuiltinQuery == nil,
 		astutil.Field(t.Queryer, ast.NewIdent(t.QueryerName)),
-		queryParam,
+		astutil.Field(ast.NewIdent("string"), queryParam),
 		t.Parameters...,
 	)
-	queryParameters = buildQueryParameters(queryParam, t.QueryParameters...)
+	queryParameters = buildQueryParameters(astutil.Field(ast.NewIdent("string"), queryParam), t.QueryParameters...)
 
 	// if we're dealing with an ellipsis parameter function
 	// mark the CallExpr Ellipsis
@@ -327,7 +346,7 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		Name:         t.Name,
 		ScannerType:  t.ScannerDecl.Type.Results.List[0].Type,
 		ScannerFunc:  t.ScannerDecl.Name,
-		BuiltinQuery: t.BuiltinQuery,
+		BuiltinQuery: qliteral(queryParam.Name, t.BuiltinQuery),
 		Parameters:   parameters,
 		Queryer:      query,
 	}
@@ -341,13 +360,6 @@ func buildParameters(queryInParams bool, queryer, query *ast.Field, params ...*a
 	)
 
 	params = normalizeFieldNames(params...)
-	// ensure no parameters have the name of the query constant.
-	params = mapFieldNames(func(f *ast.Field) *ast.Field {
-		names := mapIdent(func(i *ast.Ident) *ast.Ident {
-			return ast.NewIdent(strings.Replace(i.Name, "query", "__query__", 1))
-		}, f.Names...)
-		return astutil.Field(f.Type, names...)
-	}, params...)
 	// [] -> [q sqlx.Queryer]
 	parameters = append(parameters, queryer)
 	// [q sqlx.Queryer] -> [q sqlx.Queryer, query string]
