@@ -313,7 +313,7 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		query           *ast.CallExpr
 		queryParam      = ast.NewIdent(defaultQueryName)
 	)
-	// astutil.Field(ast.NewIdent("string"), ast.NewIdent(fallbackQueryName))
+
 	// if any of the parameters have the same name as the queryParam use a fallback.
 	for _, p := range astutil.MapExprToString(t.QueryParameters...) {
 		if p == defaultQueryName {

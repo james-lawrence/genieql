@@ -288,5 +288,17 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
+		Entry(
+			"example 6 - reserved word in parameters",
+			".fixtures/functions-query/output11.go",
+			QFOName("queryFunction6"),
+			QFOSharedParameters(
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("type")),
+				astutil.Field(ast.NewIdent("int"), ast.NewIdent("func")),
+			),
+			QFOScanner(exampleRowScanner),
+			QFOQueryer("q", mustParseExpr("sqlx.Queryer")),
+			QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		),
 	)
 })

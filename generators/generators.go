@@ -20,3 +20,14 @@ type Context struct {
 	Configuration  genieql.Configuration
 	Dialect        genieql.Dialect
 }
+
+func reserved(s string) bool {
+	switch s {
+	case "type":
+		return true
+	case "func":
+		return true
+	default:
+		return false
+	}
+}

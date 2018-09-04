@@ -91,16 +91,27 @@ func normalizeIdent(idents []*ast.Ident) []*ast.Ident {
 
 	for _, ident := range idents {
 		n := ident.Name
+
 		if !strings.Contains(n, "_") {
 			n = snaker.CamelToSnake(ident.Name)
 		}
-		result = append(result, ast.NewIdent(toPrivate(n)))
+
+		n = toPrivate(n)
+
+		if reserved(n) {
+			n = "_" + n
+		}
+
+		result = append(result, ast.NewIdent(n))
 	}
 
 	return result
 }
 
 func toPrivate(s string) string {
+	// ignore strings that start with an _
+	s = strings.TrimPrefix(s, "_")
+
 	parts := strings.SplitN(s, "_", 2)
 	switch len(parts) {
 	case 2:
