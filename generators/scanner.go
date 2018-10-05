@@ -217,12 +217,14 @@ func (t scanner) Generate(dst io.Writer) error {
 
 	type context struct {
 		Name          string
+		RowType       string
 		InterfaceName string
 		Parameters    []*ast.Field
 		Columns       []genieql.ColumnMap
 	}
 
 	ctx := context{
+		RowType:       t.Context.Configuration.RowType,
 		Name:          t.Name,
 		InterfaceName: stringsx.ToPublic(stringsx.DefaultIfBlank(t.interfaceName, t.Name)),
 		Parameters:    t.Fields.List,
@@ -432,14 +434,14 @@ func (t {{.Name | private}}Static) Next() bool {
 
 const staticRowScanner = `// New{{.Name | title}}StaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func New{{.Name | title}}StaticRow(row *sql.Row) {{.Name | title}}StaticRow {
+func New{{.Name | title}}StaticRow(row {{.RowType}}) {{.Name | title}}StaticRow {
 	return {{.Name | title}}StaticRow {
 		row: row,
 	}
 }
 
 type {{.Name | title}}StaticRow struct {
-	row *sql.Row
+	row {{.RowType}}
 }
 
 func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {

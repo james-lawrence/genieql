@@ -25,6 +25,7 @@ type Configuration struct {
 	Dialect       string
 	Driver        string
 	Queryer       string
+	RowType       string
 	ConnectionURL string
 	Host          string
 	Port          int
@@ -117,6 +118,7 @@ func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 	var (
 		config = Configuration{
 			Queryer: "*sql.DB",
+			RowType: "*sql.Row",
 		}
 	)
 
@@ -144,6 +146,14 @@ func ConfigurationOptionLocation(path string) ConfigurationOption {
 func ConfigurationOptionQueryer(queryer string) ConfigurationOption {
 	return func(c *Configuration) error {
 		c.Queryer = queryer
+		return nil
+	}
+}
+
+// ConfigurationOptionRowType specify the default type to use for static row scanners.
+func ConfigurationOptionRowType(rt string) ConfigurationOption {
+	return func(c *Configuration) error {
+		c.RowType = rt
 		return nil
 	}
 }

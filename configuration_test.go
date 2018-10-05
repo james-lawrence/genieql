@@ -134,6 +134,7 @@ var _ = Describe("Configuration", func() {
 				ConfigurationOptionLocation(path),
 				ConfigurationOptionDriver("github.com/lib/pq"),
 				ConfigurationOptionDatabase(uri),
+				ConfigurationOptionRowType("sqlx.Row"),
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -173,6 +174,7 @@ name: dummy.config
 dialect: postgres
 driver: github.com/lib/pq
 queryer: '*sql.DB'
+rowtype: sqlx.Row
 connectionurl: postgres://soandso:password@localhost:5432/databasename?sslmode=disable
 host: localhost
 port: 5432

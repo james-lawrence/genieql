@@ -20,6 +20,7 @@ type bootstrapDatabase struct {
 	dburi          *url.URL
 	driver         string
 	queryer        string
+	rowtype        string
 }
 
 func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
@@ -29,6 +30,7 @@ func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
 		genieql.ConfigurationOptionDriver(t.driver),
 		genieql.ConfigurationOptionDatabase(t.dburi),
 		genieql.ConfigurationOptionQueryer(t.queryer),
+		genieql.ConfigurationOptionRowType(t.rowtype),
 	)
 }
 
@@ -38,6 +40,7 @@ func (t *bootstrapDatabase) configure(bootstrap *kingpin.CmdClause) *kingpin.Cmd
 	bootstrap.Flag("driver", "name of the underlying driver for the database, usually the import url").
 		Default("github.com/lib/pq").StringVar(&t.driver)
 	bootstrap.Flag("queryer", "the default queryer to use").Default("*sql.DB").StringVar(&t.queryer)
+	bootstrap.Flag("rowtype", "the default type to use for retrieving rows").Default("*sql.Row").StringVar(&t.rowtype)
 	bootstrap.Arg("uri", "uri for the database qlgenie will work with").Required().URLVar(&t.dburi)
 	bootstrap.Action(t.Bootstrap)
 
