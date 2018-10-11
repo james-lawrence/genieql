@@ -248,7 +248,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	}
 
 	if fields, _, err = mapping.MapFieldsToColumns(fset, pkg, genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))...); err != nil {
-		return errors.Wrapf(err, "failed to map fields to columns for", t.packageType)
+		return errors.Wrapf(err, "failed to map fields to columns for: %s", t.packageType)
 	}
 
 	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}

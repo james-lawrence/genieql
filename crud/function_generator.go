@@ -70,11 +70,21 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			queryerOption,
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOSharedParameters(fieldFromColumnInfo(column)...),
-			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Type, snaker.SnakeToCamel(column.Name))),
-			generators.QFOScanner(t.Scanner),
 		}
 
-		mg = append(mg, generators.NewQueryFunction(options...))
+		findOptions := append(
+			options,
+			generators.QFOName(fmt.Sprintf("%sFindBy%s", t.Type, snaker.SnakeToCamel(column.Name))),
+			generators.QFOScanner(t.UniqScanner),
+		)
+		lookupOptions := append(
+			options,
+			generators.QFOName(fmt.Sprintf("%sLookupBy%s", t.Type, snaker.SnakeToCamel(column.Name))),
+			generators.QFOScanner(t.Scanner),
+		)
+
+		mg = append(mg, generators.NewQueryFunction(findOptions...))
+		mg = append(mg, generators.NewQueryFunction(lookupOptions...))
 	}
 
 	if len(naturalKey) > 0 {
