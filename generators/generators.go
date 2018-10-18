@@ -27,6 +27,8 @@ func reserved(s string) bool {
 		return true
 	case "func":
 		return true
+	case "default":
+		return true
 	default:
 		return false
 	}
