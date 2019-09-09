@@ -62,13 +62,8 @@ var _ = Describe("Configuration", func() {
 		})
 
 		It("should error if port is invalid", func() {
-			uri, err := url.Parse("postgres://soandso@localhost:abc1/databasename?sslmode=disable")
-			Expect(err).ToNot(HaveOccurred())
-			_, err = NewConfiguration(
-				ConfigurationOptionDriver("github.com/lib/pq"),
-				ConfigurationOptionDatabase(uri),
-			)
-			Expect(err.Error()).To(Equal("strconv.Atoi: parsing \"abc1\": invalid syntax"))
+			_, err := url.Parse("postgres://soandso@localhost:abc1/databasename?sslmode=disable")
+			Expect(err.Error()).To(Equal("parse postgres://soandso@localhost:abc1/databasename?sslmode=disable: invalid port \":abc1\" after host"))
 		})
 	})
 

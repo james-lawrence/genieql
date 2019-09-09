@@ -24,6 +24,7 @@ var _ = Describe("Postgresql", func() {
 		Entry("handle varchar", pgtype.VarcharOID, "string"),
 		Entry("handle inet", pgtype.InetOID, "string"),
 		Entry("handle uuid", pgtype.UUIDOID, "string"),
+		Entry("handle uuid arrays", pgtype.UUIDArrayOID, "[]string"),
 		Entry("handle dates", pgtype.DateOID, "time.Time"),
 		Entry("handle timestamps with timezone", pgtype.TimestamptzOID, "time.Time"),
 		Entry("handle timestamps", pgtype.TimestampOID, "time.Time"),
