@@ -15,6 +15,8 @@ func OIDToType(oid int) ast.Expr {
 		return astutil.Expr("bool")
 	case pgtype.UUIDOID:
 		return astutil.Expr("string")
+	case pgtype.UUIDArrayOID:
+		return astutil.Expr("[]string")
 	case pgtype.TimestamptzOID, pgtype.TimestampOID, pgtype.DateOID:
 		return astutil.Expr("time.Time")
 	case pgtype.Int2OID, pgtype.Int4OID, pgtype.Int8OID:

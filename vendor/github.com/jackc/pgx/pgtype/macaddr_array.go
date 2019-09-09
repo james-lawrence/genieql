@@ -3,40 +3,40 @@ package pgtype
 import (
 	"database/sql/driver"
 	"encoding/binary"
-	"time"
+	"net"
 
 	"github.com/jackc/pgx/pgio"
 	"github.com/pkg/errors"
 )
 
-type TimestampArray struct {
-	Elements   []Timestamp
+type MacaddrArray struct {
+	Elements   []Macaddr
 	Dimensions []ArrayDimension
 	Status     Status
 }
 
-func (dst *TimestampArray) Set(src interface{}) error {
+func (dst *MacaddrArray) Set(src interface{}) error {
 	// untyped nil and typed nil interfaces are different
 	if src == nil {
-		*dst = TimestampArray{Status: Null}
+		*dst = MacaddrArray{Status: Null}
 		return nil
 	}
 
 	switch value := src.(type) {
 
-	case []time.Time:
+	case []net.HardwareAddr:
 		if value == nil {
-			*dst = TimestampArray{Status: Null}
+			*dst = MacaddrArray{Status: Null}
 		} else if len(value) == 0 {
-			*dst = TimestampArray{Status: Present}
+			*dst = MacaddrArray{Status: Present}
 		} else {
-			elements := make([]Timestamp, len(value))
+			elements := make([]Macaddr, len(value))
 			for i := range value {
 				if err := elements[i].Set(value[i]); err != nil {
 					return err
 				}
 			}
-			*dst = TimestampArray{
+			*dst = MacaddrArray{
 				Elements:   elements,
 				Dimensions: []ArrayDimension{{Length: int32(len(elements)), LowerBound: 1}},
 				Status:     Present,
@@ -47,13 +47,13 @@ func (dst *TimestampArray) Set(src interface{}) error {
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
 		}
-		return errors.Errorf("cannot convert %v to TimestampArray", value)
+		return errors.Errorf("cannot convert %v to MacaddrArray", value)
 	}
 
 	return nil
 }
 
-func (dst *TimestampArray) Get() interface{} {
+func (dst *MacaddrArray) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst
@@ -64,13 +64,13 @@ func (dst *TimestampArray) Get() interface{} {
 	}
 }
 
-func (src *TimestampArray) AssignTo(dst interface{}) error {
+func (src *MacaddrArray) AssignTo(dst interface{}) error {
 	switch src.Status {
 	case Present:
 		switch v := dst.(type) {
 
-		case *[]time.Time:
-			*v = make([]time.Time, len(src.Elements))
+		case *[]net.HardwareAddr:
+			*v = make([]net.HardwareAddr, len(src.Elements))
 			for i := range src.Elements {
 				if err := src.Elements[i].AssignTo(&((*v)[i])); err != nil {
 					return err
@@ -90,9 +90,9 @@ func (src *TimestampArray) AssignTo(dst interface{}) error {
 	return errors.Errorf("cannot decode %#v into %T", src, dst)
 }
 
-func (dst *TimestampArray) DecodeText(ci *ConnInfo, src []byte) error {
+func (dst *MacaddrArray) DecodeText(ci *ConnInfo, src []byte) error {
 	if src == nil {
-		*dst = TimestampArray{Status: Null}
+		*dst = MacaddrArray{Status: Null}
 		return nil
 	}
 
@@ -101,13 +101,13 @@ func (dst *TimestampArray) DecodeText(ci *ConnInfo, src []byte) error {
 		return err
 	}
 
-	var elements []Timestamp
+	var elements []Macaddr
 
 	if len(uta.Elements) > 0 {
-		elements = make([]Timestamp, len(uta.Elements))
+		elements = make([]Macaddr, len(uta.Elements))
 
 		for i, s := range uta.Elements {
-			var elem Timestamp
+			var elem Macaddr
 			var elemSrc []byte
 			if s != "NULL" {
 				elemSrc = []byte(s)
@@ -121,14 +121,14 @@ func (dst *TimestampArray) DecodeText(ci *ConnInfo, src []byte) error {
 		}
 	}
 
-	*dst = TimestampArray{Elements: elements, Dimensions: uta.Dimensions, Status: Present}
+	*dst = MacaddrArray{Elements: elements, Dimensions: uta.Dimensions, Status: Present}
 
 	return nil
 }
 
-func (dst *TimestampArray) DecodeBinary(ci *ConnInfo, src []byte) error {
+func (dst *MacaddrArray) DecodeBinary(ci *ConnInfo, src []byte) error {
 	if src == nil {
-		*dst = TimestampArray{Status: Null}
+		*dst = MacaddrArray{Status: Null}
 		return nil
 	}
 
@@ -139,7 +139,7 @@ func (dst *TimestampArray) DecodeBinary(ci *ConnInfo, src []byte) error {
 	}
 
 	if len(arrayHeader.Dimensions) == 0 {
-		*dst = TimestampArray{Dimensions: arrayHeader.Dimensions, Status: Present}
+		*dst = MacaddrArray{Dimensions: arrayHeader.Dimensions, Status: Present}
 		return nil
 	}
 
@@ -148,7 +148,7 @@ func (dst *TimestampArray) DecodeBinary(ci *ConnInfo, src []byte) error {
 		elementCount *= d.Length
 	}
 
-	elements := make([]Timestamp, elementCount)
+	elements := make([]Macaddr, elementCount)
 
 	for i := range elements {
 		elemLen := int(int32(binary.BigEndian.Uint32(src[rp:])))
@@ -164,11 +164,11 @@ func (dst *TimestampArray) DecodeBinary(ci *ConnInfo, src []byte) error {
 		}
 	}
 
-	*dst = TimestampArray{Elements: elements, Dimensions: arrayHeader.Dimensions, Status: Present}
+	*dst = MacaddrArray{Elements: elements, Dimensions: arrayHeader.Dimensions, Status: Present}
 	return nil
 }
 
-func (src *TimestampArray) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
+func (src *MacaddrArray) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
 	switch src.Status {
 	case Null:
 		return nil, nil
@@ -225,7 +225,7 @@ func (src *TimestampArray) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) 
 	return buf, nil
 }
 
-func (src *TimestampArray) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
+func (src *MacaddrArray) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
 	switch src.Status {
 	case Null:
 		return nil, nil
@@ -237,10 +237,10 @@ func (src *TimestampArray) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error
 		Dimensions: src.Dimensions,
 	}
 
-	if dt, ok := ci.DataTypeForName("timestamp"); ok {
+	if dt, ok := ci.DataTypeForName("macaddr"); ok {
 		arrayHeader.ElementOID = int32(dt.OID)
 	} else {
-		return nil, errors.Errorf("unable to find oid for type name %v", "timestamp")
+		return nil, errors.Errorf("unable to find oid for type name %v", "macaddr")
 	}
 
 	for i := range src.Elements {
@@ -270,7 +270,7 @@ func (src *TimestampArray) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error
 }
 
 // Scan implements the database/sql Scanner interface.
-func (dst *TimestampArray) Scan(src interface{}) error {
+func (dst *MacaddrArray) Scan(src interface{}) error {
 	if src == nil {
 		return dst.DecodeText(nil, nil)
 	}
@@ -288,7 +288,7 @@ func (dst *TimestampArray) Scan(src interface{}) error {
 }
 
 // Value implements the database/sql/driver Valuer interface.
-func (src *TimestampArray) Value() (driver.Value, error) {
+func (src *MacaddrArray) Value() (driver.Value, error) {
 	buf, err := src.EncodeText(nil, nil)
 	if err != nil {
 		return nil, err
