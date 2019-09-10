@@ -15,27 +15,52 @@ func Example1Insert(q sqlx.Queryer, arg1 Example1) Example1ScannerStaticRow {
 	return NewExample1ScannerStaticRow(q.QueryRow(query, arg1.CreatedAt, arg1.ID, arg1.TextField, arg1.UpdatedAt, arg1.UUIDField))
 }
 
-func Example1FindByCreatedAt(q sqlx.Queryer, createdAt time.Time) Example1Scanner {
+func Example1FindByCreatedAt(q sqlx.Queryer, createdAt time.Time) Example1ScannerStaticRow {
+	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "created_at" = $1`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, createdAt))
+}
+
+func Example1LookupByCreatedAt(q sqlx.Queryer, createdAt time.Time) Example1Scanner {
 	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "created_at" = $1`
 	return NewExample1ScannerDynamic(q.Query(query, createdAt))
 }
 
-func Example1FindByID(q sqlx.Queryer, id int) Example1Scanner {
+func Example1FindByID(q sqlx.Queryer, id int) Example1ScannerStaticRow {
+	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "id" = $1`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, id))
+}
+
+func Example1LookupByID(q sqlx.Queryer, id int) Example1Scanner {
 	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "id" = $1`
 	return NewExample1ScannerDynamic(q.Query(query, id))
 }
 
-func Example1FindByTextField(q sqlx.Queryer, textField string) Example1Scanner {
+func Example1FindByTextField(q sqlx.Queryer, textField string) Example1ScannerStaticRow {
+	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "text_field" = $1`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, textField))
+}
+
+func Example1LookupByTextField(q sqlx.Queryer, textField string) Example1Scanner {
 	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "text_field" = $1`
 	return NewExample1ScannerDynamic(q.Query(query, textField))
 }
 
-func Example1FindByUpdatedAt(q sqlx.Queryer, updatedAt time.Time) Example1Scanner {
+func Example1FindByUpdatedAt(q sqlx.Queryer, updatedAt time.Time) Example1ScannerStaticRow {
+	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "updated_at" = $1`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, updatedAt))
+}
+
+func Example1LookupByUpdatedAt(q sqlx.Queryer, updatedAt time.Time) Example1Scanner {
 	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "updated_at" = $1`
 	return NewExample1ScannerDynamic(q.Query(query, updatedAt))
 }
 
-func Example1FindByUUIDField(q sqlx.Queryer, uuidField string) Example1Scanner {
+func Example1FindByUUIDField(q sqlx.Queryer, uuidField string) Example1ScannerStaticRow {
+	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "uuid_field" = $1`
+	return NewExample1ScannerStaticRow(q.QueryRow(query, uuidField))
+}
+
+func Example1LookupByUUIDField(q sqlx.Queryer, uuidField string) Example1Scanner {
 	const query = `SELECT "created_at","id","text_field","updated_at","uuid_field" FROM example1 WHERE "uuid_field" = $1`
 	return NewExample1ScannerDynamic(q.Query(query, uuidField))
 }

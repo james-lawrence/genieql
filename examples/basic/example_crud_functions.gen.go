@@ -15,22 +15,42 @@ func exampleInsert(q sqlx.Queryer, arg1 example) ExampleScannerStaticRow {
 	return NewExampleScannerStaticRow(q.QueryRow(query, arg1.ID, arg1.Email, arg1.Created, arg1.Updated))
 }
 
-func exampleFindByCreated(q sqlx.Queryer, created time.Time) ExampleScanner {
+func exampleFindByCreated(q sqlx.Queryer, created time.Time) ExampleScannerStaticRow {
+	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "created" = $1`
+	return NewExampleScannerStaticRow(q.QueryRow(query, created))
+}
+
+func exampleLookupByCreated(q sqlx.Queryer, created time.Time) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "created" = $1`
 	return NewExampleScannerStatic(q.Query(query, created))
 }
 
-func exampleFindByEmail(q sqlx.Queryer, email string) ExampleScanner {
+func exampleFindByEmail(q sqlx.Queryer, email string) ExampleScannerStaticRow {
+	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "email" = $1`
+	return NewExampleScannerStaticRow(q.QueryRow(query, email))
+}
+
+func exampleLookupByEmail(q sqlx.Queryer, email string) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "email" = $1`
 	return NewExampleScannerStatic(q.Query(query, email))
 }
 
-func exampleFindByID(q sqlx.Queryer, id int) ExampleScanner {
+func exampleFindByID(q sqlx.Queryer, id int) ExampleScannerStaticRow {
+	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "id" = $1`
+	return NewExampleScannerStaticRow(q.QueryRow(query, id))
+}
+
+func exampleLookupByID(q sqlx.Queryer, id int) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "id" = $1`
 	return NewExampleScannerStatic(q.Query(query, id))
 }
 
-func exampleFindByUpdated(q sqlx.Queryer, updated time.Time) ExampleScanner {
+func exampleFindByUpdated(q sqlx.Queryer, updated time.Time) ExampleScannerStaticRow {
+	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "updated" = $1`
+	return NewExampleScannerStaticRow(q.QueryRow(query, updated))
+}
+
+func exampleLookupByUpdated(q sqlx.Queryer, updated time.Time) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "updated" = $1`
 	return NewExampleScannerStatic(q.Query(query, updated))
 }

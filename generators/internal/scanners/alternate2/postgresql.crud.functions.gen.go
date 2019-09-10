@@ -15,47 +15,92 @@ func Type1Insert(q sqlx.Queryer, arg1 Type1) Type1ScannerStaticRow {
 	return NewType1ScannerStaticRow(q.QueryRow(query, arg1.Field1, arg1.Field2, arg1.Field3, arg1.Field4, arg1.Field5, arg1.Field6, arg1.Field7, arg1.Field8, arg1.Unmappedfield))
 }
 
-func Type1FindByField1(q sqlx.Queryer, field1 string) Type1Scanner {
+func Type1FindByField1(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field1" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field1))
+}
+
+func Type1LookupByField1(q sqlx.Queryer, field1 string) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field1" = $1`
 	return NewType1ScannerStatic(q.Query(query, field1))
 }
 
-func Type1FindByField2(q sqlx.Queryer, field2 string) Type1Scanner {
+func Type1FindByField2(q sqlx.Queryer, field2 string) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field2" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field2))
+}
+
+func Type1LookupByField2(q sqlx.Queryer, field2 string) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field2" = $1`
 	return NewType1ScannerStatic(q.Query(query, field2))
 }
 
-func Type1FindByField3(q sqlx.Queryer, field3 bool) Type1Scanner {
+func Type1FindByField3(q sqlx.Queryer, field3 bool) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field3" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field3))
+}
+
+func Type1LookupByField3(q sqlx.Queryer, field3 bool) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field3" = $1`
 	return NewType1ScannerStatic(q.Query(query, field3))
 }
 
-func Type1FindByField4(q sqlx.Queryer, field4 bool) Type1Scanner {
+func Type1FindByField4(q sqlx.Queryer, field4 bool) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field4" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field4))
+}
+
+func Type1LookupByField4(q sqlx.Queryer, field4 bool) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field4" = $1`
 	return NewType1ScannerStatic(q.Query(query, field4))
 }
 
-func Type1FindByField5(q sqlx.Queryer, field5 int) Type1Scanner {
+func Type1FindByField5(q sqlx.Queryer, field5 int) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field5" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field5))
+}
+
+func Type1LookupByField5(q sqlx.Queryer, field5 int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field5" = $1`
 	return NewType1ScannerStatic(q.Query(query, field5))
 }
 
-func Type1FindByField6(q sqlx.Queryer, field6 int) Type1Scanner {
+func Type1FindByField6(q sqlx.Queryer, field6 int) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field6" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field6))
+}
+
+func Type1LookupByField6(q sqlx.Queryer, field6 int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field6" = $1`
 	return NewType1ScannerStatic(q.Query(query, field6))
 }
 
-func Type1FindByField7(q sqlx.Queryer, field7 time.Time) Type1Scanner {
+func Type1FindByField7(q sqlx.Queryer, field7 time.Time) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field7" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field7))
+}
+
+func Type1LookupByField7(q sqlx.Queryer, field7 time.Time) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field7" = $1`
 	return NewType1ScannerStatic(q.Query(query, field7))
 }
 
-func Type1FindByField8(q sqlx.Queryer, field8 time.Time) Type1Scanner {
+func Type1FindByField8(q sqlx.Queryer, field8 time.Time) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field8" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, field8))
+}
+
+func Type1LookupByField8(q sqlx.Queryer, field8 time.Time) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field8" = $1`
 	return NewType1ScannerStatic(q.Query(query, field8))
 }
 
-func Type1FindByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1Scanner {
+func Type1FindByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1ScannerStaticRow {
+	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "unmappedfield" = $1`
+	return NewType1ScannerStaticRow(q.QueryRow(query, unmappedfield))
+}
+
+func Type1LookupByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "unmappedfield" = $1`
 	return NewType1ScannerStatic(q.Query(query, unmappedfield))
 }

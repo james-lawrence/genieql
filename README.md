@@ -19,9 +19,6 @@ of the code that gets generated and feature requests.
 
 as a result you should expect the api to change/break until around 1.0.
 
-# communication
-I've created a [google+ community](https://plus.google.com/communities/103872946940860163885) around genieql.
-
 # documentation
 release notes, and roadmap documentation
 can be found in the documentation directory.
