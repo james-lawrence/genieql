@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -271,6 +272,7 @@ type Utils interface {
 	WalkFiles(delegate func(path string, file *ast.File), pkgset ...*build.Package) error
 }
 
+// NewUtils ...
 func NewUtils(fset *token.FileSet) Utils {
 	return utils{fset: fset}
 }
@@ -286,6 +288,7 @@ func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*
 	}
 
 	for _, pkg := range pkgs {
+		log.Println("pkg", pkg.Name, len(pkg.Files))
 		for p, f := range pkg.Files {
 			delegate(p, f)
 		}

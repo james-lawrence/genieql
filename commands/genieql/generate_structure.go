@@ -70,7 +70,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		fset          = token.NewFileSet()
 	)
 
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -128,7 +128,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -284,7 +284,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 

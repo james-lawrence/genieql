@@ -2,7 +2,6 @@ package main
 
 import (
 	"go/build"
-	"go/token"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -41,7 +40,7 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return cmd
 }
 
-func loadPackageContext(configName, pkg string, fset *token.FileSet) (genieql.Configuration, genieql.Dialect, *build.Package, error) {
+func loadPackageContext(configName, pkg string) (genieql.Configuration, genieql.Dialect, *build.Package, error) {
 	var (
 		err     error
 		config  genieql.Configuration

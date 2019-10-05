@@ -41,19 +41,24 @@ func main() {
 	mapper := &mapper{
 		buildInfo: bi,
 	}
+
+	gg := generator{
+		buildInfo: bi,
+	}
+
 	generator := &generate{
 		buildInfo: bi,
 	}
 	scanner := &scanners{
 		buildInfo: bi,
 	}
-
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	app.Flag("debug", "enable debug logging").BoolVar(&bi.DebugEnabled)
 
 	bootstrap.configure(app)
 	mapper.configure(app)
 	generator.configure(app)
+	gg.configure(app)
 	scanner.configure(app)
 
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {

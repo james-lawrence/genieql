@@ -62,7 +62,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -128,7 +128,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg, fset); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
 		return err
 	}
 

@@ -60,6 +60,7 @@ func ConfigurationDirectory() string {
 	var err error
 	var defaultPath string
 	paths := filepath.SplitList(os.Getenv("GOPATH"))
+
 	if len(paths) == 0 {
 		if defaultPath, err = os.Getwd(); err != nil {
 			log.Fatalln(err)
