@@ -1,7 +1,6 @@
-package commands
+package cmd
 
 import (
-	"bytes"
 	"io"
 	"log"
 	"os"
@@ -29,15 +28,9 @@ const DefaultWriteFlags = os.O_CREATE | os.O_TRUNC | os.O_RDWR
 // WriteStdoutOrFile writes to stdout if fpath is empty.
 func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	var (
-		err    error
-		buffer                = bytes.NewBuffer([]byte{})
-		dst    io.WriteCloser = os.Stdout
+		err error
+		dst io.WriteCloser = os.Stdout
 	)
-
-	if err = g.Generate(buffer); err != nil {
-		log.Printf("%s: failed to generate: %+v\n", genieql.PrintDebug(), err)
-		return err
-	}
 
 	if len(fpath) > 0 {
 		log.Println("writing results to", fpath)
@@ -47,6 +40,10 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 		defer dst.Close()
 	}
 
-	_, err = io.Copy(dst, buffer)
+	if err = g.Generate(dst); err != nil {
+		log.Printf("%s: failed to generate: %+v\n", genieql.PrintDebug(), err)
+		return err
+	}
+
 	return err
 }

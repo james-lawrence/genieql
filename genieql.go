@@ -4,6 +4,7 @@ package genieql
 import (
 	"go/format"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,10 +22,8 @@ const Preface = `
 
 // FormatOutput formats and resolves imports for the raw bytes representing a go
 // source file and writes them into the dst.
-func FormatOutput(dst io.Writer, filename string, raw []byte) error {
-	var err error
-
-	if raw, err = imports.Process(filename, raw, nil); err != nil {
+func FormatOutput(dst io.Writer, raw []byte) (err error) {
+	if raw, err = imports.Process("generated.go", raw, nil); err != nil {
 		return errors.Wrap(err, "failed to add required imports")
 	}
 
@@ -34,6 +33,58 @@ func FormatOutput(dst io.Writer, filename string, raw []byte) error {
 
 	_, err = dst.Write(raw)
 	return errors.Wrap(err, "failed to write to completed code to destination")
+}
+
+// Reformat a file
+func Reformat(in *os.File) (err error) {
+	var (
+		raw []byte
+	)
+
+	// ensure we're at the start of the file.
+	if _, err = in.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	if raw, err = ioutil.ReadAll(in); err != nil {
+		return err
+	}
+
+	if raw, err = imports.Process("generated.go", []byte(string(raw)), nil); err != nil {
+		return errors.Wrap(err, "failed to add required imports")
+	}
+
+	// ensure we're at the start of the file.
+	if _, err = in.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	if err = in.Truncate(0); err != nil {
+		return errors.Wrap(err, "failed to truncate file")
+	}
+
+	if _, err = in.Write(raw); err != nil {
+		return errors.Wrap(err, "failed to write formatted content")
+	}
+
+	return nil
+}
+
+// Format arbitrary source fragment.
+func Format(s string) (_ string, err error) {
+	var (
+		raw []byte
+	)
+
+	if raw, err = imports.Process("generated.go", []byte(s), &imports.Options{Fragment: true, Comments: true, TabIndent: true, TabWidth: 8}); err != nil {
+		return "", errors.Wrap(err, "failed to add required imports")
+	}
+
+	if raw, err = format.Source(raw); err != nil {
+		return "", errors.Wrap(err, "failed to format source")
+	}
+
+	return string(raw), nil
 }
 
 // LoadInformation loads table information based on the configuration and

@@ -1,8 +1,10 @@
-// +build genieql,autogenerate
+// +build genieql.autogenerate
 
 package autocompile
 
 import (
+	"time"
+
 	"bitbucket.org/jatone/genieql/genieql"
 )
 
@@ -27,12 +29,12 @@ func Example3(gql genieql.Structure) {
 	)
 }
 
-// // CustomScanner generates a scanner that consumes the given parameters.
-// func CustomScanner(gql genieql.Scanner, pattern func(i1, i2 int, b1 bool, t1 time.Time)) {}
-//
-// // Example1Scanner generates a scanner that consumes the given parameters.
-// func Example1Scanner(gql genieql.Scanner, pattern func(Example1)) {}
-//
+// CustomScanner generates a scanner that consumes the given parameters.
+func CustomScanner(gql genieql.Scanner, pattern func(i1, i2 int, b1 bool, t1 time.Time)) {}
+
+// Example1Scanner generates a scanner that consumes the given parameters.
+func Example1Scanner(gql genieql.Scanner, pattern func(Example1)) {}
+
 // // Example2Scanner generates a scanner that consumes the given parameters.
 // func Example1Scanner(gql genieql.Scanner, e2 Example1) {}
 //

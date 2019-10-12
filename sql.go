@@ -7,7 +7,7 @@ import (
 	"sort"
 
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 type ColumnInfo struct {

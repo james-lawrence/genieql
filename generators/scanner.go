@@ -16,7 +16,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 type mode int
@@ -78,14 +78,6 @@ func ScannerOptionPackage(p *build.Package) ScannerOption {
 func ScannerOptionContext(p Context) ScannerOption {
 	return func(s *scanner) error {
 		s.Context = p
-		return nil
-	}
-}
-
-// ScannerOptionFileSet provides the token.FileSet being used to build the scanners.
-func ScannerOptionFileSet(p *token.FileSet) ScannerOption {
-	return func(s *scanner) error {
-		s.Context.FileSet = p
 		return nil
 	}
 }
@@ -167,8 +159,10 @@ func NewScanner(options ...ScannerOption) genieql.Generator {
 
 func maybeScanner(s scanner, err error) genieql.Generator {
 	if err != nil {
+		log.Println("failed to build scanner", err)
 		return genieql.NewErrGenerator(err)
 	}
+	log.Println("successfully built scanner")
 	return s
 }
 
@@ -231,7 +225,7 @@ func (t scanner) Generate(dst io.Writer) error {
 	}
 
 	if ctx.Columns, err = mapFields(t.Context, t.Fields.List, t.ignoreSet...); err != nil {
-		return err
+		return errors.Wrap(err, "failed to map fields")
 	}
 
 	lookupNullableTypes := composeLookupNullableType(drivers.DefaultLookupNullableType, t.Driver.LookupNullableType)

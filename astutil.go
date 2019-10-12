@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -97,48 +96,55 @@ func FindValueSpecs(node ast.Node) []*ast.ValueSpec {
 	return v.specs
 }
 
-type constantFilter struct {
-	constants []*ast.GenDecl
-}
-
-func (t *constantFilter) Visit(node ast.Node) ast.Visitor {
-	switch n := node.(type) {
-	case *ast.GenDecl:
-		if n.Tok == token.CONST {
-			t.constants = append(t.constants, n)
-		}
-	}
-
-	return t
-}
-
 // FindConstants locates constants within the provided node's subtree.
 func FindConstants(node ast.Node) []*ast.GenDecl {
-	v := constantFilter{}
+	v := declFilter{keep: func(n *ast.GenDecl) bool {
+		return n.Tok == token.CONST
+	}}
 	ast.Walk(&v, node)
-	return v.constants
+	return v.nodes
 }
 
-type typeFilter struct {
-	types []*ast.GenDecl
+// FindTypes locates type declarations within the provided node's subtree.
+func FindTypes(node ast.Node) []*ast.GenDecl {
+	v := declFilter{keep: func(n *ast.GenDecl) bool {
+		return n.Tok == token.TYPE
+	}}
+	ast.Walk(&v, node)
+	return v.nodes
 }
 
-func (t *typeFilter) Visit(node ast.Node) ast.Visitor {
+// FindImports locates imports within the provided node's subtree.
+func FindImports(node ast.Node) []*ast.GenDecl {
+	v := declFilter{keep: func(n *ast.GenDecl) bool {
+		return n.Tok == token.IMPORT
+	}}
+	ast.Walk(&v, node)
+	return v.nodes
+}
+
+// GenDeclToDecl upcases GenDecl to Decl.
+func GenDeclToDecl(decls ...*ast.GenDecl) (results []ast.Decl) {
+	for _, d := range decls {
+		results = append(results, d)
+	}
+	return results
+}
+
+type declFilter struct {
+	nodes []*ast.GenDecl
+	keep  func(*ast.GenDecl) bool
+}
+
+func (t *declFilter) Visit(node ast.Node) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.GenDecl:
-		if n.Tok == token.TYPE {
-			t.types = append(t.types, n)
+		if t.keep(n) {
+			t.nodes = append(t.nodes, n)
 		}
 	}
 
 	return t
-}
-
-// FindTypes locates types within the provided node's subtree.
-func FindTypes(node ast.Node) []*ast.GenDecl {
-	v := typeFilter{}
-	ast.Walk(&v, node)
-	return v.types
 }
 
 type funcFilter struct {
@@ -146,6 +152,10 @@ type funcFilter struct {
 }
 
 func (t *funcFilter) Visit(node ast.Node) ast.Visitor {
+	if node == nil {
+		return t
+	}
+
 	switch n := node.(type) {
 	case *ast.FuncDecl:
 		t.functions = append(t.functions, n)
@@ -235,6 +245,7 @@ type Searcher interface {
 	FindFieldsForType(x ast.Expr) ([]*ast.Field, error)
 }
 
+// NewSearcher seatch the pkgset.
 func NewSearcher(fset *token.FileSet, pkgset ...*build.Package) Searcher {
 	return searcher{fset: fset, pkgset: pkgset}
 }
@@ -265,6 +276,7 @@ func (t searcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
 	return ExtractFields(spec).List, nil
 }
 
+// Utils provides utility functions on packages.
 type Utils interface {
 	ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error)
 	FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.TypeSpec, error)
@@ -288,7 +300,6 @@ func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*
 	}
 
 	for _, pkg := range pkgs {
-		log.Println("pkg", pkg.Name, len(pkg.Files))
 		for p, f := range pkg.Files {
 			delegate(p, f)
 		}
@@ -297,13 +308,23 @@ func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*
 	return nil
 }
 
-func (t utils) ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error) {
-	result := []*ast.Package{}
+func (t utils) ParsePackages(pkgset ...*build.Package) (result []*ast.Package, err error) {
 	for _, pkg := range pkgset {
-		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, nil, parser.ParseComments)
+		filter := func(i os.FileInfo) bool {
+			for _, f := range pkg.GoFiles {
+				if f == i.Name() {
+					return true
+				}
+			}
+
+			return false
+		}
+
+		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, filter, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
+
 		for _, pkg := range pkgs {
 			result = append(result, pkg)
 		}
@@ -488,6 +509,7 @@ func PrintDebug() string {
 	var (
 		buffer bytes.Buffer
 	)
+
 	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
 		buffer.WriteString(
 			fmt.Sprintf(
@@ -498,6 +520,8 @@ func PrintDebug() string {
 			),
 		)
 	}
+
 	buffer.WriteString(strings.Join(os.Args[1:], " "))
+
 	return buffer.String()
 }

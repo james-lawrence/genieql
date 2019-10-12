@@ -33,6 +33,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		pkg     *build.Package
 		fset    = token.NewFileSet()
 	)
+
 	pkgName, typName := t.extractPackageType(t.packageType)
 	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
 		return err
@@ -63,7 +64,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, cg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 	return nil

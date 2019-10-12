@@ -2,6 +2,7 @@ package genieql
 
 import (
 	"go/ast"
+	"reflect"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,7 +30,7 @@ var _ = Describe("Driver", func() {
 				reg := driverRegistry{}
 				driver, err := reg.LookupDriver("testDriver")
 				Expect(driver).To(BeNil())
-				Expect(err).To(MatchError(ErrMissingDriver))
+				Expect(err).To(MatchError("requested driver is not registered: 'testDriver'"))
 			})
 
 			It("should return the driver if its been registered", func() {
@@ -49,3 +50,6 @@ type testDriver struct{}
 
 func (t testDriver) LookupNullableType(ast.Expr) ast.Expr             { return nil }
 func (t testDriver) NullableType(typ, from ast.Expr) (ast.Expr, bool) { return nil, false }
+func (t testDriver) Exported() map[string]reflect.Value {
+	return map[string]reflect.Value{}
+}

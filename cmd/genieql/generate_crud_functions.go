@@ -14,7 +14,7 @@ import (
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/crud"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 type generateCRUDFunctions struct {
@@ -100,7 +100,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, cg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 	return nil

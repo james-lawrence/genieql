@@ -1,13 +1,23 @@
 package genieql
 
 import (
+	"database/sql"
+	sqldriver "database/sql/driver"
 	"fmt"
 	"go/ast"
 	"log"
+	"reflect"
+	"strings"
 )
 
 // ErrMissingDriver - returned when a driver has not been registered.
-var ErrMissingDriver = fmt.Errorf("requested driver is not registered")
+type missingDriver struct {
+	driver string
+}
+
+func (t missingDriver) Error() string {
+	return fmt.Sprintf("requested driver is not registered: '%s'", t.driver)
+}
 
 // ErrDuplicateDriver - returned when a ddriver gets registered twice.
 var ErrDuplicateDriver = fmt.Errorf("driver has already been registered")
@@ -41,7 +51,7 @@ func MustLookupDriver(name string) Driver {
 
 // PrintRegisteredDrivers print drivers in the registry, debugging utility.
 func PrintRegisteredDrivers() {
-	for key, _ := range map[string]Driver(drivers) {
+	for key := range map[string]Driver(drivers) {
 		log.Println("Driver", key)
 	}
 }
@@ -50,6 +60,21 @@ func PrintRegisteredDrivers() {
 type Driver interface {
 	LookupNullableType(ast.Expr) ast.Expr
 	NullableType(typ, from ast.Expr) (ast.Expr, bool)
+	Exported() (res map[string]reflect.Value)
+}
+
+type decoder interface {
+	sql.Scanner
+	sqldriver.Valuer
+}
+
+// NullableTypeDefinition defines a type supported by the driver.
+type NullableTypeDefinition struct {
+	Type         string
+	NullType     string
+	NullField    string
+	CastRequired bool
+	Decoder      decoder
 }
 
 type driverRegistry map[string]Driver
@@ -67,21 +92,39 @@ func (t driverRegistry) RegisterDriver(driver string, imp Driver) error {
 func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 	impl, exists := t[name]
 	if !exists {
-		return nil, ErrMissingDriver
+		return nil, missingDriver{driver: name}
 	}
 
 	return impl, nil
 }
 
 // NewDriver builds a new driver from the component parts
-func NewDriver(nt NullableType, lnt LookupNullableType) Driver {
-	return driver{nt: nt, lnt: lnt}
+func NewDriver(nt NullableType, lnt LookupNullableType, supported ...NullableTypeDefinition) Driver {
+	return driver{nt: nt, lnt: lnt, supported: supported}
 }
 
 type driver struct {
-	nt  NullableType
-	lnt LookupNullableType
+	nt        NullableType
+	lnt       LookupNullableType
+	supported []NullableTypeDefinition
 }
 
 func (t driver) LookupNullableType(typ ast.Expr) ast.Expr         { return t.lnt(typ) }
 func (t driver) NullableType(typ, from ast.Expr) (ast.Expr, bool) { return t.nt(typ, from) }
+func (t driver) Exported() (res map[string]reflect.Value) {
+	res = map[string]reflect.Value{}
+	for _, typ := range t.supported {
+		if typ.Decoder == nil {
+			continue
+		}
+
+		switch idx := strings.IndexRune(typ.NullType, '.'); idx {
+		case -1:
+			res[typ.NullType] = reflect.ValueOf(typ.Decoder)
+		default:
+			res[typ.NullType[idx+1:]] = reflect.ValueOf(typ.Decoder)
+		}
+	}
+
+	return res
+}

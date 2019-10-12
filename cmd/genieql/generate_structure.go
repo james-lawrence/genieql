@@ -11,7 +11,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/serenize/snaker"
@@ -70,7 +70,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		fset          = token.NewFileSet()
 	)
 
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 		),
 	}
 
-	return commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags)
+	return cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags)
 }
 
 // GenerateTableConstants creates a genieql mappings for the tables defined in the specified package.
@@ -128,7 +128,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -189,7 +189,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -226,7 +226,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -247,7 +247,7 @@ func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
 		),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -284,7 +284,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -341,7 +341,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 

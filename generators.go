@@ -31,6 +31,20 @@ func (t multiGenerator) Generate(dst io.Writer) error {
 	return nil
 }
 
+type copier struct {
+	src io.Reader
+}
+
+func (t copier) Generate(dst io.Writer) error {
+	_, err := io.Copy(dst, t.src)
+	return err
+}
+
+// NewCopyGenerator simply copies the reader when generate is called.
+func NewCopyGenerator(in io.Reader) Generator {
+	return copier{src: in}
+}
+
 // NewErrGenerator builds a generate that errors out.
 func NewErrGenerator(err error) Generator {
 	return errGenerator{err: err}

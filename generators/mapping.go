@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 // mappedParam converts a *ast.Field that represents a struct into an array

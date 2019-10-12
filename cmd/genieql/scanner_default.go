@@ -86,7 +86,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, gen),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.scanner.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.scanner.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 

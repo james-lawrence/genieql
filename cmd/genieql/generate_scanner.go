@@ -62,7 +62,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -95,7 +95,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, g),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -128,7 +128,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -178,7 +178,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 

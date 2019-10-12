@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"database/sql"
 	"go/ast"
 	"go/types"
 	"io"
@@ -25,16 +26,9 @@ func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
 	return stdlib.LookupNullableType(typ)
 }
 
-type NullableType struct {
-	Type         string
-	NullType     string
-	NullField    string
-	CastRequired bool
-}
-
 type config struct {
 	Name  string
-	Types []NullableType
+	Types []genieql.NullableTypeDefinition
 }
 
 // name: github.com/jackc/pgx
@@ -42,6 +36,7 @@ type config struct {
 // - Type: "string"
 //   NullType: "sql.NullString"
 //   NullField: "String"
+
 // ReadDriver - reads a driver from an io.Reader
 func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 	var (
@@ -60,15 +55,16 @@ func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 	return config.Name, NewDriver(config.Types...), nil
 }
 
-func NewDriver(types ...NullableType) genieql.Driver {
-	mapping := make(map[string]NullableType, len(types))
+// NewDriver build a driver from the nullable types
+func NewDriver(types ...genieql.NullableTypeDefinition) genieql.Driver {
+	mapping := make(map[string]genieql.NullableTypeDefinition, len(types))
 	for _, _type := range types {
 		mapping[_type.Type] = _type
 	}
-	return genieql.NewDriver(nullableTypeLookup(mapping), nullableTypes(mapping))
+	return genieql.NewDriver(nullableTypeLookup(mapping), nullableTypes(mapping), types...)
 }
 
-func nullableTypeLookup(_types map[string]NullableType) func(dst, from ast.Expr) (ast.Expr, bool) {
+func nullableTypeLookup(_types map[string]genieql.NullableTypeDefinition) func(dst, from ast.Expr) (ast.Expr, bool) {
 	return func(dst, from ast.Expr) (ast.Expr, bool) {
 		var (
 			expr ast.Expr
@@ -90,7 +86,7 @@ func nullableTypeLookup(_types map[string]NullableType) func(dst, from ast.Expr)
 	}
 }
 
-func nullableTypes(_types map[string]NullableType) func(typ ast.Expr) ast.Expr {
+func nullableTypes(_types map[string]genieql.NullableTypeDefinition) func(typ ast.Expr) ast.Expr {
 	return func(typ ast.Expr) ast.Expr {
 		if x, ok := typ.(*ast.StarExpr); ok {
 			typ = x.X
@@ -104,12 +100,13 @@ func nullableTypes(_types map[string]NullableType) func(typ ast.Expr) ast.Expr {
 }
 
 var stdlib = NewDriver(
-	NullableType{Type: "string", NullType: "sql.NullString", NullField: "String"},
-	NullableType{Type: "int", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true},
-	NullableType{Type: "int32", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true},
-	NullableType{Type: "int64", NullType: "sql.NullInt64", NullField: "Int64"},
-	NullableType{Type: "float", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true},
-	NullableType{Type: "float32", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true},
-	NullableType{Type: "float64", NullType: "sql.NullFloat64", NullField: "Float64"},
-	NullableType{Type: "bool", NullType: "sql.NullBool", NullField: "Bool"},
+	genieql.NullableTypeDefinition{Type: "string", NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
+	genieql.NullableTypeDefinition{Type: "int", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
+	genieql.NullableTypeDefinition{Type: "int32", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
+	genieql.NullableTypeDefinition{Type: "int64", NullType: "sql.NullInt64", NullField: "Int64", Decoder: &sql.NullFloat64{}},
+	genieql.NullableTypeDefinition{Type: "float", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
+	genieql.NullableTypeDefinition{Type: "float32", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
+	genieql.NullableTypeDefinition{Type: "float64", NullType: "sql.NullFloat64", NullField: "Float64", Decoder: &sql.NullFloat64{}},
+	genieql.NullableTypeDefinition{Type: "bool", NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
+	genieql.NullableTypeDefinition{Type: "time.Time", NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
 )

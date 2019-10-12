@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/containous/yaegi/interp"
+	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	genieql2 "bitbucket.org/jatone/genieql/genieql"
@@ -13,12 +14,13 @@ import (
 )
 
 // Structure matcher - identifies structure generators.
-func Structure(ctx Context, i *interp.Interpreter, pos *ast.FuncDecl) (r Result, err error) {
+func Structure(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
 		v             reflect.Value
 		f             func(genieql2.Structure)
 		ok            bool
 		gen           genieql2.Structure
+		formatted     string
 		structPattern = astutil.TypePattern(astutil.Expr("genieql.Structure"))
 	)
 
@@ -26,10 +28,19 @@ func Structure(ctx Context, i *interp.Interpreter, pos *ast.FuncDecl) (r Result,
 		return r, ErrNoMatch
 	}
 
-	log.Printf("eval(%s.%s)\n", ctx.CurrentPackage.Name, pos.Name)
+	if formatted, err = formatSource(ctx, src); err != nil {
+		return r, errors.Wrapf(err, "genieql.Structure (%s.%s)", ctx.CurrentPackage.Name, pos.Name)
+	}
+
+	log.Printf("genieql.Structure identified (%s.%s)\n", ctx.CurrentPackage.Name, pos.Name)
+	ctx.Debugln(formatted)
+
+	if _, err = i.Eval(formatted); err != nil {
+		return r, errors.Wrap(err, "failed to compile source")
+	}
 
 	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
-		return r, err
+		return r, errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, pos.Name)
 	}
 
 	if f, ok = v.Interface().(func(genieql2.Structure)); !ok {
@@ -37,6 +48,7 @@ func Structure(ctx Context, i *interp.Interpreter, pos *ast.FuncDecl) (r Result,
 	}
 
 	gen = genieql2.NewStructure(ctx.Context, pos.Name.String())
+
 	f(gen)
 
 	return Result{

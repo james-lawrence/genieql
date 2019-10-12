@@ -36,7 +36,7 @@ func (t *sconfig) Generate(dst io.Writer) error {
 		return errorsx.String("missing definition, unable to generate structure. please call the From method")
 	}
 
-	log.Println("defining a struct", t.name)
+	log.Println("generating", t.name)
 
 	return generators.NewStructure(
 		generators.StructOptionContext(t.ctx),

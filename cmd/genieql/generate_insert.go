@@ -18,7 +18,7 @@ import (
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/crud"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 type generateInsertConfig struct {
@@ -98,7 +98,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(t.configName, t.pkg); err != nil {
+	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -168,7 +168,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Println("failed to write results")
 		log.Fatalln(err)
 	}
@@ -271,7 +271,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
-	if err = commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags); err != nil {
+	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -400,7 +400,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
-	return commands.WriteStdoutOrFile(pg, t.output, commands.DefaultWriteFlags)
+	return cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags)
 }
 
 func maybeColumnConstants(enabled bool, name string, dialect genieql.Dialect, defaults []string, columns []genieql.ColumnInfo) genieql.Generator {

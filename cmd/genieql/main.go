@@ -13,7 +13,7 @@ import (
 	// register the postgresql dialect
 	"bitbucket.org/jatone/genieql"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	"bitbucket.org/jatone/genieql/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 
 	// register the drivers
 	_ "bitbucket.org/jatone/genieql/internal/drivers"

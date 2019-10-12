@@ -40,7 +40,7 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return cmd
 }
 
-func loadPackageContext(configName, pkg string) (genieql.Configuration, genieql.Dialect, *build.Package, error) {
+func loadPackageContext(ctx build.Context, configName, pkg string) (genieql.Configuration, genieql.Dialect, *build.Package, error) {
 	var (
 		err     error
 		config  genieql.Configuration
@@ -58,7 +58,7 @@ func loadPackageContext(configName, pkg string) (genieql.Configuration, genieql.
 		return config, dialect, bpkg, err
 	}
 
-	if bpkg, err = locatePackage(pkg); err != nil {
+	if bpkg, err = genieql.LocatePackage(pkg, ctx, genieql.StrictPackageName(filepath.Base(pkg))); err != nil {
 		return config, dialect, bpkg, err
 	}
 

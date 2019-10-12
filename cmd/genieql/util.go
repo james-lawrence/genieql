@@ -62,7 +62,7 @@ func (t printGenerator) Generate(dst io.Writer) error {
 		return err
 	}
 
-	if err = genieql.FormatOutput(&formatted, "genieql.go", buffer.Bytes()); err != nil {
+	if err = genieql.FormatOutput(&formatted, buffer.Bytes()); err != nil {
 		return err
 	}
 

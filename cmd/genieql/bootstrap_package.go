@@ -35,34 +35,34 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			continue
 		}
 
-		commands.WriteStdoutOrFile(
+		cmd.WriteStdoutOrFile(
 			printGenerator{delegate: pbootstrap.NewTableStructure(pkg)},
 			t.definitionFileNames.TableStructures,
-			commands.DefaultWriteFlags,
+			cmd.DefaultWriteFlags,
 		)
 
-		commands.WriteStdoutOrFile(
+		cmd.WriteStdoutOrFile(
 			printGenerator{delegate: pbootstrap.NewScanners(pkg)},
 			t.definitionFileNames.Scanners,
-			commands.DefaultWriteFlags,
+			cmd.DefaultWriteFlags,
 		)
 
-		commands.WriteStdoutOrFile(
+		cmd.WriteStdoutOrFile(
 			printGenerator{delegate: pbootstrap.NewFunctions(pkg)},
 			t.definitionFileNames.Functions,
-			commands.DefaultWriteFlags,
+			cmd.DefaultWriteFlags,
 		)
 
-		commands.WriteStdoutOrFile(
+		cmd.WriteStdoutOrFile(
 			printGenerator{delegate: pbootstrap.NewInsertBatch(pkg)},
 			t.definitionFileNames.BatchInserts,
-			commands.DefaultWriteFlags,
+			cmd.DefaultWriteFlags,
 		)
 
-		commands.WriteStdoutOrFile(
+		cmd.WriteStdoutOrFile(
 			printGenerator{delegate: pbootstrap.NewGoGenerateDefinitions(pkg)},
 			t.definitionFileNames.GoGenerate,
-			commands.DefaultWriteFlags,
+			cmd.DefaultWriteFlags,
 		)
 	}
 
