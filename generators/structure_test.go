@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("Structure", func() {
 			}
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, localdirectory, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry(

@@ -57,3 +57,14 @@ type errGenerator struct {
 func (t errGenerator) Generate(io.Writer) error {
 	return t.err
 }
+
+type funcGenerator func(io.Writer) error
+
+func (t funcGenerator) Generate(dst io.Writer) error {
+	return t(dst)
+}
+
+// NewFuncGenerator pure function generator
+func NewFuncGenerator(fn func(dst io.Writer) error) Generator {
+	return funcGenerator(fn)
+}

@@ -112,7 +112,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, localfile, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -191,7 +191,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, localdirectory, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -232,7 +232,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			Expect(NewQueryFunction(options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, localfile, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())

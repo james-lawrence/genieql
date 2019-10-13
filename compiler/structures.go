@@ -53,5 +53,6 @@ func Structure(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncD
 
 	return Result{
 		Generator: gen,
+		Priority:  PriorityStructure,
 	}, nil
 }

@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"fmt"
 	"go/build"
 	"go/token"
 	"log"
@@ -25,6 +26,7 @@ const (
 
 // Context - context for generators
 type Context struct {
+	Build          build.Context
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
 	Configuration  genieql.Configuration
@@ -37,7 +39,17 @@ func (t Context) Println(args ...interface{}) {
 	if t.Verbosity < VerbosityInfo {
 		return
 	}
-	log.Println(args...)
+
+	log.Output(2, fmt.Sprintln(args...))
+}
+
+// Printf ...
+func (t Context) Printf(format string, args ...interface{}) {
+	if t.Verbosity < VerbosityInfo {
+		return
+	}
+
+	log.Output(2, fmt.Sprintf(format, args...))
 }
 
 // Debug logs
@@ -45,15 +57,17 @@ func (t Context) Debug(args ...interface{}) {
 	if t.Verbosity < VerbosityDebug {
 		return
 	}
-	log.Print(args...)
+
+	log.Output(2, fmt.Sprint(args...))
 }
 
 // Debugf logs
-func (t Context) Debugf(fmt string, args ...interface{}) {
+func (t Context) Debugf(format string, args ...interface{}) {
 	if t.Verbosity < VerbosityDebug {
 		return
 	}
-	log.Printf(fmt, args...)
+
+	log.Output(2, fmt.Sprintf(format, args...))
 }
 
 // Debugln logs
@@ -62,7 +76,16 @@ func (t Context) Debugln(args ...interface{}) {
 		return
 	}
 
-	log.Println(args...)
+	log.Output(2, fmt.Sprintln(args...))
+}
+
+// Traceln detailed logging
+func (t Context) Traceln(args ...interface{}) {
+	if t.Verbosity < VerbosityTrace {
+		return
+	}
+
+	log.Output(2, fmt.Sprintln(args...))
 }
 
 func reserved(s string) bool {

@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"path/filepath"
+	"reflect"
 	"runtime"
 
 	"bitbucket.org/jatone/genieql"
@@ -45,6 +46,10 @@ func (t noopDriver) LookupNullableType(x ast.Expr) ast.Expr {
 
 func (t noopDriver) NullableType(typ, from ast.Expr) (ast.Expr, bool) {
 	return typ, false
+}
+
+func (t noopDriver) Exported() map[string]reflect.Value {
+	return map[string]reflect.Value{}
 }
 
 func mustParseExpr(s string) ast.Expr {

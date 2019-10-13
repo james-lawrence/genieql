@@ -60,21 +60,35 @@ func _arguments(xtransformer func(ast.Expr) ast.Expr, fields []*ast.Field) strin
 	return strings.Join(result, ", ")
 }
 
+// SanitizeFieldIdents transforms the idents of fields to prevent collisions.
+func SanitizeFieldIdents(trans func(*ast.Ident) *ast.Ident, fields ...*ast.Field) []*ast.Field {
+	normalizeIdent := func(idents []*ast.Ident) []*ast.Ident {
+		result := make([]*ast.Ident, 0, len(idents))
+		for _, ident := range idents {
+			result = append(result, trans(ident))
+		}
+		return result
+	}
+
+	return astutil.TransformFields(func(field *ast.Field) *ast.Field {
+		return astutil.Field(field.Type, normalizeIdent(field.Names)...)
+	}, fields...)
+}
+
+// NormalizeFieldNames normalizes the names of the field.
+func NormalizeFieldNames(fields ...*ast.Field) []*ast.Field {
+	return normalizeFieldNames(fields...)
+}
+
 // normalizes the names of the field.
 func normalizeFieldNames(fields ...*ast.Field) []*ast.Field {
-	result := make([]*ast.Field, 0, len(fields))
-	for _, field := range fields {
-		result = append(result, astutil.Field(field.Type, normalizeIdent(field.Names)...))
-	}
-	return result
+	return astutil.TransformFields(func(field *ast.Field) *ast.Field {
+		return astutil.Field(field.Type, normalizeIdent(field.Names)...)
+	}, fields...)
 }
 
 func mapFieldNames(m func(*ast.Field) *ast.Field, fields ...*ast.Field) []*ast.Field {
-	result := make([]*ast.Field, 0, len(fields))
-	for _, field := range fields {
-		result = append(result, m(field))
-	}
-	return result
+	return astutil.TransformFields(m, fields...)
 }
 
 func mapIdent(m func(*ast.Ident) *ast.Ident, args ...*ast.Ident) []*ast.Ident {
@@ -83,6 +97,13 @@ func mapIdent(m func(*ast.Ident) *ast.Ident, args ...*ast.Ident) []*ast.Ident {
 		result = append(result, m(f))
 	}
 	return result
+}
+
+// NormalizeIdent ensures ident obey the following:
+// 1. are snakecased.
+// 2. are not reserved keywords.
+func NormalizeIdent(idents ...*ast.Ident) []*ast.Ident {
+	return normalizeIdent(idents)
 }
 
 // normalize's the idents.
@@ -167,6 +188,11 @@ func extractArrayInfo(x *ast.ArrayType) (int, ast.Expr, error) {
 func selectType(x ast.Expr) bool {
 	_, ok := x.(*ast.SelectorExpr)
 	return ok
+}
+
+// AllBuiltinTypes returns true iff all the types are builtin to the go runtime.
+func AllBuiltinTypes(xs ...ast.Expr) bool {
+	return allBuiltinTypes(xs...)
 }
 
 func allBuiltinTypes(xs ...ast.Expr) bool {

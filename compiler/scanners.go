@@ -26,10 +26,12 @@ func Scanner(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDec
 	)
 
 	if len(pos.Type.Params.List) < 1 {
+		ctx.Debugln("no match not enough params", pos.Name.String(), ctx.Context.FileSet.PositionFor(pos.Pos(), true).String())
 		return r, ErrNoMatch
 	}
 
 	if !pattern(astutil.MapFieldsToTypExpr(pos.Type.Params.List[:1]...)...) {
+		ctx.Traceln("no match pattern", pos.Name.String(), ctx.Context.FileSet.PositionFor(pos.Pos(), true).String())
 		return r, ErrNoMatch
 	}
 
@@ -60,7 +62,6 @@ func Scanner(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDec
 	}
 
 	if f, ok = v.Interface().(func(genieql2.Scanner)); !ok {
-		log.Println("type cast failed")
 		return r, errors.Errorf("genieql.Scanner - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, pos.Name)
 	}
 
@@ -74,6 +75,6 @@ func Scanner(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDec
 
 	return Result{
 		Generator: gen,
-		Priority:  1,
+		Priority:  PriorityScanners,
 	}, nil
 }

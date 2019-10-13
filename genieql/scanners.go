@@ -3,9 +3,9 @@ package genieql
 import (
 	"go/ast"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 )
 
@@ -31,14 +31,19 @@ type scanner struct {
 }
 
 func (t *scanner) Generate(dst io.Writer) error {
-	log.Println("generation of", t.name, "initiated")
-	err := generators.NewScanner(
+	t.ctx.Println("generation of", t.name, "initiated")
+	defer t.ctx.Println("generation of", t.name, "completed")
+
+	modes := generators.ScannerOptionNoop
+	if len(t.params.List) > 1 && !generators.AllBuiltinTypes(astutil.MapFieldsToTypExpr(t.params.List...)...) {
+		t.ctx.Println("multiple structures detected disabling dynamic scanner output for", t.name)
+		modes = generators.ScannerOptionOutputMode(generators.ModeInterface | generators.ModeStatic | generators.ModeStaticDisableColumns)
+	}
+
+	return generators.NewScanner(
 		generators.ScannerOptionContext(t.ctx),
 		generators.ScannerOptionName(t.name),
 		generators.ScannerOptionParameters(t.params),
+		modes,
 	).Generate(dst)
-	if err == nil {
-		log.Println("generation of", t.name, "completed")
-	}
-	return err
 }

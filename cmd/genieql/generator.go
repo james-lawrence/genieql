@@ -48,15 +48,15 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 	log.Println("loading", t.configName, pname)
 	bctx := build.Default
 	bctx.BuildTags = []string{
-		"genieql.autogenerate",
-		"genieql.generated",
+		genieql.BuildTagIgnore,
+		genieql.BuildTagGenerate,
 	}
 
 	if config, dialect, pkg, err = loadPackageContext(bctx, t.configName, pname); err != nil {
 		return err
 	}
 
-	if taggedFiles, err = findTaggedFiles(pname, "genieql.autogenerate"); err != nil {
+	if taggedFiles, err = findTaggedFiles(pname, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
 
@@ -66,9 +66,10 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	log.Println("golang files", pkg.GoFiles)
 	ctx := generators.Context{
-		Verbosity:      generators.VerbosityInfo,
+		Build:     bctx,
+		Verbosity: generators.VerbosityInfo,
+		// Verbosity:      generators.VerbosityDebug,
 		CurrentPackage: pkg,
 		FileSet:        fset,
 		Configuration:  config,
@@ -76,17 +77,22 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 	}
 
 	filtered := []*ast.File{}
-	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
 		if taggedFiles.IsTagged(filepath.Base(path)) {
 			filtered = append(filtered, file)
 		}
 	}, pkg)
 
-	log.Println("compiling", len(filtered), "files")
+	if err != nil {
+		return err
+	}
+
+	log.Println("compiling", bctx.GOPATH, len(filtered), "files")
 	c := compiler.New(
 		ctx,
 		compiler.Structure,
 		compiler.Scanner,
+		compiler.Function,
 	)
 
 	buf := bytes.NewBuffer(nil)
@@ -95,7 +101,7 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 	}
 
 	gen := genieql.MultiGenerate(
-		genieql.NewCopyGenerator(bytes.NewBufferString("// +build !genieql.generated\n\n")),
+		genieql.NewCopyGenerator(bytes.NewBufferString("// +build !genieql.ignore")),
 		genieql.NewCopyGenerator(buf),
 	)
 

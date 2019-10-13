@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20151201005709-14fd436dd20c // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/containous/yaegi v0.6.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-yaml/yaml v0.0.0-20170407172122-cd8b52f8269e
 	github.com/jackc/pgtype v1.0.1
 	github.com/jackc/pgx v3.6.0+incompatible

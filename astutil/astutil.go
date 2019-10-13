@@ -1,11 +1,16 @@
 package astutil
 
 import (
+	"bytes"
+	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"go/types"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 // Expr converts a template expression into an ast.Expr node.
@@ -64,7 +69,8 @@ func Return(expressions ...ast.Expr) ast.Stmt {
 // Block - creates a block statement from the provided statements.
 func Block(statements ...ast.Stmt) *ast.BlockStmt {
 	return &ast.BlockStmt{
-		List: statements,
+		List:   statements,
+		Rbrace: statements[len(statements)-1].End(),
 	}
 }
 
@@ -144,6 +150,33 @@ func VarList(specs ...ast.Spec) ast.Decl {
 	}
 }
 
+func literalDecl(tok token.Token, name string, x ast.Expr) *ast.GenDecl {
+	return &ast.GenDecl{
+		Tok: tok,
+		Specs: []ast.Spec{
+			&ast.ValueSpec{
+				Names: []*ast.Ident{
+					&ast.Ident{
+						Name: name,
+						Obj: &ast.Object{
+							Kind: ast.Con,
+							Name: name,
+						},
+					},
+				},
+				Values: []ast.Expr{
+					x,
+				},
+			},
+		},
+	}
+}
+
+// Const creates a constant. i.e) const a = 0
+func Const(name string, x ast.Expr) ast.Decl {
+	return literalDecl(token.CONST, name, x)
+}
+
 // CallExpr - creates a function call expression with the provided argument
 // expressions.
 func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
@@ -151,6 +184,15 @@ func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
 		Fun:  fun,
 		Args: args,
 	}
+}
+
+// TransformFields ...
+func TransformFields(m func(*ast.Field) *ast.Field, fields ...*ast.Field) []*ast.Field {
+	result := make([]*ast.Field, 0, len(fields))
+	for _, field := range fields {
+		result = append(result, m(field))
+	}
+	return result
 }
 
 // MapFieldsToNameExpr - extracts all the names from the provided fields.
@@ -186,10 +228,15 @@ func MapFieldsToNameIdent(args ...*ast.Field) []*ast.Ident {
 // i.e.) a,b int, c string, d float is transformed into: int, int, string, float
 func MapFieldsToTypExpr(args ...*ast.Field) []ast.Expr {
 	r := []ast.Expr{}
-	for _, f := range args {
+	for idx, f := range args {
+		if len(f.Names) == 0 {
+			f.Names = []*ast.Ident{ast.NewIdent(fmt.Sprintf("f%d", idx))}
+		}
+
 		for _ = range f.Names {
 			r = append(r, f.Type)
 		}
+
 	}
 	return r
 }
@@ -235,4 +282,25 @@ func TypePattern(pattern ...ast.Expr) func(...ast.Expr) bool {
 // IntegerLiteral builds a integer literal.
 func IntegerLiteral(n int) ast.Expr {
 	return &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(n)}
+}
+
+// StringLiteral expression
+func StringLiteral(s string) ast.Expr {
+	return &ast.BasicLit{
+		Kind:  token.STRING,
+		Value: fmt.Sprintf("`%s`", s),
+	}
+}
+
+// Print an ast.Node
+func Print(n ast.Node) (string, error) {
+	if n == nil {
+		return "", nil
+	}
+
+	dst := bytes.NewBuffer([]byte{})
+	fset := token.NewFileSet()
+	err := printer.Fprint(dst, fset, n)
+
+	return dst.String(), errors.Wrap(err, "failure to print ast")
 }

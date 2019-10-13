@@ -42,6 +42,8 @@ func main() {
 		buildInfo: bi,
 	}
 
+	astcli := astcli{}
+
 	gg := generator{
 		buildInfo: bi,
 	}
@@ -55,6 +57,7 @@ func main() {
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	app.Flag("debug", "enable debug logging").BoolVar(&bi.DebugEnabled)
 
+	astcli.configure(app)
 	bootstrap.configure(app)
 	mapper.configure(app)
 	generator.configure(app)

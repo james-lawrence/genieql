@@ -11,6 +11,14 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/tools/imports"
+
+	"bitbucket.org/jatone/genieql/internal/iox"
+)
+
+// Build Tag constants
+const (
+	BuildTagIgnore   = "genieql.ignore"   // used to filter out files from the build context using !genieql.ignore
+	BuildTagGenerate = "genieql.generate" // used to specify which files should be analyzed for directives using genieql.generate
 )
 
 // Preface text inserted at the top of all generated files.
@@ -36,13 +44,13 @@ func FormatOutput(dst io.Writer, raw []byte) (err error) {
 }
 
 // Reformat a file
-func Reformat(in *os.File) (err error) {
+func Reformat(in io.ReadWriteSeeker) (err error) {
 	var (
 		raw []byte
 	)
 
 	// ensure we're at the start of the file.
-	if _, err = in.Seek(0, io.SeekStart); err != nil {
+	if err = iox.Rewind(in); err != nil {
 		return err
 	}
 
@@ -55,7 +63,38 @@ func Reformat(in *os.File) (err error) {
 	}
 
 	// ensure we're at the start of the file.
-	if _, err = in.Seek(0, io.SeekStart); err != nil {
+	if err = iox.Rewind(in); err != nil {
+		return err
+	}
+
+	if _, err = in.Write(raw); err != nil {
+		return errors.Wrap(err, "failed to write formatted content")
+	}
+
+	return nil
+}
+
+// ReformatFile a file
+func ReformatFile(in *os.File) (err error) {
+	var (
+		raw []byte
+	)
+
+	// ensure we're at the start of the file.
+	if err = iox.Rewind(in); err != nil {
+		return err
+	}
+
+	if raw, err = ioutil.ReadAll(in); err != nil {
+		return err
+	}
+
+	if raw, err = imports.Process("generated.go", []byte(string(raw)), nil); err != nil {
+		return errors.Wrap(err, "failed to add required imports")
+	}
+
+	// ensure we're at the start of the file.
+	if err = iox.Rewind(in); err != nil {
 		return err
 	}
 

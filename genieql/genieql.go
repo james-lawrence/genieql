@@ -4,21 +4,6 @@ import (
 	"bitbucket.org/jatone/genieql"
 )
 
-// // Debug emitter used for debugging.
-// type Debug struct{}
-//
-// // Emit ...
-// func (Debug) Emit(g genieql.Generator) {
-// 	if err := errors.Wrap(g.Generate(os.Stdout), "failed to generate"); err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-// }
-
-type emitter interface {
-	Emit(genieql.Generator)
-}
-
 type definition interface {
 	Columns() ([]genieql.ColumnInfo, error)
 }

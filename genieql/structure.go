@@ -2,7 +2,6 @@ package genieql
 
 import (
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/generators"
@@ -36,7 +35,8 @@ func (t *sconfig) Generate(dst io.Writer) error {
 		return errorsx.String("missing definition, unable to generate structure. please call the From method")
 	}
 
-	log.Println("generating", t.name)
+	t.ctx.Println("generation of", t.name, "initiated")
+	defer t.ctx.Println("generation of", t.name, "completed")
 
 	return generators.NewStructure(
 		generators.StructOptionContext(t.ctx),
