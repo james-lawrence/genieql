@@ -115,6 +115,7 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
 	}
 
+	// returns the sets of mapped and unmapped columns.
 	mColumns, uColumns := mapColumns(columns, fields, t.Aliaser())
 	return mColumns, uColumns, nil
 }

@@ -40,6 +40,7 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 		taggedFiles TaggedFiles
 		config      genieql.Configuration
 		dialect     genieql.Dialect
+		driver      genieql.Driver
 		pkg         *build.Package
 		pname       = t.buildInfo.CurrentPackageImport()
 		fset        = token.NewFileSet()
@@ -53,6 +54,10 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 	}
 
 	if config, dialect, pkg, err = loadPackageContext(bctx, t.configName, pname); err != nil {
+		return err
+	}
+
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
 		return err
 	}
 
@@ -74,6 +79,7 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 		FileSet:        fset,
 		Configuration:  config,
 		Dialect:        dialect,
+		Driver:         driver,
 	}
 
 	filtered := []*ast.File{}
@@ -93,6 +99,7 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 		compiler.Structure,
 		compiler.Scanner,
 		compiler.Function,
+		compiler.Inserts,
 	)
 
 	buf := bytes.NewBuffer(nil)

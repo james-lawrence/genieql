@@ -21,4 +21,5 @@ require (
 	github.com/zieckey/goini v0.0.0-20160930104250-ef198e443302
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/tools v0.0.0-20191012152004-8de300cfc20a
+	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 )

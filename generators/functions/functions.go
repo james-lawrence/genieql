@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"log"
 	"strings"
 
+	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"github.com/pkg/errors"
@@ -18,6 +20,48 @@ const (
 
 var queryRecordsPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
 var queryUniquePattern = astutil.TypePattern(astutil.Expr("*sql.Row"))
+var contextPattern = astutil.TypePattern(astutil.Expr("context.Context"))
+
+// DetectScanner - extracts the scanner from the function definition.
+// by convention the scanner is the first field in the result type.
+func DetectScanner(ctx generators.Context, fnt *ast.FuncType) (r *ast.FuncDecl) {
+	var (
+		err error
+	)
+
+	if fnt.Results == nil || len(fnt.Results.List) == 0 {
+		return nil
+	}
+
+	test := func(s string) bool {
+		return s == types.ExprString(fnt.Results.List[0].Type)
+	}
+
+	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
+
+	if r, err = util.FindFunction(test); err != nil {
+		log.Println("failed to find scanner")
+		return nil
+	}
+
+	return r
+}
+
+// DetectContext - detects if a context.Context is being used.
+// by convention the scanner is the first field in the inputs type.
+func DetectContext(fnt *ast.FuncType) (r *ast.Field) {
+	if fnt.Params == nil || len(fnt.Params.List) <= 1 {
+		return nil
+	}
+
+	pattern := astutil.MapFieldsToTypExpr(fnt.Params.List[0])
+
+	if contextPattern(pattern...) {
+		return fnt.Params.List[0]
+	}
+
+	return nil
+}
 
 // compiler consumes a definition and returns a function declaration node.
 type compiler interface {
@@ -46,6 +90,7 @@ func (t Query) sanitizeFields(i *ast.Ident) *ast.Ident {
 // transform placeholder...
 func (t Query) transform(inputs ...*ast.Field) (transforms []ast.Stmt, output []*ast.Field) {
 	output = astutil.TransformFields(func(field *ast.Field) *ast.Field {
+		log.Println("transforms for field", field.Names, field.Type)
 		return field
 	}, inputs...)
 	return transforms, output
@@ -58,6 +103,21 @@ func (t Query) Compile(d Definition) (*ast.FuncDecl, error) {
 		queryerIdent = ast.NewIdent(defaultQueryParamName)
 		stmts        []ast.Stmt
 	)
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			return
+		}
+
+		if cause, ok := recovered.(error); ok {
+			log.Println("panic", cause)
+		}
+	}()
+
+	// basic validations
+	if t.Scanner == nil {
+		return nil, errors.Errorf("a scanner was not provided")
+	}
 
 	pattern := astutil.MapFieldsToTypExpr(t.Scanner.Type.Params.List...)
 

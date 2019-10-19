@@ -31,6 +31,7 @@ type Context struct {
 	FileSet        *token.FileSet
 	Configuration  genieql.Configuration
 	Dialect        genieql.Dialect
+	Driver         genieql.Driver
 	Verbosity      int
 }
 

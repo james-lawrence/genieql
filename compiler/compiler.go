@@ -30,6 +30,7 @@ const (
 
 // Result of a matcher
 type Result struct {
+	Location  string // source location that generated this result.
 	Priority  int
 	Generator genieql.Generator
 }
@@ -70,19 +71,21 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 				Imports: in.Imports,
 				Decls:   append(imports, fn),
 			}
-
+			pos := t.Context.FileSet.PositionFor(fn.Pos(), true).String()
 			if r, err = m(t, i, focused, fn); err != nil {
 				if err != ErrNoMatch {
 					log.Printf(
 						"failed to build code generator: %s\n%s - %s.%s\n",
 						err,
-						t.Context.FileSet.PositionFor(fn.Pos(), true).String(),
+						pos,
 						t.CurrentPackage.Name,
 						fn.Name,
 					)
 				}
 				continue
 			}
+
+			r.Location = pos
 
 			results = append(results, r)
 		}
@@ -95,15 +98,10 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 // output into the dst.
 func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	var (
-		driver  genieql.Driver
 		working *os.File
 		results = []Result{}
 		printer = genieql.ASTPrinter{}
 	)
-
-	if driver, err = genieql.LookupDriver(t.Context.Configuration.Driver); err != nil {
-		return err
-	}
 
 	if working, err = ioutil.TempFile(t.Context.CurrentPackage.Dir, "genieql-*.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
@@ -131,11 +129,12 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	})
 	i.Use(stdlib.Symbols)
 	i.Use(interp.Exports{
-		t.Context.Configuration.Driver: driver.Exported(),
+		t.Context.Configuration.Driver: t.Context.Driver.Exported(),
 		"bitbucket.org/jatone/genieql/genieql": map[string]reflect.Value{
 			"Structure": reflect.ValueOf((*genieql2.Structure)(nil)),
 			"Scanner":   reflect.ValueOf((*genieql2.Scanner)(nil)),
 			"Function":  reflect.ValueOf((*genieql2.Function)(nil)),
+			"Insert":    reflect.ValueOf((*genieql2.Insert)(nil)),
 			"Camelcase": reflect.ValueOf(genieql2.Camelcase),
 			"Table":     reflect.ValueOf(genieql2.Table),
 			"Query":     reflect.ValueOf(genieql2.Query),
@@ -156,36 +155,50 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			buf       = bytes.NewBuffer([]byte(nil))
 		)
 
+		t.Context.Debugln("generating code")
+
 		if err = r.Generator.Generate(buf); err != nil {
-			log.Printf("%+v\n", errors.Wrap(err, "failed to generate"))
+			log.Printf("%+v\n", errors.Wrapf(err, "%s: failed to generate", r.Location))
 			continue
 		}
 
+		t.Context.Debugln("writing generated code into buffer")
+
 		if _, err = working.WriteString("\n"); err != nil {
-			return errors.Wrap(err, "failed to append to working file")
+			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
 		}
 
 		if _, err = working.Write(buf.Bytes()); err != nil {
-			return errors.Wrap(err, "failed to append to working file")
+			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
 		}
 
 		if _, err = working.WriteString("\n"); err != nil {
-			return errors.Wrap(err, "failed to append to working file")
+			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
 		}
+
+		t.Context.Debugln("reformatting buffer")
 
 		if err = genieql.Reformat(working); err != nil {
-			return errors.Wrap(err, "failed to reformat to working file")
+			return errors.Wrapf(err, "%s: failed to reformat to working file", r.Location)
 		}
+
+		t.Context.Debugln("evaluating buffer")
 
 		if formatted, err = iox.ReadString(working); err != nil {
-			return errors.Wrap(err, "failed to read entire set")
+			return errors.Wrapf(err, "%s: failed to read entire set", r.Location)
 		}
 
+		t.Context.Debugln("generated code")
+
 		if err = panicSafe(func() error { _, bad := i.Eval(formatted); return bad }); err != nil {
-			t.Println(formatted)
-			return errors.Wrap(err, "failed to update compilation context")
+			// t.Println(formatted)
+			return errors.Wrapf(err, "%s: failed to update compilation context", r.Location)
 		}
+
+		t.Context.Debugln("added generated code to evaluation context")
 	}
+
+	// time.Sleep(30 * time.Second)
 
 	return errors.Wrap(errorsx.Compact(
 		iox.Rewind(working),
@@ -201,6 +214,7 @@ func panicSafe(fn func() error) (err error) {
 		}
 
 		if cause, ok := recovered.(error); ok {
+			log.Println("recovered panic", cause)
 			err = cause
 		}
 	}()
