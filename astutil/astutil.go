@@ -304,3 +304,21 @@ func Print(n ast.Node) (string, error) {
 
 	return dst.String(), errors.Wrap(err, "failure to print ast")
 }
+
+// StructureFieldSelectors return an array of selector expressions from the given
+// idents and a field of fields.
+func StructureFieldSelectors(local *ast.Field, fields ...*ast.Field) []ast.Expr {
+	selectors := make([]ast.Expr, 0, len(fields))
+	for _, n := range local.Names {
+		for _, field := range fields {
+			sel := MapFieldsToNameIdent(field)[0]
+			sel.NamePos = 0
+			selectors = append(selectors, &ast.SelectorExpr{
+				X:   n,
+				Sel: sel,
+			})
+		}
+	}
+
+	return selectors
+}

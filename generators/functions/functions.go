@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/x/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -30,6 +31,7 @@ func DetectScanner(ctx generators.Context, fnt *ast.FuncType) (r *ast.FuncDecl) 
 	)
 
 	if fnt.Results == nil || len(fnt.Results.List) == 0 {
+		log.Println("missing function results")
 		return nil
 	}
 
@@ -40,7 +42,7 @@ func DetectScanner(ctx generators.Context, fnt *ast.FuncType) (r *ast.FuncDecl) 
 	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
 
 	if r, err = util.FindFunction(test); err != nil {
-		log.Println("failed to find scanner")
+		log.Println("failed to find scanner", types.ExprString(fnt.Results.List[0].Type))
 		return nil
 	}
 
@@ -68,6 +70,11 @@ type compiler interface {
 	Compile(Definition) (*ast.FuncDecl, error)
 }
 
+func defaultTransform(field *ast.Field) (*ast.Field, error) {
+	// log.Println("transforming field", field.Names, field.Type)
+	return field, nil
+}
+
 // Query function compiler
 type Query struct {
 	generators.Context
@@ -76,6 +83,8 @@ type Query struct {
 	Queryer         ast.Expr   // the type of the queryer
 	QueryerFunction *ast.Ident
 	Scanner         *ast.FuncDecl
+	Transforms      []ast.Stmt
+	QueryInputs     []ast.Expr
 }
 
 func (t Query) sanitizeFields(i *ast.Ident) *ast.Ident {
@@ -88,21 +97,31 @@ func (t Query) sanitizeFields(i *ast.Ident) *ast.Ident {
 }
 
 // transform placeholder...
-func (t Query) transform(inputs ...*ast.Field) (transforms []ast.Stmt, output []*ast.Field) {
+func (t Query) transformInputs(inputs ...*ast.Field) (output []ast.Expr) {
+	for _, i := range inputs {
+		output = append(output, astutil.MapFieldsToNameExpr(i)...)
+	}
+	return output
+}
+
+// transform placeholder...
+func (t Query) transform(inputs ...*ast.Field) (output []*ast.Field, err error) {
 	output = astutil.TransformFields(func(field *ast.Field) *ast.Field {
-		log.Println("transforms for field", field.Names, field.Type)
-		return field
+		updated, failure := defaultTransform(field)
+		err = errorsx.Compact(err, failure)
+		return updated
 	}, inputs...)
-	return transforms, output
+
+	return output, err
 }
 
 // Compile using the provided definition.
-func (t Query) Compile(d Definition) (*ast.FuncDecl, error) {
+func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	var (
 		query        = astutil.Expr(defaultQuery)
 		queryerIdent = ast.NewIdent(defaultQueryParamName)
-		stmts        []ast.Stmt
 	)
+
 	defer func() {
 		recovered := recover()
 		if recovered == nil {
@@ -139,7 +158,9 @@ func (t Query) Compile(d Definition) (*ast.FuncDecl, error) {
 	// prevent name collisions.
 	d.Signature.Params.List = generators.SanitizeFieldIdents(t.sanitizeFields, d.Signature.Params.List...)
 	// TODO: generate input transformation statements if necessary.
-	stmts, d.Signature.Params.List = t.transform(d.Signature.Params.List...)
+	if d.Signature.Params.List, err = t.transform(d.Signature.Params.List...); err != nil {
+		return nil, err
+	}
 	// TODO: generate input transformation statements if necessary.
 
 	// setup function arguments.
@@ -154,7 +175,11 @@ func (t Query) Compile(d Definition) (*ast.FuncDecl, error) {
 		qinputs = append(qinputs, astutil.MapFieldsToNameExpr(t.ContextField)...)
 	}
 	qinputs = append(qinputs, query)
-	qinputs = append(qinputs, astutil.MapFieldsToNameExpr(d.Signature.Params.List...)...)
+	if len(t.QueryInputs) == 0 {
+		qinputs = append(qinputs, t.transformInputs(d.Signature.Params.List...)...)
+	} else {
+		qinputs = append(qinputs, t.QueryInputs...)
+	}
 
 	// rewrite function parameters with the queryer and context
 	d.Signature.Params.List = append(
@@ -163,7 +188,14 @@ func (t Query) Compile(d Definition) (*ast.FuncDecl, error) {
 	)
 	d.Signature.Results = t.Scanner.Type.Results
 
-	stmts = append([]ast.Stmt{&ast.DeclStmt{Decl: astutil.Const(types.ExprString(query), t.Query)}}, stmts...)
+	stmts := []ast.Stmt{
+		&ast.DeclStmt{Decl: astutil.Const(types.ExprString(query), t.Query)},
+	}
+
+	if len(t.Transforms) > 0 {
+		stmts = append(stmts, t.Transforms...)
+	}
+
 	stmts = append(stmts, astutil.Return(
 		astutil.CallExpr(
 			t.Scanner.Name,

@@ -71,7 +71,9 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 				Imports: in.Imports,
 				Decls:   append(imports, fn),
 			}
+
 			pos := t.Context.FileSet.PositionFor(fn.Pos(), true).String()
+
 			if r, err = m(t, i, focused, fn); err != nil {
 				if err != ErrNoMatch {
 					log.Printf(
@@ -178,7 +180,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("reformatting buffer")
 
-		if err = genieql.Reformat(working); err != nil {
+		if err = genieql.ReformatFile(working); err != nil {
 			return errors.Wrapf(err, "%s: failed to reformat to working file", r.Location)
 		}
 

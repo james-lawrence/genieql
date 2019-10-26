@@ -23,7 +23,7 @@ func Inserts(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl
 		pattern   = astutil.TypePattern(astutil.Expr("genieql.Insert"))
 		cf        *ast.Field // context field
 		qf        *ast.Field // query field
-		typ       *ast.Field
+		typ       *ast.Field // type we're scanning into the table.
 	)
 
 	if len(fn.Type.Params.List) < 1 {
@@ -42,7 +42,19 @@ func Inserts(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl
 
 	// save the original parameters
 	params := fn.Type.Params.List
+	results := fn.Type.Results.List
+
+	// rewrite the function.
+	fn.Type.Params.List = params[:1]
+	fn.Type.Results.List = []*ast.Field(nil)
+
+	if formatted, err = formatSource(ctx, src); err != nil {
+		return r, errors.Wrapf(err, "genieql.Insert (%s.%s)", ctx.CurrentPackage.Name, fn.Name)
+	}
+
+	// restore the signature
 	fn.Type.Params.List = params[1:]
+	fn.Type.Results.List = results
 
 	if cf = functions.DetectContext(fn.Type); cf != nil {
 		// pop the context off the params.
@@ -50,27 +62,22 @@ func Inserts(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl
 	}
 
 	qf = fn.Type.Params.List[0]
+
 	// pop off the queryer.
 	fn.Type.Params.List = fn.Type.Params.List[1:]
 
 	// extract the type argument from the function.
 	typ = fn.Type.Params.List[0]
 
-	// rewrite the function.
-	fn.Type.Params.List = params[:1]
-
-	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Insert (%s.%s)", ctx.CurrentPackage.Name, fn.Name)
-	}
-
 	ctx.Printf("genieql.Insert identified (%s.%s)\n", ctx.CurrentPackage.Name, fn.Name)
 	ctx.Debugln(formatted)
 
 	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
 		var (
-			v  reflect.Value
-			f  func(genieql2.Insert)
-			ok bool
+			v       reflect.Value
+			f       func(genieql2.Insert)
+			scanner *ast.FuncDecl // scanner to use for the results.
+			ok      bool
 		)
 
 		if _, err = i.Eval(formatted); err != nil {
@@ -86,13 +93,18 @@ func Inserts(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl
 			return errors.Errorf("genieql.Insert - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, fn.Name)
 		}
 
+		if scanner = functions.DetectScanner(ctx.Context, fn.Type); scanner == nil {
+			return errors.Errorf("genieql.Insert (%s.%s) - missing scanner", ctx.CurrentPackage.Name, fn.Name)
+		}
+
 		fgen := genieql2.NewInsert(
 			ctx.Context,
 			fn.Name.String(),
 			fn.Doc,
 			cf,
 			qf,
-			typ.Type,
+			typ,
+			scanner,
 		)
 
 		f(fgen)
