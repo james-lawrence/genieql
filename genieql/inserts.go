@@ -21,7 +21,6 @@ type Insert interface {
 	Into(string) Insert       // what table to insert into
 	Ignore(...string) Insert  // ignore the specified columns.
 	Default(...string) Insert // use the database default for the specified columns.
-	// Batch(n int) Insert       // number of records to support inserting.
 }
 
 // NewInsert instantiate a new insert generator. it uses the name of function
@@ -61,18 +60,27 @@ type insert struct {
 	comment  *ast.CommentGroup
 }
 
+// Into specify the table the data will be inserted into.
 func (t *insert) Into(s string) Insert {
 	t.table = s
 	return t
 }
 
+// Default specify the table columns to be given their default values.
 func (t *insert) Default(defaults ...string) Insert {
 	t.defaults = defaults
 	return t
 }
 
+// Ingore specify the table columns to ignore.
 func (t *insert) Ignore(ignore ...string) Insert {
 	t.ignore = ignore
+	return t
+}
+
+// Batch specify the maximum number of records to insert.
+func (t *insert) Batch(size int) Insert {
+	t.n = size
 	return t
 }
 
@@ -114,7 +122,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	ignore := genieql.ColumnInfoFilterIgnore(t.defaults...)
+	ignore := genieql.ColumnInfoFilterIgnore(append(t.ignore, t.defaults...)...)
 	cset := genieql.ColumnInfoSet(columns)
 
 	if fields, _, err = mapping.MapFieldsToColumns(fset, t.ctx.CurrentPackage, cset.Filter(ignore)...); err != nil {

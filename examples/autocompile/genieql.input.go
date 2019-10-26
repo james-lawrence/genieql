@@ -50,19 +50,6 @@ func Example1FindByX1(
 	gql = gql.Query("SELECT " + Example1ScannerStaticColumns + " FROM example1 WHERE id = $1 AND foo = $2")
 }
 
-// // Example1FindByX2 generates function
-// func Example1FindByX2(
-// 	gql genieql.Function,
-// 	pattern func(ctx context.Context, q sqlx.Queryer, i1 pgtype.UUIDArray) NewExample1ScannerStaticRow,
-// ) {
-// 	gql = gql.Query("SELECT " + Example1ScannerStaticColumns + " FROM example1 WHERE id = $1")
-// }
-
 func Example1Insert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {
-	gql.Into("example1").Ignore("UUIDField").Default("WAT")
+	gql.Into("example1").Default("uuid_field").Batch(10)
 }
-
-//
-// func Example1Upsert(gql genieql.Insert, e Example1) {
-// 	gql.Query("").Ignore(e.UUIDField)
-// }
