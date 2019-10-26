@@ -50,6 +50,15 @@ func Example1FindByX1(
 	gql = gql.Query("SELECT " + Example1ScannerStaticColumns + " FROM example1 WHERE id = $1 AND foo = $2")
 }
 
+func Example1FindBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {
+	gql.From("example1").Ignore("created_at", "updated_at", "id")
+}
+
+func Example1LookupBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStatic {
+	gql.From("example1")
+}
+
+// Example1Insert insert a single example1 record.
 func Example1Insert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {
-	gql.Into("example1").Default("uuid_field").Batch(10)
+	gql.Into("example1").Default("uuid_field")
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -75,16 +76,16 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 			pos := t.Context.FileSet.PositionFor(fn.Pos(), true).String()
 
 			if r, err = m(t, i, focused, fn); err != nil {
-				if err != ErrNoMatch {
-					log.Printf(
-						"failed to build code generator: %s\n%s - %s.%s\n",
-						err,
-						pos,
-						t.CurrentPackage.Name,
-						fn.Name,
-					)
+				if err == ErrNoMatch {
+					continue
 				}
-				continue
+
+				r = Result{
+					Priority: math.MaxInt64,
+					Generator: genieql.NewErrGenerator(
+						errors.Wrapf(err, "failed to build code generator: %s", fn.Name),
+					),
+				}
 			}
 
 			r.Location = pos
@@ -133,13 +134,14 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	i.Use(interp.Exports{
 		t.Context.Configuration.Driver: t.Context.Driver.Exported(),
 		"bitbucket.org/jatone/genieql/genieql": map[string]reflect.Value{
-			"Structure": reflect.ValueOf((*genieql2.Structure)(nil)),
-			"Scanner":   reflect.ValueOf((*genieql2.Scanner)(nil)),
-			"Function":  reflect.ValueOf((*genieql2.Function)(nil)),
-			"Insert":    reflect.ValueOf((*genieql2.Insert)(nil)),
-			"Camelcase": reflect.ValueOf(genieql2.Camelcase),
-			"Table":     reflect.ValueOf(genieql2.Table),
-			"Query":     reflect.ValueOf(genieql2.Query),
+			"Structure":    reflect.ValueOf((*genieql2.Structure)(nil)),
+			"Scanner":      reflect.ValueOf((*genieql2.Scanner)(nil)),
+			"Function":     reflect.ValueOf((*genieql2.Function)(nil)),
+			"Insert":       reflect.ValueOf((*genieql2.Insert)(nil)),
+			"QueryAutogen": reflect.ValueOf((*genieql2.QueryAutogen)(nil)),
+			"Camelcase":    reflect.ValueOf(genieql2.Camelcase),
+			"Table":        reflect.ValueOf(genieql2.Table),
+			"Query":        reflect.ValueOf(genieql2.Query),
 		},
 	})
 
@@ -181,6 +183,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("reformatting buffer")
 
 		if err = genieql.ReformatFile(working); err != nil {
+			log.Println("FAILED", buf.String())
 			return errors.Wrapf(err, "%s: failed to reformat to working file", r.Location)
 		}
 
@@ -193,7 +196,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("generated code")
 
 		if err = panicSafe(func() error { _, bad := i.Eval(formatted); return bad }); err != nil {
-			// t.Println(formatted)
+			t.Println(formatted)
 			return errors.Wrapf(err, "%s: failed to update compilation context", r.Location)
 		}
 

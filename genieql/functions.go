@@ -82,6 +82,10 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
+	if err = GenerateComment(t.comment, newFunctionComment(t.name)).Generate(dst); err != nil {
+		return err
+	}
+
 	if err = printer.Fprint(dst, t.ctx.FileSet, n); err != nil {
 		return err
 	}

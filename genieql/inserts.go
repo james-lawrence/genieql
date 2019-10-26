@@ -128,8 +128,8 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	if fields, _, err = mapping.MapFieldsToColumns(fset, t.ctx.CurrentPackage, cset.Filter(ignore)...); err != nil {
 		return errors.Wrapf(
 			err,
-			"failed to map fields to columns for: %s",
-			t.ctx.CurrentPackage.Name, ":", types.ExprString(t.tf.Type),
+			"failed to map fields to columns for: %s:%s",
+			t.ctx.CurrentPackage.Name, types.ExprString(t.tf.Type),
 		)
 	}
 
@@ -172,6 +172,10 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 			var (
 				n ast.Node
 			)
+
+			if err = GenerateComment(t.comment, newFunctionComment(t.name)).Generate(dst); err != nil {
+				return err
+			}
 
 			if n, err = qfn.Compile(functions.New(t.name, sig)); err != nil {
 				return err

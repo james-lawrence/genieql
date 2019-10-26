@@ -94,15 +94,16 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 	}
 
 	log.Println("compiling", bctx.GOPATH, len(filtered), "files")
+	buf := bytes.NewBuffer(nil)
 	c := compiler.New(
 		ctx,
 		compiler.Structure,
 		compiler.Scanner,
 		compiler.Function,
 		compiler.Inserts,
+		compiler.QueryAutogen,
 	)
 
-	buf := bytes.NewBuffer(nil)
 	if err = c.Compile(buf, filtered...); err != nil {
 		return err
 	}
