@@ -9,7 +9,7 @@ require (
 	github.com/containous/yaegi v0.6.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-yaml/yaml v0.0.0-20170407172122-cd8b52f8269e
-	github.com/jackc/pgtype v1.0.1
+	github.com/jackc/pgtype v1.0.2
 	github.com/jackc/pgx v3.6.0+incompatible
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-sqlite3 v1.2.1-0.20170529145928-83772a7051f5

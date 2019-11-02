@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS example1 (
   text_field text NOT NULL DEFAULT '',
   bool_field boolean NOT NULL DEFAULT 'f',
   uuid_array uuid[] not null default '{}'::uuid[],
+  int2_array int2[] not null default '{}'::int2[],
   int4_array int4[] not null default '{}'::int4[],
   int8_array int8[] not null default '{}'::int8[],
   timestamp_field timestamptz NOT NULL DEFAULT current_timestamp

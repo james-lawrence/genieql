@@ -58,6 +58,7 @@ func PrintRegisteredDrivers() {
 
 // Driver - driver specific details.
 type Driver interface {
+	LookupType(s string) (NullableTypeDefinition, bool)
 	LookupNullableType(ast.Expr) ast.Expr
 	NullableType(typ, from ast.Expr) (ast.Expr, bool)
 	Exported() (res map[string]reflect.Value)
@@ -70,7 +71,8 @@ type decoder interface {
 
 // NullableTypeDefinition defines a type supported by the driver.
 type NullableTypeDefinition struct {
-	Type         string
+	Type         string // dialect type
+	Native       string // golang type
 	NullType     string
 	NullField    string
 	CastRequired bool
@@ -107,6 +109,17 @@ type driver struct {
 	nt        NullableType
 	lnt       LookupNullableType
 	supported []NullableTypeDefinition
+}
+
+func (t driver) LookupType(l string) (NullableTypeDefinition, bool) {
+	for _, s := range t.supported {
+		println("checking", s.Type, "against", l)
+		if s.Type == l {
+			return s, true
+		}
+	}
+
+	return NullableTypeDefinition{}, false
 }
 
 func (t driver) LookupNullableType(typ ast.Expr) ast.Expr         { return t.lnt(typ) }

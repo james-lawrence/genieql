@@ -12,14 +12,22 @@ import (
 const (
 	boolExprString    = "bool"
 	intExprString     = "int"
+	intArrExpr        = "[]int"
 	int16ExprString   = "int16"
 	int32ExprString   = "int32"
 	int64ExprString   = "int64"
 	stringExprString  = "string"
+	stringArrExpr     = "[]string"
 	floatExprString   = "float"
 	float32ExprString = "float32"
 	float64ExprString = "float64"
 	timeExprString    = "time.Time"
+	durationExpr      = "time.Duration"
+	ipExpr            = "net.IP"
+	macExpr           = "net.HardwareAddr"
+	cidrExpr          = "net.IPNet"
+	cidrArrayExpr     = "[]net.IPNet"
+	bytesExpr         = "[]byte"
 )
 
 // MustParseExpr panics if the string cannot be parsed into an expression.

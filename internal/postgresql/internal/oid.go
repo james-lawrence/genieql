@@ -3,7 +3,7 @@ package internal
 import (
 	"go/ast"
 
-	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgtype"
 
 	"bitbucket.org/jatone/genieql/astutil"
 )
@@ -12,32 +12,65 @@ import (
 func OIDToType(oid int) ast.Expr {
 	switch oid {
 	case pgtype.BoolOID:
-		return astutil.Expr("bool")
+		return astutil.Expr("pgtype.Bool")
 	case pgtype.UUIDOID:
-		return astutil.Expr("string")
+		return astutil.Expr("pgtype.UUID")
+	case pgtype.BPCharOID:
+		return astutil.Expr("pgtype.BPChar")
 	case pgtype.UUIDArrayOID:
-		return astutil.Expr("[]string")
-	case pgtype.TimestamptzOID, pgtype.TimestampOID, pgtype.DateOID:
-		return astutil.Expr("time.Time")
-	case pgtype.Int2OID, pgtype.Int4OID, pgtype.Int8OID:
-		return astutil.Expr("int")
-	case pgtype.TextOID, pgtype.VarcharOID, pgtype.JSONOID:
-		return astutil.Expr("string")
-	// TODO - properly handle json: case pgtype.JSONOID, pgtype.JSONBOID:
+		return astutil.Expr("pgtype.UUIDArray")
+	case pgtype.IntervalOID:
+		return astutil.Expr("pgtype.Interval")
+	case pgtype.CIDROID:
+		return astutil.Expr("pgtype.CIDR")
+	case pgtype.CIDRArrayOID:
+		return astutil.Expr("pgtype.CIDRArray")
+	case pgtype.MacaddrOID:
+		return astutil.Expr("pgtype.Macaddr")
+	case pgtype.TimestamptzOID:
+		return astutil.Expr("pgtype.Timestamptz")
+	case pgtype.TimestampOID:
+		return astutil.Expr("pgtype.Timestamp")
+	case pgtype.DateOID:
+		return astutil.Expr("pgtype.Date")
+	case pgtype.BitOID:
+		return astutil.Expr("pgtype.Bit")
+	case pgtype.VarbitOID:
+		return astutil.Expr("pgtype.Varbit")
+	case pgtype.Int2ArrayOID:
+		return astutil.Expr("pgtype.Int2Array")
+	case pgtype.Int4ArrayOID:
+		return astutil.Expr("pgtype.Int4Array")
+	case pgtype.Int8ArrayOID:
+		return astutil.Expr("pgtype.Int8Array")
+	case pgtype.Int2OID:
+		return astutil.Expr("pgtype.Int2")
+	case pgtype.Int4OID:
+		return astutil.Expr("pgtype.Int4")
+	case pgtype.Int8OID:
+		return astutil.Expr("pgtype.Int8")
+	case pgtype.TextOID:
+		return astutil.Expr("pgtype.Text")
+	case pgtype.VarcharOID:
+		return astutil.Expr("pgtype.Varchar")
+	case pgtype.JSONOID:
+		return astutil.Expr("pgtype.JSON")
+	case pgtype.JSONBOID:
+		return astutil.Expr("pgtype.JSONB")
 	case pgtype.ByteaOID:
-		return astutil.Expr("[]byte")
+		return astutil.Expr("pgtype.Bytea")
 	case pgtype.Float4OID:
-		return astutil.Expr("float32")
-	case pgtype.Float8OID, pgtype.NumericOID:
-		// NumericOID is technically wrong but since the stdlib doesn't have a numeric
-		// representation we push it to float64.
-		return astutil.Expr("float64")
+		return astutil.Expr("pgtype.Float4")
+	case pgtype.Float8OID:
+		return astutil.Expr("pgtype.Float8")
+	case pgtype.NumericOID:
+		return astutil.Expr("pgtype.Numeric")
 	case pgtype.InetOID:
-		return astutil.Expr("string")
+		return astutil.Expr("pgtype.Inet")
 	case pgtype.OIDOID:
-		return astutil.Expr("int")
+		return astutil.Expr("pgtype.OID")
 	case pgtype.NameOID:
-		return astutil.Expr("string")
+		return astutil.Expr("pgtype.Name")
 	default:
 		return nil
 	}

@@ -124,7 +124,7 @@ func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, er
 			log.Println("skipping column", info.Name, "unknown type identifier", oid, "please open an issue")
 			continue
 		}
-
+		println("result type", types.ExprString(expr))
 		info.Type = types.ExprString(expr)
 
 		columns = append(columns, info)
