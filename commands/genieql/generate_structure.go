@@ -151,7 +151,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 	}
 
 	g := []genieql.Generator{}
-	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -172,6 +172,10 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 
 		g = append(g, decls...)
 	}, pkg)
+
+	if err != nil {
+		return err
+	}
 
 	mg := genieql.MultiGenerate(g...)
 	hg := headerGenerator{
@@ -302,7 +306,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		Dialect:        dialect,
 	}
 	g := []genieql.Generator{}
-	genieql.NewUtils(fset).WalkFiles(func(k string, f *ast.File) {
+	err = genieql.NewUtils(fset).WalkFiles(func(k string, f *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(k)) {
 			return
 		}
@@ -321,6 +325,10 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		}, genieql.FindConstants(f)...)
 		g = append(g, decls...)
 	}, pkg)
+
+	if err != nil {
+		return err
+	}
 
 	hg := headerGenerator{
 		fset: fset,
