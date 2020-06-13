@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"io"
@@ -196,14 +197,11 @@ func newScanner(options ...ScannerOption) (scanner, error) {
 		}
 	}
 
-	s.Driver, err = genieql.LookupDriver(s.Context.Configuration.Driver)
-
 	return s, err
 }
 
 type scannerConfig struct {
 	Context
-	Driver        genieql.Driver
 	Name          string
 	interfaceName string
 	Mode          mode
@@ -240,18 +238,37 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
-	lookupNullableTypes := composeLookupNullableType(drivers.DefaultLookupNullableType, t.Driver.LookupNullableType)
 	nullableTypes := composeNullableType(drivers.DefaultNullableTypes, t.Driver.NullableType)
+	typeDefinitions := composeTypeDefinitionsExpr(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
 
 	funcMap := template.FuncMap{
-		"expr":       types.ExprString,
-		"scan":       scan,
-		"arguments":  argumentsAsPointers,
-		"printAST":   astPrint,
-		"nulltype":   lookupNullableTypes,
-		"assignment": assignmentStmt{NullableType: nullableTypes}.assignment,
-		"title":      stringsx.ToPublic,
-		"private":    stringsx.ToPrivate,
+		"expr":      types.ExprString,
+		"scan":      scan,
+		"arguments": argumentsAsPointers,
+		"printAST":  astPrint,
+		"nulltype": func(e ast.Expr) (expr ast.Expr) {
+			var (
+				err error
+				ok  bool
+				d   genieql.NullableTypeDefinition
+			)
+			if d, ok = typeDefinitions(e); !ok {
+				log.Println("failed to locate type definition:", types.ExprString(e))
+				return e
+			}
+
+			if expr, err = parser.ParseExpr(d.NullType); err != nil {
+				log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
+				return e
+			}
+
+			return expr
+		},
+		"assignment": assignmentStmt{
+			NullableType: nullableTypes,
+		}.assignment,
+		"title":   stringsx.ToPublic,
+		"private": stringsx.ToPrivate,
 	}
 
 	if t.Mode.Enabled(ModeInterface) {

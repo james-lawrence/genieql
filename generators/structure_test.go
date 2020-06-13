@@ -35,9 +35,9 @@ var _ = ginkgo.Describe("Structure", func() {
 			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
 		),
 	)
+
 	driver := genieql.MustLookupDriver(config.Driver)
-	dialect, err := genieql.LookupDialect(config)
-	panicOnError(err)
+	dialect := genieql.MustLookupDialect(config)
 
 	DescribeTable("build a structure based on the definition file",
 		func(definition, fixture string, builder func(string) StructOption, options ...StructOption) {

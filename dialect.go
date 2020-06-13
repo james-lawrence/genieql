@@ -49,6 +49,16 @@ func LookupDialect(config Configuration) (Dialect, error) {
 	return factory.Connect(config)
 }
 
+// MustLookupDialect lookup a gesitered dialect or panic
+func MustLookupDialect(c Configuration) Dialect {
+	d, err := LookupDialect(c)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
 // DialectFactory ...
 type DialectFactory interface {
 	Connect(Configuration) (Dialect, error)

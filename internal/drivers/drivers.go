@@ -26,16 +26,15 @@ func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
 	return stdlib.LookupNullableType(typ)
 }
 
+// DefaultTypeDefinitions determine the type definition for an expression.
+func DefaultTypeDefinitions(s string) (genieql.NullableTypeDefinition, bool) {
+	return stdlib.LookupType(s)
+}
+
 type config struct {
 	Name  string
 	Types []genieql.NullableTypeDefinition
 }
-
-// name: github.com/jackc/pgx
-// types:
-// - Type: "string"
-//   NullType: "sql.NullString"
-//   NullField: "String"
 
 // ReadDriver - reads a driver from an io.Reader
 func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
@@ -95,18 +94,31 @@ func nullableTypes(_types map[string]genieql.NullableTypeDefinition) func(typ as
 		if _type, ok := _types[types.ExprString(typ)]; ok {
 			return MustParseExpr(_type.NullType)
 		}
+
 		return typ
 	}
 }
 
+func init() {
+	genieql.RegisterDriver(StandardLib, stdlib)
+}
+
+// StandardLib driver only uses types from stdlib.
+const StandardLib = "genieql.default"
+
 var stdlib = NewDriver(
-	genieql.NullableTypeDefinition{Type: "string", NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
-	genieql.NullableTypeDefinition{Type: "int", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "int32", NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "int64", NullType: "sql.NullInt64", NullField: "Int64", Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "float", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "float32", NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "float64", NullType: "sql.NullFloat64", NullField: "Float64", Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "bool", NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
-	genieql.NullableTypeDefinition{Type: "time.Time", NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullString", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullInt64", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullInt32", Native: intExprString, NullType: "sql.NullInt32", NullField: "Int32", CastRequired: true, Decoder: &sql.NullInt32{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullFloat64", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullBool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
+	genieql.NullableTypeDefinition{Type: "sql.NullTime", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
+	genieql.NullableTypeDefinition{Type: "int", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
+	genieql.NullableTypeDefinition{Type: "*int", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
+	genieql.NullableTypeDefinition{Type: "bool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
+	genieql.NullableTypeDefinition{Type: "*bool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
+	genieql.NullableTypeDefinition{Type: "time.Time", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
+	genieql.NullableTypeDefinition{Type: "*time.Time", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
+	genieql.NullableTypeDefinition{Type: "string", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
+	genieql.NullableTypeDefinition{Type: "*string", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
 )

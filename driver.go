@@ -30,6 +30,9 @@ type NullableType func(typ, from ast.Expr) (ast.Expr, bool)
 // LookupNullableType interface for functions that map type's to their nullable counter parts.
 type LookupNullableType func(typ ast.Expr) ast.Expr
 
+// LookupTypeDefinition converts a expression into a type definition.
+type LookupTypeDefinition func(typ ast.Expr) (NullableTypeDefinition, bool)
+
 // RegisterDriver register a database driver with genieql. usually in an init function.
 func RegisterDriver(driver string, imp Driver) error {
 	return drivers.RegisterDriver(driver, imp)

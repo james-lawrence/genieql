@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 
 	. "bitbucket.org/jatone/genieql/generators"
@@ -31,7 +32,9 @@ var _ = ginkgo.Describe("Scanner", func() {
 			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
 		),
 	)
-	genieql.RegisterDriver(config.Driver, noopDriver{})
+
+	driver, err := genieql.LookupDriver(drivers.StandardLib)
+	panicOnError(err)
 
 	DescribeTable("should build a scanner for builtin types",
 		func(definition, fixture string) {
@@ -51,6 +54,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 						CurrentPackage: pkg,
 						FileSet:        token.NewFileSet(),
 						Dialect:        dialect{},
+						Driver:         driver,
 					}),
 				)
 				for _, g := range gens {
@@ -82,6 +86,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			soc := ScannerOptionContext(Context{
 				Configuration: config,
 				Dialect:       dialect{},
+				Driver:        driver,
 			})
 
 			buffer.WriteString("package example\n\n")

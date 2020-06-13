@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
 // StructOption option to provide the structure function.
@@ -180,6 +181,7 @@ type {{.Name}} struct {
 			t.aliaser,
 			genieql.MCOColumns(columns...),
 			genieql.MCOType(t.Name),
+			genieql.MCOPackage(t.Context.CurrentPackage),
 		)...,
 	)
 
@@ -187,6 +189,7 @@ type {{.Name}} struct {
 		return err
 	}
 
+	typeDefinitions := composeTypeDefinitions(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	ctx := context{
 		Name:    t.Name,
 		Columns: mapping.Columns,
@@ -195,8 +198,8 @@ type {{.Name}} struct {
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
 		"transformation": mapping.Aliaser(),
 		"type": func(s string) string {
-			if e, ok := t.Context.Driver.LookupType(s); ok {
-				return e.Native
+			if d, ok := typeDefinitions(s); ok {
+				return d.Native
 			}
 
 			return s

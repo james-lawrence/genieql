@@ -2,6 +2,7 @@ package generators
 
 import (
 	"go/ast"
+	"go/types"
 
 	"bitbucket.org/jatone/genieql"
 )
@@ -25,5 +26,32 @@ func composeLookupNullableType(lookupNullableTypes ...genieql.LookupNullableType
 		}
 
 		return typ
+	}
+}
+
+// tdRegistry type definition registry
+type tdRegistry func(s string) (genieql.NullableTypeDefinition, bool)
+
+func composeTypeDefinitionsExpr(definitions ...tdRegistry) genieql.LookupTypeDefinition {
+	return func(e ast.Expr) (d genieql.NullableTypeDefinition, ok bool) {
+		for _, registry := range definitions {
+			if d, ok = registry(types.ExprString(e)); ok {
+				return d, true
+			}
+		}
+
+		return d, false
+	}
+}
+
+func composeTypeDefinitions(definitions ...tdRegistry) tdRegistry {
+	return func(e string) (d genieql.NullableTypeDefinition, ok bool) {
+		for _, registry := range definitions {
+			if d, ok = registry(e); ok {
+				return d, true
+			}
+		}
+
+		return d, false
 	}
 }
