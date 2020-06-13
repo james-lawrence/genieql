@@ -62,7 +62,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		generators.QFOBuiltinQueryFromString(query),
 	}
 
-	mg = append(mg, generators.NewQueryFunction(options...))
+	mg = append(mg, generators.NewQueryFunction(t.ctx, options...))
 
 	for i, column := range t.TableDetails.Columns {
 		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, genieql.ColumnInfoSet(t.TableDetails.Columns[i:i+1]).ColumnNames())
@@ -83,12 +83,12 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOScanner(t.Scanner),
 		)
 
-		mg = append(mg, generators.NewQueryFunction(findOptions...))
-		mg = append(mg, generators.NewQueryFunction(lookupOptions...))
+		mg = append(mg, generators.NewQueryFunction(t.ctx, findOptions...))
+		mg = append(mg, generators.NewQueryFunction(t.ctx, lookupOptions...))
 	}
 
 	if len(naturalKey) > 0 {
-		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
+	query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
@@ -96,7 +96,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
 		}
-		mg = append(mg, generators.NewQueryFunction(options...))
+		mg = append(mg, generators.NewQueryFunction(t.ctx, options...))
 		mg = append(mg, t.updateFunc(queryerOption, naturalKey, names))
 		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
@@ -106,7 +106,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
 		}
-		mg = append(mg, generators.NewQueryFunction(options...))
+		mg = append(mg, generators.NewQueryFunction(t.ctx, options...))
 	}
 
 	return genieql.MultiGenerate(mg...).Generate(dst)
@@ -134,7 +134,7 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 		generators.QFOScanner(t.UniqScanner),
 	}
 
-	return generators.NewQueryFunction(options...)
+	return generators.NewQueryFunction(t.ctx, options...)
 }
 
 func fieldFromColumnInfo(infos ...genieql.ColumnInfo) []*ast.Field {

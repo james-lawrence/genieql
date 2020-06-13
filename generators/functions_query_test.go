@@ -93,7 +93,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		},
 	}
 
-	DescribeTable("build a query function from a function prototype",
+	FDescribeTable("build a query function from a function prototype",
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})

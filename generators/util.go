@@ -7,15 +7,18 @@ import (
 	"go/printer"
 	"go/token"
 	"go/types"
+	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
 func exprToArray(x ast.Expr) ast.Expr {
@@ -30,6 +33,37 @@ func fieldToType(f *ast.Field) ast.Expr {
 
 func fieldToNames(f *ast.Field) []*ast.Ident {
 	return f.Names
+}
+
+type transforms func(x ast.Expr) ast.Expr
+
+func argumentsNative(ctx Context) transforms {
+	def := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	return func(x ast.Expr) (out ast.Expr) {
+		var (
+			err error
+			ok  bool
+			d   genieql.NullableTypeDefinition
+		)
+
+		if d, ok = def(x); !ok {
+			return x
+		}
+
+		if out, err = parser.ParseExpr(d.Native); err != nil {
+			log.Println("failed to parse expression from type definition", spew.Sdump(d))
+			return x
+		}
+
+		log.Println("TRANSFORMING", types.ExprString(x), "->", types.ExprString(out))
+		return out
+	}
+}
+
+func argumentsTransform(t transforms) func(fields []*ast.Field) string {
+	return func(fields []*ast.Field) string {
+		return _arguments(t, fields)
+	}
 }
 
 // utility function that converts a set of ast.Field into

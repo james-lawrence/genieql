@@ -83,7 +83,7 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		poptions = append(poptions, BatchFunctionExploder(fields...))
 	}
 
-	if qfoOptions, err = generatorFromFuncType(ctx, name, comment, ft); err != nil {
+	if _, qfoOptions, err = generatorFromFuncType(ctx, name, comment, ft); err != nil {
 		return genieql.NewErrGenerator(err)
 	}
 	qf.Apply(qfoOptions...)
