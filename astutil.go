@@ -317,17 +317,7 @@ func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*
 
 func (t utils) ParsePackages(pkgset ...*build.Package) (result []*ast.Package, err error) {
 	for _, pkg := range pkgset {
-		filter := func(i os.FileInfo) bool {
-			for _, f := range pkg.GoFiles {
-				if f == i.Name() {
-					return true
-				}
-			}
-
-			return false
-		}
-
-		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, filter, parser.ParseComments)
+		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}

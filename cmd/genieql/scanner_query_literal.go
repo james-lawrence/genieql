@@ -28,11 +28,17 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		dialect       genieql.Dialect
 		mappingConfig genieql.MappingConfig
 		pkg           *build.Package
+		mpkg          *build.Package
 		pkgset        []*ast.Package
 		fset          = token.NewFileSet()
 	)
+
 	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkgName, typName, t.scanner.mapName); err != nil {
+	if mpkg, err = locatePackage(pkgName); err != nil {
+		return err
+	}
+
+	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, mpkg, typName, t.scanner.mapName); err != nil {
 		return err
 	}
 

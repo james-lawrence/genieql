@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"go/ast"
 	"go/build"
-	"go/token"
 	"log"
 	"path/filepath"
 
@@ -34,30 +33,20 @@ func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return cli
 }
 
-func (t *generator) execute(*kingpin.ParseContext) error {
+func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err         error
+		ctx         generators.Context
 		taggedFiles TaggedFiles
-		config      genieql.Configuration
-		dialect     genieql.Dialect
-		driver      genieql.Driver
-		pkg         *build.Package
 		pname       = t.buildInfo.CurrentPackageImport()
-		fset        = token.NewFileSet()
 	)
 
-	log.Println("loading", t.configName, pname)
 	bctx := build.Default
 	bctx.BuildTags = []string{
 		genieql.BuildTagIgnore,
 		genieql.BuildTagGenerate,
 	}
 
-	if config, dialect, pkg, err = loadPackageContext(bctx, t.configName, pname); err != nil {
-		return err
-	}
-
-	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, pname, genieql.BuildTagIgnore, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
 
@@ -71,23 +60,12 @@ func (t *generator) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	ctx := generators.Context{
-		Build:     bctx,
-		Verbosity: generators.VerbosityInfo,
-		// Verbosity:      generators.VerbosityDebug,
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  config,
-		Dialect:        dialect,
-		Driver:         driver,
-	}
-
 	filtered := []*ast.File{}
-	err = genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if taggedFiles.IsTagged(filepath.Base(path)) {
 			filtered = append(filtered, file)
 		}
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	if err != nil {
 		return err

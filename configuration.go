@@ -34,10 +34,13 @@ type Configuration struct {
 	Password      string
 }
 
-func (t Configuration) ReadMap(pkg, typ, name string, m *MappingConfig) error {
-	return ReadMapper(t, pkg, typ, name, m)
+// ReadMap the column -> struct mapping from disk cache.
+func (t Configuration) ReadMap(name string, m *MappingConfig, options ...MappingConfigOption) error {
+	m.Apply(options...)
+	return ReadMapper(t, name, m)
 }
 
+// WriteMap persists the column -> struct mapping to disk cache.
 func (t Configuration) WriteMap(name string, m MappingConfig) error {
 	return WriteMapper(t, name, m)
 }

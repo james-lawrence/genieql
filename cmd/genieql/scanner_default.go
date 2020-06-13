@@ -36,8 +36,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	log.Println("PACKAGE NAME", pkg.Name, pkg.ImportPath, pkgRelativePath)
-	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkg.Name, typName, t.scanner.mapName); err != nil {
+	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkg, typName, t.scanner.mapName); err != nil {
 		return err
 	}
 

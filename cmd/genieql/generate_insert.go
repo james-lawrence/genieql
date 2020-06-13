@@ -89,29 +89,21 @@ func (t *insertBatchCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	return cmd
 }
 
-func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
+func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err     error
-		config  genieql.Configuration
-		dialect genieql.Dialect
-		pkg     *build.Package
-		fset    = token.NewFileSet()
+		ctx  generators.Context
+		tags = []string{
+			"genieql", "generate", "insert", "batch",
+		}
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
 		return err
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  config,
-		Dialect:        dialect,
-	}
-
-	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "insert", "batch")
+	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	if len(taggedFiles.files) == 0 {
@@ -121,7 +113,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 	}
 
 	g := []genieql.Generator{}
-	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -155,22 +147,21 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) error {
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
 
 		g = append(g, functionsTypes...)
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 
 	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
-		log.Println("failed to write results")
-		log.Fatalln(err)
+		return errors.Wrap(err, "failed to write results")
 	}
 
 	return nil
@@ -229,7 +220,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg, typName, t.mapName); err != nil {
 		return err
 	}
 
@@ -332,7 +323,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg, typName, t.mapName); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 

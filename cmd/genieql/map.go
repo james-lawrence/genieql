@@ -1,6 +1,8 @@
 package main
 
 import (
+	"go/build"
+
 	"github.com/alecthomas/kingpin"
 
 	"bitbucket.org/jatone/genieql"
@@ -36,6 +38,7 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 		columns []genieql.ColumnInfo
 		config  genieql.Configuration
 		dialect genieql.Dialect
+		pkg     *build.Package
 	)
 
 	if config, dialect, err = loadContext(t.configuration); err != nil {
@@ -54,7 +57,11 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 		}
 	}
 
-	pkg, typ := t.extractPackageType(t.packageType)
+	pkgRelativePath, typ := t.extractPackageType(t.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
+		return err
+	}
+
 	m := genieql.MappingConfig{
 		Package:         pkg,
 		Type:            typ,

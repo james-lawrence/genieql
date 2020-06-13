@@ -305,6 +305,14 @@ func Print(n ast.Node) (string, error) {
 	return dst.String(), errors.Wrap(err, "failure to print ast")
 }
 
+// MustPrint an ast.Node
+func MustPrint(n ast.Node) string {
+	if s, err := Print(n); err == nil {
+		return s
+	}
+	return ""
+}
+
 // StructureFieldSelectors return an array of selector expressions from the given
 // idents and a field of fields.
 func StructureFieldSelectors(local *ast.Field, fields ...*ast.Field) []ast.Expr {

@@ -95,10 +95,10 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 	}
 
 	err = t.ctx.Configuration.ReadMap(
-		t.ctx.CurrentPackage.ImportPath,
-		types.ExprString(t.tf.Type),
 		"default", // deprecated hopefully we'll be able to drop at some point.
 		&mapping,
+		genieql.MCOPackage(t.ctx.CurrentPackage),
+		genieql.MCOType(types.ExprString(t.tf.Type)),
 	)
 
 	if err != nil {

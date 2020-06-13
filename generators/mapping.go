@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
-	"log"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -13,32 +12,26 @@ import (
 
 // mappedParam converts a *ast.Field that represents a struct into an array
 // of ColumnMap.
-func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieql.ColumnInfo, error) {
+func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos []genieql.ColumnInfo, err error) {
 	var (
-		err    error
-		infos  []genieql.ColumnInfo
-		driver genieql.Driver
-		m      genieql.MappingConfig
-		pkg    *build.Package
+		pkg *build.Package
 	)
 
 	ipath := importPath(ctx, param.Type)
-	if err = ctx.Configuration.ReadMap(ipath, types.ExprString(determineType(param.Type)), "default", &m); err != nil {
-		return m, infos, err
-	}
 
-	if driver, err = genieql.LookupDriver(ctx.Configuration.Driver); err != nil {
-		return m, infos, err
-	}
-
-	log.Println("IMPORT PATH CHECK", ipath, "==", ctx.CurrentPackage.ImportPath)
 	if ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
-	} else if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageImport(ipath)); err != nil {
+	} else {
+		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageImport(ipath)); err != nil {
+			return m, infos, err
+		}
+	}
+
+	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
 		return m, infos, err
 	}
 
-	infos, _, err = m.MappedColumnInfo(driver, ctx.Dialect, ctx.FileSet, pkg)
+	infos, _, err = m.MappedColumnInfo(ctx.Driver, ctx.Dialect, ctx.FileSet, pkg)
 	return m, infos, err
 }
 
@@ -53,9 +46,6 @@ func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Fi
 	)
 
 	ipath := importPath(ctx, param.Type)
-	if err = ctx.Configuration.ReadMap(ipath, types.ExprString(param.Type), "default", &m); err != nil {
-		return infos, err
-	}
 
 	if ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
@@ -63,6 +53,10 @@ func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Fi
 		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
 			return infos, err
 		}
+	}
+
+	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
+		return infos, err
 	}
 
 	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, pkg, ignoreSet...)
@@ -75,9 +69,17 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		infos   []*ast.Field
 		columns []genieql.ColumnInfo
 		m       genieql.MappingConfig
+		pkg     *build.Package
 	)
 
-	if err = ctx.Configuration.ReadMap(importPath(ctx, param.Type), types.ExprString(unwrapExpr(param.Type)), "default", &m); err != nil {
+	ipath := importPath(ctx, param.Type)
+	if ipath == ctx.CurrentPackage.ImportPath {
+		pkg = ctx.CurrentPackage
+	} else if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+		return columns, infos, err
+	}
+
+	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(unwrapExpr(param.Type)))); err != nil {
 		return columns, infos, err
 	}
 

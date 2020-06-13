@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/parser"
-	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -52,29 +51,18 @@ func (t *generateScannerCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClaus
 	return cli
 }
 
-func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
+func (t *generateScannerCLI) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err     error
-		config  genieql.Configuration
-		dialect genieql.Dialect
-		node    *ast.File
-		pkg     *build.Package
-		fset    = token.NewFileSet()
+		ctx  generators.Context
+		node *ast.File
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
-	if node, err = parser.ParseFile(fset, "example", fmt.Sprintf("package foo; %s", t.scanner), 0); err != nil {
+	if node, err = parser.ParseFile(ctx.FileSet, "example", fmt.Sprintf("package foo; %s", t.scanner), 0); err != nil {
 		return err
-	}
-
-	ctx := generators.Context{
-		FileSet:        fset,
-		CurrentPackage: pkg,
-		Configuration:  config,
-		Dialect:        dialect,
 	}
 
 	g := genieql.MultiGenerate(mapDeclsToGenerator(func(d *ast.GenDecl) []genieql.Generator {
@@ -85,13 +73,13 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) error {
 	}, genieql.SelectFuncType(genieql.FindTypes(node)...)...)...)
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, g),
 	}
 
@@ -119,22 +107,21 @@ func (t *generateScannerTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCla
 	return c
 }
 
-func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
+func (t *generateScannerTypes) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err     error
-		config  genieql.Configuration
-		dialect genieql.Dialect
-		pkg     *build.Package
-		fset    = token.NewFileSet()
+		ctx  generators.Context
+		tags = []string{
+			"genieql", "generate", "scanners",
+		}
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "scanners")
+	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	if len(taggedFiles.files) == 0 {
@@ -143,14 +130,8 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  config,
-		Dialect:        dialect,
-	}
 	g := []genieql.Generator{}
-	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -163,18 +144,18 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) error {
 		}, genieql.SelectFuncType(genieql.FindTypes(file)...)...)
 
 		g = append(g, scanners...)
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	mg := genieql.MultiGenerate(g...)
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 

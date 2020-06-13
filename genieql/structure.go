@@ -45,7 +45,7 @@ func (t *sconfig) Generate(dst io.Writer) error {
 			return t.d.Columns()
 		}),
 		generators.StructOptionMappingConfigOptions(
-			genieql.MCOPackage(t.ctx.CurrentPackage.ImportPath),
+			genieql.MCOPackage(t.ctx.CurrentPackage),
 		),
 	).Generate(dst)
 }

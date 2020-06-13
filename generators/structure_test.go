@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("Structure", func() {
 			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
 		),
 	)
-	genieql.RegisterDriver(config.Driver, noopDriver{})
+	driver := genieql.MustLookupDriver(config.Driver)
 	dialect, err := genieql.LookupDialect(config)
 	panicOnError(err)
 
@@ -71,6 +71,7 @@ var _ = ginkgo.Describe("Structure", func() {
 				Configuration:  config,
 				Dialect:        dialect,
 				CurrentPackage: pkg,
+				Driver:         driver,
 			}),
 		),
 		Entry(
@@ -89,6 +90,7 @@ const Lowercase = "type1"
 				Configuration:  config,
 				Dialect:        dialect,
 				CurrentPackage: pkg,
+				Driver:         driver,
 			}),
 		),
 	)

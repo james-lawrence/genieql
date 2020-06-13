@@ -2,9 +2,11 @@ package main
 
 import (
 	"go/build"
+	"go/token"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/generators"
 	"github.com/alecthomas/kingpin"
 )
 
@@ -40,29 +42,42 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return cmd
 }
 
-func loadPackageContext(ctx build.Context, configName, pkg string) (genieql.Configuration, genieql.Dialect, *build.Package, error) {
+func loadGeneratorContext(bctx build.Context, name, pkg string, tags ...string) (ctx generators.Context, err error) {
 	var (
-		err     error
 		config  genieql.Configuration
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		bpkg    *build.Package
 	)
 
+	bctx.BuildTags = tags
+
 	config = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), configName),
+			filepath.Join(genieql.ConfigurationDirectory(), name),
 		),
 	)
 
 	if dialect, err = genieql.LookupDialect(config); err != nil {
-		return config, dialect, bpkg, err
+		return ctx, err
 	}
 
-	if bpkg, err = genieql.LocatePackage(pkg, ctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return config, dialect, bpkg, err
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return ctx, err
 	}
 
-	return config, dialect, bpkg, err
+	if bpkg, err = genieql.LocatePackage(pkg, bctx, genieql.StrictPackageImport(pkg)); err != nil {
+		return ctx, err
+	}
+
+	return generators.Context{
+		Build:          bctx,
+		CurrentPackage: bpkg,
+		FileSet:        token.NewFileSet(),
+		Configuration:  config,
+		Dialect:        dialect,
+		Driver:         driver,
+	}, err
 }
 
 func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) {
@@ -85,7 +100,7 @@ func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) 
 	return configuration, dialect, err
 }
 
-func loadMappingContext(config, pkg, typ, mName string) (genieql.Configuration, genieql.Dialect, genieql.MappingConfig, error) {
+func loadMappingContext(config string, pkg *build.Package, typ, mName string) (genieql.Configuration, genieql.Dialect, genieql.MappingConfig, error) {
 	var (
 		err           error
 		configuration genieql.Configuration
@@ -99,7 +114,7 @@ func loadMappingContext(config, pkg, typ, mName string) (genieql.Configuration, 
 		),
 	)
 
-	if err = configuration.ReadMap(pkg, typ, mName, &mapping); err != nil {
+	if err = configuration.ReadMap(mName, &mapping, genieql.MCOPackage(pkg), genieql.MCOType(typ)); err != nil {
 		return configuration, dialect, mapping, err
 	}
 

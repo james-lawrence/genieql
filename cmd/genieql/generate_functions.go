@@ -3,7 +3,6 @@ package main
 import (
 	"go/ast"
 	"go/build"
-	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -31,21 +30,20 @@ func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 	return c
 }
 
-func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
+func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err         error
+		ctx         generators.Context
 		taggedFiles TaggedFiles
-		config      genieql.Configuration
-		dialect     genieql.Dialect
-		pkg         *build.Package
-		fset        = token.NewFileSet()
+		tags        = []string{
+			"genieql", "generate", "functions",
+		}
 	)
 
-	if config, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
 		return err
 	}
 
-	if taggedFiles, err = findTaggedFiles(t.pkg, "genieql", "generate", "functions"); err != nil {
+	if taggedFiles, err = findTaggedFiles(t.pkg, tags...); err != nil {
 		return err
 	}
 
@@ -56,13 +54,7 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 	}
 
 	g := []genieql.Generator{}
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  config,
-		Dialect:        dialect,
-	}
-	genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
@@ -81,18 +73,18 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) error {
 		}, genieql.SelectFuncDecl(func(*ast.FuncDecl) bool { return true }, genieql.FindFunc(file)...)...)
 
 		g = append(g, functions...)
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	mg := genieql.MultiGenerate(g...)
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 

@@ -47,7 +47,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg, typName, t.mapName); err != nil {
 		return err
 	}
 

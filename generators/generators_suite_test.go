@@ -3,7 +3,6 @@ package generators_test
 import (
 	"go/ast"
 	"go/parser"
-	"io/ioutil"
 	"log"
 	"reflect"
 
@@ -16,7 +15,8 @@ import (
 )
 
 func TestGenerators(t *testing.T) {
-	log.SetOutput(ioutil.Discard)
+	// log.SetOutput(ioutil.Discard)
+	log.SetFlags(log.Flags() | log.Lshortfile)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Generators Suite")
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"go/ast"
 	"go/build"
-	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,32 +59,22 @@ func (t *GenerateTableCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause 
 	return cli
 }
 
-func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
+func (t *GenerateTableCLI) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		columns       []genieql.ColumnInfo
-		configuration genieql.Configuration
-		dialect       genieql.Dialect
-		pkg           *build.Package
-		fset          = token.NewFileSet()
+		ctx     generators.Context
+		columns []genieql.ColumnInfo
 	)
 
-	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
-	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
 		return err
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  configuration,
-		Dialect:        dialect,
-	}
 	pg := printGenerator{
-		pkg: pkg,
+		pkg: ctx.CurrentPackage,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
@@ -93,7 +82,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) error {
 			),
 			generators.StructOptionMappingConfigOptions(
 				genieql.MCOColumns(columns...),
-				genieql.MCOPackage(pkg.ImportPath),
+				genieql.MCOPackage(ctx.CurrentPackage),
 			),
 		),
 	}
@@ -120,19 +109,19 @@ func (t *GenerateTableConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdC
 	return cmd
 }
 
-func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
+func (t *GenerateTableConstants) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		configuration genieql.Configuration
-		dialect       genieql.Dialect
-		pkg           *build.Package
-		fset          = token.NewFileSet()
+		ctx  generators.Context
+		tags = []string{
+			"genieql", "generate", "structure", "table",
+		}
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "structure", "table")
+	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
 	if err != nil {
 		return err
 	}
@@ -143,18 +132,12 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  configuration,
-		Dialect:        dialect,
-	}
-
 	g := []genieql.Generator{}
-	err = genieql.NewUtils(fset).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(path)) {
 			return
 		}
+
 		consts := genieql.FindConstants(file)
 
 		decls := mapDeclsToGenerator(func(decl *ast.GenDecl) []genieql.Generator {
@@ -165,13 +148,13 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 				},
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
-					genieql.MCOPackage(pkg.ImportPath),
+					genieql.MCOPackage(ctx.CurrentPackage),
 				),
 			)
 		}, consts...)
 
 		g = append(g, decls...)
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	if err != nil {
 		return err
@@ -179,13 +162,13 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) error {
 
 	mg := genieql.MultiGenerate(g...)
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
@@ -218,31 +201,22 @@ func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause 
 	return cli
 }
 
-func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) error {
+func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		configuration genieql.Configuration
-		dialect       genieql.Dialect
-		pkg           *build.Package
-		fset          = token.NewFileSet()
+		ctx generators.Context
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  configuration,
-		Dialect:        dialect,
-	}
 	pg := printGenerator{
-		pkg: pkg,
+		pkg: ctx.CurrentPackage,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
 			generators.StructOptionName(t.typeName),
 			generators.StructOptionMappingConfigOptions(
-				genieql.MCOPackage(pkg.ImportPath),
+				genieql.MCOPackage(ctx.CurrentPackage),
 			),
 		),
 	}
@@ -276,21 +250,21 @@ func (t *GenerateQueryConstants) configure(cmd *kingpin.CmdClause) *kingpin.CmdC
 	return cmd
 }
 
-func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
+func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		configuration genieql.Configuration
-		dialect       genieql.Dialect
-		pkg           *build.Package
-		fset          = token.NewFileSet()
+		ctx  generators.Context
+		tags = []string{
+			"genieql", "generate", "structure", "query",
+		}
 	)
-	if configuration, dialect, pkg, err = loadPackageContext(build.Default, t.configName, t.pkg); err != nil {
+
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, "genieql", "generate", "structure", "query")
+	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	if len(taggedFiles.files) == 0 {
@@ -299,14 +273,8 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 		return nil
 	}
 
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  configuration,
-		Dialect:        dialect,
-	}
 	g := []genieql.Generator{}
-	err = genieql.NewUtils(fset).WalkFiles(func(k string, f *ast.File) {
+	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(k string, f *ast.File) {
 		if !taggedFiles.IsTagged(filepath.Base(k)) {
 			return
 		}
@@ -319,25 +287,25 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) error {
 				},
 				generators.StructOptionContext(ctx),
 				generators.StructOptionMappingConfigOptions(
-					genieql.MCOPackage(pkg.ImportPath),
+					genieql.MCOPackage(ctx.CurrentPackage),
 				),
 			)
 		}, genieql.FindConstants(f)...)
 		g = append(g, decls...)
-	}, pkg)
+	}, ctx.CurrentPackage)
 
 	if err != nil {
 		return err
 	}
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 

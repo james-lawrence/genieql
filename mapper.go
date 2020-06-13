@@ -18,12 +18,14 @@ import (
 // MappingConfigOption (MCO) options for building MappingConfigs.
 type MappingConfigOption func(*MappingConfig)
 
-func MCOPackage(p string) MappingConfigOption {
+// MCOPackage set the package name for the configuration.
+func MCOPackage(p *build.Package) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.Package = p
 	}
 }
 
+// MCOTransformations specify the transformations to apply to column names.
 func MCOTransformations(t ...string) MappingConfigOption {
 	return func(mc *MappingConfig) {
 		mc.Transformations = t
@@ -51,6 +53,7 @@ func MCOColumns(columns ...ColumnInfo) MappingConfigOption {
 	}
 }
 
+// NewMappingConfig ...
 func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
 	mc := MappingConfig{}
 
@@ -61,7 +64,7 @@ func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
 
 // MappingConfig TODO...
 type MappingConfig struct {
-	Package         string
+	Package         *build.Package
 	Type            string
 	Transformations []string
 	RenameMap       map[string]string
@@ -73,6 +76,14 @@ func (t *MappingConfig) Apply(options ...MappingConfigOption) {
 	for _, opt := range options {
 		opt(t)
 	}
+}
+
+// Clone the mapping config and apply additional options.
+func (t MappingConfig) Clone(options ...MappingConfigOption) MappingConfig {
+	for _, opt := range options {
+		opt(&t)
+	}
+	return t
 }
 
 // Aliaser ...
@@ -104,13 +115,13 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
+		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
 	}
 
 	columns = t.Columns
-	// if no columns are defined for the mapping lets load generate it from
+	// if no columns are defined for the mapping lets generate it automatically (may result in incorrect results)
 	if len(columns) == 0 {
-		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", t.Package, t.Type))
+		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", t.Package.Name, t.Type))
 		// for now just support the CamelCase -> snakecase.
 		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
 	}
@@ -129,6 +140,7 @@ func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *b
 	)
 }
 
+// MapFieldsToColumns ...
 func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
 	var (
 		err    error
@@ -150,7 +162,7 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 		return err
 	}
 
-	path := filepath.Join(config.Location, config.Database, m.Package, m.Type, name)
+	path := filepath.Join(config.Location, config.Database, m.Package.Name, m.Type, name)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
@@ -158,12 +170,13 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 }
 
 // ReadMapper loads the structure -> result row mapping from disk.
-func ReadMapper(config Configuration, pkg, typ, name string, m *MappingConfig) error {
+func ReadMapper(config Configuration, name string, m *MappingConfig) error {
 	var (
 		err error
 	)
 
-	raw, err := ioutil.ReadFile(filepath.Join(config.Location, config.Database, pkg, typ, name))
+	path := filepath.Join(config.Location, config.Database, m.Package.Name, m.Type, name)
+	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
