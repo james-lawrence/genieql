@@ -14,7 +14,7 @@ func QueryLiteral(name, query string) *ast.GenDecl {
 		Specs: []ast.Spec{
 			&ast.ValueSpec{
 				Names: []*ast.Ident{
-					&ast.Ident{
+					{
 						Name: name,
 						Obj: &ast.Object{
 							Kind: ast.Con,
@@ -39,7 +39,7 @@ func QueryLiteral2(tok token.Token, name string, x ast.Expr) *ast.GenDecl {
 		Specs: []ast.Spec{
 			&ast.ValueSpec{
 				Names: []*ast.Ident{
-					&ast.Ident{
+					{
 						Name: name,
 						Obj: &ast.Object{
 							Kind: ast.Con,

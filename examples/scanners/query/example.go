@@ -5,7 +5,7 @@ import "time"
 
 //go:generate genieql map example snakecase lowercase
 //go:generate genieql scanner default --interface-only --output=example_scanner.gen.go example example3
-//go:generate genieql scanner query-literal --output=example_example3.gen.go example query
+//go:generate genieql scanner query-literal --output=example_query_literal.gen.go example query
 
 type example struct {
 	ID      int

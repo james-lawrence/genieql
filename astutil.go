@@ -47,9 +47,16 @@ func StrictPackageName(name string) func(*build.Package) bool {
 	}
 }
 
+// StrictPackageImport only accepts packages that are an exact match.
+func StrictPackageImport(name string) func(*build.Package) bool {
+	return func(pkg *build.Package) bool {
+		return pkg.ImportPath == name
+	}
+}
+
 // LocatePackage finds a package by its name.
-func LocatePackage(pkgName string, context build.Context, matches func(*build.Package) bool) (*build.Package, error) {
-	pkg, err := context.Import(pkgName, ".", build.IgnoreVendor&build.ImportComment)
+func LocatePackage(pkgName string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
+	pkg, err = context.Import(pkgName, ".", build.IgnoreVendor&build.ImportComment)
 	_, noGoError := err.(*build.NoGoError)
 	if err != nil && !noGoError {
 		return nil, errors.Wrap(err, "failed to import the package")
@@ -362,7 +369,6 @@ func (t utils) FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDe
 	for _, pkg := range pkgs {
 		found = append(found, FindFunc(pkg)...)
 	}
-
 	found = SelectFuncDecl(func(fx *ast.FuncDecl) bool { return f(fx.Name.Name) }, found...)
 	x := len(found)
 	switch {

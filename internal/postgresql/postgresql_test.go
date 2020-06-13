@@ -29,6 +29,8 @@ var _ = Describe("Postgresql", func() {
 					"blk_write_time",
 					"blks_hit",
 					"blks_read",
+					"checksum_failures",
+					"checksum_last_failure",
 					"conflicts",
 					"datid",
 					"datname",

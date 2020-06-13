@@ -58,7 +58,7 @@ func loadPackageContext(ctx build.Context, configName, pkg string) (genieql.Conf
 		return config, dialect, bpkg, err
 	}
 
-	if bpkg, err = genieql.LocatePackage(pkg, ctx, genieql.StrictPackageName(filepath.Base(pkg))); err != nil {
+	if bpkg, err = genieql.LocatePackage(pkg, ctx, genieql.StrictPackageImport(pkg)); err != nil {
 		return config, dialect, bpkg, err
 	}
 

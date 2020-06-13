@@ -34,12 +34,12 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	pkgName, typName := t.extractPackageType(t.packageType)
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	pkgRelativePath, typName := t.extractPackageType(t.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
 		return err
 	}
 
-	if pkg, err = locatePackage(pkgName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
 		return err
 	}
 
@@ -58,7 +58,7 @@ func (t *generateCrud) Execute(*kingpin.ParseContext) error {
 		pkg:  pkg,
 		args: os.Args[1:],
 	}
-	cg := crud.New(config, details, pkgName, typName)
+	cg := crud.New(config, details, pkg.Name, typName)
 	pg := printGenerator{
 		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, cg),

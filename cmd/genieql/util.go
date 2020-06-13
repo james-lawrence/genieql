@@ -7,15 +7,15 @@ import (
 	"go/token"
 	"io"
 	"log"
-	"path/filepath"
+	"os"
 
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 )
 
-func locatePackage(pkg string) (*build.Package, error) {
-	bpkg, err := genieql.LocatePackage(pkg, build.Default, genieql.StrictPackageName(filepath.Base(pkg)))
+func locatePackage(pkg string) (bpkg *build.Package, err error) {
+	bpkg, err = genieql.LocatePackage(pkg, build.Default, genieql.StrictPackageImport(pkg))
 	return bpkg, errors.Wrapf(err, "failed to locate package: %s", pkg)
 }
 
@@ -26,7 +26,7 @@ func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args 
 	)
 	name, _ := bi.extractPackageType(pkgtype)
 
-	if pkg, err = genieql.LocatePackage(name, build.Default, genieql.StrictPackageName(filepath.Base(name))); err != nil {
+	if pkg, err = genieql.LocatePackage(name, build.Default, genieql.StrictPackageImport(name)); err != nil {
 		return genieql.NewErrGenerator(errors.Wrapf(err, "failed to locate package: %s", name))
 	}
 
@@ -109,9 +109,8 @@ func (t TaggedFiles) IsTagged(name string) bool {
 func currentPackage(dir string) *build.Package {
 	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
 	if err != nil {
-		log.Printf("failed to load package for %s %v\n", dir, errors.Wrap(err, ""))
+		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
 	}
-
 	return pkg
 }
 
@@ -119,16 +118,21 @@ func findTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
 	var (
 		err         error
 		taggedFiles TaggedFiles
+		wd          string
 	)
 
-	normal, err := build.Default.Import(path, ".", build.IgnoreVendor)
+	if wd, err = os.Getwd(); err != nil {
+		return taggedFiles, err
+	}
+
+	normal, err := build.Default.Import(path, wd, build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err
 	}
 
 	ctx := build.Default
 	ctx.BuildTags = tags
-	tagged, err := ctx.Import(path, ".", build.IgnoreVendor)
+	tagged, err := ctx.Import(path, wd, build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err
 	}

@@ -110,7 +110,7 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	columns = t.Columns
 	// if no columns are defined for the mapping lets load generate it from
 	if len(columns) == 0 {
-		log.Println(errors.Wrapf(err, "no defined columns for: %s.%s generating fake columns", t.Package, t.Type))
+		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", t.Package, t.Type))
 		// for now just support the CamelCase -> snakecase.
 		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
 	}

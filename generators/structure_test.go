@@ -2,6 +2,7 @@ package generators_test
 
 import (
 	"bytes"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -21,6 +22,14 @@ import (
 )
 
 var _ = ginkgo.Describe("Structure", func() {
+	pkg := &build.Package{
+		Name: "example",
+		Dir:  ".fixtures",
+		GoFiles: []string{
+			"example.go",
+		},
+	}
+
 	config := genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), "generators-test.config"),
@@ -58,7 +67,11 @@ var _ = ginkgo.Describe("Structure", func() {
 			func(table string) StructOption {
 				return StructOptionTableStrategy(table)
 			},
-			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
+			StructOptionContext(Context{
+				Configuration:  config,
+				Dialect:        dialect,
+				CurrentPackage: pkg,
+			}),
 		),
 		Entry(
 			"type1 structure with configuration",
@@ -72,7 +85,11 @@ const Lowercase = "type1"
 			func(table string) StructOption {
 				return StructOptionTableStrategy(table)
 			},
-			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
+			StructOptionContext(Context{
+				Configuration:  config,
+				Dialect:        dialect,
+				CurrentPackage: pkg,
+			}),
 		),
 	)
 
@@ -99,7 +116,11 @@ const Lowercase = "type1"
 			func(table string) StructOption {
 				return StructOptionTableStrategy(table)
 			},
-			StructOptionContext(Context{Configuration: config, Dialect: dialect}),
+			StructOptionContext(Context{
+				Configuration:  config,
+				Dialect:        dialect,
+				CurrentPackage: pkg,
+			}),
 		),
 	)
 })

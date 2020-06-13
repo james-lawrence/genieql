@@ -63,7 +63,7 @@ var _ = Describe("Configuration", func() {
 
 		It("should error if port is invalid", func() {
 			_, err := url.Parse("postgres://soandso@localhost:abc1/databasename?sslmode=disable")
-			Expect(err.Error()).To(Equal("parse postgres://soandso@localhost:abc1/databasename?sslmode=disable: invalid port \":abc1\" after host"))
+			Expect(err.Error()).To(Equal("parse \"postgres://soandso@localhost:abc1/databasename?sslmode=disable\": invalid port \":abc1\" after host"))
 		})
 	})
 

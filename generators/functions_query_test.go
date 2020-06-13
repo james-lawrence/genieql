@@ -56,6 +56,9 @@ var _ = ginkgo.Describe("Query Functions", func() {
 	pkg := &build.Package{
 		Name: "example",
 		Dir:  ".fixtures",
+		GoFiles: []string{
+			"example.go",
+		},
 	}
 
 	configuration := genieql.Configuration{
@@ -157,7 +160,7 @@ type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			".fixtures/functions-query/output8.go",
 		),
 		Entry(
-			"example 8 - structure parameter",
+			"example 8 - structure pointer parameter",
 			"package example; type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner",
 			".fixtures/functions-query/output9.go",
 		),

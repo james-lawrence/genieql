@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
+	"log"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -20,6 +21,7 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		m      genieql.MappingConfig
 		pkg    *build.Package
 	)
+
 	ipath := importPath(ctx, param.Type)
 	if err = ctx.Configuration.ReadMap(ipath, types.ExprString(determineType(param.Type)), "default", &m); err != nil {
 		return m, infos, err
@@ -29,12 +31,11 @@ func mappedParam(ctx Context, param *ast.Field) (genieql.MappingConfig, []genieq
 		return m, infos, err
 	}
 
+	log.Println("IMPORT PATH CHECK", ipath, "==", ctx.CurrentPackage.ImportPath)
 	if ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
-	} else {
-		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
-			return m, infos, err
-		}
+	} else if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageImport(ipath)); err != nil {
+		return m, infos, err
 	}
 
 	infos, _, err = m.MappedColumnInfo(driver, ctx.Dialect, ctx.FileSet, pkg)

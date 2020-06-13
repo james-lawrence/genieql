@@ -19,7 +19,7 @@ var _ = Describe("drivers", func() {
 		Entry("handle float64", "float64", true, "localVariable.Float64"),
 		Entry("handle bool", "bool", true, "localVariable.Bool"),
 		Entry("handle string", "string", true, "localVariable.String"),
-		Entry("not handle time.Time", "time.Time", false, "time.Time"),
+		Entry("handle time.Time", "time.Time", true, "localVariable.Time"),
 		Entry("handle *int", "*int", true, "int(localVariable.Int64)"),
 		Entry("handle *int32", "*int32", true, "int32(localVariable.Int64)"),
 		Entry("handle *int64", "*int64", true, "localVariable.Int64"),
@@ -28,7 +28,7 @@ var _ = Describe("drivers", func() {
 		Entry("handle *float64", "*float64", true, "localVariable.Float64"),
 		Entry("handle *bool", "*bool", true, "localVariable.Bool"),
 		Entry("handle *string", "*string", true, "localVariable.String"),
-		Entry("not handle *time.Time", "*time.Time", false, "*time.Time"),
+		Entry("handle *time.Time", "*time.Time", true, "localVariable.Time"),
 	)
 
 	DescribeTable("LookupNullableType",
@@ -41,7 +41,7 @@ var _ = Describe("drivers", func() {
 		Entry("float64", "float64", "sql.NullFloat64"),
 		Entry("bool", "bool", "sql.NullBool"),
 		Entry("string", "string", "sql.NullString"),
-		Entry("time.Time", "time.Time", "time.Time"),
+		Entry("time.Time", "time.Time", "sql.NullTime"),
 		Entry("*int", "*int", "sql.NullInt64"),
 		Entry("*int32", "*int32", "sql.NullInt64"),
 		Entry("*int64", "*int64", "sql.NullInt64"),
@@ -50,13 +50,13 @@ var _ = Describe("drivers", func() {
 		Entry("*float64", "*float64", "sql.NullFloat64"),
 		Entry("*bool", "*bool", "sql.NullBool"),
 		Entry("*string", "*string", "sql.NullString"),
-		Entry("*time.Time", "*time.Time", "time.Time"),
+		Entry("*time.Time", "*time.Time", "sql.NullTime"),
 	)
 
 	var (
 		exampleDriver = NewDriver(
-			NullableType{Type: "string", NullType: "sql.NullString", NullField: "String"},
-			NullableType{Type: "int", NullType: "sql.NullInt64", NullField: "Int64"},
+			genieql.NullableTypeDefinition{Type: "string", NullType: "sql.NullString", NullField: "String"},
+			genieql.NullableTypeDefinition{Type: "int", NullType: "sql.NullInt64", NullField: "Int64"},
 		)
 	)
 	DescribeTable("driver lookup nullable",

@@ -42,12 +42,12 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 		pkg     *build.Package
 	)
 
-	pkgName, typName := t.extractPackageType(t.packageType)
-	if pkg, err = locatePackage(pkgName); err != nil {
+	pkgRelativePath, typName := t.extractPackageType(t.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
 		return err
 	}
 
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
 		return err
 	}
 
@@ -93,7 +93,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) error {
 
 	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
 
-	cg := crud.NewFunctions(ctx, mapping, stringsx.DefaultIfBlank(t.queryer, config.Queryer), details, pkgName, typName, scanner, uniqScanner, fields)
+	cg := crud.NewFunctions(ctx, mapping, stringsx.DefaultIfBlank(t.queryer, config.Queryer), details, pkg.Name, typName, scanner, uniqScanner, fields)
 
 	pg := printGenerator{
 		pkg:      pkg,

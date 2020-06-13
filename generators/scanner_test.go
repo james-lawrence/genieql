@@ -22,10 +22,13 @@ var _ = ginkgo.Describe("Scanner", func() {
 	pkg := &build.Package{
 		Name: "example",
 		Dir:  ".fixtures",
+		GoFiles: []string{
+			"example.go",
+		},
 	}
 	config := genieql.MustConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join(filepath.Join(localdirectory, ".fixtures", ".genieql"), "generators-test.config"),
+			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
 		),
 	)
 	genieql.RegisterDriver(config.Driver, noopDriver{})

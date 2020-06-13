@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"os"
@@ -30,7 +31,13 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	var (
 		err error
 		dst io.WriteCloser = os.Stdout
+		buf bytes.Buffer
 	)
+
+	if err = g.Generate(&buf); err != nil {
+		log.Printf("%s: failed to generate: %+v\n", genieql.PrintDebug(), err)
+		return err
+	}
 
 	if len(fpath) > 0 {
 		log.Println("writing results to", fpath)
@@ -40,8 +47,7 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 		defer dst.Close()
 	}
 
-	if err = g.Generate(dst); err != nil {
-		log.Printf("%s: failed to generate: %+v\n", genieql.PrintDebug(), err)
+	if _, err = io.Copy(dst, &buf); err != nil {
 		return err
 	}
 

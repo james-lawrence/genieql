@@ -224,16 +224,16 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	pkgName, typName := t.extractPackageType(t.packageType)
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	pkgRelativePath, typName := t.extractPackageType(t.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
+		return err
+	}
+
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
 		return err
 	}
 
 	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
-		return err
-	}
-
-	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
 
@@ -327,16 +327,16 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) error {
 		fset    = token.NewFileSet()
 	)
 
-	pkgName, typName := t.extractPackageType(t.packageType)
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkgName, typName, t.mapName); err != nil {
+	pkgRelativePath, typName := t.extractPackageType(t.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
+		return err
+	}
+
+	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg.Name, typName, t.mapName); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 
 	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
-		return err
-	}
-
-	if pkg, err = locatePackage(pkgName); err != nil {
 		return err
 	}
 

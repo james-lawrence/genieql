@@ -45,6 +45,7 @@ func (t buildInfo) extractPackageType(s string) (string, string) {
 	if i := strings.LastIndex(s, "."); i > -1 {
 		return s[:i], s[i+1:]
 	}
+
 	return t.CurrentPKG.ImportPath, s
 }
 

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strings"
 
 	"github.com/alecthomas/kingpin"
 	_ "github.com/lib/pq"
@@ -69,7 +71,7 @@ func main() {
 		if bi.DebugEnabled {
 			fmts = "%+v\n"
 		}
-		log.Printf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, "parsing failed")))
+		log.Printf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, fmt.Sprintf("parsing failed: %s", strings.Join(os.Args, " ")))))
 		log.Fatalln(genieql.PrintDebug())
 	}
 

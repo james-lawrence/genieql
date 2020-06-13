@@ -22,7 +22,7 @@ var _ = Describe("Genieql", func() {
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			err := errors.Cause(FormatOutput(buffer, []byte(invalidCode)))
-			Expect(err).To(MatchError("2:1: expected 'package', found 'func'"))
+			Expect(err).To(MatchError("generated.go:2:1: expected 'package', found 'func'"))
 		})
 	})
 })

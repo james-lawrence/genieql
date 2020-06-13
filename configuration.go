@@ -82,6 +82,7 @@ func ReadConfiguration(config *Configuration) error {
 		err error
 		raw []byte
 	)
+
 	if raw, err = ioutil.ReadFile(filepath.Join(config.Location, config.Name)); err != nil {
 		return errors.Wrap(err, "failed to read configuration file")
 	}

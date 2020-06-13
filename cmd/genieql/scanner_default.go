@@ -30,12 +30,14 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		pkg           *build.Package
 		fset          = token.NewFileSet()
 	)
-	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkgName, typName, t.scanner.mapName); err != nil {
+
+	pkgRelativePath, typName := t.scanner.extractPackageType(t.scanner.packageType)
+	if pkg, err = locatePackage(pkgRelativePath); err != nil {
 		return err
 	}
 
-	if pkg, err = locatePackage(pkgName); err != nil {
+	log.Println("PACKAGE NAME", pkg.Name, pkg.ImportPath, pkgRelativePath)
+	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkg.Name, typName, t.scanner.mapName); err != nil {
 		return err
 	}
 
@@ -66,7 +68,9 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) error {
 		Dialect:        dialect,
 	}
 
-	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
+	fields := []*ast.Field{
+		{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)},
+	}
 	gen := generators.NewScanner(
 		generators.ScannerOptionContext(ctx),
 		generators.ScannerOptionName(t.scanner.scannerName),

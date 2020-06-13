@@ -113,7 +113,6 @@ type driver struct {
 
 func (t driver) LookupType(l string) (NullableTypeDefinition, bool) {
 	for _, s := range t.supported {
-		println("checking", s.Type, "against", l)
 		if s.Type == l {
 			return s, true
 		}
