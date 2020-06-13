@@ -37,7 +37,6 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-
 	if ctx, err = loadGeneratorContext(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}

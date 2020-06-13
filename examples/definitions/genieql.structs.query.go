@@ -2,4 +2,4 @@
 
 package definitions
 
-const QueryExample1, QueryExample2 = "SELECT id FROM example1", "SELECT uuid_field FROM example2"
+const QueryExample1, QueryExample2 = "SELECT uuid_field FROM example1", "SELECT uuid_field FROM example2"

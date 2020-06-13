@@ -238,7 +238,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
-	nullableTypes := composeNullableType(drivers.DefaultNullableTypes, t.Driver.NullableType)
+	nullableTypes := composeNullableType(t.Driver.NullableType, drivers.DefaultNullableTypes)
 	typeDefinitions := composeTypeDefinitionsExpr(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
 
 	funcMap := template.FuncMap{

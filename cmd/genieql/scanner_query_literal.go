@@ -3,7 +3,6 @@ package main
 import (
 	"go/ast"
 	"go/build"
-	"go/token"
 	"log"
 	"os"
 
@@ -19,26 +18,22 @@ type queryLiteral struct {
 	queryLiteral string
 }
 
-func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
+func (t *queryLiteral) Execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		query         string
-		columns       []genieql.ColumnInfo
-		config        genieql.Configuration
-		dialect       genieql.Dialect
-		mappingConfig genieql.MappingConfig
-		pkg           *build.Package
-		mpkg          *build.Package
-		pkgset        []*ast.Package
-		fset          = token.NewFileSet()
+		ctx     generators.Context
+		query   string
+		columns []genieql.ColumnInfo
+		mapping genieql.MappingConfig
+		pkg     *build.Package
+		pkgset  []*ast.Package
 	)
 
-	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if mpkg, err = locatePackage(pkgName); err != nil {
+	pkgRelativePath, typName := t.scanner.extractPackageType(t.scanner.packageType)
+	if ctx, err = loadGeneratorContext(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
-	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, mpkg, typName, t.scanner.mapName); err != nil {
+	if err = ctx.Configuration.ReadMap(t.scanner.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return err
 	}
 
@@ -47,7 +42,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if pkgset, err = genieql.NewUtils(fset).ParsePackages(pkg); err != nil {
+	if pkgset, err = genieql.NewUtils(ctx.FileSet).ParsePackages(pkg); err != nil {
 		return err
 	}
 
@@ -55,28 +50,17 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 		return err
 	}
 
-	if columns, err = dialect.ColumnInformationForQuery(query); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForQuery(query); err != nil {
 		return err
 	}
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
-	(&mappingConfig).Apply(
-		genieql.MCOColumns(columns...),
-	)
-
-	if err = config.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
+	if err = ctx.Configuration.WriteMap(t.scanner.mapName, mapping.Clone(genieql.MCOColumns(columns...))); err != nil {
 		log.Fatalln(err)
 	}
 	// END HACK!
 
-	ctx := generators.Context{
-		FileSet:        fset,
-		CurrentPackage: pkg,
-		Configuration:  config,
-		Dialect:        dialect,
-	}
-
-	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
+	fields := []*ast.Field{{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
 	gen := generators.NewScanner(
 		generators.ScannerOptionContext(ctx),
 		generators.ScannerOptionName(t.scanner.scannerName),
@@ -86,7 +70,7 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) error {
 	)
 
 	hg := headerGenerator{
-		fset: fset,
+		fset: ctx.FileSet,
 		pkg:  pkg,
 		args: os.Args[1:],
 	}
