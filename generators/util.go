@@ -55,7 +55,7 @@ func argumentsNative(ctx Context) transforms {
 			return x
 		}
 
-		log.Println("TRANSFORMING", types.ExprString(x), "->", types.ExprString(out))
+		// log.Println("TRANSFORMING", types.ExprString(x), "->", types.ExprString(out))
 		return out
 	}
 }

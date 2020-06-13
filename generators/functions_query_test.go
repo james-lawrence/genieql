@@ -8,10 +8,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	_ "github.com/lib/pq"
@@ -61,9 +63,14 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		},
 	}
 
-	configuration := genieql.Configuration{
-		Location: ".fixtures/.genieql",
-	}
+	configuration := genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
+		),
+	)
+
+	driver, err := genieql.LookupDriver(drivers.StandardLib)
+	panicOnError(err)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
@@ -93,16 +100,17 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		},
 	}
 
-	FDescribeTable("build a query function from a function prototype",
+	DescribeTable("build a query function from a function prototype",
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
 			ctx := Context{
-				CurrentPackage: pkg,
-				FileSet:        fset,
 				Configuration:  configuration,
+				CurrentPackage: pkg,
+				FileSet:        token.NewFileSet(),
 				Dialect:        dialect{},
+				Driver:         driver,
 			}
 
 			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
@@ -179,9 +187,11 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			formatted := bytes.NewBuffer([]byte{})
 			fset := token.NewFileSet()
 			ctx := Context{
-				CurrentPackage: pkg,
-				FileSet:        fset,
 				Configuration:  configuration,
+				CurrentPackage: pkg,
+				FileSet:        token.NewFileSet(),
+				Dialect:        dialect{},
+				Driver:         driver,
 			}
 
 			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
@@ -231,8 +241,15 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 
+			ctx := Context{
+				Configuration:  configuration,
+				CurrentPackage: pkg,
+				FileSet:        token.NewFileSet(),
+				Dialect:        dialect{},
+				Driver:         driver,
+			}
 			buffer.WriteString("package example\n\n")
-			Expect(NewQueryFunction(options...).Generate(buffer)).ToNot(HaveOccurred())
+			Expect(NewQueryFunction(ctx, options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())

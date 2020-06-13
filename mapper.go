@@ -148,7 +148,7 @@ func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Packag
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package, t.Type)
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
 	}
 
 	mFields, uFields := mapFields(columns, fields, t.Aliaser())

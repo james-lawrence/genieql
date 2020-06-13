@@ -6,10 +6,8 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/zieckey/goini"
 
@@ -354,7 +352,6 @@ func (t queryFunction) Generate(dst io.Writer) error {
 		}
 	}
 
-	log.Println("generating", t.Name, spew.Sdump(t.Parameters))
 	parameters = buildParameters(
 		t.BuiltinQuery == nil,
 		astutil.Field(t.Queryer, ast.NewIdent(t.QueryerName)),
