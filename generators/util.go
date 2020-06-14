@@ -377,14 +377,21 @@ func builtinType(x ast.Expr) bool {
 		}
 	}
 
+	// TODO these shouldn't really be here. I suppose. think of a way to associate with the driver.
 	switch name {
 	case "interface{}":
-		return true
-	case "time.Time":
-		return true
+		fallthrough
+	case "time.Time", "[]time.Time", "time.Duration", "[]time.Duration":
+		fallthrough
 	case "json.RawMessage":
-		return true
+		fallthrough
 	case "net.IPNet", "[]net.IPNet":
+		fallthrough
+	case "net.IP", "[]net.IP":
+		fallthrough
+	case "net.HardwareAddr":
+		fallthrough
+	case "[]byte", "[]int", "[]string":
 		return true
 	default:
 		return false
