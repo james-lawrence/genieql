@@ -195,3 +195,11 @@ func ConfigurationOptionDriver(driver string) ConfigurationOption {
 		return nil
 	}
 }
+
+// ConfigurationOptionDialect specify the dialect
+func ConfigurationOptionDialect(d string) ConfigurationOption {
+	return func(c *Configuration) error {
+		c.Dialect = d
+		return nil
+	}
+}

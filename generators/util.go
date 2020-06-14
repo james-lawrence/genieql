@@ -28,7 +28,8 @@ func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, e
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
-			"expr": types.ExprString,
+			"expr":        types.ExprString,
+			"dereference": unwrapExpr,
 		}
 	)
 
@@ -277,6 +278,10 @@ func builtinType(x ast.Expr) bool {
 	case "interface{}":
 		return true
 	case "time.Time":
+		return true
+	case "json.RawMessage":
+		return true
+	case "net.IPNet", "[]net.IPNet":
 		return true
 	default:
 		return false

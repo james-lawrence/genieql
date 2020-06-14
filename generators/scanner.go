@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
@@ -256,6 +257,7 @@ func (t scanner) Generate(dst io.Writer) error {
 
 		return expr
 	}
+
 	funcMap := template.FuncMap{
 		"astDebug": func(e ast.Node) ast.Node {
 			log.Println(astutil.MustPrint(e))
@@ -351,10 +353,12 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) (output ast.
 	)
 
 	if d, err = t.LookupTypeDefinition(column.Type); err != nil {
+		log.Println("BOOM 1")
 		return nil, err
 	}
 
 	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: column.Dst}); err != nil {
+		log.Println("BOOM 2", spew.Sdump(d), spew.Sdump(column))
 		return nil, err
 	}
 
