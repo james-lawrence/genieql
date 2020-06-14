@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
-	"go/types"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -146,7 +144,6 @@ func fieldFromColumnInfo(ctx generators.Context, infos ...genieql.ColumnInfo) []
 			ident = ast.NewIdent(d.Native)
 		}
 
-		log.Println("fieldFromColumnInfo", types.ExprString(ident), info.Name)
 		r = append(r, astutil.Field(ident, ast.NewIdent(info.Name)))
 	}
 	return r
