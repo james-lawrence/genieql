@@ -15,7 +15,7 @@ func init() {
 const PQ = "github.com/lib/pq"
 
 const pqDefaultDecode = `func() {
-	if err := {{ .From | expr }}.AssignTo({{.To | dereference | expr}}); err != nil {
+	if err := {{ .From | expr }}.AssignTo({{.To | autoreference | expr}}); err != nil {
 		return err
 	}
 }`

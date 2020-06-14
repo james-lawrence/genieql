@@ -1,6 +1,8 @@
 package scanners_test
 
 import (
+	"log"
+
 	. "bitbucket.org/jatone/genieql/internal/sqlxtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,6 +12,7 @@ import (
 )
 
 func TestIntegrationTests(t *testing.T) {
+	log.SetFlags(log.Flags() | log.Lshortfile)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Scanners Suite")
 }

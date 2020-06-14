@@ -14,7 +14,7 @@ func init() {
 const PGX = "github.com/jackc/pgx"
 
 const pgxDefaultDecode = `func() {
-	if err := {{ .From | expr }}.AssignTo({{.To | dereference | expr}}); err != nil {
+	if err := {{ .From | expr }}.AssignTo({{.To | autoreference | expr}}); err != nil {
 		return err
 	}
 }`

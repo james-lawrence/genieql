@@ -12,8 +12,8 @@ import (
 var exampleTime, _ = time.Parse(time.RFC3339, "2016-03-15T02:51:14Z")
 
 var table = []Type1{
-	Type1{Field1: "Hello1", Field3: false, Field5: 1, Field7: exampleTime, Field8: newTime(exampleTime)},
-	Type1{Field1: "Hello2", Field2: newString("World"), Field3: false, Field4: newBool(true), Field5: 1, Field6: newInt(2), Field7: exampleTime, Field8: newTime(exampleTime)},
+	{Field1: "Hello1", Field3: false, Field5: 1, Field7: exampleTime, Field8: newTime(exampleTime)},
+	{Field1: "Hello2", Field2: newString("World"), Field3: false, Field4: newBool(true), Field5: 1, Field6: newInt(2), Field7: exampleTime, Field8: newTime(exampleTime)},
 }
 
 var _ = Describe("Type1", func() {

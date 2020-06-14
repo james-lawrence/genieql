@@ -366,7 +366,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
-				{{ .To | expr }} = tmp
+				{{ .To | debug | expr }} = tmp
 			}
 		}`,
 	},
