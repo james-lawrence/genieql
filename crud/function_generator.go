@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/types"
 	"io"
-
-	"github.com/serenize/snaker"
+	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
+	"github.com/serenize/snaker"
 )
 
 func NewFunctions(ctx generators.Context, mapper genieql.MappingConfig, queryer string, details genieql.TableDetails, pkg, typ string, scanner, uniqScanner *ast.FuncDecl, fields []*ast.Field) genieql.Generator {
@@ -69,7 +70,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		options = []generators.QueryFunctionOption{
 			queryerOption,
 			generators.QFOBuiltinQueryFromString(query),
-			generators.QFOSharedParameters(fieldFromColumnInfo(column)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(t.ctx, column)...),
 		}
 
 		findOptions := append(
@@ -88,10 +89,10 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 	}
 
 	if len(naturalKey) > 0 {
-	query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
+		query = t.TableDetails.Dialect.Select(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(t.ctx, naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
@@ -101,7 +102,7 @@ func (t funcGenerator) Generate(dst io.Writer) error {
 		query = t.TableDetails.Dialect.Delete(t.TableDetails.Table, names, naturalKey.ColumnNames())
 		options = []generators.QueryFunctionOption{
 			queryerOption,
-			generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
+			generators.QFOSharedParameters(fieldFromColumnInfo(t.ctx, naturalKey...)...),
 			generators.QFOBuiltinQueryFromString(query),
 			generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
 			generators.QFOScanner(t.UniqScanner),
@@ -123,10 +124,10 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 	options := []generators.QueryFunctionOption{
 		queryerOption,
 		generators.QFOParameters(
-			append(fieldFromColumnInfo(naturalKey...), updateParam),
+			append(fieldFromColumnInfo(t.ctx, naturalKey...), updateParam),
 			append(
 				generators.StructureQueryParameters(updateParam, updateFields...),
-				astutil.MapFieldsToNameExpr(fieldFromColumnInfo(naturalKey...)...)...,
+				astutil.MapFieldsToNameExpr(fieldFromColumnInfo(t.ctx, naturalKey...)...)...,
 			),
 		),
 		generators.QFOBuiltinQueryFromString(query),
@@ -137,10 +138,16 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 	return generators.NewQueryFunction(t.ctx, options...)
 }
 
-func fieldFromColumnInfo(infos ...genieql.ColumnInfo) []*ast.Field {
+func fieldFromColumnInfo(ctx generators.Context, infos ...genieql.ColumnInfo) []*ast.Field {
 	r := make([]*ast.Field, 0, len(infos))
 	for _, info := range infos {
-		r = append(r, astutil.Field(ast.NewIdent(info.Type), ast.NewIdent(info.Name)))
+		ident := ast.NewIdent(info.Type)
+		if d, err := ctx.Driver.LookupType(info.Type); err == nil {
+			ident = ast.NewIdent(d.Native)
+		}
+
+		log.Println("fieldFromColumnInfo", types.ExprString(ident), info.Name)
+		r = append(r, astutil.Field(ident, ast.NewIdent(info.Name)))
 	}
 	return r
 }

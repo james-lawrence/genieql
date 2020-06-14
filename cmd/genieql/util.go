@@ -63,12 +63,12 @@ func (t printGenerator) Generate(dst io.Writer) error {
 	}
 
 	if err = genieql.FormatOutput(&formatted, buffer.Bytes()); err != nil {
-		return err
+		return errors.Wrap(err, buffer.String())
 	}
 
 	_, err = io.Copy(dst, &formatted)
 
-	return err
+	return errors.Wrap(err, formatted.String())
 }
 
 type printNodes struct{}

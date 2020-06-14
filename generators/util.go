@@ -30,6 +30,9 @@ func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, e
 		m      = template.FuncMap{
 			"expr":          types.ExprString,
 			"autoreference": autoreference,
+			"error": func(err error) ast.Node {
+				return astutil.Return()
+			},
 		}
 	)
 
@@ -148,13 +151,14 @@ func decode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
 }
 
 // encode a column to a local variable.
-func encode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
+func encode(ctx Context) func(ast.Expr, int, genieql.ColumnMap) (ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	return func(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+	return func(failure ast.Expr, i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
 		type stmtCtx struct {
-			From ast.Expr
-			To   ast.Expr
-			Type ast.Expr
+			Error ast.Expr
+			From  ast.Expr
+			To    ast.Expr
+			Type  ast.Expr
 		}
 
 		var (
@@ -171,20 +175,14 @@ func encode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
 		if d.Encode == "" {
 			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, d.Type, d.NullType)
 			return nil, nil
-			// return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
 		}
 
 		from := unwrapExpr(column.Dst)
-		// log.Println(types.ExprString(local), spew.Sdump(column), spew.Sdump(d))
 		if _, ok := column.Type.(*ast.StarExpr); ok {
 			from = &ast.StarExpr{X: from}
 		}
-		// log.Printf("wrapped from %s %t -> %s - %s\n", d.Type, d.Nullable, types.ExprString(from), spew.Sdump(column))
-		// } else {
-		// 	log.Printf("unwrapped from %s %t -> %s - %s\n", d.Type, d.Nullable, types.ExprString(from), spew.Sdump(column))
-		// }
 
-		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Type: unwrapExpr(column.Type), From: from, To: local}); err != nil {
+		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Error: failure, Type: unwrapExpr(column.Type), From: from, To: local}); err != nil {
 			return nil, err
 		}
 

@@ -19,6 +19,12 @@ const pgxDefaultDecode = `func() {
 	}
 }`
 
+const pgxDefaultEncode = `func() {
+	if err := {{ .To | expr }}.Set({{.From | autoreference | expr}}); err != nil {
+		return {{ .Error | expr }}(nil, err)
+	}
+}`
+
 var pgx = []genieql.NullableTypeDefinition{
 	// cannot support OID yet... due to no field to access.
 	// {Type: "pgtype.OID", Native: stringExprString, NullType: "pgtype.OIDValue", NullField: "Text"}
@@ -29,6 +35,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.CIDRArray",
@@ -37,6 +44,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Macaddr",
@@ -45,6 +53,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Addr",
 		Decoder:   &pgtype.Macaddr{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Name",
@@ -53,6 +62,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Text",
 		Decoder:   &pgtype.Name{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Inet",
@@ -61,6 +71,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Numeric",
@@ -69,6 +80,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Int",
 		Decoder:   &pgtype.Numeric{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Bytea",
@@ -77,6 +89,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.Bytea{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Bit",
@@ -85,6 +98,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.Bit{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Varbit",
@@ -93,6 +107,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.Varbit{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Bool",
@@ -101,6 +116,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bool",
 		Decoder:   &pgtype.Bool{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Float4",
@@ -109,6 +125,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Float",
 		Decoder:   &pgtype.Float4{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Float8",
@@ -117,6 +134,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Float",
 		Decoder:   &pgtype.Float8{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int2",
@@ -125,6 +143,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Int",
 		Decoder:   &pgtype.Int2{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int2Array",
@@ -133,6 +152,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.Int2Array{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int4",
@@ -141,6 +161,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Int",
 		Decoder:   &pgtype.Int4{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int4Array",
@@ -149,6 +170,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.Int4Array{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int8",
@@ -157,6 +179,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Int",
 		Decoder:   &pgtype.Int8{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Int8Array",
@@ -165,6 +188,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.Int8Array{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Text",
@@ -173,6 +197,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "String",
 		Decoder:   &pgtype.Text{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Varchar",
@@ -181,6 +206,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "String",
 		Decoder:   &pgtype.Varchar{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.BPChar",
@@ -189,6 +215,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "String",
 		Decoder:   &pgtype.BPChar{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Date",
@@ -197,6 +224,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Time",
 		Decoder:   &pgtype.Date{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Timestamp",
@@ -205,6 +233,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Time",
 		Decoder:   &pgtype.Timestamp{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Timestamptz",
@@ -213,6 +242,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Time",
 		Decoder:   &pgtype.Timestamptz{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.Interval",
@@ -221,6 +251,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Microseconds",
 		Decoder:   &pgtype.Interval{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.UUID",
@@ -229,6 +260,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.UUID{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.UUIDArray",
@@ -237,6 +269,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.UUIDArray{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.JSONB",
@@ -245,6 +278,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSONB{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "pgtype.JSON",
@@ -253,6 +287,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "json.RawMessage",
@@ -261,6 +296,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "*json.RawMessage",
@@ -270,6 +306,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "net.IPNet",
@@ -278,6 +315,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "*net.IPNet",
@@ -287,6 +325,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "[]net.IPNet",
@@ -295,6 +334,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 	{
 		Type:      "*[]net.IPNet",
@@ -304,5 +344,6 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
 		Decode:    pgxDefaultDecode,
+		Encode:    pgxDefaultEncode,
 	},
 }
