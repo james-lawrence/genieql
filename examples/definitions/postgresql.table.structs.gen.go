@@ -32,7 +32,7 @@ type Example1 struct {
 	MacaddrField         net.HardwareAddr
 	NumericField         float64
 	RealField            float32
-	SmallintField        int16
+	SmallintField        int
 	TextField            string
 	TimestampField       time.Time
 	UUIDArray            []string

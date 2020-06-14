@@ -120,7 +120,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "pgtype.Int2",
-		Native:    int16ExprString,
+		Native:    intExprString,
 		NullType:  "pgtype.Int2",
 		NullField: "Int",
 		Decoder:   &pgtype.Int2{},
@@ -136,7 +136,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "pgtype.Int4",
-		Native:    int32ExprString,
+		Native:    intExprString,
 		NullType:  "pgtype.Int4",
 		NullField: "Int",
 		Decoder:   &pgtype.Int4{},
@@ -152,7 +152,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "pgtype.Int8",
-		Native:    int64ExprString,
+		Native:    intExprString,
 		NullType:  "pgtype.Int8",
 		NullField: "Int",
 		Decoder:   &pgtype.Int8{},

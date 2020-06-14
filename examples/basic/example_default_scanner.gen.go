@@ -71,24 +71,20 @@ func (t exampleScannerStatic) Scan(arg0 *example) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Time
-		arg0.Created = tmp
+	if err := c0.AssignTo(&arg0.Created); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.String
-		arg0.Email = &tmp
+	if err := c1.AssignTo(&arg0.Email); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Int
-		arg0.ID = tmp
+	if err := c2.AssignTo(&arg0.ID); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Time
-		arg0.Updated = tmp
+	if err := c3.AssignTo(&arg0.Updated); err != nil {
+		return err
 	}
 
 	return t.Rows.Err()
@@ -138,24 +134,20 @@ func (t ExampleScannerStaticRow) Scan(arg0 *example) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Time
-		arg0.Created = tmp
+	if err := c0.AssignTo(&arg0.Created); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.String
-		arg0.Email = &tmp
+	if err := c1.AssignTo(&arg0.Email); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Int
-		arg0.ID = tmp
+	if err := c2.AssignTo(&arg0.ID); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Time
-		arg0.Updated = tmp
+	if err := c3.AssignTo(&arg0.Updated); err != nil {
+		return err
 	}
 
 	return nil

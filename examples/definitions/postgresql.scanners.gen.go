@@ -352,134 +352,108 @@ func (t example1ScannerStatic) Scan(e *Example1) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Int
-		e.BigintField = tmp
+	if err := c0.AssignTo(&e.BigintField); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.Bytes
-		e.BitField = tmp
+	if err := c1.AssignTo(&e.BitField); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Bytes
-		e.BitVaryingField = tmp
+	if err := c2.AssignTo(&e.BitVaryingField); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Bool
-		e.BoolField = tmp
+	if err := c3.AssignTo(&e.BoolField); err != nil {
+		return err
 	}
 
-	if c4.Valid {
-		tmp := c4.Bytes
-		e.ByteArrayField = tmp
+	if err := c4.AssignTo(&e.ByteArrayField); err != nil {
+		return err
 	}
 
-	if c5.Valid {
-		tmp := c5.String
-		e.CharacterField = tmp
+	if err := c5.AssignTo(&e.CharacterField); err != nil {
+		return err
 	}
 
-	if c6.Valid {
-		tmp := c6.String
-		e.CharacterFixedField = tmp
+	if err := c6.AssignTo(&e.CharacterFixedField); err != nil {
+		return err
 	}
 
-	if c7.Valid {
-		tmp := c7.IPNet
-		e.CidrField = tmp
+	if err := c7.AssignTo(&e.CidrField); err != nil {
+		return err
 	}
 
-	if c8.Valid {
-		tmp := c8.Int
-		e.DecimalField = tmp
+	if err := c8.AssignTo(&e.DecimalField); err != nil {
+		return err
 	}
 
-	if c9.Valid {
-		tmp := c9.Float
-		e.DoublePrecisionField = tmp
+	if err := c9.AssignTo(&e.DoublePrecisionField); err != nil {
+		return err
 	}
 
-	if c10.Valid {
-		tmp := c10.IPNet
-		e.InetField = tmp
+	if err := c10.AssignTo(&e.InetField); err != nil {
+		return err
 	}
 
-	if c11.Valid {
-		tmp := c11.Elements
-		e.Int2Array = tmp
+	if err := c11.AssignTo(&e.Int2Array); err != nil {
+		return err
 	}
 
-	if c12.Valid {
-		tmp := c12.Elements
-		e.Int4Array = tmp
+	if err := c12.AssignTo(&e.Int4Array); err != nil {
+		return err
 	}
 
-	if c13.Valid {
-		tmp := c13.Elements
-		e.Int8Array = tmp
+	if err := c13.AssignTo(&e.Int8Array); err != nil {
+		return err
 	}
 
-	if c14.Valid {
-		tmp := c14.Int
-		e.IntField = tmp
+	if err := c14.AssignTo(&e.IntField); err != nil {
+		return err
 	}
 
-	if c15.Valid {
-		tmp := c15.Microseconds
-		e.IntervalField = tmp
+	if err := c15.AssignTo(&e.IntervalField); err != nil {
+		return err
 	}
 
-	if c16.Valid {
-		tmp := c16.Bytes
-		e.JSONField = tmp
+	if err := c16.AssignTo(&e.JSONField); err != nil {
+		return err
 	}
 
-	if c17.Valid {
-		tmp := c17.Bytes
-		e.JsonbField = tmp
+	if err := c17.AssignTo(&e.JsonbField); err != nil {
+		return err
 	}
 
-	if c18.Valid {
-		tmp := c18.Addr
-		e.MacaddrField = tmp
+	if err := c18.AssignTo(&e.MacaddrField); err != nil {
+		return err
 	}
 
-	if c19.Valid {
-		tmp := c19.Int
-		e.NumericField = tmp
+	if err := c19.AssignTo(&e.NumericField); err != nil {
+		return err
 	}
 
-	if c20.Valid {
-		tmp := c20.Float
-		e.RealField = tmp
+	if err := c20.AssignTo(&e.RealField); err != nil {
+		return err
 	}
 
-	if c21.Valid {
-		tmp := c21.Int
-		e.SmallintField = tmp
+	if err := c21.AssignTo(&e.SmallintField); err != nil {
+		return err
 	}
 
-	if c22.Valid {
-		tmp := c22.String
-		e.TextField = tmp
+	if err := c22.AssignTo(&e.TextField); err != nil {
+		return err
 	}
 
-	if c23.Valid {
-		tmp := c23.Time
-		e.TimestampField = tmp
+	if err := c23.AssignTo(&e.TimestampField); err != nil {
+		return err
 	}
 
-	if c24.Valid {
-		tmp := c24.Elements
-		e.UUIDArray = tmp
+	if err := c24.AssignTo(&e.UUIDArray); err != nil {
+		return err
 	}
 
-	if c25.Valid {
-		tmp := c25.Bytes
-		e.UUIDField = tmp
+	if err := c25.AssignTo(&e.UUIDField); err != nil {
+		return err
 	}
 
 	return t.Rows.Err()
@@ -551,134 +525,108 @@ func (t Example1ScannerStaticRow) Scan(e *Example1) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Int
-		e.BigintField = tmp
+	if err := c0.AssignTo(&e.BigintField); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.Bytes
-		e.BitField = tmp
+	if err := c1.AssignTo(&e.BitField); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Bytes
-		e.BitVaryingField = tmp
+	if err := c2.AssignTo(&e.BitVaryingField); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Bool
-		e.BoolField = tmp
+	if err := c3.AssignTo(&e.BoolField); err != nil {
+		return err
 	}
 
-	if c4.Valid {
-		tmp := c4.Bytes
-		e.ByteArrayField = tmp
+	if err := c4.AssignTo(&e.ByteArrayField); err != nil {
+		return err
 	}
 
-	if c5.Valid {
-		tmp := c5.String
-		e.CharacterField = tmp
+	if err := c5.AssignTo(&e.CharacterField); err != nil {
+		return err
 	}
 
-	if c6.Valid {
-		tmp := c6.String
-		e.CharacterFixedField = tmp
+	if err := c6.AssignTo(&e.CharacterFixedField); err != nil {
+		return err
 	}
 
-	if c7.Valid {
-		tmp := c7.IPNet
-		e.CidrField = tmp
+	if err := c7.AssignTo(&e.CidrField); err != nil {
+		return err
 	}
 
-	if c8.Valid {
-		tmp := c8.Int
-		e.DecimalField = tmp
+	if err := c8.AssignTo(&e.DecimalField); err != nil {
+		return err
 	}
 
-	if c9.Valid {
-		tmp := c9.Float
-		e.DoublePrecisionField = tmp
+	if err := c9.AssignTo(&e.DoublePrecisionField); err != nil {
+		return err
 	}
 
-	if c10.Valid {
-		tmp := c10.IPNet
-		e.InetField = tmp
+	if err := c10.AssignTo(&e.InetField); err != nil {
+		return err
 	}
 
-	if c11.Valid {
-		tmp := c11.Elements
-		e.Int2Array = tmp
+	if err := c11.AssignTo(&e.Int2Array); err != nil {
+		return err
 	}
 
-	if c12.Valid {
-		tmp := c12.Elements
-		e.Int4Array = tmp
+	if err := c12.AssignTo(&e.Int4Array); err != nil {
+		return err
 	}
 
-	if c13.Valid {
-		tmp := c13.Elements
-		e.Int8Array = tmp
+	if err := c13.AssignTo(&e.Int8Array); err != nil {
+		return err
 	}
 
-	if c14.Valid {
-		tmp := c14.Int
-		e.IntField = tmp
+	if err := c14.AssignTo(&e.IntField); err != nil {
+		return err
 	}
 
-	if c15.Valid {
-		tmp := c15.Microseconds
-		e.IntervalField = tmp
+	if err := c15.AssignTo(&e.IntervalField); err != nil {
+		return err
 	}
 
-	if c16.Valid {
-		tmp := c16.Bytes
-		e.JSONField = tmp
+	if err := c16.AssignTo(&e.JSONField); err != nil {
+		return err
 	}
 
-	if c17.Valid {
-		tmp := c17.Bytes
-		e.JsonbField = tmp
+	if err := c17.AssignTo(&e.JsonbField); err != nil {
+		return err
 	}
 
-	if c18.Valid {
-		tmp := c18.Addr
-		e.MacaddrField = tmp
+	if err := c18.AssignTo(&e.MacaddrField); err != nil {
+		return err
 	}
 
-	if c19.Valid {
-		tmp := c19.Int
-		e.NumericField = tmp
+	if err := c19.AssignTo(&e.NumericField); err != nil {
+		return err
 	}
 
-	if c20.Valid {
-		tmp := c20.Float
-		e.RealField = tmp
+	if err := c20.AssignTo(&e.RealField); err != nil {
+		return err
 	}
 
-	if c21.Valid {
-		tmp := c21.Int
-		e.SmallintField = tmp
+	if err := c21.AssignTo(&e.SmallintField); err != nil {
+		return err
 	}
 
-	if c22.Valid {
-		tmp := c22.String
-		e.TextField = tmp
+	if err := c22.AssignTo(&e.TextField); err != nil {
+		return err
 	}
 
-	if c23.Valid {
-		tmp := c23.Time
-		e.TimestampField = tmp
+	if err := c23.AssignTo(&e.TimestampField); err != nil {
+		return err
 	}
 
-	if c24.Valid {
-		tmp := c24.Elements
-		e.UUIDArray = tmp
+	if err := c24.AssignTo(&e.UUIDArray); err != nil {
+		return err
 	}
 
-	if c25.Valid {
-		tmp := c25.Bytes
-		e.UUIDField = tmp
+	if err := c25.AssignTo(&e.UUIDField); err != nil {
+		return err
 	}
 
 	return nil
@@ -836,134 +784,108 @@ func (t example1ScannerDynamic) Scan(e *Example1) error {
 	for _, column := range columns {
 		switch column {
 		case cn0:
-			if c0.Valid {
-				tmp := c0.Int
-				e.BigintField = tmp
+			if err := c0.AssignTo(&e.BigintField); err != nil {
+				return err
 			}
 		case cn1:
-			if c1.Valid {
-				tmp := c1.Bytes
-				e.BitField = tmp
+			if err := c1.AssignTo(&e.BitField); err != nil {
+				return err
 			}
 		case cn2:
-			if c2.Valid {
-				tmp := c2.Bytes
-				e.BitVaryingField = tmp
+			if err := c2.AssignTo(&e.BitVaryingField); err != nil {
+				return err
 			}
 		case cn3:
-			if c3.Valid {
-				tmp := c3.Bool
-				e.BoolField = tmp
+			if err := c3.AssignTo(&e.BoolField); err != nil {
+				return err
 			}
 		case cn4:
-			if c4.Valid {
-				tmp := c4.Bytes
-				e.ByteArrayField = tmp
+			if err := c4.AssignTo(&e.ByteArrayField); err != nil {
+				return err
 			}
 		case cn5:
-			if c5.Valid {
-				tmp := c5.String
-				e.CharacterField = tmp
+			if err := c5.AssignTo(&e.CharacterField); err != nil {
+				return err
 			}
 		case cn6:
-			if c6.Valid {
-				tmp := c6.String
-				e.CharacterFixedField = tmp
+			if err := c6.AssignTo(&e.CharacterFixedField); err != nil {
+				return err
 			}
 		case cn7:
-			if c7.Valid {
-				tmp := c7.IPNet
-				e.CidrField = tmp
+			if err := c7.AssignTo(&e.CidrField); err != nil {
+				return err
 			}
 		case cn8:
-			if c8.Valid {
-				tmp := c8.Int
-				e.DecimalField = tmp
+			if err := c8.AssignTo(&e.DecimalField); err != nil {
+				return err
 			}
 		case cn9:
-			if c9.Valid {
-				tmp := c9.Float
-				e.DoublePrecisionField = tmp
+			if err := c9.AssignTo(&e.DoublePrecisionField); err != nil {
+				return err
 			}
 		case cn10:
-			if c10.Valid {
-				tmp := c10.IPNet
-				e.InetField = tmp
+			if err := c10.AssignTo(&e.InetField); err != nil {
+				return err
 			}
 		case cn11:
-			if c11.Valid {
-				tmp := c11.Elements
-				e.Int2Array = tmp
+			if err := c11.AssignTo(&e.Int2Array); err != nil {
+				return err
 			}
 		case cn12:
-			if c12.Valid {
-				tmp := c12.Elements
-				e.Int4Array = tmp
+			if err := c12.AssignTo(&e.Int4Array); err != nil {
+				return err
 			}
 		case cn13:
-			if c13.Valid {
-				tmp := c13.Elements
-				e.Int8Array = tmp
+			if err := c13.AssignTo(&e.Int8Array); err != nil {
+				return err
 			}
 		case cn14:
-			if c14.Valid {
-				tmp := c14.Int
-				e.IntField = tmp
+			if err := c14.AssignTo(&e.IntField); err != nil {
+				return err
 			}
 		case cn15:
-			if c15.Valid {
-				tmp := c15.Microseconds
-				e.IntervalField = tmp
+			if err := c15.AssignTo(&e.IntervalField); err != nil {
+				return err
 			}
 		case cn16:
-			if c16.Valid {
-				tmp := c16.Bytes
-				e.JSONField = tmp
+			if err := c16.AssignTo(&e.JSONField); err != nil {
+				return err
 			}
 		case cn17:
-			if c17.Valid {
-				tmp := c17.Bytes
-				e.JsonbField = tmp
+			if err := c17.AssignTo(&e.JsonbField); err != nil {
+				return err
 			}
 		case cn18:
-			if c18.Valid {
-				tmp := c18.Addr
-				e.MacaddrField = tmp
+			if err := c18.AssignTo(&e.MacaddrField); err != nil {
+				return err
 			}
 		case cn19:
-			if c19.Valid {
-				tmp := c19.Int
-				e.NumericField = tmp
+			if err := c19.AssignTo(&e.NumericField); err != nil {
+				return err
 			}
 		case cn20:
-			if c20.Valid {
-				tmp := c20.Float
-				e.RealField = tmp
+			if err := c20.AssignTo(&e.RealField); err != nil {
+				return err
 			}
 		case cn21:
-			if c21.Valid {
-				tmp := c21.Int
-				e.SmallintField = tmp
+			if err := c21.AssignTo(&e.SmallintField); err != nil {
+				return err
 			}
 		case cn22:
-			if c22.Valid {
-				tmp := c22.String
-				e.TextField = tmp
+			if err := c22.AssignTo(&e.TextField); err != nil {
+				return err
 			}
 		case cn23:
-			if c23.Valid {
-				tmp := c23.Time
-				e.TimestampField = tmp
+			if err := c23.AssignTo(&e.TimestampField); err != nil {
+				return err
 			}
 		case cn24:
-			if c24.Valid {
-				tmp := c24.Elements
-				e.UUIDArray = tmp
+			if err := c24.AssignTo(&e.UUIDArray); err != nil {
+				return err
 			}
 		case cn25:
-			if c25.Valid {
-				tmp := c25.Bytes
-				e.UUIDField = tmp
+			if err := c25.AssignTo(&e.UUIDField); err != nil {
+				return err
 			}
 		}
 	}
@@ -1076,169 +998,136 @@ func (t comboScannerStatic) Scan(e1 *Example1, e2 *Example2) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Int
-		e1.BigintField = tmp
+	if err := c0.AssignTo(&e1.BigintField); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.Bytes
-		e1.BitField = tmp
+	if err := c1.AssignTo(&e1.BitField); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Bytes
-		e1.BitVaryingField = tmp
+	if err := c2.AssignTo(&e1.BitVaryingField); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Bool
-		e1.BoolField = tmp
+	if err := c3.AssignTo(&e1.BoolField); err != nil {
+		return err
 	}
 
-	if c4.Valid {
-		tmp := c4.Bytes
-		e1.ByteArrayField = tmp
+	if err := c4.AssignTo(&e1.ByteArrayField); err != nil {
+		return err
 	}
 
-	if c5.Valid {
-		tmp := c5.String
-		e1.CharacterField = tmp
+	if err := c5.AssignTo(&e1.CharacterField); err != nil {
+		return err
 	}
 
-	if c6.Valid {
-		tmp := c6.String
-		e1.CharacterFixedField = tmp
+	if err := c6.AssignTo(&e1.CharacterFixedField); err != nil {
+		return err
 	}
 
-	if c7.Valid {
-		tmp := c7.IPNet
-		e1.CidrField = tmp
+	if err := c7.AssignTo(&e1.CidrField); err != nil {
+		return err
 	}
 
-	if c8.Valid {
-		tmp := c8.Int
-		e1.DecimalField = tmp
+	if err := c8.AssignTo(&e1.DecimalField); err != nil {
+		return err
 	}
 
-	if c9.Valid {
-		tmp := c9.Float
-		e1.DoublePrecisionField = tmp
+	if err := c9.AssignTo(&e1.DoublePrecisionField); err != nil {
+		return err
 	}
 
-	if c10.Valid {
-		tmp := c10.IPNet
-		e1.InetField = tmp
+	if err := c10.AssignTo(&e1.InetField); err != nil {
+		return err
 	}
 
-	if c11.Valid {
-		tmp := c11.Elements
-		e1.Int2Array = tmp
+	if err := c11.AssignTo(&e1.Int2Array); err != nil {
+		return err
 	}
 
-	if c12.Valid {
-		tmp := c12.Elements
-		e1.Int4Array = tmp
+	if err := c12.AssignTo(&e1.Int4Array); err != nil {
+		return err
 	}
 
-	if c13.Valid {
-		tmp := c13.Elements
-		e1.Int8Array = tmp
+	if err := c13.AssignTo(&e1.Int8Array); err != nil {
+		return err
 	}
 
-	if c14.Valid {
-		tmp := c14.Int
-		e1.IntField = tmp
+	if err := c14.AssignTo(&e1.IntField); err != nil {
+		return err
 	}
 
-	if c15.Valid {
-		tmp := c15.Microseconds
-		e1.IntervalField = tmp
+	if err := c15.AssignTo(&e1.IntervalField); err != nil {
+		return err
 	}
 
-	if c16.Valid {
-		tmp := c16.Bytes
-		e1.JSONField = tmp
+	if err := c16.AssignTo(&e1.JSONField); err != nil {
+		return err
 	}
 
-	if c17.Valid {
-		tmp := c17.Bytes
-		e1.JsonbField = tmp
+	if err := c17.AssignTo(&e1.JsonbField); err != nil {
+		return err
 	}
 
-	if c18.Valid {
-		tmp := c18.Addr
-		e1.MacaddrField = tmp
+	if err := c18.AssignTo(&e1.MacaddrField); err != nil {
+		return err
 	}
 
-	if c19.Valid {
-		tmp := c19.Int
-		e1.NumericField = tmp
+	if err := c19.AssignTo(&e1.NumericField); err != nil {
+		return err
 	}
 
-	if c20.Valid {
-		tmp := c20.Float
-		e1.RealField = tmp
+	if err := c20.AssignTo(&e1.RealField); err != nil {
+		return err
 	}
 
-	if c21.Valid {
-		tmp := c21.Int
-		e1.SmallintField = tmp
+	if err := c21.AssignTo(&e1.SmallintField); err != nil {
+		return err
 	}
 
-	if c22.Valid {
-		tmp := c22.String
-		e1.TextField = tmp
+	if err := c22.AssignTo(&e1.TextField); err != nil {
+		return err
 	}
 
-	if c23.Valid {
-		tmp := c23.Time
-		e1.TimestampField = tmp
+	if err := c23.AssignTo(&e1.TimestampField); err != nil {
+		return err
 	}
 
-	if c24.Valid {
-		tmp := c24.Elements
-		e1.UUIDArray = tmp
+	if err := c24.AssignTo(&e1.UUIDArray); err != nil {
+		return err
 	}
 
-	if c25.Valid {
-		tmp := c25.Bytes
-		e1.UUIDField = tmp
+	if err := c25.AssignTo(&e1.UUIDField); err != nil {
+		return err
 	}
 
-	if c26.Valid {
-		tmp := c26.Bool
-		e2.BoolField = tmp
+	if err := c26.AssignTo(&e2.BoolField); err != nil {
+		return err
 	}
 
-	if c27.Valid {
-		tmp := c27.Elements
-		e2.Int4Array = tmp
+	if err := c27.AssignTo(&e2.Int4Array); err != nil {
+		return err
 	}
 
-	if c28.Valid {
-		tmp := c28.Elements
-		e2.Int8Array = tmp
+	if err := c28.AssignTo(&e2.Int8Array); err != nil {
+		return err
 	}
 
-	if c29.Valid {
-		tmp := c29.String
-		e2.TextField = tmp
+	if err := c29.AssignTo(&e2.TextField); err != nil {
+		return err
 	}
 
-	if c30.Valid {
-		tmp := c30.Time
-		e2.TimestampField = tmp
+	if err := c30.AssignTo(&e2.TimestampField); err != nil {
+		return err
 	}
 
-	if c31.Valid {
-		tmp := c31.Elements
-		e2.UUIDArray = tmp
+	if err := c31.AssignTo(&e2.UUIDArray); err != nil {
+		return err
 	}
 
-	if c32.Valid {
-		tmp := c32.Bytes
-		e2.UUIDField = tmp
+	if err := c32.AssignTo(&e2.UUIDField); err != nil {
+		return err
 	}
 
 	return t.Rows.Err()
@@ -1317,169 +1206,136 @@ func (t ComboScannerStaticRow) Scan(e1 *Example1, e2 *Example2) error {
 		return err
 	}
 
-	if c0.Valid {
-		tmp := c0.Int
-		e1.BigintField = tmp
+	if err := c0.AssignTo(&e1.BigintField); err != nil {
+		return err
 	}
 
-	if c1.Valid {
-		tmp := c1.Bytes
-		e1.BitField = tmp
+	if err := c1.AssignTo(&e1.BitField); err != nil {
+		return err
 	}
 
-	if c2.Valid {
-		tmp := c2.Bytes
-		e1.BitVaryingField = tmp
+	if err := c2.AssignTo(&e1.BitVaryingField); err != nil {
+		return err
 	}
 
-	if c3.Valid {
-		tmp := c3.Bool
-		e1.BoolField = tmp
+	if err := c3.AssignTo(&e1.BoolField); err != nil {
+		return err
 	}
 
-	if c4.Valid {
-		tmp := c4.Bytes
-		e1.ByteArrayField = tmp
+	if err := c4.AssignTo(&e1.ByteArrayField); err != nil {
+		return err
 	}
 
-	if c5.Valid {
-		tmp := c5.String
-		e1.CharacterField = tmp
+	if err := c5.AssignTo(&e1.CharacterField); err != nil {
+		return err
 	}
 
-	if c6.Valid {
-		tmp := c6.String
-		e1.CharacterFixedField = tmp
+	if err := c6.AssignTo(&e1.CharacterFixedField); err != nil {
+		return err
 	}
 
-	if c7.Valid {
-		tmp := c7.IPNet
-		e1.CidrField = tmp
+	if err := c7.AssignTo(&e1.CidrField); err != nil {
+		return err
 	}
 
-	if c8.Valid {
-		tmp := c8.Int
-		e1.DecimalField = tmp
+	if err := c8.AssignTo(&e1.DecimalField); err != nil {
+		return err
 	}
 
-	if c9.Valid {
-		tmp := c9.Float
-		e1.DoublePrecisionField = tmp
+	if err := c9.AssignTo(&e1.DoublePrecisionField); err != nil {
+		return err
 	}
 
-	if c10.Valid {
-		tmp := c10.IPNet
-		e1.InetField = tmp
+	if err := c10.AssignTo(&e1.InetField); err != nil {
+		return err
 	}
 
-	if c11.Valid {
-		tmp := c11.Elements
-		e1.Int2Array = tmp
+	if err := c11.AssignTo(&e1.Int2Array); err != nil {
+		return err
 	}
 
-	if c12.Valid {
-		tmp := c12.Elements
-		e1.Int4Array = tmp
+	if err := c12.AssignTo(&e1.Int4Array); err != nil {
+		return err
 	}
 
-	if c13.Valid {
-		tmp := c13.Elements
-		e1.Int8Array = tmp
+	if err := c13.AssignTo(&e1.Int8Array); err != nil {
+		return err
 	}
 
-	if c14.Valid {
-		tmp := c14.Int
-		e1.IntField = tmp
+	if err := c14.AssignTo(&e1.IntField); err != nil {
+		return err
 	}
 
-	if c15.Valid {
-		tmp := c15.Microseconds
-		e1.IntervalField = tmp
+	if err := c15.AssignTo(&e1.IntervalField); err != nil {
+		return err
 	}
 
-	if c16.Valid {
-		tmp := c16.Bytes
-		e1.JSONField = tmp
+	if err := c16.AssignTo(&e1.JSONField); err != nil {
+		return err
 	}
 
-	if c17.Valid {
-		tmp := c17.Bytes
-		e1.JsonbField = tmp
+	if err := c17.AssignTo(&e1.JsonbField); err != nil {
+		return err
 	}
 
-	if c18.Valid {
-		tmp := c18.Addr
-		e1.MacaddrField = tmp
+	if err := c18.AssignTo(&e1.MacaddrField); err != nil {
+		return err
 	}
 
-	if c19.Valid {
-		tmp := c19.Int
-		e1.NumericField = tmp
+	if err := c19.AssignTo(&e1.NumericField); err != nil {
+		return err
 	}
 
-	if c20.Valid {
-		tmp := c20.Float
-		e1.RealField = tmp
+	if err := c20.AssignTo(&e1.RealField); err != nil {
+		return err
 	}
 
-	if c21.Valid {
-		tmp := c21.Int
-		e1.SmallintField = tmp
+	if err := c21.AssignTo(&e1.SmallintField); err != nil {
+		return err
 	}
 
-	if c22.Valid {
-		tmp := c22.String
-		e1.TextField = tmp
+	if err := c22.AssignTo(&e1.TextField); err != nil {
+		return err
 	}
 
-	if c23.Valid {
-		tmp := c23.Time
-		e1.TimestampField = tmp
+	if err := c23.AssignTo(&e1.TimestampField); err != nil {
+		return err
 	}
 
-	if c24.Valid {
-		tmp := c24.Elements
-		e1.UUIDArray = tmp
+	if err := c24.AssignTo(&e1.UUIDArray); err != nil {
+		return err
 	}
 
-	if c25.Valid {
-		tmp := c25.Bytes
-		e1.UUIDField = tmp
+	if err := c25.AssignTo(&e1.UUIDField); err != nil {
+		return err
 	}
 
-	if c26.Valid {
-		tmp := c26.Bool
-		e2.BoolField = tmp
+	if err := c26.AssignTo(&e2.BoolField); err != nil {
+		return err
 	}
 
-	if c27.Valid {
-		tmp := c27.Elements
-		e2.Int4Array = tmp
+	if err := c27.AssignTo(&e2.Int4Array); err != nil {
+		return err
 	}
 
-	if c28.Valid {
-		tmp := c28.Elements
-		e2.Int8Array = tmp
+	if err := c28.AssignTo(&e2.Int8Array); err != nil {
+		return err
 	}
 
-	if c29.Valid {
-		tmp := c29.String
-		e2.TextField = tmp
+	if err := c29.AssignTo(&e2.TextField); err != nil {
+		return err
 	}
 
-	if c30.Valid {
-		tmp := c30.Time
-		e2.TimestampField = tmp
+	if err := c30.AssignTo(&e2.TimestampField); err != nil {
+		return err
 	}
 
-	if c31.Valid {
-		tmp := c31.Elements
-		e2.UUIDArray = tmp
+	if err := c31.AssignTo(&e2.UUIDArray); err != nil {
+		return err
 	}
 
-	if c32.Valid {
-		tmp := c32.Bytes
-		e2.UUIDField = tmp
+	if err := c32.AssignTo(&e2.UUIDField); err != nil {
+		return err
 	}
 
 	return nil
