@@ -264,6 +264,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "*json.RawMessage",
+		Nullable:  true,
 		Native:    bytesExpr,
 		NullType:  "pgtype.JSON",
 		NullField: "Bytes",
@@ -280,6 +281,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "*net.IPNet",
+		Nullable:  true,
 		Native:    cidrExpr,
 		NullType:  "pgtype.CIDR",
 		NullField: "IPNet",
@@ -296,6 +298,7 @@ var pgx = []genieql.NullableTypeDefinition{
 	},
 	{
 		Type:      "*[]net.IPNet",
+		Nullable:  true,
 		Native:    cidrArrayExpr,
 		NullType:  "pgtype.CIDRArray",
 		NullField: "Elements",

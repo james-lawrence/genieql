@@ -79,6 +79,7 @@ type NullableTypeDefinition struct {
 	Native       string // golang type
 	NullType     string
 	NullField    string
+	Nullable     bool // does this type represent a pointer type.
 	CastRequired bool
 	Decoder      decoder
 	Decode       string // template function that decodes from the Driver type to Native type

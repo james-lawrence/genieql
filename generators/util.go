@@ -28,12 +28,7 @@ func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, e
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
-			"debug": func(e ast.Node) ast.Node {
-				log.Println(astutil.MustPrint(e))
-				return e
-			},
-			"expr": types.ExprString,
-			// "dereference":   unwrapExpr,
+			"expr":          types.ExprString,
 			"autoreference": autoreference,
 		}
 	)

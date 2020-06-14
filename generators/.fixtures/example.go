@@ -16,6 +16,8 @@ func StaticExampleRowScanner(row *sql.Row) ExampleRowScanner {
 type StructA struct {
 	A, B, C int
 	D, E, F bool
+	G       *int
+	H       *bool
 }
 
 type StructB struct {

@@ -205,6 +205,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*int",
+		Nullable:     true,
 		Native:       intExprString,
 		NullType:     "sql.NullInt64",
 		NullField:    "Int64",
@@ -233,6 +234,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*int32",
+		Nullable:     true,
 		Native:       intExprString,
 		NullType:     "sql.NullInt32",
 		NullField:    "Int32",
@@ -261,6 +263,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*int64",
+		Nullable:     true,
 		Native:       intExprString,
 		NullType:     "sql.NullInt64",
 		NullField:    "Int64",
@@ -289,6 +292,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*float",
+		Nullable:     true,
 		Native:       floatExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
@@ -317,6 +321,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*float32",
+		Nullable:     true,
 		Native:       floatExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
@@ -345,6 +350,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "*float64",
+		Nullable:     true,
 		Native:       floatExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
@@ -366,12 +372,13 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
-				{{ .To | debug | expr }} = tmp
+				{{ .To | expr }} = tmp
 			}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "*bool",
+		Nullable:  true,
 		Native:    boolExprString,
 		NullType:  "sql.NullBool",
 		NullField: "Bool",
@@ -398,6 +405,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "*time.Time",
+		Nullable:  true,
 		Native:    timeExprString,
 		NullType:  "sql.NullTime",
 		NullField: "Time",
@@ -424,6 +432,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "*string",
+		Nullable:  true,
 		Native:    stringExprString,
 		NullType:  "sql.NullString",
 		NullField: "String",

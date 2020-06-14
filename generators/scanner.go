@@ -360,8 +360,12 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) (output ast.
 		return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
 	}
 
-	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: column.Dst}); err != nil {
-		log.Println("BOOM 2", spew.Sdump(d), spew.Sdump(column))
+	to := column.Dst
+	if d.Nullable {
+		to = &ast.StarExpr{X: unwrapExpr(to)}
+	}
+
+	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}); err != nil {
 		return nil, err
 	}
 
