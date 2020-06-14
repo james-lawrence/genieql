@@ -121,6 +121,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.String = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "sql.NullInt64",
@@ -133,6 +136,9 @@ var stdlib = NewDriver(
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -148,6 +154,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int32 = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "sql.NullFloat64",
@@ -162,6 +171,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "sql.NullBool",
@@ -174,6 +186,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Bool
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -188,6 +203,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Time = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "int",
@@ -201,6 +219,9 @@ var stdlib = NewDriver(
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -217,6 +238,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "int32",
@@ -230,6 +254,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Int32
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -246,6 +273,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int32 = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "int64",
@@ -259,6 +289,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Int64
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -275,6 +308,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Int64 = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "float",
@@ -288,6 +324,9 @@ var stdlib = NewDriver(
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -304,6 +343,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "float32",
@@ -317,6 +359,9 @@ var stdlib = NewDriver(
 				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -333,6 +378,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "float64",
@@ -346,6 +394,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Float64
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -362,6 +413,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Float64 = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "bool",
@@ -374,6 +428,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Bool
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -389,6 +446,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Bool = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "time.Time",
@@ -401,6 +461,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.Time
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -416,6 +479,9 @@ var stdlib = NewDriver(
 				{{ .To | expr }} = tmp
 			}
 		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Time = {{ .From | expr }}
+		}`,
 	},
 	genieql.NullableTypeDefinition{
 		Type:      "string",
@@ -428,6 +494,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.String
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
 	genieql.NullableTypeDefinition{
@@ -442,6 +511,9 @@ var stdlib = NewDriver(
 				tmp := {{ .From | expr }}.String
 				{{ .To | expr }} = tmp
 			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
 )

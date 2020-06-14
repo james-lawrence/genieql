@@ -87,6 +87,111 @@ func argumentsNative(ctx Context) transforms {
 	}
 }
 
+func nulltypes(ctx Context) transforms {
+	typeDefinitions := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	return func(e ast.Expr) (expr ast.Expr) {
+		var (
+			err error
+			d   genieql.NullableTypeDefinition
+		)
+
+		e = removeEllipsis(e)
+		if d, err = typeDefinitions(e); err != nil {
+			log.Println("failed to locate type definition:", types.ExprString(e))
+			return e
+		}
+
+		if expr, err = parser.ParseExpr(d.NullType); err != nil {
+			log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
+			return e
+		}
+
+		return expr
+	}
+}
+
+// decode a column to a local variable.
+func decode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
+	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	return func(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+		type stmtCtx struct {
+			From ast.Expr
+			To   ast.Expr
+			Type ast.Expr
+		}
+
+		var (
+			local = column.Local(i)
+			gen   *ast.FuncLit
+			d     genieql.NullableTypeDefinition
+		)
+
+		if d, err = lookupTypeDefinition(column.Type); err != nil {
+			return nil, err
+		}
+
+		if d.Decode == "" {
+			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
+		}
+
+		to := column.Dst
+		if d.Nullable {
+			to = &ast.StarExpr{X: unwrapExpr(to)}
+		}
+
+		if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}); err != nil {
+			return nil, err
+		}
+
+		return gen.Body.List[0], nil
+	}
+}
+
+// encode a column to a local variable.
+func encode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
+	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	return func(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+		type stmtCtx struct {
+			From ast.Expr
+			To   ast.Expr
+			Type ast.Expr
+		}
+
+		var (
+			local = column.Local(i)
+			gen   *ast.FuncLit
+			d     genieql.NullableTypeDefinition
+		)
+
+		if d, err = lookupTypeDefinition(removeEllipsis(column.Type)); err != nil {
+			log.Println("skipping encode unknown type information:", types.ExprString(column.Type))
+			return nil, nil
+		}
+
+		if d.Encode == "" {
+			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, d.Type, d.NullType)
+			return nil, nil
+			// return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
+		}
+
+		from := unwrapExpr(column.Dst)
+		// log.Println(types.ExprString(local), spew.Sdump(column), spew.Sdump(d))
+		if _, ok := column.Type.(*ast.StarExpr); ok {
+			from = &ast.StarExpr{X: from}
+		}
+		// log.Printf("wrapped from %s %t -> %s - %s\n", d.Type, d.Nullable, types.ExprString(from), spew.Sdump(column))
+		// } else {
+		// 	log.Printf("unwrapped from %s %t -> %s - %s\n", d.Type, d.Nullable, types.ExprString(from), spew.Sdump(column))
+		// }
+
+		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Type: unwrapExpr(column.Type), From: from, To: local}); err != nil {
+			return nil, err
+		}
+
+		return gen.Body.List[0], nil
+	}
+}
+
 func argumentsTransform(t transforms) func(fields []*ast.Field) string {
 	return func(fields []*ast.Field) string {
 		return _arguments(t, fields)
@@ -294,8 +399,9 @@ func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
 		columns = append(columns, genieql.ColumnMap{
-			Name:   name.Name,
-			Type:   &ast.StarExpr{X: param.Type},
+			Name: name.Name,
+			// Type:   &ast.StarExpr{X: param.Type},
+			Type:   param.Type,
 			Dst:    &ast.StarExpr{X: name},
 			PtrDst: false,
 		})
@@ -326,11 +432,14 @@ func autoreference(x ast.Expr) ast.Expr {
 }
 
 func determineType(x ast.Expr) ast.Expr {
-	if x, ok := x.(*ast.SelectorExpr); ok {
+	switch x := x.(type) {
+	case *ast.SelectorExpr:
 		return x.Sel
+	case *ast.StarExpr:
+		return x.X
+	default:
+		return x
 	}
-
-	return x
 }
 
 func importPath(ctx Context, x ast.Expr) string {

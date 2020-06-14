@@ -122,7 +122,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
 			buffer.WriteString("\n")
-
+			// log.Println(buffer.String())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
@@ -220,7 +220,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		),
 		Entry(
 			"example 2 - should handle a query referenced by an ident query",
-			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
+			`package example; func queryFunction6(q sqlx.Queryer, arg1 int) StaticExampleScanner {
 	var query = HelloWorld
 	return nil
 }`,
@@ -228,7 +228,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		),
 		Entry(
 			"example 3 - should handle a query referencing another package ident.",
-			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
+			`package example; func queryFunction7(q sqlx.Queryer, arg1 int) StaticExampleScanner {
 	var query = mypkg.HelloWorld
 	return nil
 }`,
@@ -311,7 +311,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		Entry(
 			"example 6 - reserved word in parameters",
 			".fixtures/functions-query/output11.go",
-			QFOName("queryFunction6"),
+			QFOName("queryFunction11"),
 			QFOSharedParameters(
 				astutil.Field(ast.NewIdent("int"), ast.NewIdent("type")),
 				astutil.Field(ast.NewIdent("int"), ast.NewIdent("func")),

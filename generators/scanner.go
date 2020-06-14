@@ -4,19 +4,16 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/parser"
 	"go/types"
 	"io"
 	"log"
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
@@ -238,41 +235,15 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
-	typeDefinitions := composeTypeDefinitionsExpr(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	nulltype := func(e ast.Expr) (expr ast.Expr) {
-		var (
-			err error
-			d   genieql.NullableTypeDefinition
-		)
-
-		if d, err = typeDefinitions(e); err != nil {
-			log.Println("failed to locate type definition:", types.ExprString(e))
-			return e
-		}
-
-		if expr, err = parser.ParseExpr(d.NullType); err != nil {
-			log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
-			return e
-		}
-
-		return expr
-	}
-
 	funcMap := template.FuncMap{
-		"astDebug": func(e ast.Node) ast.Node {
-			log.Println(astutil.MustPrint(e))
-			return e
-		},
+		"ast":       astPrint,
 		"expr":      types.ExprString,
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
-		"printAST":  astPrint,
-		"nulltype":  nulltype,
-		"assignment": assignmentStmt{
-			LookupTypeDefinition: typeDefinitions,
-		}.assignment,
-		"title":   stringsx.ToPublic,
-		"private": stringsx.ToPrivate,
+		"nulltype":  nulltypes(t.Context),
+		"decode":    decode(t.Context),
+		"title":     stringsx.ToPublic,
+		"private":   stringsx.ToPrivate,
 	}
 
 	if t.Mode.Enabled(ModeInterface) {
@@ -335,43 +306,6 @@ func scan(columns []genieql.ColumnMap) string {
 	return strings.Join(args, ", ")
 }
 
-type assignmentStmt struct {
-	genieql.LookupTypeDefinition
-}
-
-func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
-	type stmtCtx struct {
-		From ast.Expr
-		To   ast.Expr
-		Type ast.Expr
-	}
-
-	var (
-		local = column.Local(i)
-		gen   *ast.FuncLit
-		d     genieql.NullableTypeDefinition
-	)
-
-	if d, err = t.LookupTypeDefinition(column.Type); err != nil {
-		return nil, err
-	}
-
-	if d.Decode == "" {
-		return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
-	}
-
-	to := column.Dst
-	if d.Nullable {
-		to = &ast.StarExpr{X: unwrapExpr(to)}
-	}
-
-	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}); err != nil {
-		return nil, err
-	}
-
-	return gen.Body.List[0], nil
-}
-
 const interfaceScanner = `
 // {{.InterfaceName}} scanner interface.
 type {{.InterfaceName}} interface {
@@ -432,7 +366,7 @@ func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ assignment $index $column | printAST }}
+	{{ decode $index $column | ast }}
 	{{ end }}
 
 	return t.Rows.Err()
@@ -483,7 +417,7 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ assignment $index $column | printAST }}
+	{{ decode $index $column | ast }}
 	{{ end }}
 
 	return nil
@@ -550,7 +484,7 @@ func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
 		switch column {
 		{{- range $index, $column := .Columns}}
 		case cn{{$index}}:
-			{{ assignment $index $column | printAST -}}
+			{{ decode $index $column | ast -}}
 		{{- end }}
 		}
 	}

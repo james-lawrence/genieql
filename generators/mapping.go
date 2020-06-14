@@ -17,7 +17,7 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		pkg *build.Package
 	)
 
-	ipath := importPath(ctx, param.Type)
+	ipath := importPath(ctx, unwrapExpr(param.Type))
 
 	if ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
@@ -111,10 +111,20 @@ func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql
 }
 
 func mapColumns(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
-	if builtinType(param.Type) {
+	x := removeEllipsis(param.Type)
+	if builtinType(x) {
 		return builtinParam(param)
 	}
+
 	return mapParam(ctx, param, ignoreSet...)
+}
+
+func removeEllipsis(e ast.Expr) ast.Expr {
+	if e, ellipsis := e.(*ast.Ellipsis); ellipsis {
+		return e.Elt
+	}
+
+	return e
 }
 
 // mappedParam converts a *ast.Field that represents a struct into an array
