@@ -198,7 +198,7 @@ type {{.Name}} struct {
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
 		"transformation": mapping.Aliaser(),
 		"type": func(s string) string {
-			if d, ok := typeDefinitions(s); ok {
+			if d, err := typeDefinitions(s); err == nil {
 				return d.Native
 			}
 

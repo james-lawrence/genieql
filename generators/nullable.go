@@ -5,6 +5,7 @@ import (
 	"go/types"
 
 	"bitbucket.org/jatone/genieql"
+	"github.com/pkg/errors"
 )
 
 func composeNullableType(nullableTypes ...genieql.NullableType) genieql.NullableType {
@@ -30,28 +31,28 @@ func composeLookupNullableType(lookupNullableTypes ...genieql.LookupNullableType
 }
 
 // tdRegistry type definition registry
-type tdRegistry func(s string) (genieql.NullableTypeDefinition, bool)
+type tdRegistry func(s string) (genieql.NullableTypeDefinition, error)
 
 func composeTypeDefinitionsExpr(definitions ...tdRegistry) genieql.LookupTypeDefinition {
-	return func(e ast.Expr) (d genieql.NullableTypeDefinition, ok bool) {
+	return func(e ast.Expr) (d genieql.NullableTypeDefinition, err error) {
 		for _, registry := range definitions {
-			if d, ok = registry(types.ExprString(e)); ok {
-				return d, true
+			if d, err = registry(types.ExprString(e)); err == nil {
+				return d, nil
 			}
 		}
 
-		return d, false
+		return d, errors.Errorf("failed to locate type information for %s", types.ExprString(e))
 	}
 }
 
 func composeTypeDefinitions(definitions ...tdRegistry) tdRegistry {
-	return func(e string) (d genieql.NullableTypeDefinition, ok bool) {
+	return func(e string) (d genieql.NullableTypeDefinition, err error) {
 		for _, registry := range definitions {
-			if d, ok = registry(e); ok {
-				return d, true
+			if d, err = registry(e); err == nil {
+				return d, nil
 			}
 		}
 
-		return d, false
+		return d, errors.Errorf("failed to locate type information for %s", e)
 	}
 }

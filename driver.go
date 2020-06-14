@@ -7,7 +7,8 @@ import (
 	"go/ast"
 	"log"
 	"reflect"
-	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // ErrMissingDriver - returned when a driver has not been registered.
@@ -31,7 +32,7 @@ type NullableType func(typ, from ast.Expr) (ast.Expr, bool)
 type LookupNullableType func(typ ast.Expr) ast.Expr
 
 // LookupTypeDefinition converts a expression into a type definition.
-type LookupTypeDefinition func(typ ast.Expr) (NullableTypeDefinition, bool)
+type LookupTypeDefinition func(typ ast.Expr) (NullableTypeDefinition, error)
 
 // RegisterDriver register a database driver with genieql. usually in an init function.
 func RegisterDriver(driver string, imp Driver) error {
@@ -61,7 +62,7 @@ func PrintRegisteredDrivers() {
 
 // Driver - driver specific details.
 type Driver interface {
-	LookupType(s string) (NullableTypeDefinition, bool)
+	LookupType(s string) (NullableTypeDefinition, error)
 	LookupNullableType(ast.Expr) ast.Expr
 	NullableType(typ, from ast.Expr) (ast.Expr, bool)
 	Exported() (res map[string]reflect.Value)
@@ -80,6 +81,8 @@ type NullableTypeDefinition struct {
 	NullField    string
 	CastRequired bool
 	Decoder      decoder
+	Decode       string // template function that decodes from the Driver type to Native type
+	Encode       string // template function that encodes from the Native type to Driver type
 }
 
 type driverRegistry map[string]Driver
@@ -114,31 +117,33 @@ type driver struct {
 	supported []NullableTypeDefinition
 }
 
-func (t driver) LookupType(l string) (NullableTypeDefinition, bool) {
+func (t driver) LookupType(l string) (NullableTypeDefinition, error) {
 	for _, s := range t.supported {
 		if s.Type == l {
-			return s, true
+			return s, nil
 		}
 	}
 
-	return NullableTypeDefinition{}, false
+	return NullableTypeDefinition{}, errors.New("missing type")
 }
 
 func (t driver) LookupNullableType(typ ast.Expr) ast.Expr         { return t.lnt(typ) }
 func (t driver) NullableType(typ, from ast.Expr) (ast.Expr, bool) { return t.nt(typ, from) }
 func (t driver) Exported() (res map[string]reflect.Value) {
 	res = map[string]reflect.Value{}
-	for _, typ := range t.supported {
-		if typ.Decoder == nil {
-			continue
-		}
+	for _, d := range t.supported {
+		_ = d
+		// TODO:
+		// if typ.Decoder == nil {
+		// 	continue
+		// }
 
-		switch idx := strings.IndexRune(typ.NullType, '.'); idx {
-		case -1:
-			res[typ.NullType] = reflect.ValueOf(typ.Decoder)
-		default:
-			res[typ.NullType[idx+1:]] = reflect.ValueOf(typ.Decoder)
-		}
+		// switch idx := strings.IndexRune(typ.NullType, '.'); idx {
+		// case -1:
+		// 	res[typ.NullType] = reflect.ValueOf(typ.Decoder)
+		// default:
+		// 	res[typ.NullType[idx+1:]] = reflect.ValueOf(typ.Decoder)
+		// }
 	}
 
 	return res

@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/parser"
-	"go/token"
 	"go/types"
 	"io"
 	"log"
@@ -238,34 +237,37 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
-	nullableTypes := composeNullableType(t.Driver.NullableType, drivers.DefaultNullableTypes)
 	typeDefinitions := composeTypeDefinitionsExpr(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	nulltype := func(e ast.Expr) (expr ast.Expr) {
+		var (
+			err error
+			d   genieql.NullableTypeDefinition
+		)
 
+		if d, err = typeDefinitions(e); err != nil {
+			log.Println("failed to locate type definition:", types.ExprString(e))
+			return e
+		}
+
+		if expr, err = parser.ParseExpr(d.NullType); err != nil {
+			log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
+			return e
+		}
+
+		return expr
+	}
 	funcMap := template.FuncMap{
+		"astDebug": func(e ast.Node) ast.Node {
+			log.Println(astutil.MustPrint(e))
+			return e
+		},
 		"expr":      types.ExprString,
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
 		"printAST":  astPrint,
-		"nulltype": func(e ast.Expr) (expr ast.Expr) {
-			var (
-				err error
-				ok  bool
-				d   genieql.NullableTypeDefinition
-			)
-			if d, ok = typeDefinitions(e); !ok {
-				log.Println("failed to locate type definition:", types.ExprString(e))
-				return e
-			}
-
-			if expr, err = parser.ParseExpr(d.NullType); err != nil {
-				log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
-				return e
-			}
-
-			return expr
-		},
+		"nulltype":  nulltype,
 		"assignment": assignmentStmt{
-			NullableType: nullableTypes,
+			LookupTypeDefinition: typeDefinitions,
 		}.assignment,
 		"title":   stringsx.ToPublic,
 		"private": stringsx.ToPrivate,
@@ -332,47 +334,31 @@ func scan(columns []genieql.ColumnMap) string {
 }
 
 type assignmentStmt struct {
-	genieql.NullableType
+	genieql.LookupTypeDefinition
 }
 
-func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) ast.Stmt {
+func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+	type stmtCtx struct {
+		From ast.Expr
+		To   ast.Expr
+		Type ast.Expr
+	}
+
 	var (
-		local         = column.Local(i)
-		nullExpresion ast.Expr
-		nullable      bool
+		local = column.Local(i)
+		gen   *ast.FuncLit
+		d     genieql.NullableTypeDefinition
 	)
 
-	if nullExpresion, nullable = t.NullableType(column.Type, local); !nullable {
-		assignVal := astutil.ExprList(local)
-		if column.PtrDst {
-			assignVal = astutil.ExprList(&ast.UnaryExpr{Op: token.AND, X: local})
-		}
-
-		return astutil.Assign(
-			[]ast.Expr{column.Dst},
-			token.ASSIGN,
-			assignVal,
-		)
+	if d, err = t.LookupTypeDefinition(column.Type); err != nil {
+		return nil, err
 	}
 
-	tmpVar := astutil.ExprTemplateList("tmp")
-	assignVal := tmpVar
-	if column.PtrDst {
-		assignVal = astutil.ExprTemplateList("&tmp")
+	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: column.Dst}); err != nil {
+		return nil, err
 	}
 
-	return &ast.IfStmt{
-		Cond: &ast.SelectorExpr{
-			X:   local,
-			Sel: ast.NewIdent("Valid"),
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				astutil.Assign(tmpVar, token.DEFINE, []ast.Expr{nullExpresion}),
-				astutil.Assign([]ast.Expr{column.Dst}, token.ASSIGN, assignVal),
-			},
-		},
-	}
+	return gen.Body.List[0], nil
 }
 
 const interfaceScanner = `

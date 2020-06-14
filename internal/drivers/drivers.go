@@ -27,7 +27,7 @@ func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
 }
 
 // DefaultTypeDefinitions determine the type definition for an expression.
-func DefaultTypeDefinitions(s string) (genieql.NullableTypeDefinition, bool) {
+func DefaultTypeDefinitions(s string) (genieql.NullableTypeDefinition, error) {
 	return stdlib.LookupType(s)
 }
 
@@ -44,11 +44,13 @@ func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 	)
 
 	if raw, err = ioutil.ReadAll(in); err != nil {
-		return "", nil, errors.Wrap(err, "failed to read driver")
+		return "",
+			nil, errors.Wrap(err, "failed to read driver")
 	}
 
 	if err = yaml.Unmarshal(raw, &config); err != nil {
-		return "", nil, errors.Wrap(err, "failed to unmarshal driver")
+		return "",
+			nil, errors.Wrap(err, "failed to unmarshal driver")
 	}
 
 	return config.Name, NewDriver(config.Types...), nil
@@ -107,28 +109,330 @@ func init() {
 const StandardLib = "genieql.default"
 
 var stdlib = NewDriver(
-	genieql.NullableTypeDefinition{Type: "sql.NullString", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
-	genieql.NullableTypeDefinition{Type: "sql.NullInt64", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "sql.NullInt32", Native: intExprString, NullType: "sql.NullInt32", NullField: "Int32", CastRequired: true, Decoder: &sql.NullInt32{}},
-	genieql.NullableTypeDefinition{Type: "sql.NullFloat64", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "sql.NullBool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
-	genieql.NullableTypeDefinition{Type: "sql.NullTime", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
-	genieql.NullableTypeDefinition{Type: "int", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "*int", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: true, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "int32", Native: intExprString, NullType: "sql.NullInt32", NullField: "Int32", CastRequired: false, Decoder: &sql.NullInt32{}},
-	genieql.NullableTypeDefinition{Type: "*int32", Native: intExprString, NullType: "sql.NullInt32", NullField: "Int32", CastRequired: false, Decoder: &sql.NullInt32{}},
-	genieql.NullableTypeDefinition{Type: "int64", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: false, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "*int64", Native: intExprString, NullType: "sql.NullInt64", NullField: "Int64", CastRequired: false, Decoder: &sql.NullInt64{}},
-	genieql.NullableTypeDefinition{Type: "float", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "*float", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "float32", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "*float32", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: true, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "float64", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: false, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "*float64", Native: floatExprString, NullType: "sql.NullFloat64", NullField: "Float64", CastRequired: false, Decoder: &sql.NullFloat64{}},
-	genieql.NullableTypeDefinition{Type: "bool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
-	genieql.NullableTypeDefinition{Type: "*bool", Native: boolExprString, NullType: "sql.NullBool", NullField: "Bool", Decoder: &sql.NullBool{}},
-	genieql.NullableTypeDefinition{Type: "time.Time", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
-	genieql.NullableTypeDefinition{Type: "*time.Time", Native: timeExprString, NullType: "sql.NullTime", NullField: "Time", Decoder: &sql.NullTime{}},
-	genieql.NullableTypeDefinition{Type: "string", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
-	genieql.NullableTypeDefinition{Type: "*string", Native: stringExprString, NullType: "sql.NullString", NullField: "String", Decoder: &sql.NullString{}},
+	genieql.NullableTypeDefinition{
+		Type:      "sql.NullString",
+		Native:    stringExprString,
+		NullType:  "sql.NullString",
+		NullField: "String",
+		Decoder:   &sql.NullString{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.String)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "sql.NullInt64",
+		Native:    intExprString,
+		NullType:  "sql.NullInt64",
+		NullField: "Int64",
+		Decoder:   &sql.NullInt64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "sql.NullInt32",
+		Native:       intExprString,
+		NullType:     "sql.NullInt32",
+		NullField:    "Int32",
+		CastRequired: true,
+		Decoder:      &sql.NullInt32{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "sql.NullFloat64",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: true,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "sql.NullBool",
+		Native:    boolExprString,
+		NullType:  "sql.NullBool",
+		NullField: "Bool",
+		Decoder:   &sql.NullBool{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Bool
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "sql.NullTime",
+		Native:    timeExprString,
+		NullType:  "sql.NullTime",
+		NullField: "Time",
+		Decoder:   &sql.NullTime{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Time
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "int",
+		Native:       intExprString,
+		NullType:     "sql.NullInt64",
+		NullField:    "Int64",
+		CastRequired: true,
+		Decoder:      &sql.NullInt64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*int",
+		Native:       intExprString,
+		NullType:     "sql.NullInt64",
+		NullField:    "Int64",
+		CastRequired: true,
+		Decoder:      &sql.NullInt64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "int32",
+		Native:       intExprString,
+		NullType:     "sql.NullInt32",
+		NullField:    "Int32",
+		CastRequired: false,
+		Decoder:      &sql.NullInt32{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Int32
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*int32",
+		Native:       intExprString,
+		NullType:     "sql.NullInt32",
+		NullField:    "Int32",
+		CastRequired: false,
+		Decoder:      &sql.NullInt32{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Int32
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "int64",
+		Native:       intExprString,
+		NullType:     "sql.NullInt64",
+		NullField:    "Int64",
+		CastRequired: false,
+		Decoder:      &sql.NullInt64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Int64
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*int64",
+		Native:       intExprString,
+		NullType:     "sql.NullInt64",
+		NullField:    "Int64",
+		CastRequired: false,
+		Decoder:      &sql.NullInt64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Int64
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "float",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: true,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*float",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: true,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "float32",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: true,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*float32",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: true,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "float64",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: false,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Float64
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:         "*float64",
+		Native:       floatExprString,
+		NullType:     "sql.NullFloat64",
+		NullField:    "Float64",
+		CastRequired: false,
+		Decoder:      &sql.NullFloat64{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Float64
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "bool",
+		Native:    boolExprString,
+		NullType:  "sql.NullBool",
+		NullField: "Bool",
+		Decoder:   &sql.NullBool{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Bool
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "*bool",
+		Native:    boolExprString,
+		NullType:  "sql.NullBool",
+		NullField: "Bool",
+		Decoder:   &sql.NullBool{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Bool
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "time.Time",
+		Native:    timeExprString,
+		NullType:  "sql.NullTime",
+		NullField: "Time",
+		Decoder:   &sql.NullTime{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Time
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "*time.Time",
+		Native:    timeExprString,
+		NullType:  "sql.NullTime",
+		NullField: "Time",
+		Decoder:   &sql.NullTime{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.Time
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "string",
+		Native:    stringExprString,
+		NullType:  "sql.NullString",
+		NullField: "String",
+		Decoder:   &sql.NullString{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.String
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
+	genieql.NullableTypeDefinition{
+		Type:      "*string",
+		Native:    stringExprString,
+		NullType:  "sql.NullString",
+		NullField: "String",
+		Decoder:   &sql.NullString{},
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .From | expr }}.String
+				{{ .To | expr }} = tmp
+			}
+		}`,
+	},
 )

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
@@ -20,6 +21,31 @@ import (
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 )
+
+func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, err error) {
+	var (
+		ok     bool
+		parsed ast.Node
+		buf    bytes.Buffer
+		m      = template.FuncMap{
+			"expr": types.ExprString,
+		}
+	)
+
+	if err = template.Must(template.New("genFunctionLiteral").Funcs(m).Parse(example)).Execute(&buf, ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to generate from template")
+	}
+
+	if parsed, err = parser.ParseExpr(buf.String()); err != nil {
+		return nil, errors.Wrapf(err, "failed to parse function expression: %s", buf.String())
+	}
+
+	if output, ok = parsed.(*ast.FuncLit); !ok {
+		return nil, errors.Errorf("parsed template expected to result in *ast.FuncLit not %T: %s", example, parsed)
+	}
+
+	return output, nil
+}
 
 func exprToArray(x ast.Expr) ast.Expr {
 	return &ast.ArrayType{
@@ -42,16 +68,16 @@ func argumentsNative(ctx Context) transforms {
 	return func(x ast.Expr) (out ast.Expr) {
 		var (
 			err error
-			ok  bool
 			d   genieql.NullableTypeDefinition
 		)
 
-		if d, ok = def(x); !ok {
+		if d, err = def(x); err != nil {
+			// this is expected.
 			return x
 		}
 
 		if out, err = parser.ParseExpr(d.Native); err != nil {
-			log.Println("failed to parse expression from type definition", spew.Sdump(d))
+			log.Println("failed to parse expression from type definition", err, spew.Sdump(d))
 			return x
 		}
 
