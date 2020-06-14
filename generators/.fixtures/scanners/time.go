@@ -111,7 +111,7 @@ func (t TimeStaticRow) Scan(arg *time.Time) error {
 	)
 
 	if t.err != nil {
-		return err
+		return t.err
 	}
 
 	if err := t.row.Scan(&c0); err != nil {

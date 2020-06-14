@@ -43,3 +43,10 @@ CREATE TABLE IF NOT EXISTS example3 (
   created timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
   updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS example4 (
+  id uuid PRIMARY KEY,
+  email   text NOT NULL DEFAULT '',
+  created timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
+  updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
+);

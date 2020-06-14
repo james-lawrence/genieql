@@ -4,6 +4,6 @@ package functions
 
 import "bitbucket.org/jatone/genieql/internal/sqlx"
 
-//genieql.options: table=example1
-//genieql.options: default-columns=id,created_at,updated_at
-type example1BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example1) NewExample1ScannerStatic
+//genieql.options: table=example4
+//genieql.options: default-columns=created_at,updated_at
+type example4BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example4) NewExample4ScannerStatic

@@ -16,5 +16,5 @@ func queryFunction11(q sqlx.Queryer, query string, _type int, _func int) Example
 	c0.Int64 = int64(_type)
 	c1.Int64 = int64(_func)
 
-	return StaticExampleRowScanner(q.QueryRow(query, c0, c1))
+	return StaticExampleRowScanner(q.QueryRow(query, c0, c1), nil)
 }

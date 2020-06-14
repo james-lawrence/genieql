@@ -129,7 +129,7 @@ func (t MultipleParamStaticRow) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) 
 	)
 
 	if t.err != nil {
-		return err
+		return t.err
 	}
 
 	if err := t.row.Scan(&c0, &c1, &c2, &c3); err != nil {

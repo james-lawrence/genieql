@@ -18,7 +18,6 @@ const (
 	int64ExprString   = "int64"
 	stringExprString  = "string"
 	stringArrExpr     = "[]string"
-	floatExprString   = "float"
 	float32ExprString = "float32"
 	float64ExprString = "float64"
 	timeExprString    = "time.Time"

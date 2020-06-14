@@ -9,17 +9,17 @@ import (
 
 var _ = Describe("Functions", func() {
 	DescribeTable("Batch Insert",
-		func(examples ...Example1) {
+		func(examples ...Example4) {
 			const (
-				countQuery = `SELECT COUNT(*) FROM example1`
+				countQuery = `SELECT COUNT(*) FROM Example4`
 			)
 			var (
 				count   int
-				scan    Example1
-				results []Example1
+				scan    Example4
+				results []Example4
 			)
 
-			scanner := NewExample1BatchInsertFunction(TX, examples...)
+			scanner := NewExample4BatchInsertFunction(TX, examples...)
 			defer scanner.Close()
 			for scanner.Next() {
 				Expect(scanner.Scan(&scan)).ToNot(HaveOccurred())
@@ -33,52 +33,52 @@ var _ = Describe("Functions", func() {
 		Entry("insert empty list"),
 		Entry(
 			"insert 1 item",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
 		),
 		Entry(
 			"insert 2 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
 		),
 		Entry(
 			"insert 3 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000002"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000002"},
 		),
 		Entry(
 			"insert 4 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000002"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000003"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000002"},
+			Example4{ID: "00000000-0000-0000-0000-000000000003"},
 		),
 		Entry(
 			"insert 5 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000002"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000003"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000004"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000002"},
+			Example4{ID: "00000000-0000-0000-0000-000000000003"},
+			Example4{ID: "00000000-0000-0000-0000-000000000004"},
 		),
 		Entry(
 			"insert 6 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000002"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000003"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000004"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000005"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000002"},
+			Example4{ID: "00000000-0000-0000-0000-000000000003"},
+			Example4{ID: "00000000-0000-0000-0000-000000000004"},
+			Example4{ID: "00000000-0000-0000-0000-000000000005"},
 		),
 		Entry(
 			"insert 7 items",
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000000"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000001"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000002"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000003"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000004"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000005"},
-			Example1{UUIDField: "00000000-0000-0000-0000-000000000006"},
+			Example4{ID: "00000000-0000-0000-0000-000000000000"},
+			Example4{ID: "00000000-0000-0000-0000-000000000001"},
+			Example4{ID: "00000000-0000-0000-0000-000000000002"},
+			Example4{ID: "00000000-0000-0000-0000-000000000003"},
+			Example4{ID: "00000000-0000-0000-0000-000000000004"},
+			Example4{ID: "00000000-0000-0000-0000-000000000005"},
+			Example4{ID: "00000000-0000-0000-0000-000000000006"},
 		),
 	)
 })

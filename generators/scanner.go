@@ -415,7 +415,7 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	)
 
 	if t.err != nil {
-		return err
+		return t.err
 	}
 
 	if err := t.row.Scan({{ .Columns | scan}}); err != nil {

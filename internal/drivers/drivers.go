@@ -160,7 +160,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "sql.NullFloat64",
-		Native:       floatExprString,
+		Native:       float64ExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
 		CastRequired: true,
@@ -313,43 +313,8 @@ var stdlib = NewDriver(
 		}`,
 	},
 	genieql.NullableTypeDefinition{
-		Type:         "float",
-		Native:       floatExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: true,
-		Decoder:      &sql.NullFloat64{},
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
-				{{ .To | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
-		}`,
-	},
-	genieql.NullableTypeDefinition{
-		Type:         "*float",
-		Nullable:     true,
-		Native:       floatExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: true,
-		Decoder:      &sql.NullFloat64{},
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
-				{{ .To | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
-		}`,
-	},
-	genieql.NullableTypeDefinition{
 		Type:         "float32",
-		Native:       floatExprString,
+		Native:       float64ExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
 		CastRequired: true,
@@ -367,7 +332,7 @@ var stdlib = NewDriver(
 	genieql.NullableTypeDefinition{
 		Type:         "*float32",
 		Nullable:     true,
-		Native:       floatExprString,
+		Native:       float64ExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
 		CastRequired: true,
@@ -384,7 +349,7 @@ var stdlib = NewDriver(
 	},
 	genieql.NullableTypeDefinition{
 		Type:         "float64",
-		Native:       floatExprString,
+		Native:       float64ExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
 		CastRequired: false,
@@ -402,7 +367,7 @@ var stdlib = NewDriver(
 	genieql.NullableTypeDefinition{
 		Type:         "*float64",
 		Nullable:     true,
-		Native:       floatExprString,
+		Native:       float64ExprString,
 		NullType:     "sql.NullFloat64",
 		NullField:    "Float64",
 		CastRequired: false,

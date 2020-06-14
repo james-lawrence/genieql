@@ -157,7 +157,7 @@ func (t StructExampleStaticRow) Scan(arg *StructA) error {
 	)
 
 	if t.err != nil {
-		return err
+		return t.err
 	}
 
 	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7); err != nil {

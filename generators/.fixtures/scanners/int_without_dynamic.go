@@ -108,7 +108,7 @@ func (t IntNoDynamicStaticRow) Scan(arg *int) error {
 	)
 
 	if t.err != nil {
-		return err
+		return t.err
 	}
 
 	if err := t.row.Scan(&c0); err != nil {
