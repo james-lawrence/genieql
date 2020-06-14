@@ -13,7 +13,7 @@ func init() {
 // PGX - driver for github.com/jackc/pgx
 const PGX = "github.com/jackc/pgx"
 
-const defaultDecode = `func() {
+const pgxDefaultDecode = `func() {
 	if err := {{ .From | expr }}.AssignTo({{.To | dereference | expr}}); err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDR",
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.CIDRArray",
@@ -36,7 +36,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDRArray",
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Macaddr",
@@ -44,7 +44,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Macaddr",
 		NullField: "Addr",
 		Decoder:   &pgtype.Macaddr{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Name",
@@ -52,7 +52,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Name",
 		NullField: "Text",
 		Decoder:   &pgtype.Name{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Inet",
@@ -60,7 +60,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Inet",
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Numeric",
@@ -68,7 +68,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Numeric",
 		NullField: "Int",
 		Decoder:   &pgtype.Numeric{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Bytea",
@@ -76,7 +76,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Bytea",
 		NullField: "Bytes",
 		Decoder:   &pgtype.Bytea{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Bit",
@@ -84,7 +84,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Bit",
 		NullField: "Bytes",
 		Decoder:   &pgtype.Bit{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Varbit",
@@ -92,7 +92,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Varbit",
 		NullField: "Bytes",
 		Decoder:   &pgtype.Varbit{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Bool",
@@ -100,7 +100,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Bool",
 		NullField: "Bool",
 		Decoder:   &pgtype.Bool{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Float4",
@@ -108,7 +108,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Float4",
 		NullField: "Float",
 		Decoder:   &pgtype.Float4{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Float8",
@@ -116,7 +116,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Float8",
 		NullField: "Float",
 		Decoder:   &pgtype.Float8{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int2",
@@ -124,7 +124,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int2",
 		NullField: "Int",
 		Decoder:   &pgtype.Int2{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int2Array",
@@ -132,7 +132,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int2Array",
 		NullField: "Elements",
 		Decoder:   &pgtype.Int2Array{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int4",
@@ -140,7 +140,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int4",
 		NullField: "Int",
 		Decoder:   &pgtype.Int4{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int4Array",
@@ -148,7 +148,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int4Array",
 		NullField: "Elements",
 		Decoder:   &pgtype.Int4Array{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int8",
@@ -156,7 +156,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int8",
 		NullField: "Int",
 		Decoder:   &pgtype.Int8{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Int8Array",
@@ -164,7 +164,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Int8Array",
 		NullField: "Elements",
 		Decoder:   &pgtype.Int8Array{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Text",
@@ -172,7 +172,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Text",
 		NullField: "String",
 		Decoder:   &pgtype.Text{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Varchar",
@@ -180,7 +180,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Varchar",
 		NullField: "String",
 		Decoder:   &pgtype.Varchar{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.BPChar",
@@ -188,7 +188,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.BPChar",
 		NullField: "String",
 		Decoder:   &pgtype.BPChar{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Date",
@@ -196,7 +196,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Date",
 		NullField: "Time",
 		Decoder:   &pgtype.Date{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Timestamp",
@@ -204,7 +204,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Timestamp",
 		NullField: "Time",
 		Decoder:   &pgtype.Timestamp{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Timestamptz",
@@ -212,7 +212,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Timestamptz",
 		NullField: "Time",
 		Decoder:   &pgtype.Timestamptz{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.Interval",
@@ -220,7 +220,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.Interval",
 		NullField: "Microseconds",
 		Decoder:   &pgtype.Interval{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.UUID",
@@ -228,7 +228,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.UUID",
 		NullField: "Bytes",
 		Decoder:   &pgtype.UUID{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.UUIDArray",
@@ -236,7 +236,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.UUIDArray",
 		NullField: "Elements",
 		Decoder:   &pgtype.UUIDArray{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.JSONB",
@@ -244,7 +244,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.JSONB",
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSONB{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "pgtype.JSON",
@@ -252,7 +252,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.JSON",
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "json.RawMessage",
@@ -260,7 +260,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.JSON",
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "*json.RawMessage",
@@ -268,7 +268,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.JSON",
 		NullField: "Bytes",
 		Decoder:   &pgtype.JSON{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "net.IPNet",
@@ -276,7 +276,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDR",
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "*net.IPNet",
@@ -284,7 +284,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDR",
 		NullField: "IPNet",
 		Decoder:   &pgtype.Inet{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "[]net.IPNet",
@@ -292,7 +292,7 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDRArray",
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 	{
 		Type:      "*[]net.IPNet",
@@ -300,6 +300,6 @@ var pgx = []genieql.NullableTypeDefinition{
 		NullType:  "pgtype.CIDRArray",
 		NullField: "Elements",
 		Decoder:   &pgtype.CIDRArray{},
-		Decode:    defaultDecode,
+		Decode:    pgxDefaultDecode,
 	},
 }

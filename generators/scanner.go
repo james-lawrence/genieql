@@ -353,8 +353,11 @@ func (t assignmentStmt) assignment(i int, column genieql.ColumnMap) (output ast.
 	)
 
 	if d, err = t.LookupTypeDefinition(column.Type); err != nil {
-		log.Println("BOOM 1")
 		return nil, err
+	}
+
+	if d.Decode == "" {
+		return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
 	}
 
 	if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: column.Dst}); err != nil {

@@ -30,6 +30,7 @@ func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, e
 		m      = template.FuncMap{
 			"expr":        types.ExprString,
 			"dereference": unwrapExpr,
+			"reference":   reference,
 		}
 	)
 
@@ -312,6 +313,15 @@ func unwrapExpr(x ast.Expr) ast.Expr {
 	default:
 		return x
 	}
+}
+
+func reference(x ast.Expr) ast.Expr {
+	log.Printf("GENERATING REFERENCE: %T -> %s\n", x, types.ExprString(x))
+	// switch x := x.(type) {
+	// case *ast.Ident:
+	// 	return &ast.UnaryExpr{Op: token.AND, X: x}
+	// }
+	return x
 }
 
 func determineType(x ast.Expr) ast.Expr {
