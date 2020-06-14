@@ -314,12 +314,11 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-
 	if ctx, err = loadGeneratorContext(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
-	if err = ctx.Configuration.ReadMap(t.mapName, &mapping); err != nil {
+	if err = ctx.Configuration.ReadMap(t.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 
