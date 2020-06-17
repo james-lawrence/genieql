@@ -21,7 +21,8 @@ type MappingConfigOption func(*MappingConfig)
 // MCOPackage set the package name for the configuration.
 func MCOPackage(p *build.Package) MappingConfigOption {
 	return func(mc *MappingConfig) {
-		mc.Package = p
+		dup := *p
+		mc.Package = &dup
 	}
 }
 
