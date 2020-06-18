@@ -106,9 +106,8 @@ func (t multipleParamStatic) Next() bool {
 
 // NewMultipleParamStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewMultipleParamStaticRow(row *sql.Row, err error) MultipleParamStaticRow {
+func NewMultipleParamStaticRow(row *sql.Row) MultipleParamStaticRow {
 	return MultipleParamStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -157,6 +156,12 @@ func (t MultipleParamStaticRow) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) 
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t MultipleParamStaticRow) Err(err error) MultipleParamStaticRow {
+	t.err = err
+	return t
 }
 
 // NewMultipleParamDynamic creates a scanner that operates on a dynamic

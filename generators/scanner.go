@@ -393,9 +393,8 @@ func (t {{.Name | private}}Static) Next() bool {
 
 const staticRowScanner = `// New{{.Name | title}}StaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func New{{.Name | title}}StaticRow(row {{.RowType}}, err error) {{.Name | title}}StaticRow {
+func New{{.Name | title}}StaticRow(row {{.RowType}}) {{.Name | title}}StaticRow {
 	return {{.Name | title}}StaticRow {
-		err: err,
 		row: row,
 	}
 }
@@ -427,6 +426,12 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	{{ end }}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t {{.Name | title}}StaticRow) Err(err error) {{.Name | title}}StaticRow {
+	t.err = err
+	return t
 }
 `
 

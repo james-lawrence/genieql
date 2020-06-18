@@ -60,9 +60,8 @@ func (t boolStatic) Next() bool {
 
 // NewBoolStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewBoolStaticRow(row *sql.Row, err error) BoolStaticRow {
+func NewBoolStaticRow(row *sql.Row) BoolStaticRow {
 	return BoolStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -93,4 +92,10 @@ func (t BoolStaticRow) Scan(arg1 *bool) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t BoolStaticRow) Err(err error) BoolStaticRow {
+	t.err = err
+	return t
 }

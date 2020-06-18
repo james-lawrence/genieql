@@ -60,9 +60,8 @@ func (t intStatic) Next() bool {
 
 // NewIntStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewIntStaticRow(row *sql.Row, err error) IntStaticRow {
+func NewIntStaticRow(row *sql.Row) IntStaticRow {
 	return IntStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -93,4 +92,10 @@ func (t IntStaticRow) Scan(arg1 *int) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t IntStaticRow) Err(err error) IntStaticRow {
+	t.err = err
+	return t
 }

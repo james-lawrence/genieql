@@ -88,9 +88,8 @@ func (t intNoDynamicStatic) Next() bool {
 
 // NewIntNoDynamicStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewIntNoDynamicStaticRow(row *sql.Row, err error) IntNoDynamicStaticRow {
+func NewIntNoDynamicStaticRow(row *sql.Row) IntNoDynamicStaticRow {
 	return IntNoDynamicStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -121,4 +120,10 @@ func (t IntNoDynamicStaticRow) Scan(arg *int) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t IntNoDynamicStaticRow) Err(err error) IntNoDynamicStaticRow {
+	t.err = err
+	return t
 }

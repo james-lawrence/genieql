@@ -130,9 +130,8 @@ func (t structExampleStatic) Next() bool {
 
 // NewStructExampleStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewStructExampleStaticRow(row *sql.Row, err error) StructExampleStaticRow {
+func NewStructExampleStaticRow(row *sql.Row) StructExampleStaticRow {
 	return StructExampleStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -205,6 +204,12 @@ func (t StructExampleStaticRow) Scan(arg *StructA) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t StructExampleStaticRow) Err(err error) StructExampleStaticRow {
+	t.err = err
+	return t
 }
 
 // NewStructExampleDynamic creates a scanner that operates on a dynamic

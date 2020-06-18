@@ -91,9 +91,8 @@ func (t timeStatic) Next() bool {
 
 // NewTimeStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewTimeStaticRow(row *sql.Row, err error) TimeStaticRow {
+func NewTimeStaticRow(row *sql.Row) TimeStaticRow {
 	return TimeStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -124,6 +123,12 @@ func (t TimeStaticRow) Scan(arg *time.Time) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t TimeStaticRow) Err(err error) TimeStaticRow {
+	t.err = err
+	return t
 }
 
 // NewTimeDynamic creates a scanner that operates on a dynamic

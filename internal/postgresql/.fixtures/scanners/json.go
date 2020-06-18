@@ -92,9 +92,8 @@ func (t jSONStatic) Next() bool {
 
 // NewJSONStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewJSONStaticRow(row *sql.Row, err error) JSONStaticRow {
+func NewJSONStaticRow(row *sql.Row) JSONStaticRow {
 	return JSONStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -124,4 +123,10 @@ func (t JSONStaticRow) Scan(arg1 *json.RawMessage) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t JSONStaticRow) Err(err error) JSONStaticRow {
+	t.err = err
+	return t
 }

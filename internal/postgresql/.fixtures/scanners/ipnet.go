@@ -92,9 +92,8 @@ func (t iPNetStatic) Next() bool {
 
 // NewIPNetStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewIPNetStaticRow(row *sql.Row, err error) IPNetStaticRow {
+func NewIPNetStaticRow(row *sql.Row) IPNetStaticRow {
 	return IPNetStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -124,4 +123,10 @@ func (t IPNetStaticRow) Scan(arg1 *net.IPNet) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t IPNetStaticRow) Err(err error) IPNetStaticRow {
+	t.err = err
+	return t
 }

@@ -88,9 +88,8 @@ func (t privateIntStatic) Next() bool {
 
 // NewPrivateIntStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewPrivateIntStaticRow(row *sql.Row, err error) PrivateIntStaticRow {
+func NewPrivateIntStaticRow(row *sql.Row) PrivateIntStaticRow {
 	return PrivateIntStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -121,6 +120,12 @@ func (t PrivateIntStaticRow) Scan(arg *int) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t PrivateIntStaticRow) Err(err error) PrivateIntStaticRow {
+	t.err = err
+	return t
 }
 
 // NewPrivateIntDynamic creates a scanner that operates on a dynamic

@@ -60,9 +60,8 @@ func (t intNoInterfaceStatic) Next() bool {
 
 // NewIntNoInterfaceStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewIntNoInterfaceStaticRow(row *sql.Row, err error) IntNoInterfaceStaticRow {
+func NewIntNoInterfaceStaticRow(row *sql.Row) IntNoInterfaceStaticRow {
 	return IntNoInterfaceStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -93,6 +92,12 @@ func (t IntNoInterfaceStaticRow) Scan(arg *int) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t IntNoInterfaceStaticRow) Err(err error) IntNoInterfaceStaticRow {
+	t.err = err
+	return t
 }
 
 // NewIntNoInterfaceDynamic creates a scanner that operates on a dynamic

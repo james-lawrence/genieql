@@ -92,7 +92,6 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					astutil.Field(astutil.Expr("*sql.Row"), ast.NewIdent("row")),
-					astutil.Field(astutil.Expr("error"), ast.NewIdent("err")),
 				},
 			},
 			Results: &ast.FieldList{
