@@ -183,6 +183,7 @@ func encode(ctx Context) func(ast.Expr, int, genieql.ColumnMap) (ast.Stmt, error
 		}
 
 		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Error: failure, Type: unwrapExpr(column.Type), From: from, To: local}); err != nil {
+			log.Println("FAILED TO PARSE ENCODE", types.ExprString(from), d.Encode)
 			return nil, err
 		}
 

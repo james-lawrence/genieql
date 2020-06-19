@@ -1,6 +1,10 @@
 package example
 
-import "bitbucket.org/jatone/genieql/internal/sqlx"
+import (
+	"database/sql"
+
+	"bitbucket.org/jatone/genieql/internal/sqlx"
+)
 
 // NewBatchFunction3 creates a scanner that inserts a batch of
 // records into the database.
@@ -62,9 +66,17 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 		const query = `QUERY 1`
 		exploder := func(v ...custom) (r [3]interface{}) {
 			for idx, v := range v[:1] {
-				r[idx*3+0], r[idx*3+1], r[idx*3+2] = v.A, v.B, v.C
+				var (
+					c0 sql.NullInt64
+					c1 sql.NullInt64
+					c2 sql.NullInt64
+				)
+				c0.Int64 = int64(v.A)
+				c1.Int64 = int64(v.B)
+				c2.Int64 = int64(v.C)
+				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return
+			return r
 		}
 		tmp := exploder(v...)
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []custom(nil), true
@@ -72,9 +84,17 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 		const query = `QUERY 2`
 		exploder := func(v ...custom) (r [6]interface{}) {
 			for idx, v := range v[:2] {
-				r[idx*3+0], r[idx*3+1], r[idx*3+2] = v.A, v.B, v.C
+				var (
+					c0 sql.NullInt64
+					c1 sql.NullInt64
+					c2 sql.NullInt64
+				)
+				c0.Int64 = int64(v.A)
+				c1.Int64 = int64(v.B)
+				c2.Int64 = int64(v.C)
+				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return
+			return r
 		}
 		tmp := exploder(v...)
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []custom(nil), true
@@ -82,9 +102,17 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 		const query = `QUERY 3`
 		exploder := func(v ...custom) (r [9]interface{}) {
 			for idx, v := range v[:3] {
-				r[idx*3+0], r[idx*3+1], r[idx*3+2] = v.A, v.B, v.C
+				var (
+					c0 sql.NullInt64
+					c1 sql.NullInt64
+					c2 sql.NullInt64
+				)
+				c0.Int64 = int64(v.A)
+				c1.Int64 = int64(v.B)
+				c2.Int64 = int64(v.C)
+				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return
+			return r
 		}
 		tmp := exploder(v[:3]...)
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), v[3:], true

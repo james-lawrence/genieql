@@ -12,7 +12,7 @@ type ColumnMap struct {
 	PtrDst bool
 }
 
-func (t ColumnMap) Local(i int) ast.Expr {
+func (t ColumnMap) Local(i int) *ast.Ident {
 	return &ast.Ident{
 		Name: fmt.Sprintf("c%d", i),
 	}

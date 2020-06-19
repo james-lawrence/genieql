@@ -313,12 +313,29 @@ func (t *queryFunction) Apply(options ...QueryFunctionOption) *queryFunction {
 }
 
 func (t queryFunction) Generate(dst io.Writer) (err error) {
+	type context struct {
+		Name            string
+		ScannerFunc     ast.Expr
+		ScannerType     ast.Expr
+		BuiltinQuery    ast.Node
+		Exploders       []ast.Stmt
+		Queryer         ast.Expr
+		Parameters      []*ast.Field
+		QueryParameters []ast.Expr
+		Comment         string
+		Columns         []genieql.ColumnMap
+	}
+
 	const (
 		defaultQueryName = "query"
 	)
 
 	var (
-		columns []genieql.ColumnMap
+		columns         []genieql.ColumnMap
+		parameters      []*ast.Field
+		queryParameters []ast.Expr
+		query           *ast.CallExpr
+		queryParam      = ast.NewIdent(defaultQueryName)
 	)
 
 	qliteral := func(name string, x ast.Expr) ast.Decl {
@@ -333,26 +350,6 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 			return genieql.QueryLiteral2(token.VAR, name, x)
 		}
 	}
-
-	type context struct {
-		Name            string
-		ScannerFunc     ast.Expr
-		ScannerType     ast.Expr
-		BuiltinQuery    ast.Node
-		Exploders       []ast.Stmt
-		Queryer         ast.Expr
-		Parameters      []*ast.Field
-		QueryParameters []ast.Expr
-		Comment         string
-		Columns         []genieql.ColumnMap
-	}
-
-	var (
-		parameters      []*ast.Field
-		queryParameters []ast.Expr
-		query           *ast.CallExpr
-		queryParam      = ast.NewIdent(defaultQueryName)
-	)
 
 	// if any of the parameters have the same name as the queryParam use a fallback.
 	for _, p := range astutil.MapExprToString(t.QueryParameters...) {

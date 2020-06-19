@@ -84,10 +84,15 @@ func structureQueryParameters(param *ast.Field, fields ...*ast.Field) []ast.Expr
 	return selectors
 }
 
-func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field) ast.Stmt {
+func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field) (_ ast.Stmt, err error) {
+	// nothing to do.
 	if len(selectors) == 0 {
-		return nil
+		return nil, nil
 	}
+
+	nulltype := nulltypes(ctx)
+	encoder := encode(ctx)
+
 	input := &ast.Ellipsis{Elt: typ.Type}
 	output := &ast.ArrayType{Elt: ast.NewIdent("interface{}"), Len: astutil.IntegerLiteral(n * len(selectors))}
 	returnc := ast.NewIdent("r")
@@ -95,7 +100,21 @@ func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field
 	value := ast.NewIdent("v")
 	assignlhs := make([]ast.Expr, 0, len(selectors))
 	assignrhs := make([]ast.Expr, 0, len(selectors))
+	encodings := make([]ast.Stmt, 0, len(selectors))
+	localspec := make([]ast.Spec, 0, len(selectors))
+
 	for idx, sel := range selectors {
+		var (
+			encoded ast.Stmt
+		)
+		info := genieql.ColumnMap{
+			Type: sel.Type,
+			Dst: &ast.SelectorExpr{
+				X:   value,
+				Sel: astutil.MapFieldsToNameIdent(sel)[0],
+			},
+		}
+
 		assignlhs = append(assignlhs, &ast.IndexExpr{
 			X: returnc,
 			Index: &ast.BinaryExpr{
@@ -108,20 +127,31 @@ func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field
 				Y:  astutil.IntegerLiteral(idx),
 			},
 		})
-		assignrhs = append(assignrhs, &ast.SelectorExpr{
-			X:   value,
-			Sel: astutil.MapFieldsToNameIdent(sel)[0],
-		})
+
+		if encoded, err = encoder(info.Dst, idx, info); err != nil {
+			return nil, err
+		}
+		encodings = append(encodings, encoded)
+
+		localspec = append(localspec, astutil.ValueSpec(nulltype(info.Type), info.Local(idx)))
+		assignrhs = append(assignrhs, info.Local(idx))
 	}
+
+	stmts := []ast.Stmt{
+		&ast.DeclStmt{
+			Decl: astutil.VarList(localspec...),
+		},
+	}
+	stmts = append(stmts, encodings...)
+	stmts = append(stmts, astutil.Assign(assignlhs, token.ASSIGN, assignrhs))
+
 	body := &ast.RangeStmt{
 		Key:   key,
 		Value: value,
 		Tok:   token.DEFINE,
 		X:     &ast.SliceExpr{X: typ.Names[0], High: astutil.IntegerLiteral(n)},
 		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				astutil.Assign(assignlhs, token.ASSIGN, assignrhs),
-			},
+			List: stmts,
 		},
 	}
 
@@ -137,12 +167,12 @@ func buildExploder(n int, name ast.Expr, typ *ast.Field, selectors ...*ast.Field
 				Body: &ast.BlockStmt{
 					List: []ast.Stmt{
 						body,
-						astutil.Return(),
+						astutil.Return(returnc),
 					},
 				},
 			},
 		},
-	}
+	}, nil
 }
 
 func buildExploderInvocations(n int, fun ast.Expr, arg ast.Expr) []ast.Expr {

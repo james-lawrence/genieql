@@ -141,7 +141,7 @@ func ValueSpec(typ ast.Expr, names ...*ast.Ident) ast.Spec {
 }
 
 // VarList creates a variable list. i.e) var (a int, b bool, c string)
-func VarList(specs ...ast.Spec) ast.Decl {
+func VarList(specs ...ast.Spec) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok:    token.VAR,
 		Lparen: 1,
@@ -156,7 +156,7 @@ func literalDecl(tok token.Token, name string, x ast.Expr) *ast.GenDecl {
 		Specs: []ast.Spec{
 			&ast.ValueSpec{
 				Names: []*ast.Ident{
-					&ast.Ident{
+					{
 						Name: name,
 						Obj: &ast.Object{
 							Kind: ast.Con,

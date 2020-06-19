@@ -104,7 +104,6 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
-			fset := token.NewFileSet()
 			ctx := Context{
 				Configuration:  configuration,
 				CurrentPackage: pkg,
@@ -113,7 +112,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 				Driver:         driver,
 			}
 
-			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
+			file, err := parser.ParseFile(ctx.FileSet, "prototypes.go", prototype, parser.ParseComments)
 			Expect(err).ToNot(HaveOccurred())
 
 			buffer.WriteString("package example\n\n")
@@ -185,7 +184,6 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
-			fset := token.NewFileSet()
 			ctx := Context{
 				Configuration:  configuration,
 				CurrentPackage: pkg,
@@ -194,7 +192,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 				Driver:         driver,
 			}
 
-			file, err := parser.ParseFile(fset, "prototypes.go", prototype, parser.ParseComments)
+			file, err := parser.ParseFile(ctx.FileSet, "prototypes.go", prototype, parser.ParseComments)
 			Expect(err).ToNot(HaveOccurred())
 
 			buffer.WriteString("package example\n\n")

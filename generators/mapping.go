@@ -11,7 +11,7 @@ import (
 )
 
 // mappedParam converts a *ast.Field that represents a struct into an array
-// of ColumnMap.
+// of ColumnInfo.
 func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos []genieql.ColumnInfo, err error) {
 	var (
 		pkg *build.Package

@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	_ "github.com/lib/pq"
@@ -20,6 +25,23 @@ import (
 )
 
 var _ = ginkgo.Describe("Batch Functions", func() {
+	pkg := &build.Package{
+		Name: "example",
+		Dir:  ".fixtures",
+		GoFiles: []string{
+			"example.go",
+		},
+	}
+
+	configuration := genieql.MustConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
+		),
+	)
+
+	driver, err := genieql.LookupDriver(drivers.StandardLib)
+	panicOnError(err)
+
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{
@@ -43,8 +65,15 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				buffer    bytes.Buffer
 				formatted bytes.Buffer
 			)
+			ctx := Context{
+				Configuration:  configuration,
+				CurrentPackage: pkg,
+				FileSet:        token.NewFileSet(),
+				Dialect:        dialect{},
+				Driver:         driver,
+			}
 			buffer.WriteString("package example\n\n")
-			Expect(NewBatchFunction(maximum, field, options...).Generate(&buffer)).ToNot(HaveOccurred())
+			Expect(NewBatchFunction(ctx, maximum, field, options...).Generate(&buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
 			Expect(genieql.FormatOutput(&formatted, buffer.Bytes())).ToNot(HaveOccurred())
@@ -93,4 +122,44 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			),
 		),
 	)
+
+	DescribeTable("build a query function from a function prototype",
+		func(prototype, fixture string, options ...BatchFunctionOption) {
+			buffer := bytes.NewBuffer([]byte{})
+			formatted := bytes.NewBuffer([]byte{})
+			builder := func(local string, n int, columns ...string) ast.Decl {
+				return genieql.QueryLiteral("query", fmt.Sprintf("QUERY %d", n))
+			}
+			ctx := Context{
+				Configuration:  configuration,
+				CurrentPackage: pkg,
+				FileSet:        token.NewFileSet(),
+				Dialect:        dialect{},
+				Driver:         driver,
+			}
+
+			file, err := parser.ParseFile(ctx.FileSet, "prototypes.go", prototype, parser.ParseComments)
+			Expect(err).ToNot(HaveOccurred())
+
+			buffer.WriteString("package example\n\n")
+			for _, decl := range genieql.FindTypes(file) {
+				gen := genieql.MultiGenerate(NewBatchFunctionFromGenDecl(ctx, decl, builder, []string{}, options...)...)
+				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
+			}
+			buffer.WriteString("\n")
+			// log.Println(buffer.String())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+
+			expected, err := ioutil.ReadFile(fixture)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(formatted.String()).To(Equal(string(expected)))
+		},
+		Entry(
+			"example 1 - structure insert",
+			// type example1BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example1) NewExample1ScannerStatic
+			"package example; type batchFunction4 func(q sqlx.Queryer, p [5]StructA) StaticExampleScanner",
+			".fixtures/functions-batch/output4.go",
+		),
+	)
+	// type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner
 })

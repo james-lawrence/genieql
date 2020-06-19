@@ -107,15 +107,16 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		),
 	)
 
-	return NewBatchFunction(max, field, poptions...)
+	return NewBatchFunction(ctx, max, field, poptions...)
 }
 
 // NewBatchFunction builds functions that execute on batches of values, such as update and insert.
-func NewBatchFunction(maximum int, typ *ast.Field, options ...BatchFunctionOption) genieql.Generator {
+func NewBatchFunction(ctx Context, maximum int, typ *ast.Field, options ...BatchFunctionOption) genieql.Generator {
 	b := batchFunction{
+		Context:  ctx,
 		Maximum:  maximum,
 		Type:     typ,
-		Template: batchInsertScannerTemplate,
+		Template: batchInsertScannerTemplate(ctx),
 	}
 
 	for _, opt := range options {
@@ -140,7 +141,7 @@ type batchFunction struct {
 	Selectors     []*ast.Field
 }
 
-func (t batchFunction) Generate(dst io.Writer) error {
+func (t batchFunction) Generate(dst io.Writer) (err error) {
 	type queryFunctionContext struct {
 		Number       int
 		BuiltinQuery ast.Node
@@ -148,6 +149,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		Exploder     ast.Node
 		Explode      ast.Node
 	}
+
 	type context struct {
 		Type             *ast.Field
 		QueryFunction    queryFunction
@@ -162,6 +164,7 @@ func (t batchFunction) Generate(dst io.Writer) error {
 		parameters         []*ast.Field
 		queryParameters    []ast.Expr
 		defaultQueryParams []ast.Expr
+		exploder           ast.Stmt
 		statements         []queryFunctionContext
 		exploderName       = ast.NewIdent("exploder")
 		tmpName            = ast.NewIdent("tmp")
@@ -192,6 +195,10 @@ func (t batchFunction) Generate(dst io.Writer) error {
 
 	statements = make([]queryFunctionContext, 0, t.Maximum)
 	for i := 1; i < t.Maximum; i++ {
+		if exploder, err = buildExploder(t.Context, i, exploderName, t.Type, t.Selectors...); err != nil {
+			return err
+		}
+
 		tmp := queryFunctionContext{
 			Number:       i,
 			BuiltinQuery: t.Builder(i),
@@ -200,17 +207,21 @@ func (t batchFunction) Generate(dst io.Writer) error {
 				Args:     queryParameters,
 				Ellipsis: token.Pos(1),
 			},
-			Exploder: buildExploder(i, exploderName, t.Type, t.Selectors...),
+			Exploder: exploder,
 			Explode:  buildExploderAssign(tmpName, exploderName, astutil.MapFieldsToNameExpr(t.Type), t.Selectors...),
 		}
 
 		statements = append(statements, tmp)
 	}
 
+	if exploder, err = buildExploder(t.Context, t.Maximum, exploderName, t.Type, t.Selectors...); err != nil {
+		return err
+	}
+
 	defaultStatement := queryFunctionContext{
 		Number:       t.Maximum,
 		BuiltinQuery: t.Builder(t.Maximum),
-		Exploder:     buildExploder(t.Maximum, exploderName, t.Type, t.Selectors...),
+		Exploder:     exploder,
 		Explode:      buildExploderAssign(tmpName, exploderName, astutil.ExprList(&ast.SliceExpr{X: astutil.MapFieldsToNameExpr(t.Type)[0], High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)}}), t.Selectors...),
 		Queryer: &ast.CallExpr{
 			Fun:      &ast.SelectorExpr{X: ast.NewIdent(t.queryFunction.QueryerName), Sel: t.queryFunction.QueryerFunction},
@@ -232,17 +243,24 @@ func (t batchFunction) Generate(dst io.Writer) error {
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate batch insert")
 }
 
-var batchInsertScannerTemplate = template.Must(template.New("batch-function").Funcs(batchQueryFuncMap).Parse(batchScannerTemplate))
-var batchQueryFuncMap = template.FuncMap{
-	"expr":      types.ExprString,
-	"arguments": arguments,
-	"ast":       astPrint,
-	"array":     exprToArray,
-	"name": func(f *ast.Field) ast.Expr {
-		return astutil.MapFieldsToNameExpr(f)[0]
-	},
-	"title":   stringsx.ToPublic,
-	"private": stringsx.ToPrivate,
+func batchInsertScannerTemplate(ctx Context) *template.Template {
+	return template.Must(template.New("batch-function").Funcs(batchQueryFuncMap(ctx)).Parse(batchScannerTemplate))
+}
+
+func batchQueryFuncMap(ctx Context) template.FuncMap {
+	return template.FuncMap{
+		"expr":      types.ExprString,
+		"arguments": arguments,
+		"ast":       astPrint,
+		"array":     exprToArray,
+		"name": func(f *ast.Field) ast.Expr {
+			return astutil.MapFieldsToNameExpr(f)[0]
+		},
+		"title":    stringsx.ToPublic,
+		"private":  stringsx.ToPrivate,
+		"encode":   encode(ctx),
+		"nulltype": nulltypes(ctx),
+	}
 }
 
 const batchScannerTemplate = `// New{{.QueryFunction.Name | title}} creates a scanner that inserts a batch of
