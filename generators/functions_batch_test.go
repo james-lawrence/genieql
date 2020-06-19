@@ -75,7 +75,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			buffer.WriteString("package example\n\n")
 			Expect(NewBatchFunction(ctx, maximum, field, options...).Generate(&buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
-
+			// log.Println("GENERATED", buffer.String())
 			Expect(genieql.FormatOutput(&formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -147,7 +147,6 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
 			buffer.WriteString("\n")
-			// log.Println(buffer.String())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := ioutil.ReadFile(fixture)
@@ -156,10 +155,8 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 		},
 		Entry(
 			"example 1 - structure insert",
-			// type example1BatchInsertFunction func(queryer sqlx.Queryer, p [5]Example1) NewExample1ScannerStatic
 			"package example; type batchFunction4 func(q sqlx.Queryer, p [5]StructA) StaticExampleScanner",
 			".fixtures/functions-batch/output4.go",
 		),
 	)
-	// type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner
 })

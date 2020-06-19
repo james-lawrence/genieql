@@ -64,7 +64,7 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 		return nil, []custom(nil), false
 	case 1:
 		const query = `QUERY 1`
-		exploder := func(v ...custom) (r [3]interface{}) {
+		exploder := func(v ...custom) (r [3]interface{}, err error) {
 			for idx, v := range v[:1] {
 				var (
 					c0 sql.NullInt64
@@ -79,13 +79,19 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(v...)
+
+		tmp, err := exploder(v...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []custom(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []custom(nil), true
 	case 2:
 		const query = `QUERY 2`
-		exploder := func(v ...custom) (r [6]interface{}) {
+		exploder := func(v ...custom) (r [6]interface{}, err error) {
 			for idx, v := range v[:2] {
 				var (
 					c0 sql.NullInt64
@@ -100,13 +106,19 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(v...)
+
+		tmp, err := exploder(v...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []custom(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []custom(nil), true
 	default:
 		const query = `QUERY 3`
-		exploder := func(v ...custom) (r [9]interface{}) {
+		exploder := func(v ...custom) (r [9]interface{}, err error) {
 			for idx, v := range v[:3] {
 				var (
 					c0 sql.NullInt64
@@ -121,9 +133,15 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(v[:3]...)
+
+		tmp, err := exploder(v[:3]...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []custom(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), v[3:], true
 	}
 }

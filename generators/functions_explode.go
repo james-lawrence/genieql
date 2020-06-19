@@ -164,13 +164,16 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		Rhs: []ast.Expr{
 			&ast.FuncLit{
 				Type: &ast.FuncType{
-					Params:  &ast.FieldList{List: []*ast.Field{astutil.Field(input, typ.Names...)}},
-					Results: &ast.FieldList{List: []*ast.Field{astutil.Field(output, ast.NewIdent("r"))}},
+					Params: &ast.FieldList{List: []*ast.Field{astutil.Field(input, typ.Names...)}},
+					Results: &ast.FieldList{List: []*ast.Field{
+						astutil.Field(output, ast.NewIdent("r")),
+						astutil.Field(ast.NewIdent("error"), ast.NewIdent("err")),
+					}},
 				},
 				Body: &ast.BlockStmt{
 					List: []ast.Stmt{
 						body,
-						astutil.Return(returnc),
+						astutil.Return(returnc, ast.NewIdent("nil")),
 					},
 				},
 			},
@@ -186,20 +189,28 @@ func buildExploderInvocations(n int, fun ast.Expr, arg ast.Expr) []ast.Expr {
 	return r
 }
 
-func buildExploderAssign(tmpName, exploderName ast.Expr, exploderArg []ast.Expr, selectors ...*ast.Field) ast.Stmt {
+func buildExploderAssign(tmpName, exploderName ast.Expr, errReturn ast.Stmt, exploderArg []ast.Expr, selectors ...*ast.Field) []ast.Stmt {
 	if len(selectors) == 0 {
 		return nil
 	}
-
-	return astutil.Assign(
-		astutil.ExprList(tmpName),
-		token.DEFINE,
-		astutil.ExprList(
-			&ast.CallExpr{
-				Fun:      exploderName,
-				Args:     exploderArg,
-				Ellipsis: token.Pos(1),
-			},
+	errExpr := ast.NewIdent("err")
+	return []ast.Stmt{
+		astutil.Assign(
+			astutil.ExprList(tmpName, errExpr),
+			token.DEFINE,
+			astutil.ExprList(
+				&ast.CallExpr{
+					Fun:      exploderName,
+					Args:     exploderArg,
+					Ellipsis: token.Pos(1),
+				},
+			),
 		),
-	)
+		&ast.IfStmt{
+			Cond: &ast.BinaryExpr{X: errExpr, Op: token.NEQ, Y: ast.NewIdent("nil")},
+			Body: astutil.Block(
+				errReturn,
+			),
+		},
+	}
 }

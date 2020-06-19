@@ -64,7 +64,7 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 		return nil, []StructA(nil), false
 	case 1:
 		const query = `QUERY 1`
-		exploder := func(p ...StructA) (r [8]interface{}) {
+		exploder := func(p ...StructA) (r [8]interface{}, err error) {
 			for idx, v := range p[:1] {
 				var (
 					c0 sql.NullInt64
@@ -94,13 +94,19 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []StructA(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []StructA(nil), true
 	case 2:
 		const query = `QUERY 2`
-		exploder := func(p ...StructA) (r [16]interface{}) {
+		exploder := func(p ...StructA) (r [16]interface{}, err error) {
 			for idx, v := range p[:2] {
 				var (
 					c0 sql.NullInt64
@@ -130,13 +136,19 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []StructA(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []StructA(nil), true
 	case 3:
 		const query = `QUERY 3`
-		exploder := func(p ...StructA) (r [24]interface{}) {
+		exploder := func(p ...StructA) (r [24]interface{}, err error) {
 			for idx, v := range p[:3] {
 				var (
 					c0 sql.NullInt64
@@ -166,13 +178,19 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []StructA(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []StructA(nil), true
 	case 4:
 		const query = `QUERY 4`
-		exploder := func(p ...StructA) (r [32]interface{}) {
+		exploder := func(p ...StructA) (r [32]interface{}, err error) {
 			for idx, v := range p[:4] {
 				var (
 					c0 sql.NullInt64
@@ -202,13 +220,19 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []StructA(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), []StructA(nil), true
 	default:
 		const query = `QUERY 5`
-		exploder := func(p ...StructA) (r [40]interface{}) {
+		exploder := func(p ...StructA) (r [40]interface{}, err error) {
 			for idx, v := range p[:5] {
 				var (
 					c0 sql.NullInt64
@@ -238,9 +262,15 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p[:5]...)
+
+		tmp, err := exploder(p[:5]...)
+
+		if err != nil {
+			return StaticExampleScanner(nil, err), []StructA(nil), false
+		}
+
 		return StaticExampleScanner(q.Query(query, tmp[:]...)), p[5:], true
 	}
 }

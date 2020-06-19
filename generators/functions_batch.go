@@ -144,7 +144,7 @@ func (t batchFunction) Generate(dst io.Writer) (err error) {
 		BuiltinQuery ast.Node
 		Queryer      ast.Expr
 		Exploder     ast.Node
-		Explode      ast.Node
+		Explode      []ast.Stmt
 	}
 
 	type context struct {
@@ -190,6 +190,19 @@ func (t batchFunction) Generate(dst io.Writer) (err error) {
 		})
 	}
 
+	failure := astutil.Return(
+		astutil.CallExpr(
+			t.queryFunction.ScannerDecl.Name,
+			ast.NewIdent("nil"),
+			ast.NewIdent("err"),
+		),
+		astutil.CallExpr(
+			exprToArray(t.Type.Type),
+			ast.NewIdent("nil"),
+		),
+		ast.NewIdent("false"),
+	)
+
 	statements = make([]queryFunctionContext, 0, t.Maximum)
 	for i := 1; i < t.Maximum; i++ {
 		if exploder, err = buildExploder(t.Context, i, exploderName, t.Type, t.Selectors...); err != nil {
@@ -205,7 +218,7 @@ func (t batchFunction) Generate(dst io.Writer) (err error) {
 				Ellipsis: token.Pos(1),
 			},
 			Exploder: exploder,
-			Explode:  buildExploderAssign(tmpName, exploderName, astutil.MapFieldsToNameExpr(t.Type), t.Selectors...),
+			Explode:  buildExploderAssign(tmpName, exploderName, failure, astutil.MapFieldsToNameExpr(t.Type), t.Selectors...),
 		}
 
 		statements = append(statements, tmp)
@@ -219,7 +232,7 @@ func (t batchFunction) Generate(dst io.Writer) (err error) {
 		Number:       t.Maximum,
 		BuiltinQuery: t.Builder(t.Maximum),
 		Exploder:     exploder,
-		Explode:      buildExploderAssign(tmpName, exploderName, astutil.ExprList(&ast.SliceExpr{X: astutil.MapFieldsToNameExpr(t.Type)[0], High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)}}), t.Selectors...),
+		Explode:      buildExploderAssign(tmpName, exploderName, failure, astutil.ExprList(&ast.SliceExpr{X: astutil.MapFieldsToNameExpr(t.Type)[0], High: &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(t.Maximum)}}), t.Selectors...),
 		Queryer: &ast.CallExpr{
 			Fun:      &ast.SelectorExpr{X: ast.NewIdent(t.queryFunction.QueryerName), Sel: t.queryFunction.QueryerFunction},
 			Args:     defaultQueryParams,
@@ -320,13 +333,17 @@ func (t *{{.QueryFunction.Name | private}}) advance(q sqlx.Queryer, {{.Type | na
 	case {{ $ctx.Number }}:
 		{{ $ctx.BuiltinQuery | ast }}
 		{{ $ctx.Exploder | ast }}
-		{{ $ctx.Explode | ast }}
+		{{ range $_, $stmt := $ctx.Explode }}
+		{{ $stmt | ast }}
+		{{ end }}
 		return {{ $.ScannerFunc | expr }}({{ $ctx.Queryer | expr }}), {{$.Type.Type | array | expr}}(nil), true
 	{{- end }}
 	default:
 		{{ .DefaultStatement.BuiltinQuery | ast }}
 		{{ .DefaultStatement.Exploder | ast }}
-		{{ .DefaultStatement.Explode | ast }}
+		{{ range $_, $stmt := .DefaultStatement.Explode }}
+		{{ $stmt | ast }}
+		{{ end }}
 		return {{ .ScannerFunc | expr }}({{ .DefaultStatement.Queryer | expr }}), {{.Type | name}}[{{.DefaultStatement.Number}}:], true
 	}
 }
