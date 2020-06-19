@@ -241,10 +241,11 @@ func (t scanner) Generate(dst io.Writer) error {
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
 		"nulltype":  nulltypes(t.Context),
-		"decode": func(i int, c genieql.ColumnMap) (ast.Stmt, error) {
-			return decode(t.Context)(i, c, func(local string) ast.Node {
+		"decode":    decode(t.Context),
+		"error": func() func(string) ast.Node {
+			return func(local string) ast.Node {
 				return ast.NewIdent(local)
-			})
+			}
 		},
 		"title":   stringsx.ToPublic,
 		"private": stringsx.ToPrivate,
@@ -370,7 +371,7 @@ func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ decode $index $column | ast }}
+	{{ decode $index $column error | ast }}
 	{{ end }}
 
 	return t.Rows.Err()
@@ -426,7 +427,7 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ decode $index $column | ast }}
+	{{ decode $index $column error | ast }}
 	{{ end }}
 
 	return nil
@@ -499,7 +500,7 @@ func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
 		switch column {
 		{{- range $index, $column := .Columns}}
 		case cn{{$index}}:
-			{{ decode $index $column | ast -}}
+			{{ decode $index $column error | ast -}}
 		{{- end }}
 		}
 	}

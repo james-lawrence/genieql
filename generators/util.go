@@ -154,10 +154,9 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (as
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output ast.Stmt, err error) {
 		type stmtCtx struct {
-			Error ast.Expr
-			From  ast.Expr
-			To    ast.Expr
-			Type  ast.Expr
+			From ast.Expr
+			To   ast.Expr
+			Type ast.Expr
 		}
 
 		var (
