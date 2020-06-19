@@ -18,8 +18,13 @@ func customQueryFunction(q sqlx.Queryer, query string, x1, x2, x3 int) ProfileSc
 		c2 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(x1)
+
+	c1.Valid = true
 	c1.Int64 = int64(x2)
+
+	c2.Valid = true
 	c2.Int64 = int64(x3)
 
 	return NewProfileScannerDynamic(q.Query(query, c0, c1, c2))
@@ -34,8 +39,13 @@ func customQueryFunction2(q sqlx.Queryer, x1, x2, x3 int) ProfileScanner {
 		c2 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(x1)
+
+	c1.Valid = true
 	c1.Int64 = int64(x2)
+
+	c2.Valid = true
 	c2.Int64 = int64(x3)
 
 	return NewProfileScannerDynamic(q.Query(query, c0, c1, c2))

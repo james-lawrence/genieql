@@ -220,9 +220,8 @@ func (t example1ScannerStatic) Next() bool {
 
 // NewExample1ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExample1ScannerStaticRow(row *sql.Row, err error) Example1ScannerStaticRow {
+func NewExample1ScannerStaticRow(row *sql.Row) Example1ScannerStaticRow {
 	return Example1ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -377,6 +376,12 @@ func (t Example1ScannerStaticRow) Scan(e *Example1) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Example1ScannerStaticRow) Err(err error) Example1ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewExample1ScannerDynamic creates a scanner that operates on a dynamic
@@ -773,9 +778,8 @@ func (t example2ScannerStatic) Next() bool {
 
 // NewExample2ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExample2ScannerStaticRow(row *sql.Row, err error) Example2ScannerStaticRow {
+func NewExample2ScannerStaticRow(row *sql.Row) Example2ScannerStaticRow {
 	return Example2ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -835,6 +839,12 @@ func (t Example2ScannerStaticRow) Scan(e *Example2) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Example2ScannerStaticRow) Err(err error) Example2ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewExample2ScannerDynamic creates a scanner that operates on a dynamic
@@ -1064,9 +1074,8 @@ func (t example3ScannerStatic) Next() bool {
 
 // NewExample3ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExample3ScannerStaticRow(row *sql.Row, err error) Example3ScannerStaticRow {
+func NewExample3ScannerStaticRow(row *sql.Row) Example3ScannerStaticRow {
 	return Example3ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -1111,6 +1120,12 @@ func (t Example3ScannerStaticRow) Scan(e *Example3) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Example3ScannerStaticRow) Err(err error) Example3ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewExample3ScannerDynamic creates a scanner that operates on a dynamic
@@ -1316,9 +1331,8 @@ func (t example4ScannerStatic) Next() bool {
 
 // NewExample4ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExample4ScannerStaticRow(row *sql.Row, err error) Example4ScannerStaticRow {
+func NewExample4ScannerStaticRow(row *sql.Row) Example4ScannerStaticRow {
 	return Example4ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -1363,6 +1377,12 @@ func (t Example4ScannerStaticRow) Scan(e *Example4) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Example4ScannerStaticRow) Err(err error) Example4ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewExample4ScannerDynamic creates a scanner that operates on a dynamic

@@ -57,9 +57,8 @@ func (t exampleQueryScannerStatic) Next() bool {
 
 // NewExampleQueryScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExampleQueryScannerStaticRow(row *sql.Row, err error) ExampleQueryScannerStaticRow {
+func NewExampleQueryScannerStaticRow(row *sql.Row) ExampleQueryScannerStaticRow {
 	return ExampleQueryScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -83,4 +82,10 @@ func (t ExampleQueryScannerStaticRow) Scan(arg0 *example) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t ExampleQueryScannerStaticRow) Err(err error) ExampleQueryScannerStaticRow {
+	t.err = err
+	return t
 }

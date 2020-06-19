@@ -46,85 +46,110 @@ func Example1Insert(q sqlx.Queryer, arg1 Example1) Example1ScannerStaticRow {
 	)
 
 	if err := c0.Set(&arg1.BigintField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c1.Set(&arg1.BitField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c2.Set(&arg1.BitVaryingField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c3.Set(&arg1.BoolField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c4.Set(&arg1.ByteArrayField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c5.Set(&arg1.CharacterField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c6.Set(&arg1.CharacterFixedField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c7.Set(&arg1.CidrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c8.Set(&arg1.DecimalField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c9.Set(&arg1.DoublePrecisionField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c10.Set(&arg1.InetField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c11.Set(&arg1.Int2Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c12.Set(&arg1.Int4Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c13.Set(&arg1.Int8Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c14.Set(&arg1.IntField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c15.Set(&arg1.IntervalField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c16.Set(&arg1.JSONField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c17.Set(&arg1.JsonbField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c18.Set(&arg1.MacaddrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c19.Set(&arg1.NumericField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c20.Set(&arg1.RealField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c21.Set(&arg1.SmallintField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c22.Set(&arg1.TextField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c23.Set(&arg1.TimestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c24.Set(&arg1.UUIDArray); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c25.Set(&arg1.UUIDField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25), nil)
+	if err := c1.Set(&arg1.BitField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c2.Set(&arg1.BitVaryingField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c3.Set(&arg1.BoolField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c4.Set(&arg1.ByteArrayField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c5.Set(&arg1.CharacterField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c6.Set(&arg1.CharacterFixedField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c7.Set(&arg1.CidrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c8.Set(&arg1.DecimalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c9.Set(&arg1.DoublePrecisionField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c10.Set(&arg1.InetField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c11.Set(&arg1.Int2Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c12.Set(&arg1.Int4Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c13.Set(&arg1.Int8Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c14.Set(&arg1.IntField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c15.Set(&arg1.IntervalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c16.Set(&arg1.JSONField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c17.Set(&arg1.JsonbField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c18.Set(&arg1.MacaddrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c19.Set(&arg1.NumericField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c20.Set(&arg1.RealField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c21.Set(&arg1.SmallintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c22.Set(&arg1.TextField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c23.Set(&arg1.TimestampField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c24.Set(&arg1.UUIDArray); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c25.Set(&arg1.UUIDField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25))
 }
 
 // Example1FindByBigintField generated by genieql
@@ -134,9 +159,10 @@ func Example1FindByBigintField(q sqlx.Queryer, bigintField int) Example1ScannerS
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(bigintField)
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByBigintField generated by genieql
@@ -146,6 +172,7 @@ func Example1LookupByBigintField(q sqlx.Queryer, bigintField int) Example1Scanne
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(bigintField)
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -159,10 +186,10 @@ func Example1FindByBitField(q sqlx.Queryer, bitField []byte) Example1ScannerStat
 	)
 
 	if err := c0.Set(bitField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByBitField generated by genieql
@@ -187,10 +214,10 @@ func Example1FindByBitVaryingField(q sqlx.Queryer, bitVaryingField []byte) Examp
 	)
 
 	if err := c0.Set(bitVaryingField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByBitVaryingField generated by genieql
@@ -214,9 +241,10 @@ func Example1FindByBoolField(q sqlx.Queryer, boolField bool) Example1ScannerStat
 		c0 sql.NullBool
 	)
 
+	c0.Valid = true
 	c0.Bool = boolField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByBoolField generated by genieql
@@ -226,6 +254,7 @@ func Example1LookupByBoolField(q sqlx.Queryer, boolField bool) Example1Scanner {
 		c0 sql.NullBool
 	)
 
+	c0.Valid = true
 	c0.Bool = boolField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -239,10 +268,10 @@ func Example1FindByByteArrayField(q sqlx.Queryer, byteArrayField []byte) Example
 	)
 
 	if err := c0.Set(byteArrayField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByByteArrayField generated by genieql
@@ -266,9 +295,10 @@ func Example1FindByCharacterField(q sqlx.Queryer, characterField string) Example
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = characterField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByCharacterField generated by genieql
@@ -278,6 +308,7 @@ func Example1LookupByCharacterField(q sqlx.Queryer, characterField string) Examp
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = characterField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -290,9 +321,10 @@ func Example1FindByCharacterFixedField(q sqlx.Queryer, characterFixedField strin
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = characterFixedField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByCharacterFixedField generated by genieql
@@ -302,6 +334,7 @@ func Example1LookupByCharacterFixedField(q sqlx.Queryer, characterFixedField str
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = characterFixedField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -315,10 +348,10 @@ func Example1FindByCidrField(q sqlx.Queryer, cidrField net.IPNet) Example1Scanne
 	)
 
 	if err := c0.Set(cidrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByCidrField generated by genieql
@@ -342,9 +375,10 @@ func Example1FindByDecimalField(q sqlx.Queryer, decimalField float64) Example1Sc
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = decimalField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByDecimalField generated by genieql
@@ -354,6 +388,7 @@ func Example1LookupByDecimalField(q sqlx.Queryer, decimalField float64) Example1
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = decimalField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -366,9 +401,10 @@ func Example1FindByDoublePrecisionField(q sqlx.Queryer, doublePrecisionField flo
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = doublePrecisionField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByDoublePrecisionField generated by genieql
@@ -378,6 +414,7 @@ func Example1LookupByDoublePrecisionField(q sqlx.Queryer, doublePrecisionField f
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = doublePrecisionField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -391,10 +428,10 @@ func Example1FindByInetField(q sqlx.Queryer, inetField net.IP) Example1ScannerSt
 	)
 
 	if err := c0.Set(inetField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByInetField generated by genieql
@@ -419,10 +456,10 @@ func Example1FindByInt2Array(q sqlx.Queryer, int2Array []int) Example1ScannerSta
 	)
 
 	if err := c0.Set(int2Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByInt2Array generated by genieql
@@ -447,10 +484,10 @@ func Example1FindByInt4Array(q sqlx.Queryer, int4Array []int) Example1ScannerSta
 	)
 
 	if err := c0.Set(int4Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByInt4Array generated by genieql
@@ -475,10 +512,10 @@ func Example1FindByInt8Array(q sqlx.Queryer, int8Array []int) Example1ScannerSta
 	)
 
 	if err := c0.Set(int8Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByInt8Array generated by genieql
@@ -502,9 +539,10 @@ func Example1FindByIntField(q sqlx.Queryer, intField int) Example1ScannerStaticR
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(intField)
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByIntField generated by genieql
@@ -514,6 +552,7 @@ func Example1LookupByIntField(q sqlx.Queryer, intField int) Example1Scanner {
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(intField)
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -527,10 +566,10 @@ func Example1FindByIntervalField(q sqlx.Queryer, intervalField time.Duration) Ex
 	)
 
 	if err := c0.Set(intervalField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByIntervalField generated by genieql
@@ -555,10 +594,10 @@ func Example1FindByJSONField(q sqlx.Queryer, jsonField []byte) Example1ScannerSt
 	)
 
 	if err := c0.Set(jsonField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByJSONField generated by genieql
@@ -583,10 +622,10 @@ func Example1FindByJsonbField(q sqlx.Queryer, jsonbField []byte) Example1Scanner
 	)
 
 	if err := c0.Set(jsonbField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByJsonbField generated by genieql
@@ -611,10 +650,10 @@ func Example1FindByMacaddrField(q sqlx.Queryer, macaddrField net.HardwareAddr) E
 	)
 
 	if err := c0.Set(macaddrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByMacaddrField generated by genieql
@@ -638,9 +677,10 @@ func Example1FindByNumericField(q sqlx.Queryer, numericField float64) Example1Sc
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = numericField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByNumericField generated by genieql
@@ -650,6 +690,7 @@ func Example1LookupByNumericField(q sqlx.Queryer, numericField float64) Example1
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = numericField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -662,9 +703,10 @@ func Example1FindByRealField(q sqlx.Queryer, realField float64) Example1ScannerS
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = float64(realField)
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByRealField generated by genieql
@@ -674,6 +716,7 @@ func Example1LookupByRealField(q sqlx.Queryer, realField float64) Example1Scanne
 		c0 sql.NullFloat64
 	)
 
+	c0.Valid = true
 	c0.Float64 = float64(realField)
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -686,9 +729,10 @@ func Example1FindBySmallintField(q sqlx.Queryer, smallintField int) Example1Scan
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(smallintField)
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupBySmallintField generated by genieql
@@ -698,6 +742,7 @@ func Example1LookupBySmallintField(q sqlx.Queryer, smallintField int) Example1Sc
 		c0 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(smallintField)
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -710,9 +755,10 @@ func Example1FindByTextField(q sqlx.Queryer, textField string) Example1ScannerSt
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = textField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByTextField generated by genieql
@@ -722,6 +768,7 @@ func Example1LookupByTextField(q sqlx.Queryer, textField string) Example1Scanner
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = textField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -734,9 +781,10 @@ func Example1FindByTimestampField(q sqlx.Queryer, timestampField time.Time) Exam
 		c0 sql.NullTime
 	)
 
+	c0.Valid = true
 	c0.Time = timestampField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByTimestampField generated by genieql
@@ -746,6 +794,7 @@ func Example1LookupByTimestampField(q sqlx.Queryer, timestampField time.Time) Ex
 		c0 sql.NullTime
 	)
 
+	c0.Valid = true
 	c0.Time = timestampField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -759,10 +808,10 @@ func Example1FindByUUIDArray(q sqlx.Queryer, uuidArray []string) Example1Scanner
 	)
 
 	if err := c0.Set(uuidArray); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByUUIDArray generated by genieql
@@ -786,9 +835,10 @@ func Example1FindByUUIDField(q sqlx.Queryer, uuidField string) Example1ScannerSt
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = uuidField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByUUIDField generated by genieql
@@ -798,6 +848,7 @@ func Example1LookupByUUIDField(q sqlx.Queryer, uuidField string) Example1Scanner
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = uuidField
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -810,9 +861,10 @@ func Example1FindByKey(q sqlx.Queryer, uuidField string) Example1ScannerStaticRo
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = uuidField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1UpdateByID generated by genieql
@@ -848,87 +900,114 @@ func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Examp
 		c26 pgtype.UUID
 	)
 
+	c0.Valid = true
 	c0.String = uuidField
+
 	if err := c1.Set(&update.BigintField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c2.Set(&update.BitField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c3.Set(&update.BitVaryingField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c4.Set(&update.BoolField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c5.Set(&update.ByteArrayField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c6.Set(&update.CharacterField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c7.Set(&update.CharacterFixedField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c8.Set(&update.CidrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c9.Set(&update.DecimalField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c10.Set(&update.DoublePrecisionField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c11.Set(&update.InetField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c12.Set(&update.Int2Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c13.Set(&update.Int4Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c14.Set(&update.Int8Array); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c15.Set(&update.IntField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c16.Set(&update.IntervalField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c17.Set(&update.JSONField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c18.Set(&update.JsonbField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c19.Set(&update.MacaddrField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c20.Set(&update.NumericField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c21.Set(&update.RealField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c22.Set(&update.SmallintField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c23.Set(&update.TextField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c24.Set(&update.TimestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c25.Set(&update.UUIDArray); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
-	}
-	if err := c26.Set(&update.UUIDField); err != nil {
-		return NewExample1ScannerStaticRow(nil, err)
+		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26), nil)
+	if err := c2.Set(&update.BitField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c3.Set(&update.BitVaryingField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c4.Set(&update.BoolField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c5.Set(&update.ByteArrayField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c6.Set(&update.CharacterField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c7.Set(&update.CharacterFixedField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c8.Set(&update.CidrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c9.Set(&update.DecimalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c10.Set(&update.DoublePrecisionField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c11.Set(&update.InetField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c12.Set(&update.Int2Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c13.Set(&update.Int4Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c14.Set(&update.Int8Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c15.Set(&update.IntField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c16.Set(&update.IntervalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c17.Set(&update.JSONField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c18.Set(&update.JsonbField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c19.Set(&update.MacaddrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c20.Set(&update.NumericField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c21.Set(&update.RealField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c22.Set(&update.SmallintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c23.Set(&update.TextField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c24.Set(&update.TimestampField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c25.Set(&update.UUIDArray); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	if err := c26.Set(&update.UUIDField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26))
 }
 
 // Example1DeleteByID generated by genieql
@@ -938,7 +1017,8 @@ func Example1DeleteByID(q sqlx.Queryer, uuidField string) Example1ScannerStaticR
 		c0 sql.NullString
 	)
 
+	c0.Valid = true
 	c0.String = uuidField
 
-	return NewExample1ScannerStaticRow(q.QueryRow(query, c0), nil)
+	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }

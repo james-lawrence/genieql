@@ -115,9 +115,8 @@ func (t profileScannerStatic) Next() bool {
 
 // NewProfileScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewProfileScannerStaticRow(row *sql.Row, err error) ProfileScannerStaticRow {
+func NewProfileScannerStaticRow(row *sql.Row) ProfileScannerStaticRow {
 	return ProfileScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -166,6 +165,12 @@ func (t ProfileScannerStaticRow) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) erro
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t ProfileScannerStaticRow) Err(err error) ProfileScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewProfileScannerDynamic creates a scanner that operates on a dynamic
@@ -485,9 +490,8 @@ func (t example1ScannerStatic) Next() bool {
 
 // NewExample1ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewExample1ScannerStaticRow(row *sql.Row, err error) Example1ScannerStaticRow {
+func NewExample1ScannerStaticRow(row *sql.Row) Example1ScannerStaticRow {
 	return Example1ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -642,6 +646,12 @@ func (t Example1ScannerStaticRow) Scan(e *Example1) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Example1ScannerStaticRow) Err(err error) Example1ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewExample1ScannerDynamic creates a scanner that operates on a dynamic
@@ -1165,9 +1175,8 @@ func (t comboScannerStatic) Next() bool {
 
 // NewComboScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewComboScannerStaticRow(row *sql.Row, err error) ComboScannerStaticRow {
+func NewComboScannerStaticRow(row *sql.Row) ComboScannerStaticRow {
 	return ComboScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -1357,4 +1366,10 @@ func (t ComboScannerStaticRow) Scan(e1 *Example1, e2 *Example2) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t ComboScannerStaticRow) Err(err error) ComboScannerStaticRow {
+	t.err = err
+	return t
 }

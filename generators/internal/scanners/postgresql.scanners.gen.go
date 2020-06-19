@@ -227,9 +227,8 @@ func (t comboScannerStatic) Next() bool {
 
 // NewComboScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewComboScannerStaticRow(row *sql.Row, err error) ComboScannerStaticRow {
+func NewComboScannerStaticRow(row *sql.Row) ComboScannerStaticRow {
 	return ComboScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -392,4 +391,10 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t ComboScannerStaticRow) Err(err error) ComboScannerStaticRow {
+	t.err = err
+	return t
 }

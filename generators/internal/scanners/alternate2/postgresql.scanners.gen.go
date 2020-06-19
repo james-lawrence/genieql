@@ -135,9 +135,8 @@ func (t type1ScannerStatic) Next() bool {
 
 // NewType1ScannerStaticRow creates a scanner that operates on a static
 // set of columns that are always returned in the same order, only scans a single row.
-func NewType1ScannerStaticRow(row *sql.Row, err error) Type1ScannerStaticRow {
+func NewType1ScannerStaticRow(row *sql.Row) Type1ScannerStaticRow {
 	return Type1ScannerStaticRow{
-		err: err,
 		row: row,
 	}
 }
@@ -207,6 +206,12 @@ func (t Type1ScannerStaticRow) Scan(sp0 *Type1) error {
 	}
 
 	return nil
+}
+
+// Err set an error to return by scan
+func (t Type1ScannerStaticRow) Err(err error) Type1ScannerStaticRow {
+	t.err = err
+	return t
 }
 
 // NewType1ScannerDynamic creates a scanner that operates on a dynamic
