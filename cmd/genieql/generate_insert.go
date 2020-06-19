@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/parser"
-	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -202,55 +201,45 @@ func (t *insertQueryCmd) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 	return cmd
 }
 
-func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
+func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 	var (
-		err     error
-		config  genieql.Configuration
+		ctx     generators.Context
 		mapping genieql.MappingConfig
-		dialect genieql.Dialect
-		driver  genieql.Driver
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
-		pkg     *build.Package
-		fset    = token.NewFileSet()
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if pkg, err = locatePackage(pkgRelativePath); err != nil {
+	if ctx, err = loadGeneratorContext(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
-	if config, dialect, mapping, err = loadMappingContext(t.configName, pkg, typName, t.mapName); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
 		return err
 	}
 
-	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+	if err = ctx.Configuration.ReadMap(t.mapName, &mapping, genieql.MCOColumns(columns...), genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return err
 	}
 
-	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, _, err = mapping.MappedColumnInfo(ctx.Driver, ctx.Dialect, ctx.FileSet, ctx.CurrentPackage); err != nil {
 		return err
 	}
 
-	mapping.Apply(genieql.MCOColumns(columns...))
-
-	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, pkg); err != nil {
-		return err
-	}
-
-	if fields, _, err = mapping.MapFieldsToColumns(fset, pkg, genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))...); err != nil {
+	if fields, _, err = mapping.MapFieldsToColumns2(ctx.FileSet, ctx.CurrentPackage, genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))...); err != nil {
 		return errors.Wrapf(err, "failed to map fields to columns for: %s", t.packageType)
 	}
 
-	details := genieql.TableDetails{Columns: columns, Dialect: dialect, Table: t.table}
+	details := genieql.TableDetails{Columns: columns, Dialect: ctx.Dialect, Table: t.table}
 	constName := fmt.Sprintf("%sInsert%s", typName, t.constSuffix)
 
-	hg := newHeaderGenerator(t.buildInfo, fset, t.packageType, os.Args[1:]...)
-	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", constName), dialect, t.defaults, columns)
+	hg := newHeaderGenerator(t.buildInfo, ctx.FileSet, t.packageType, os.Args[1:]...)
+	cc := maybeColumnConstants(t.emitColumnConstant, fmt.Sprintf("%sStaticColumns", constName), ctx.Dialect, t.defaults, columns)
 
 	ef := maybeGenerator(
 		t.emitExplodeFunction,
 		generators.NewExploderFunction(
+			ctx,
 			astutil.Field(ast.NewIdent(typName), ast.NewIdent("arg1")),
 			fields,
 			generators.QFOName(fmt.Sprintf("%sExplode", constName)),
@@ -258,7 +247,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) error {
 	)
 	cg := crud.Insert(details).Build(t.batch, constName, t.defaults)
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
@@ -335,7 +324,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	}
 
 	onlyMap := genieql.ColumnInfoSet(columns).Filter(genieql.ColumnInfoFilterIgnore(t.defaults...))
-	if fields, _, err = mapping.MapFieldsToColumns(ctx.FileSet, ctx.CurrentPackage, onlyMap...); err != nil {
+	if fields, _, err = mapping.MapFieldsToColumns2(ctx.FileSet, ctx.CurrentPackage, onlyMap...); err != nil {
 		return errors.Wrapf(err, "failed to locate fields for %s", t.packageType)
 	}
 
@@ -363,6 +352,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	ef := maybeGenerator(
 		t.emitExplodeFunction,
 		generators.NewExploderFunction(
+			ctx,
 			astutil.Field(ast.NewIdent(typName), ast.NewIdent("arg1")),
 			fields,
 			generators.QFOName(fmt.Sprintf("%sExplode", functionName)),

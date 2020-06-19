@@ -27,39 +27,39 @@ func Type1Insert(q sqlx.Queryer, arg1 Type1) Type1ScannerStaticRow {
 		c8 pgtype.Int4
 	)
 
-	if err := c0.Set(&arg1.Field1); err != nil {
+	if err := c0.Set(arg1.Field1); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c1.Set(&arg1.Field2); err != nil {
+	if err := c1.Set(arg1.Field2); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&arg1.Field3); err != nil {
+	if err := c2.Set(arg1.Field3); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&arg1.Field4); err != nil {
+	if err := c3.Set(arg1.Field4); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(&arg1.Field5); err != nil {
+	if err := c4.Set(arg1.Field5); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c5.Set(&arg1.Field6); err != nil {
+	if err := c5.Set(arg1.Field6); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c6.Set(&arg1.Field7); err != nil {
+	if err := c6.Set(arg1.Field7); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c7.Set(&arg1.Field8); err != nil {
+	if err := c7.Set(arg1.Field8); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c8.Set(&arg1.Unmappedfield); err != nil {
+	if err := c8.Set(arg1.Unmappedfield); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
@@ -332,39 +332,39 @@ func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerSt
 	c0.Valid = true
 	c0.String = field1
 
-	if err := c1.Set(&update.Field1); err != nil {
+	if err := c1.Set(update.Field1); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&update.Field2); err != nil {
+	if err := c2.Set(update.Field2); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&update.Field3); err != nil {
+	if err := c3.Set(update.Field3); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(&update.Field4); err != nil {
+	if err := c4.Set(update.Field4); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c5.Set(&update.Field5); err != nil {
+	if err := c5.Set(update.Field5); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c6.Set(&update.Field6); err != nil {
+	if err := c6.Set(update.Field6); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c7.Set(&update.Field7); err != nil {
+	if err := c7.Set(update.Field7); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c8.Set(&update.Field8); err != nil {
+	if err := c8.Set(update.Field8); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c9.Set(&update.Unmappedfield); err != nil {
+	if err := c9.Set(update.Unmappedfield); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 

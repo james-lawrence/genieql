@@ -22,19 +22,19 @@ func exampleInsert(q sqlx.Queryer, arg1 example) ExampleScannerStaticRow {
 		c3 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(&arg1.Created); err != nil {
+	if err := c0.Set(arg1.Created); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c1.Set(&arg1.Email); err != nil {
+	if err := c1.Set(arg1.Email); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&arg1.ID); err != nil {
+	if err := c2.Set(arg1.ID); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&arg1.Updated); err != nil {
+	if err := c3.Set(arg1.Updated); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
@@ -172,19 +172,19 @@ func exampleUpdateByID(q sqlx.Queryer, id int, update example) ExampleScannerSta
 	c0.Valid = true
 	c0.Int64 = int64(id)
 
-	if err := c1.Set(&update.Created); err != nil {
+	if err := c1.Set(update.Created); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&update.Email); err != nil {
+	if err := c2.Set(update.Email); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&update.ID); err != nil {
+	if err := c3.Set(update.ID); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(&update.Updated); err != nil {
+	if err := c4.Set(update.Updated); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 

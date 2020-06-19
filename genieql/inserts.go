@@ -143,6 +143,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	)
 
 	g2 := generators.NewExploderFunction(
+		t.ctx,
 		astutil.Field(ast.NewIdent(types.ExprString(t.tf.Type)), ast.NewIdent("arg1")),
 		fields,
 		generators.QFOName(fmt.Sprintf("%sExplode", t.name)),

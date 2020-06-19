@@ -375,7 +375,7 @@ func builtinType(x ast.Expr) bool {
 		}
 	}
 
-	// TODO these shouldn't really be here. I suppose. think of a way to associate with the driver.
+	// TODO these shouldn't really be here. think of a way to associate with the driver.
 	switch name {
 	case "interface{}":
 		fallthrough
@@ -420,6 +420,18 @@ func unwrapExpr(x ast.Expr) ast.Expr {
 		return real.X
 	default:
 		return x
+	}
+}
+
+func determineIdent(x ast.Expr) *ast.Ident {
+	switch real := x.(type) {
+	case *ast.Ident:
+		return real
+	case *ast.SelectorExpr:
+		return real.Sel
+	default:
+		log.Printf("%T\n", x)
+		return nil
 	}
 }
 

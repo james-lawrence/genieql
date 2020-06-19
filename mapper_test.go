@@ -15,7 +15,7 @@ import (
 var _ = Describe("Mapper", func() {
 	DescribeTable("MapFieldToColumn",
 		func(column string, field *ast.Field, aliaser Aliaser) {
-			matchFound := MapFieldToColumn(column, field, aliaser)
+			matchFound := MapFieldToColumn(ColumnInfo{Name: column}, field, aliaser)
 			Expect(matchFound).ToNot(BeNil())
 		},
 		Entry(

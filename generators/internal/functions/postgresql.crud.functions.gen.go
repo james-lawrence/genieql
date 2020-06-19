@@ -45,107 +45,107 @@ func Example1Insert(q sqlx.Queryer, arg1 Example1) Example1ScannerStaticRow {
 		c25 pgtype.UUID
 	)
 
-	if err := c0.Set(&arg1.BigintField); err != nil {
+	if err := c0.Set(arg1.BigintField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c1.Set(&arg1.BitField); err != nil {
+	if err := c1.Set(arg1.BitField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&arg1.BitVaryingField); err != nil {
+	if err := c2.Set(arg1.BitVaryingField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&arg1.BoolField); err != nil {
+	if err := c3.Set(arg1.BoolField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(&arg1.ByteArrayField); err != nil {
+	if err := c4.Set(arg1.ByteArrayField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c5.Set(&arg1.CharacterField); err != nil {
+	if err := c5.Set(arg1.CharacterField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c6.Set(&arg1.CharacterFixedField); err != nil {
+	if err := c6.Set(arg1.CharacterFixedField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c7.Set(&arg1.CidrField); err != nil {
+	if err := c7.Set(arg1.CidrField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c8.Set(&arg1.DecimalField); err != nil {
+	if err := c8.Set(arg1.DecimalField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c9.Set(&arg1.DoublePrecisionField); err != nil {
+	if err := c9.Set(arg1.DoublePrecisionField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c10.Set(&arg1.InetField); err != nil {
+	if err := c10.Set(arg1.InetField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c11.Set(&arg1.Int2Array); err != nil {
+	if err := c11.Set(arg1.Int2Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c12.Set(&arg1.Int4Array); err != nil {
+	if err := c12.Set(arg1.Int4Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c13.Set(&arg1.Int8Array); err != nil {
+	if err := c13.Set(arg1.Int8Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c14.Set(&arg1.IntField); err != nil {
+	if err := c14.Set(arg1.IntField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c15.Set(&arg1.IntervalField); err != nil {
+	if err := c15.Set(arg1.IntervalField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c16.Set(&arg1.JSONField); err != nil {
+	if err := c16.Set(arg1.JSONField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c17.Set(&arg1.JsonbField); err != nil {
+	if err := c17.Set(arg1.JsonbField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c18.Set(&arg1.MacaddrField); err != nil {
+	if err := c18.Set(arg1.MacaddrField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c19.Set(&arg1.NumericField); err != nil {
+	if err := c19.Set(arg1.NumericField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c20.Set(&arg1.RealField); err != nil {
+	if err := c20.Set(arg1.RealField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c21.Set(&arg1.SmallintField); err != nil {
+	if err := c21.Set(arg1.SmallintField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c22.Set(&arg1.TextField); err != nil {
+	if err := c22.Set(arg1.TextField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c23.Set(&arg1.TimestampField); err != nil {
+	if err := c23.Set(arg1.TimestampField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c24.Set(&arg1.UUIDArray); err != nil {
+	if err := c24.Set(arg1.UUIDArray); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c25.Set(&arg1.UUIDField); err != nil {
+	if err := c25.Set(arg1.UUIDField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
@@ -903,107 +903,107 @@ func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Examp
 	c0.Valid = true
 	c0.String = uuidField
 
-	if err := c1.Set(&update.BigintField); err != nil {
+	if err := c1.Set(update.BigintField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c2.Set(&update.BitField); err != nil {
+	if err := c2.Set(update.BitField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(&update.BitVaryingField); err != nil {
+	if err := c3.Set(update.BitVaryingField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(&update.BoolField); err != nil {
+	if err := c4.Set(update.BoolField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c5.Set(&update.ByteArrayField); err != nil {
+	if err := c5.Set(update.ByteArrayField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c6.Set(&update.CharacterField); err != nil {
+	if err := c6.Set(update.CharacterField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c7.Set(&update.CharacterFixedField); err != nil {
+	if err := c7.Set(update.CharacterFixedField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c8.Set(&update.CidrField); err != nil {
+	if err := c8.Set(update.CidrField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c9.Set(&update.DecimalField); err != nil {
+	if err := c9.Set(update.DecimalField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c10.Set(&update.DoublePrecisionField); err != nil {
+	if err := c10.Set(update.DoublePrecisionField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c11.Set(&update.InetField); err != nil {
+	if err := c11.Set(update.InetField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c12.Set(&update.Int2Array); err != nil {
+	if err := c12.Set(update.Int2Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c13.Set(&update.Int4Array); err != nil {
+	if err := c13.Set(update.Int4Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c14.Set(&update.Int8Array); err != nil {
+	if err := c14.Set(update.Int8Array); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c15.Set(&update.IntField); err != nil {
+	if err := c15.Set(update.IntField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c16.Set(&update.IntervalField); err != nil {
+	if err := c16.Set(update.IntervalField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c17.Set(&update.JSONField); err != nil {
+	if err := c17.Set(update.JSONField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c18.Set(&update.JsonbField); err != nil {
+	if err := c18.Set(update.JsonbField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c19.Set(&update.MacaddrField); err != nil {
+	if err := c19.Set(update.MacaddrField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c20.Set(&update.NumericField); err != nil {
+	if err := c20.Set(update.NumericField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c21.Set(&update.RealField); err != nil {
+	if err := c21.Set(update.RealField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c22.Set(&update.SmallintField); err != nil {
+	if err := c22.Set(update.SmallintField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c23.Set(&update.TextField); err != nil {
+	if err := c23.Set(update.TextField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c24.Set(&update.TimestampField); err != nil {
+	if err := c24.Set(update.TimestampField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c25.Set(&update.UUIDArray); err != nil {
+	if err := c25.Set(update.UUIDArray); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c26.Set(&update.UUIDField); err != nil {
+	if err := c26.Set(update.UUIDField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 

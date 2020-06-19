@@ -1,8 +1,6 @@
 package definitions
 
 import (
-	"database/sql"
-
 	"bitbucket.org/jatone/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
 )
@@ -72,98 +70,111 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		exploder := func(p ...Example1) (r [26]interface{}, err error) {
 			for idx, v := range p[:1] {
 				var (
-					c0  sql.NullInt64
-					c1  pgtype.Bytea
-					c2  pgtype.Bytea
-					c3  sql.NullBool
+					c0  pgtype.Int8
+					c1  pgtype.Bit
+					c2  pgtype.Varbit
+					c3  pgtype.Bool
 					c4  pgtype.Bytea
-					c5  sql.NullString
-					c6  sql.NullString
+					c5  pgtype.Varchar
+					c6  pgtype.BPChar
 					c7  pgtype.CIDR
-					c8  sql.NullFloat64
-					c9  sql.NullFloat64
+					c8  pgtype.Numeric
+					c9  pgtype.Float8
 					c10 pgtype.Inet
-					c11 pgtype.Int8Array
-					c12 pgtype.Int8Array
+					c11 pgtype.Int2Array
+					c12 pgtype.Int4Array
 					c13 pgtype.Int8Array
-					c14 sql.NullInt64
+					c14 pgtype.Int4
 					c15 pgtype.Interval
-					c16 pgtype.Bytea
-					c17 pgtype.Bytea
+					c16 pgtype.JSON
+					c17 pgtype.JSONB
 					c18 pgtype.Macaddr
-					c19 sql.NullFloat64
-					c20 sql.NullFloat64
-					c21 sql.NullInt64
-					c22 sql.NullString
-					c23 sql.NullTime
-					c24 pgtype.TextArray
-					c25 sql.NullString
+					c19 pgtype.Numeric
+					c20 pgtype.Float4
+					c21 pgtype.Int2
+					c22 pgtype.Text
+					c23 pgtype.Timestamptz
+					c24 pgtype.UUIDArray
+					c25 pgtype.UUID
 				)
-				c0.Valid = true
-				c0.Int64 = int64(v.BigintField)
-				if err := c1.Set(&v.BitField); err != nil {
+				if err := c0.Set(v.BigintField); err != nil {
 					return r, err
 				}
-				if err := c2.Set(&v.BitVaryingField); err != nil {
+				if err := c1.Set(v.BitField); err != nil {
 					return r, err
 				}
-				c3.Valid = true
-				c3.Bool = v.BoolField
-				if err := c4.Set(&v.ByteArrayField); err != nil {
+				if err := c2.Set(v.BitVaryingField); err != nil {
 					return r, err
 				}
-				c5.Valid = true
-				c5.String = v.CharacterField
-				c6.Valid = true
-				c6.String = v.CharacterFixedField
-				if err := c7.Set(&v.CidrField); err != nil {
+				if err := c3.Set(v.BoolField); err != nil {
 					return r, err
 				}
-				c8.Valid = true
-				c8.Float64 = v.DecimalField
-				c9.Valid = true
-				c9.Float64 = v.DoublePrecisionField
-				if err := c10.Set(&v.InetField); err != nil {
+				if err := c4.Set(v.ByteArrayField); err != nil {
 					return r, err
 				}
-				if err := c11.Set(&v.Int2Array); err != nil {
+				if err := c5.Set(v.CharacterField); err != nil {
 					return r, err
 				}
-				if err := c12.Set(&v.Int4Array); err != nil {
+				if err := c6.Set(v.CharacterFixedField); err != nil {
 					return r, err
 				}
-				if err := c13.Set(&v.Int8Array); err != nil {
+				if err := c7.Set(v.CidrField); err != nil {
 					return r, err
 				}
-				c14.Valid = true
-				c14.Int64 = int64(v.IntField)
-				if err := c15.Set(&v.IntervalField); err != nil {
+				if err := c8.Set(v.DecimalField); err != nil {
 					return r, err
 				}
-				if err := c16.Set(&v.JSONField); err != nil {
+				if err := c9.Set(v.DoublePrecisionField); err != nil {
 					return r, err
 				}
-				if err := c17.Set(&v.JsonbField); err != nil {
+				if err := c10.Set(v.InetField); err != nil {
 					return r, err
 				}
-				if err := c18.Set(&v.MacaddrField); err != nil {
+				if err := c11.Set(v.Int2Array); err != nil {
 					return r, err
 				}
-				c19.Valid = true
-				c19.Float64 = v.NumericField
-				c20.Valid = true
-				c20.Float64 = float64(v.RealField)
-				c21.Valid = true
-				c21.Int64 = int64(v.SmallintField)
-				c22.Valid = true
-				c22.String = v.TextField
-				c23.Valid = true
-				c23.Time = v.TimestampField
-				if err := c24.Set(&v.UUIDArray); err != nil {
+				if err := c12.Set(v.Int4Array); err != nil {
 					return r, err
 				}
-				c25.Valid = true
-				c25.String = v.UUIDField
+				if err := c13.Set(v.Int8Array); err != nil {
+					return r, err
+				}
+				if err := c14.Set(v.IntField); err != nil {
+					return r, err
+				}
+				if err := c15.Set(v.IntervalField); err != nil {
+					return r, err
+				}
+				if err := c16.Set(v.JSONField); err != nil {
+					return r, err
+				}
+				if err := c17.Set(v.JsonbField); err != nil {
+					return r, err
+				}
+				if err := c18.Set(v.MacaddrField); err != nil {
+					return r, err
+				}
+				if err := c19.Set(v.NumericField); err != nil {
+					return r, err
+				}
+				if err := c20.Set(v.RealField); err != nil {
+					return r, err
+				}
+				if err := c21.Set(v.SmallintField); err != nil {
+					return r, err
+				}
+				if err := c22.Set(v.TextField); err != nil {
+					return r, err
+				}
+				if err := c23.Set(v.TimestampField); err != nil {
+					return r, err
+				}
+				if err := c24.Set(v.UUIDArray); err != nil {
+					return r, err
+				}
+				if err := c25.Set(v.UUIDField); err != nil {
+					return r, err
+				}
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
 			return r, nil
@@ -181,98 +192,111 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		exploder := func(p ...Example1) (r [52]interface{}, err error) {
 			for idx, v := range p[:2] {
 				var (
-					c0  sql.NullInt64
-					c1  pgtype.Bytea
-					c2  pgtype.Bytea
-					c3  sql.NullBool
+					c0  pgtype.Int8
+					c1  pgtype.Bit
+					c2  pgtype.Varbit
+					c3  pgtype.Bool
 					c4  pgtype.Bytea
-					c5  sql.NullString
-					c6  sql.NullString
+					c5  pgtype.Varchar
+					c6  pgtype.BPChar
 					c7  pgtype.CIDR
-					c8  sql.NullFloat64
-					c9  sql.NullFloat64
+					c8  pgtype.Numeric
+					c9  pgtype.Float8
 					c10 pgtype.Inet
-					c11 pgtype.Int8Array
-					c12 pgtype.Int8Array
+					c11 pgtype.Int2Array
+					c12 pgtype.Int4Array
 					c13 pgtype.Int8Array
-					c14 sql.NullInt64
+					c14 pgtype.Int4
 					c15 pgtype.Interval
-					c16 pgtype.Bytea
-					c17 pgtype.Bytea
+					c16 pgtype.JSON
+					c17 pgtype.JSONB
 					c18 pgtype.Macaddr
-					c19 sql.NullFloat64
-					c20 sql.NullFloat64
-					c21 sql.NullInt64
-					c22 sql.NullString
-					c23 sql.NullTime
-					c24 pgtype.TextArray
-					c25 sql.NullString
+					c19 pgtype.Numeric
+					c20 pgtype.Float4
+					c21 pgtype.Int2
+					c22 pgtype.Text
+					c23 pgtype.Timestamptz
+					c24 pgtype.UUIDArray
+					c25 pgtype.UUID
 				)
-				c0.Valid = true
-				c0.Int64 = int64(v.BigintField)
-				if err := c1.Set(&v.BitField); err != nil {
+				if err := c0.Set(v.BigintField); err != nil {
 					return r, err
 				}
-				if err := c2.Set(&v.BitVaryingField); err != nil {
+				if err := c1.Set(v.BitField); err != nil {
 					return r, err
 				}
-				c3.Valid = true
-				c3.Bool = v.BoolField
-				if err := c4.Set(&v.ByteArrayField); err != nil {
+				if err := c2.Set(v.BitVaryingField); err != nil {
 					return r, err
 				}
-				c5.Valid = true
-				c5.String = v.CharacterField
-				c6.Valid = true
-				c6.String = v.CharacterFixedField
-				if err := c7.Set(&v.CidrField); err != nil {
+				if err := c3.Set(v.BoolField); err != nil {
 					return r, err
 				}
-				c8.Valid = true
-				c8.Float64 = v.DecimalField
-				c9.Valid = true
-				c9.Float64 = v.DoublePrecisionField
-				if err := c10.Set(&v.InetField); err != nil {
+				if err := c4.Set(v.ByteArrayField); err != nil {
 					return r, err
 				}
-				if err := c11.Set(&v.Int2Array); err != nil {
+				if err := c5.Set(v.CharacterField); err != nil {
 					return r, err
 				}
-				if err := c12.Set(&v.Int4Array); err != nil {
+				if err := c6.Set(v.CharacterFixedField); err != nil {
 					return r, err
 				}
-				if err := c13.Set(&v.Int8Array); err != nil {
+				if err := c7.Set(v.CidrField); err != nil {
 					return r, err
 				}
-				c14.Valid = true
-				c14.Int64 = int64(v.IntField)
-				if err := c15.Set(&v.IntervalField); err != nil {
+				if err := c8.Set(v.DecimalField); err != nil {
 					return r, err
 				}
-				if err := c16.Set(&v.JSONField); err != nil {
+				if err := c9.Set(v.DoublePrecisionField); err != nil {
 					return r, err
 				}
-				if err := c17.Set(&v.JsonbField); err != nil {
+				if err := c10.Set(v.InetField); err != nil {
 					return r, err
 				}
-				if err := c18.Set(&v.MacaddrField); err != nil {
+				if err := c11.Set(v.Int2Array); err != nil {
 					return r, err
 				}
-				c19.Valid = true
-				c19.Float64 = v.NumericField
-				c20.Valid = true
-				c20.Float64 = float64(v.RealField)
-				c21.Valid = true
-				c21.Int64 = int64(v.SmallintField)
-				c22.Valid = true
-				c22.String = v.TextField
-				c23.Valid = true
-				c23.Time = v.TimestampField
-				if err := c24.Set(&v.UUIDArray); err != nil {
+				if err := c12.Set(v.Int4Array); err != nil {
 					return r, err
 				}
-				c25.Valid = true
-				c25.String = v.UUIDField
+				if err := c13.Set(v.Int8Array); err != nil {
+					return r, err
+				}
+				if err := c14.Set(v.IntField); err != nil {
+					return r, err
+				}
+				if err := c15.Set(v.IntervalField); err != nil {
+					return r, err
+				}
+				if err := c16.Set(v.JSONField); err != nil {
+					return r, err
+				}
+				if err := c17.Set(v.JsonbField); err != nil {
+					return r, err
+				}
+				if err := c18.Set(v.MacaddrField); err != nil {
+					return r, err
+				}
+				if err := c19.Set(v.NumericField); err != nil {
+					return r, err
+				}
+				if err := c20.Set(v.RealField); err != nil {
+					return r, err
+				}
+				if err := c21.Set(v.SmallintField); err != nil {
+					return r, err
+				}
+				if err := c22.Set(v.TextField); err != nil {
+					return r, err
+				}
+				if err := c23.Set(v.TimestampField); err != nil {
+					return r, err
+				}
+				if err := c24.Set(v.UUIDArray); err != nil {
+					return r, err
+				}
+				if err := c25.Set(v.UUIDField); err != nil {
+					return r, err
+				}
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
 			return r, nil
@@ -290,98 +314,111 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		exploder := func(p ...Example1) (r [78]interface{}, err error) {
 			for idx, v := range p[:3] {
 				var (
-					c0  sql.NullInt64
-					c1  pgtype.Bytea
-					c2  pgtype.Bytea
-					c3  sql.NullBool
+					c0  pgtype.Int8
+					c1  pgtype.Bit
+					c2  pgtype.Varbit
+					c3  pgtype.Bool
 					c4  pgtype.Bytea
-					c5  sql.NullString
-					c6  sql.NullString
+					c5  pgtype.Varchar
+					c6  pgtype.BPChar
 					c7  pgtype.CIDR
-					c8  sql.NullFloat64
-					c9  sql.NullFloat64
+					c8  pgtype.Numeric
+					c9  pgtype.Float8
 					c10 pgtype.Inet
-					c11 pgtype.Int8Array
-					c12 pgtype.Int8Array
+					c11 pgtype.Int2Array
+					c12 pgtype.Int4Array
 					c13 pgtype.Int8Array
-					c14 sql.NullInt64
+					c14 pgtype.Int4
 					c15 pgtype.Interval
-					c16 pgtype.Bytea
-					c17 pgtype.Bytea
+					c16 pgtype.JSON
+					c17 pgtype.JSONB
 					c18 pgtype.Macaddr
-					c19 sql.NullFloat64
-					c20 sql.NullFloat64
-					c21 sql.NullInt64
-					c22 sql.NullString
-					c23 sql.NullTime
-					c24 pgtype.TextArray
-					c25 sql.NullString
+					c19 pgtype.Numeric
+					c20 pgtype.Float4
+					c21 pgtype.Int2
+					c22 pgtype.Text
+					c23 pgtype.Timestamptz
+					c24 pgtype.UUIDArray
+					c25 pgtype.UUID
 				)
-				c0.Valid = true
-				c0.Int64 = int64(v.BigintField)
-				if err := c1.Set(&v.BitField); err != nil {
+				if err := c0.Set(v.BigintField); err != nil {
 					return r, err
 				}
-				if err := c2.Set(&v.BitVaryingField); err != nil {
+				if err := c1.Set(v.BitField); err != nil {
 					return r, err
 				}
-				c3.Valid = true
-				c3.Bool = v.BoolField
-				if err := c4.Set(&v.ByteArrayField); err != nil {
+				if err := c2.Set(v.BitVaryingField); err != nil {
 					return r, err
 				}
-				c5.Valid = true
-				c5.String = v.CharacterField
-				c6.Valid = true
-				c6.String = v.CharacterFixedField
-				if err := c7.Set(&v.CidrField); err != nil {
+				if err := c3.Set(v.BoolField); err != nil {
 					return r, err
 				}
-				c8.Valid = true
-				c8.Float64 = v.DecimalField
-				c9.Valid = true
-				c9.Float64 = v.DoublePrecisionField
-				if err := c10.Set(&v.InetField); err != nil {
+				if err := c4.Set(v.ByteArrayField); err != nil {
 					return r, err
 				}
-				if err := c11.Set(&v.Int2Array); err != nil {
+				if err := c5.Set(v.CharacterField); err != nil {
 					return r, err
 				}
-				if err := c12.Set(&v.Int4Array); err != nil {
+				if err := c6.Set(v.CharacterFixedField); err != nil {
 					return r, err
 				}
-				if err := c13.Set(&v.Int8Array); err != nil {
+				if err := c7.Set(v.CidrField); err != nil {
 					return r, err
 				}
-				c14.Valid = true
-				c14.Int64 = int64(v.IntField)
-				if err := c15.Set(&v.IntervalField); err != nil {
+				if err := c8.Set(v.DecimalField); err != nil {
 					return r, err
 				}
-				if err := c16.Set(&v.JSONField); err != nil {
+				if err := c9.Set(v.DoublePrecisionField); err != nil {
 					return r, err
 				}
-				if err := c17.Set(&v.JsonbField); err != nil {
+				if err := c10.Set(v.InetField); err != nil {
 					return r, err
 				}
-				if err := c18.Set(&v.MacaddrField); err != nil {
+				if err := c11.Set(v.Int2Array); err != nil {
 					return r, err
 				}
-				c19.Valid = true
-				c19.Float64 = v.NumericField
-				c20.Valid = true
-				c20.Float64 = float64(v.RealField)
-				c21.Valid = true
-				c21.Int64 = int64(v.SmallintField)
-				c22.Valid = true
-				c22.String = v.TextField
-				c23.Valid = true
-				c23.Time = v.TimestampField
-				if err := c24.Set(&v.UUIDArray); err != nil {
+				if err := c12.Set(v.Int4Array); err != nil {
 					return r, err
 				}
-				c25.Valid = true
-				c25.String = v.UUIDField
+				if err := c13.Set(v.Int8Array); err != nil {
+					return r, err
+				}
+				if err := c14.Set(v.IntField); err != nil {
+					return r, err
+				}
+				if err := c15.Set(v.IntervalField); err != nil {
+					return r, err
+				}
+				if err := c16.Set(v.JSONField); err != nil {
+					return r, err
+				}
+				if err := c17.Set(v.JsonbField); err != nil {
+					return r, err
+				}
+				if err := c18.Set(v.MacaddrField); err != nil {
+					return r, err
+				}
+				if err := c19.Set(v.NumericField); err != nil {
+					return r, err
+				}
+				if err := c20.Set(v.RealField); err != nil {
+					return r, err
+				}
+				if err := c21.Set(v.SmallintField); err != nil {
+					return r, err
+				}
+				if err := c22.Set(v.TextField); err != nil {
+					return r, err
+				}
+				if err := c23.Set(v.TimestampField); err != nil {
+					return r, err
+				}
+				if err := c24.Set(v.UUIDArray); err != nil {
+					return r, err
+				}
+				if err := c25.Set(v.UUIDField); err != nil {
+					return r, err
+				}
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
 			return r, nil
@@ -399,98 +436,111 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		exploder := func(p ...Example1) (r [104]interface{}, err error) {
 			for idx, v := range p[:4] {
 				var (
-					c0  sql.NullInt64
-					c1  pgtype.Bytea
-					c2  pgtype.Bytea
-					c3  sql.NullBool
+					c0  pgtype.Int8
+					c1  pgtype.Bit
+					c2  pgtype.Varbit
+					c3  pgtype.Bool
 					c4  pgtype.Bytea
-					c5  sql.NullString
-					c6  sql.NullString
+					c5  pgtype.Varchar
+					c6  pgtype.BPChar
 					c7  pgtype.CIDR
-					c8  sql.NullFloat64
-					c9  sql.NullFloat64
+					c8  pgtype.Numeric
+					c9  pgtype.Float8
 					c10 pgtype.Inet
-					c11 pgtype.Int8Array
-					c12 pgtype.Int8Array
+					c11 pgtype.Int2Array
+					c12 pgtype.Int4Array
 					c13 pgtype.Int8Array
-					c14 sql.NullInt64
+					c14 pgtype.Int4
 					c15 pgtype.Interval
-					c16 pgtype.Bytea
-					c17 pgtype.Bytea
+					c16 pgtype.JSON
+					c17 pgtype.JSONB
 					c18 pgtype.Macaddr
-					c19 sql.NullFloat64
-					c20 sql.NullFloat64
-					c21 sql.NullInt64
-					c22 sql.NullString
-					c23 sql.NullTime
-					c24 pgtype.TextArray
-					c25 sql.NullString
+					c19 pgtype.Numeric
+					c20 pgtype.Float4
+					c21 pgtype.Int2
+					c22 pgtype.Text
+					c23 pgtype.Timestamptz
+					c24 pgtype.UUIDArray
+					c25 pgtype.UUID
 				)
-				c0.Valid = true
-				c0.Int64 = int64(v.BigintField)
-				if err := c1.Set(&v.BitField); err != nil {
+				if err := c0.Set(v.BigintField); err != nil {
 					return r, err
 				}
-				if err := c2.Set(&v.BitVaryingField); err != nil {
+				if err := c1.Set(v.BitField); err != nil {
 					return r, err
 				}
-				c3.Valid = true
-				c3.Bool = v.BoolField
-				if err := c4.Set(&v.ByteArrayField); err != nil {
+				if err := c2.Set(v.BitVaryingField); err != nil {
 					return r, err
 				}
-				c5.Valid = true
-				c5.String = v.CharacterField
-				c6.Valid = true
-				c6.String = v.CharacterFixedField
-				if err := c7.Set(&v.CidrField); err != nil {
+				if err := c3.Set(v.BoolField); err != nil {
 					return r, err
 				}
-				c8.Valid = true
-				c8.Float64 = v.DecimalField
-				c9.Valid = true
-				c9.Float64 = v.DoublePrecisionField
-				if err := c10.Set(&v.InetField); err != nil {
+				if err := c4.Set(v.ByteArrayField); err != nil {
 					return r, err
 				}
-				if err := c11.Set(&v.Int2Array); err != nil {
+				if err := c5.Set(v.CharacterField); err != nil {
 					return r, err
 				}
-				if err := c12.Set(&v.Int4Array); err != nil {
+				if err := c6.Set(v.CharacterFixedField); err != nil {
 					return r, err
 				}
-				if err := c13.Set(&v.Int8Array); err != nil {
+				if err := c7.Set(v.CidrField); err != nil {
 					return r, err
 				}
-				c14.Valid = true
-				c14.Int64 = int64(v.IntField)
-				if err := c15.Set(&v.IntervalField); err != nil {
+				if err := c8.Set(v.DecimalField); err != nil {
 					return r, err
 				}
-				if err := c16.Set(&v.JSONField); err != nil {
+				if err := c9.Set(v.DoublePrecisionField); err != nil {
 					return r, err
 				}
-				if err := c17.Set(&v.JsonbField); err != nil {
+				if err := c10.Set(v.InetField); err != nil {
 					return r, err
 				}
-				if err := c18.Set(&v.MacaddrField); err != nil {
+				if err := c11.Set(v.Int2Array); err != nil {
 					return r, err
 				}
-				c19.Valid = true
-				c19.Float64 = v.NumericField
-				c20.Valid = true
-				c20.Float64 = float64(v.RealField)
-				c21.Valid = true
-				c21.Int64 = int64(v.SmallintField)
-				c22.Valid = true
-				c22.String = v.TextField
-				c23.Valid = true
-				c23.Time = v.TimestampField
-				if err := c24.Set(&v.UUIDArray); err != nil {
+				if err := c12.Set(v.Int4Array); err != nil {
 					return r, err
 				}
-				c25.Valid = true
-				c25.String = v.UUIDField
+				if err := c13.Set(v.Int8Array); err != nil {
+					return r, err
+				}
+				if err := c14.Set(v.IntField); err != nil {
+					return r, err
+				}
+				if err := c15.Set(v.IntervalField); err != nil {
+					return r, err
+				}
+				if err := c16.Set(v.JSONField); err != nil {
+					return r, err
+				}
+				if err := c17.Set(v.JsonbField); err != nil {
+					return r, err
+				}
+				if err := c18.Set(v.MacaddrField); err != nil {
+					return r, err
+				}
+				if err := c19.Set(v.NumericField); err != nil {
+					return r, err
+				}
+				if err := c20.Set(v.RealField); err != nil {
+					return r, err
+				}
+				if err := c21.Set(v.SmallintField); err != nil {
+					return r, err
+				}
+				if err := c22.Set(v.TextField); err != nil {
+					return r, err
+				}
+				if err := c23.Set(v.TimestampField); err != nil {
+					return r, err
+				}
+				if err := c24.Set(v.UUIDArray); err != nil {
+					return r, err
+				}
+				if err := c25.Set(v.UUIDField); err != nil {
+					return r, err
+				}
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
 			return r, nil
@@ -508,98 +558,111 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		exploder := func(p ...Example1) (r [130]interface{}, err error) {
 			for idx, v := range p[:5] {
 				var (
-					c0  sql.NullInt64
-					c1  pgtype.Bytea
-					c2  pgtype.Bytea
-					c3  sql.NullBool
+					c0  pgtype.Int8
+					c1  pgtype.Bit
+					c2  pgtype.Varbit
+					c3  pgtype.Bool
 					c4  pgtype.Bytea
-					c5  sql.NullString
-					c6  sql.NullString
+					c5  pgtype.Varchar
+					c6  pgtype.BPChar
 					c7  pgtype.CIDR
-					c8  sql.NullFloat64
-					c9  sql.NullFloat64
+					c8  pgtype.Numeric
+					c9  pgtype.Float8
 					c10 pgtype.Inet
-					c11 pgtype.Int8Array
-					c12 pgtype.Int8Array
+					c11 pgtype.Int2Array
+					c12 pgtype.Int4Array
 					c13 pgtype.Int8Array
-					c14 sql.NullInt64
+					c14 pgtype.Int4
 					c15 pgtype.Interval
-					c16 pgtype.Bytea
-					c17 pgtype.Bytea
+					c16 pgtype.JSON
+					c17 pgtype.JSONB
 					c18 pgtype.Macaddr
-					c19 sql.NullFloat64
-					c20 sql.NullFloat64
-					c21 sql.NullInt64
-					c22 sql.NullString
-					c23 sql.NullTime
-					c24 pgtype.TextArray
-					c25 sql.NullString
+					c19 pgtype.Numeric
+					c20 pgtype.Float4
+					c21 pgtype.Int2
+					c22 pgtype.Text
+					c23 pgtype.Timestamptz
+					c24 pgtype.UUIDArray
+					c25 pgtype.UUID
 				)
-				c0.Valid = true
-				c0.Int64 = int64(v.BigintField)
-				if err := c1.Set(&v.BitField); err != nil {
+				if err := c0.Set(v.BigintField); err != nil {
 					return r, err
 				}
-				if err := c2.Set(&v.BitVaryingField); err != nil {
+				if err := c1.Set(v.BitField); err != nil {
 					return r, err
 				}
-				c3.Valid = true
-				c3.Bool = v.BoolField
-				if err := c4.Set(&v.ByteArrayField); err != nil {
+				if err := c2.Set(v.BitVaryingField); err != nil {
 					return r, err
 				}
-				c5.Valid = true
-				c5.String = v.CharacterField
-				c6.Valid = true
-				c6.String = v.CharacterFixedField
-				if err := c7.Set(&v.CidrField); err != nil {
+				if err := c3.Set(v.BoolField); err != nil {
 					return r, err
 				}
-				c8.Valid = true
-				c8.Float64 = v.DecimalField
-				c9.Valid = true
-				c9.Float64 = v.DoublePrecisionField
-				if err := c10.Set(&v.InetField); err != nil {
+				if err := c4.Set(v.ByteArrayField); err != nil {
 					return r, err
 				}
-				if err := c11.Set(&v.Int2Array); err != nil {
+				if err := c5.Set(v.CharacterField); err != nil {
 					return r, err
 				}
-				if err := c12.Set(&v.Int4Array); err != nil {
+				if err := c6.Set(v.CharacterFixedField); err != nil {
 					return r, err
 				}
-				if err := c13.Set(&v.Int8Array); err != nil {
+				if err := c7.Set(v.CidrField); err != nil {
 					return r, err
 				}
-				c14.Valid = true
-				c14.Int64 = int64(v.IntField)
-				if err := c15.Set(&v.IntervalField); err != nil {
+				if err := c8.Set(v.DecimalField); err != nil {
 					return r, err
 				}
-				if err := c16.Set(&v.JSONField); err != nil {
+				if err := c9.Set(v.DoublePrecisionField); err != nil {
 					return r, err
 				}
-				if err := c17.Set(&v.JsonbField); err != nil {
+				if err := c10.Set(v.InetField); err != nil {
 					return r, err
 				}
-				if err := c18.Set(&v.MacaddrField); err != nil {
+				if err := c11.Set(v.Int2Array); err != nil {
 					return r, err
 				}
-				c19.Valid = true
-				c19.Float64 = v.NumericField
-				c20.Valid = true
-				c20.Float64 = float64(v.RealField)
-				c21.Valid = true
-				c21.Int64 = int64(v.SmallintField)
-				c22.Valid = true
-				c22.String = v.TextField
-				c23.Valid = true
-				c23.Time = v.TimestampField
-				if err := c24.Set(&v.UUIDArray); err != nil {
+				if err := c12.Set(v.Int4Array); err != nil {
 					return r, err
 				}
-				c25.Valid = true
-				c25.String = v.UUIDField
+				if err := c13.Set(v.Int8Array); err != nil {
+					return r, err
+				}
+				if err := c14.Set(v.IntField); err != nil {
+					return r, err
+				}
+				if err := c15.Set(v.IntervalField); err != nil {
+					return r, err
+				}
+				if err := c16.Set(v.JSONField); err != nil {
+					return r, err
+				}
+				if err := c17.Set(v.JsonbField); err != nil {
+					return r, err
+				}
+				if err := c18.Set(v.MacaddrField); err != nil {
+					return r, err
+				}
+				if err := c19.Set(v.NumericField); err != nil {
+					return r, err
+				}
+				if err := c20.Set(v.RealField); err != nil {
+					return r, err
+				}
+				if err := c21.Set(v.SmallintField); err != nil {
+					return r, err
+				}
+				if err := c22.Set(v.TextField); err != nil {
+					return r, err
+				}
+				if err := c23.Set(v.TimestampField); err != nil {
+					return r, err
+				}
+				if err := c24.Set(v.UUIDArray); err != nil {
+					return r, err
+				}
+				if err := c25.Set(v.UUIDField); err != nil {
+					return r, err
+				}
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
 			return r, nil

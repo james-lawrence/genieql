@@ -216,7 +216,7 @@ func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) (
 	for _, column := range columns {
 		var matched *ast.Field
 		for _, field := range fields {
-			if matched = MapFieldToColumn(column.Name, field, aliases...); matched != nil {
+			if matched = MapFieldToColumn(column, field, aliases...); matched != nil {
 				break
 			}
 		}
@@ -231,7 +231,7 @@ func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) (
 	return mColumns, uColumns
 }
 
-func mapFields(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]*ast.Field, []*ast.Field) {
+func mapFields(columns []ColumnInfo, fields []*ast.Field, mp func(ColumnInfo, *ast.Field) *ast.Field) ([]*ast.Field, []*ast.Field) {
 	if len(fields) == 0 {
 		return []*ast.Field{}, fields
 	}
@@ -249,7 +249,7 @@ func mapFields(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([
 		)
 
 		for _, column := range columns {
-			if matched = MapFieldToColumn(column.Name, field, aliases...); matched != nil {
+			if matched = mp(column, field); matched != nil {
 				break
 			}
 		}

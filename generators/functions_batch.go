@@ -59,8 +59,8 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 	var (
 		err        error
 		qf         queryFunction
-		fields     []*ast.Field
 		columns    []genieql.ColumnInfo
+		cmap       []genieql.ColumnMap
 		qfoOptions []QueryFunctionOption
 	)
 
@@ -76,12 +76,25 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 	ft.Params.List[1] = astutil.Field(elt, ft.Params.List[1].Names...)
 	field := ft.Params.List[1]
 
-	if columns, fields, err = mappedStructure(ctx, field, ignoreSet...); err != nil {
+	if columns, _, err = mappedStructure(ctx, field, ignoreSet...); err != nil {
 		return genieql.NewErrGenerator(err)
 	}
 
+	// this is super buggy
 	if !builtinType(elt) && !selectType(elt) {
-		poptions = append(poptions, BatchFunctionExploder(fields...))
+		if cmap, err = mapColumns(ctx, field, ignoreSet...); err != nil {
+			return genieql.NewErrGenerator(err)
+		}
+
+		tmp := []*ast.Field{}
+		for _, c := range cmap {
+			tmp = append(tmp, astutil.Field(
+				c.Type,
+				ast.NewIdent(types.ExprString(determineIdent(c.Dst))),
+			))
+		}
+
+		poptions = append(poptions, BatchFunctionExploder(tmp...))
 	}
 
 	if _, qfoOptions, err = generatorFromFuncType(ctx, name, comment, ft); err != nil {

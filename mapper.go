@@ -152,7 +152,22 @@ func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Packag
 		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
 	}
 
-	mFields, uFields := mapFields(columns, fields, t.Aliaser())
+	mFields, uFields := mapFields(columns, fields, func(c ColumnInfo, f *ast.Field) *ast.Field { return MapFieldToColumn(c, f, t.Aliaser()) })
+	return mFields, uFields, nil
+}
+
+// MapFieldsToColumns2 ...
+func (t MappingConfig) MapFieldsToColumns2(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
+	var (
+		err    error
+		fields []*ast.Field
+	)
+
+	if fields, err = t.TypeFields(fset, pkg); err != nil {
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+	}
+
+	mFields, uFields := mapFields(columns, fields, func(c ColumnInfo, f *ast.Field) *ast.Field { return MapFieldToColumn2(c, f, t.Aliaser()) })
 	return mFields, uFields, nil
 }
 
@@ -191,11 +206,23 @@ func Map(config Configuration, name string, m MappingConfig) error {
 }
 
 // MapFieldToColumn maps a column to a field based on the provided aliases.
-func MapFieldToColumn(column string, field *ast.Field, aliases ...Aliaser) *ast.Field {
+func MapFieldToColumn(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *ast.Field {
 	for _, fieldName := range field.Names {
 		for _, aliaser := range aliases {
-			if aliaser.Alias(column) == fieldName.Name {
+			if aliaser.Alias(c.Name) == fieldName.Name {
 				return astutil.Field(field.Type, fieldName)
+			}
+		}
+	}
+	return nil
+}
+
+// MapFieldToColumn2 maps a column to a field based on the provided aliases uses the DB type for the field type.
+func MapFieldToColumn2(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *ast.Field {
+	for _, fieldName := range field.Names {
+		for _, aliaser := range aliases {
+			if aliaser.Alias(c.Name) == fieldName.Name {
+				return astutil.Field(astutil.Expr(c.Type), fieldName)
 			}
 		}
 	}
@@ -206,8 +233,10 @@ func MapFieldToColumn(column string, field *ast.Field, aliases ...Aliaser) *ast.
 func GenerateFakeColumnInfo(d Driver, aliaser Aliaser, fields ...*ast.Field) []ColumnInfo {
 	results := make([]ColumnInfo, 0, len(fields))
 	for _, field := range fields {
+
 		_, nullable := d.NullableType(field.Type, ast.NewIdent(""))
 		for _, name := range field.Names {
+
 			results = append(results, ColumnInfo{
 				Name:       aliaser.Alias(name.Name),
 				Nullable:   nullable,
