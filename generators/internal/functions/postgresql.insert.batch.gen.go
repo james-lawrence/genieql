@@ -68,7 +68,7 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 		return nil, []Example4(nil), false
 	case 1:
 		const query = `INSERT INTO example4 ("created","email","id","updated") VALUES ($1,$2,$3,$4) RETURNING "created","email","id","updated"`
-		exploder := func(p ...Example4) (r [4]interface{}) {
+		exploder := func(p ...Example4) (r [4]interface{}, err error) {
 			for idx, v := range p[:1] {
 				var (
 					c0 sql.NullTime
@@ -86,13 +86,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				c3.Time = v.Updated
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample4ScannerStatic(nil, err), []Example4(nil), false
+		}
+
 		return NewExample4ScannerStatic(q.Query(query, tmp[:]...)), []Example4(nil), true
 	case 2:
 		const query = `INSERT INTO example4 ("created","email","id","updated") VALUES ($1,$2,$3,$4),($5,$6,$7,$8) RETURNING "created","email","id","updated"`
-		exploder := func(p ...Example4) (r [8]interface{}) {
+		exploder := func(p ...Example4) (r [8]interface{}, err error) {
 			for idx, v := range p[:2] {
 				var (
 					c0 sql.NullTime
@@ -110,13 +116,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				c3.Time = v.Updated
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample4ScannerStatic(nil, err), []Example4(nil), false
+		}
+
 		return NewExample4ScannerStatic(q.Query(query, tmp[:]...)), []Example4(nil), true
 	case 3:
 		const query = `INSERT INTO example4 ("created","email","id","updated") VALUES ($1,$2,$3,$4),($5,$6,$7,$8),($9,$10,$11,$12) RETURNING "created","email","id","updated"`
-		exploder := func(p ...Example4) (r [12]interface{}) {
+		exploder := func(p ...Example4) (r [12]interface{}, err error) {
 			for idx, v := range p[:3] {
 				var (
 					c0 sql.NullTime
@@ -134,13 +146,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				c3.Time = v.Updated
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample4ScannerStatic(nil, err), []Example4(nil), false
+		}
+
 		return NewExample4ScannerStatic(q.Query(query, tmp[:]...)), []Example4(nil), true
 	case 4:
 		const query = `INSERT INTO example4 ("created","email","id","updated") VALUES ($1,$2,$3,$4),($5,$6,$7,$8),($9,$10,$11,$12),($13,$14,$15,$16) RETURNING "created","email","id","updated"`
-		exploder := func(p ...Example4) (r [16]interface{}) {
+		exploder := func(p ...Example4) (r [16]interface{}, err error) {
 			for idx, v := range p[:4] {
 				var (
 					c0 sql.NullTime
@@ -158,13 +176,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				c3.Time = v.Updated
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample4ScannerStatic(nil, err), []Example4(nil), false
+		}
+
 		return NewExample4ScannerStatic(q.Query(query, tmp[:]...)), []Example4(nil), true
 	default:
 		const query = `INSERT INTO example4 ("created","email","id","updated") VALUES ($1,$2,$3,$4),($5,$6,$7,$8),($9,$10,$11,$12),($13,$14,$15,$16),($17,$18,$19,$20) RETURNING "created","email","id","updated"`
-		exploder := func(p ...Example4) (r [20]interface{}) {
+		exploder := func(p ...Example4) (r [20]interface{}, err error) {
 			for idx, v := range p[:5] {
 				var (
 					c0 sql.NullTime
@@ -182,9 +206,15 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				c3.Time = v.Updated
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p[:5]...)
+
+		tmp, err := exploder(p[:5]...)
+
+		if err != nil {
+			return NewExample4ScannerStatic(nil, err), []Example4(nil), false
+		}
+
 		return NewExample4ScannerStatic(q.Query(query, tmp[:]...)), p[5:], true
 	}
 }

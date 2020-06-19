@@ -281,17 +281,21 @@ func NewQueryFunction(ctx Context, options ...QueryFunctionOption) genieql.Gener
 	} else if queryPattern(pattern...) {
 		qf.QueryerFunction = ast.NewIdent("Query")
 		qf.ErrHandler = func(local string) ast.Node {
-			return astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil"), ast.NewIdent(local))
+			return astutil.Return(
+				astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil"), ast.NewIdent(local)),
+			)
 		}
 	} else if queryRowPattern(pattern...) {
 		qf.QueryerFunction = ast.NewIdent("QueryRow")
 		qf.ErrHandler = func(local string) ast.Node {
-			return astutil.CallExpr(
-				&ast.SelectorExpr{
-					X:   astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil")),
-					Sel: ast.NewIdent("Err"),
-				},
-				ast.NewIdent(local),
+			return astutil.Return(
+				astutil.CallExpr(
+					&ast.SelectorExpr{
+						X:   astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil")),
+						Sel: ast.NewIdent("Err"),
+					},
+					ast.NewIdent(local),
+				),
 			)
 		}
 	} else {

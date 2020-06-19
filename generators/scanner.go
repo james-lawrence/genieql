@@ -244,7 +244,9 @@ func (t scanner) Generate(dst io.Writer) error {
 		"decode":    decode(t.Context),
 		"error": func() func(string) ast.Node {
 			return func(local string) ast.Node {
-				return ast.NewIdent(local)
+				return astutil.Return(
+					ast.NewIdent(local),
+				)
 			}
 		},
 		"title":   stringsx.ToPublic,

@@ -92,13 +92,15 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 
 	nulltype := nulltypes(ctx)
 	encoder := encode(ctx)
-	encoderErr := func(local string) ast.Node {
-		return ast.NewIdent(local)
-	}
-
 	input := &ast.Ellipsis{Elt: typ.Type}
 	output := &ast.ArrayType{Elt: ast.NewIdent("interface{}"), Len: astutil.IntegerLiteral(n * len(selectors))}
 	returnc := ast.NewIdent("r")
+	encoderErr := func(local string) ast.Node {
+		return astutil.Return(
+			returnc,
+			ast.NewIdent(local),
+		)
+	}
 	key := ast.NewIdent("idx")
 	value := ast.NewIdent("v")
 	assignlhs := make([]ast.Expr, 0, len(selectors))

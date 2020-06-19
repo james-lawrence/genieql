@@ -69,7 +69,7 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 		return nil, []Example1(nil), false
 	case 1:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-		exploder := func(p ...Example1) (r [26]interface{}) {
+		exploder := func(p ...Example1) (r [26]interface{}, err error) {
 			for idx, v := range p[:1] {
 				var (
 					c0  sql.NullInt64
@@ -102,52 +102,52 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c0.Valid = true
 				c0.Int64 = int64(v.BigintField)
 				if err := c1.Set(&v.BitField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c2.Set(&v.BitVaryingField); err != nil {
-					return err
+					return r, err
 				}
 				c3.Valid = true
 				c3.Bool = v.BoolField
 				if err := c4.Set(&v.ByteArrayField); err != nil {
-					return err
+					return r, err
 				}
 				c5.Valid = true
 				c5.String = v.CharacterField
 				c6.Valid = true
 				c6.String = v.CharacterFixedField
 				if err := c7.Set(&v.CidrField); err != nil {
-					return err
+					return r, err
 				}
 				c8.Valid = true
 				c8.Float64 = v.DecimalField
 				c9.Valid = true
 				c9.Float64 = v.DoublePrecisionField
 				if err := c10.Set(&v.InetField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c11.Set(&v.Int2Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c12.Set(&v.Int4Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c13.Set(&v.Int8Array); err != nil {
-					return err
+					return r, err
 				}
 				c14.Valid = true
 				c14.Int64 = int64(v.IntField)
 				if err := c15.Set(&v.IntervalField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c16.Set(&v.JSONField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c17.Set(&v.JsonbField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c18.Set(&v.MacaddrField); err != nil {
-					return err
+					return r, err
 				}
 				c19.Valid = true
 				c19.Float64 = v.NumericField
@@ -160,19 +160,25 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c23.Valid = true
 				c23.Time = v.TimestampField
 				if err := c24.Set(&v.UUIDArray); err != nil {
-					return err
+					return r, err
 				}
 				c25.Valid = true
 				c25.String = v.UUIDField
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 2:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26),($27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-		exploder := func(p ...Example1) (r [52]interface{}) {
+		exploder := func(p ...Example1) (r [52]interface{}, err error) {
 			for idx, v := range p[:2] {
 				var (
 					c0  sql.NullInt64
@@ -205,52 +211,52 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c0.Valid = true
 				c0.Int64 = int64(v.BigintField)
 				if err := c1.Set(&v.BitField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c2.Set(&v.BitVaryingField); err != nil {
-					return err
+					return r, err
 				}
 				c3.Valid = true
 				c3.Bool = v.BoolField
 				if err := c4.Set(&v.ByteArrayField); err != nil {
-					return err
+					return r, err
 				}
 				c5.Valid = true
 				c5.String = v.CharacterField
 				c6.Valid = true
 				c6.String = v.CharacterFixedField
 				if err := c7.Set(&v.CidrField); err != nil {
-					return err
+					return r, err
 				}
 				c8.Valid = true
 				c8.Float64 = v.DecimalField
 				c9.Valid = true
 				c9.Float64 = v.DoublePrecisionField
 				if err := c10.Set(&v.InetField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c11.Set(&v.Int2Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c12.Set(&v.Int4Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c13.Set(&v.Int8Array); err != nil {
-					return err
+					return r, err
 				}
 				c14.Valid = true
 				c14.Int64 = int64(v.IntField)
 				if err := c15.Set(&v.IntervalField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c16.Set(&v.JSONField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c17.Set(&v.JsonbField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c18.Set(&v.MacaddrField); err != nil {
-					return err
+					return r, err
 				}
 				c19.Valid = true
 				c19.Float64 = v.NumericField
@@ -263,19 +269,25 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c23.Valid = true
 				c23.Time = v.TimestampField
 				if err := c24.Set(&v.UUIDArray); err != nil {
-					return err
+					return r, err
 				}
 				c25.Valid = true
 				c25.String = v.UUIDField
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 3:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26),($27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52),($53,$54,$55,$56,$57,$58,$59,$60,$61,$62,$63,$64,$65,$66,$67,$68,$69,$70,$71,$72,$73,$74,$75,$76,$77,$78) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-		exploder := func(p ...Example1) (r [78]interface{}) {
+		exploder := func(p ...Example1) (r [78]interface{}, err error) {
 			for idx, v := range p[:3] {
 				var (
 					c0  sql.NullInt64
@@ -308,52 +320,52 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c0.Valid = true
 				c0.Int64 = int64(v.BigintField)
 				if err := c1.Set(&v.BitField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c2.Set(&v.BitVaryingField); err != nil {
-					return err
+					return r, err
 				}
 				c3.Valid = true
 				c3.Bool = v.BoolField
 				if err := c4.Set(&v.ByteArrayField); err != nil {
-					return err
+					return r, err
 				}
 				c5.Valid = true
 				c5.String = v.CharacterField
 				c6.Valid = true
 				c6.String = v.CharacterFixedField
 				if err := c7.Set(&v.CidrField); err != nil {
-					return err
+					return r, err
 				}
 				c8.Valid = true
 				c8.Float64 = v.DecimalField
 				c9.Valid = true
 				c9.Float64 = v.DoublePrecisionField
 				if err := c10.Set(&v.InetField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c11.Set(&v.Int2Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c12.Set(&v.Int4Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c13.Set(&v.Int8Array); err != nil {
-					return err
+					return r, err
 				}
 				c14.Valid = true
 				c14.Int64 = int64(v.IntField)
 				if err := c15.Set(&v.IntervalField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c16.Set(&v.JSONField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c17.Set(&v.JsonbField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c18.Set(&v.MacaddrField); err != nil {
-					return err
+					return r, err
 				}
 				c19.Valid = true
 				c19.Float64 = v.NumericField
@@ -366,19 +378,25 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c23.Valid = true
 				c23.Time = v.TimestampField
 				if err := c24.Set(&v.UUIDArray); err != nil {
-					return err
+					return r, err
 				}
 				c25.Valid = true
 				c25.String = v.UUIDField
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	case 4:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26),($27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52),($53,$54,$55,$56,$57,$58,$59,$60,$61,$62,$63,$64,$65,$66,$67,$68,$69,$70,$71,$72,$73,$74,$75,$76,$77,$78),($79,$80,$81,$82,$83,$84,$85,$86,$87,$88,$89,$90,$91,$92,$93,$94,$95,$96,$97,$98,$99,$100,$101,$102,$103,$104) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-		exploder := func(p ...Example1) (r [104]interface{}) {
+		exploder := func(p ...Example1) (r [104]interface{}, err error) {
 			for idx, v := range p[:4] {
 				var (
 					c0  sql.NullInt64
@@ -411,52 +429,52 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c0.Valid = true
 				c0.Int64 = int64(v.BigintField)
 				if err := c1.Set(&v.BitField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c2.Set(&v.BitVaryingField); err != nil {
-					return err
+					return r, err
 				}
 				c3.Valid = true
 				c3.Bool = v.BoolField
 				if err := c4.Set(&v.ByteArrayField); err != nil {
-					return err
+					return r, err
 				}
 				c5.Valid = true
 				c5.String = v.CharacterField
 				c6.Valid = true
 				c6.String = v.CharacterFixedField
 				if err := c7.Set(&v.CidrField); err != nil {
-					return err
+					return r, err
 				}
 				c8.Valid = true
 				c8.Float64 = v.DecimalField
 				c9.Valid = true
 				c9.Float64 = v.DoublePrecisionField
 				if err := c10.Set(&v.InetField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c11.Set(&v.Int2Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c12.Set(&v.Int4Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c13.Set(&v.Int8Array); err != nil {
-					return err
+					return r, err
 				}
 				c14.Valid = true
 				c14.Int64 = int64(v.IntField)
 				if err := c15.Set(&v.IntervalField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c16.Set(&v.JSONField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c17.Set(&v.JsonbField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c18.Set(&v.MacaddrField); err != nil {
-					return err
+					return r, err
 				}
 				c19.Valid = true
 				c19.Float64 = v.NumericField
@@ -469,19 +487,25 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c23.Valid = true
 				c23.Time = v.TimestampField
 				if err := c24.Set(&v.UUIDArray); err != nil {
-					return err
+					return r, err
 				}
 				c25.Valid = true
 				c25.String = v.UUIDField
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p...)
+
+		tmp, err := exploder(p...)
+
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), []Example1(nil), true
 	default:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26),($27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52),($53,$54,$55,$56,$57,$58,$59,$60,$61,$62,$63,$64,$65,$66,$67,$68,$69,$70,$71,$72,$73,$74,$75,$76,$77,$78),($79,$80,$81,$82,$83,$84,$85,$86,$87,$88,$89,$90,$91,$92,$93,$94,$95,$96,$97,$98,$99,$100,$101,$102,$103,$104),($105,$106,$107,$108,$109,$110,$111,$112,$113,$114,$115,$116,$117,$118,$119,$120,$121,$122,$123,$124,$125,$126,$127,$128,$129,$130) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-		exploder := func(p ...Example1) (r [130]interface{}) {
+		exploder := func(p ...Example1) (r [130]interface{}, err error) {
 			for idx, v := range p[:5] {
 				var (
 					c0  sql.NullInt64
@@ -514,52 +538,52 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c0.Valid = true
 				c0.Int64 = int64(v.BigintField)
 				if err := c1.Set(&v.BitField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c2.Set(&v.BitVaryingField); err != nil {
-					return err
+					return r, err
 				}
 				c3.Valid = true
 				c3.Bool = v.BoolField
 				if err := c4.Set(&v.ByteArrayField); err != nil {
-					return err
+					return r, err
 				}
 				c5.Valid = true
 				c5.String = v.CharacterField
 				c6.Valid = true
 				c6.String = v.CharacterFixedField
 				if err := c7.Set(&v.CidrField); err != nil {
-					return err
+					return r, err
 				}
 				c8.Valid = true
 				c8.Float64 = v.DecimalField
 				c9.Valid = true
 				c9.Float64 = v.DoublePrecisionField
 				if err := c10.Set(&v.InetField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c11.Set(&v.Int2Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c12.Set(&v.Int4Array); err != nil {
-					return err
+					return r, err
 				}
 				if err := c13.Set(&v.Int8Array); err != nil {
-					return err
+					return r, err
 				}
 				c14.Valid = true
 				c14.Int64 = int64(v.IntField)
 				if err := c15.Set(&v.IntervalField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c16.Set(&v.JSONField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c17.Set(&v.JsonbField); err != nil {
-					return err
+					return r, err
 				}
 				if err := c18.Set(&v.MacaddrField); err != nil {
-					return err
+					return r, err
 				}
 				c19.Valid = true
 				c19.Float64 = v.NumericField
@@ -572,15 +596,21 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				c23.Valid = true
 				c23.Time = v.TimestampField
 				if err := c24.Set(&v.UUIDArray); err != nil {
-					return err
+					return r, err
 				}
 				c25.Valid = true
 				c25.String = v.UUIDField
 				r[idx*26+0], r[idx*26+1], r[idx*26+2], r[idx*26+3], r[idx*26+4], r[idx*26+5], r[idx*26+6], r[idx*26+7], r[idx*26+8], r[idx*26+9], r[idx*26+10], r[idx*26+11], r[idx*26+12], r[idx*26+13], r[idx*26+14], r[idx*26+15], r[idx*26+16], r[idx*26+17], r[idx*26+18], r[idx*26+19], r[idx*26+20], r[idx*26+21], r[idx*26+22], r[idx*26+23], r[idx*26+24], r[idx*26+25] = c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25
 			}
-			return r
+			return r, nil
 		}
-		tmp := exploder(p[:5]...)
+
+		tmp, err := exploder(p[:5]...)
+
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+
 		return NewExample1ScannerStatic(q.Query(query, tmp[:]...)), p[5:], true
 	}
 }
