@@ -72,8 +72,8 @@ type Dialect interface {
 	Delete(table string, columns, predicates []string) string
 	ColumnValueTransformer() ColumnTransformer
 	ColumnNameTransformer() ColumnTransformer
-	ColumnInformationForTable(table string) ([]ColumnInfo, error)
-	ColumnInformationForQuery(query string) ([]ColumnInfo, error)
+	ColumnInformationForTable(d Driver, table string) ([]ColumnInfo, error)
+	ColumnInformationForQuery(d Driver, query string) ([]ColumnInfo, error)
 }
 
 type dialectRegistry map[string]DialectFactory

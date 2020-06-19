@@ -23,7 +23,7 @@ func TestGenerators(t *testing.T) {
 
 type noopDriver struct{}
 
-func (t noopDriver) LookupType(s string) (td genieql.NullableTypeDefinition, b bool) { return td, b }
+func (t noopDriver) LookupType(s string) (td genieql.ColumnDefinition, b bool) { return td, b }
 func (t noopDriver) LookupNullableType(x ast.Expr) ast.Expr {
 	return x
 }

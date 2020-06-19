@@ -71,7 +71,7 @@ func argumentsNative(ctx Context) transforms {
 	return func(x ast.Expr) (out ast.Expr) {
 		var (
 			err error
-			d   genieql.NullableTypeDefinition
+			d   genieql.ColumnDefinition
 		)
 
 		if d, err = def(x); err != nil {
@@ -94,7 +94,7 @@ func nulltypes(ctx Context) transforms {
 	return func(e ast.Expr) (expr ast.Expr) {
 		var (
 			err error
-			d   genieql.NullableTypeDefinition
+			d   genieql.ColumnDefinition
 		)
 
 		e = removeEllipsis(e)
@@ -103,8 +103,8 @@ func nulltypes(ctx Context) transforms {
 			return e
 		}
 
-		if expr, err = parser.ParseExpr(d.NullType); err != nil {
-			log.Println("failed to parse expression:", types.ExprString(e), "->", d.NullType)
+		if expr, err = parser.ParseExpr(d.ColumnType); err != nil {
+			log.Println("failed to parse expression:", types.ExprString(e), "->", d.ColumnType)
 			return e
 		}
 
@@ -114,7 +114,6 @@ func nulltypes(ctx Context) transforms {
 
 // decode a column to a local variable.
 func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
-	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
@@ -125,23 +124,19 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 		var (
 			local = column.Local(i)
 			gen   *ast.FuncLit
-			d     genieql.NullableTypeDefinition
 		)
 
-		if d, err = lookupTypeDefinition(column.Type); err != nil {
-			return nil, err
+		if column.Definition.Decode == "" {
+			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
 		}
 
-		if d.Decode == "" {
-			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(d))
-		}
-
+		typex := astutil.MustParseExpr(column.Definition.ColumnType)
 		to := column.Dst
-		if d.Nullable {
+		if column.Definition.Nullable {
 			to = &ast.StarExpr{X: unwrapExpr(to)}
 		}
 
-		if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -151,7 +146,6 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 
 // encode a column to a local variable.
 func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
-	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
@@ -162,25 +156,20 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 		var (
 			local = column.Local(i)
 			gen   *ast.FuncLit
-			d     genieql.NullableTypeDefinition
 		)
 
-		if d, err = lookupTypeDefinition(removeEllipsis(column.Type)); err != nil {
-			log.Println("skipping encode unknown type information:", types.ExprString(column.Type))
+		if column.Definition.Encode == "" {
+			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, column.Definition.Type, column.Definition.ColumnType)
 			return nil, nil
 		}
 
-		if d.Encode == "" {
-			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, d.Type, d.NullType)
-			return nil, nil
-		}
-
+		typex := astutil.MustParseExpr(column.Definition.Type)
 		from := unwrapExpr(column.Dst)
-		if _, ok := column.Type.(*ast.StarExpr); ok {
+		if _, ok := typex.(*ast.StarExpr); ok {
 			from = &ast.StarExpr{X: from}
 		}
 
-		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Type: unwrapExpr(column.Type), From: from, To: local}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(column.Definition.Encode, stmtCtx{Type: unwrapExpr(typex), From: from, To: local}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -402,11 +391,15 @@ func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
 	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
 		columns = append(columns, genieql.ColumnMap{
-			Name: name.Name,
-			// Type:   &ast.StarExpr{X: param.Type},
-			Type:   param.Type,
-			Dst:    &ast.StarExpr{X: name},
-			PtrDst: false,
+			ColumnInfo: genieql.ColumnInfo{
+				Name: name.Name,
+				Definition: genieql.ColumnDefinition{
+					Type:       types.ExprString(param.Type),
+					Native:     types.ExprString(param.Type),
+					ColumnType: types.ExprString(param.Type),
+				},
+			},
+			Dst: &ast.StarExpr{X: name},
 		})
 	}
 	return columns, nil

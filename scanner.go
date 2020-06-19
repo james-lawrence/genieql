@@ -6,10 +6,8 @@ import (
 )
 
 type ColumnMap struct {
-	Name   string
-	Type   ast.Expr
-	Dst    ast.Expr
-	PtrDst bool
+	ColumnInfo
+	Dst ast.Expr
 }
 
 func (t ColumnMap) Local(i int) *ast.Ident {

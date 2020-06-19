@@ -3,7 +3,6 @@ package drivers
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/types"
 
 	"bitbucket.org/jatone/genieql/astutil"
@@ -29,18 +28,8 @@ const (
 	bytesExpr         = "[]byte"
 )
 
-// MustParseExpr panics if the string cannot be parsed into an expression.
-func MustParseExpr(in string) ast.Expr {
-	expr, err := parser.ParseExpr(in)
-	if err != nil {
-		panic(err)
-	}
-
-	return expr
-}
-
 func typeToExpr(from ast.Expr, selector string) ast.Expr {
-	return MustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
+	return astutil.MustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
 }
 
 func castedTypeToExpr(castType, expr ast.Expr) ast.Expr {

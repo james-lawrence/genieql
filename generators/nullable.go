@@ -8,33 +8,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func composeNullableType(nullableTypes ...genieql.NullableType) genieql.NullableType {
-	return func(typ, from ast.Expr) (ast.Expr, bool) {
-		for _, f := range nullableTypes {
-			if t, ok := f(typ, from); ok {
-				return t, true
-			}
-		}
-
-		return typ, false
-	}
-}
-
-func composeLookupNullableType(lookupNullableTypes ...genieql.LookupNullableType) genieql.LookupNullableType {
-	return func(typ ast.Expr) ast.Expr {
-		for _, f := range lookupNullableTypes {
-			typ = f(typ)
-		}
-
-		return typ
-	}
-}
-
 // tdRegistry type definition registry
-type tdRegistry func(s string) (genieql.NullableTypeDefinition, error)
+type tdRegistry func(s string) (genieql.ColumnDefinition, error)
 
 func composeTypeDefinitionsExpr(definitions ...tdRegistry) genieql.LookupTypeDefinition {
-	return func(e ast.Expr) (d genieql.NullableTypeDefinition, err error) {
+	return func(e ast.Expr) (d genieql.ColumnDefinition, err error) {
 		for _, registry := range definitions {
 			if d, err = registry(types.ExprString(e)); err == nil {
 				return d, nil
@@ -46,7 +24,7 @@ func composeTypeDefinitionsExpr(definitions ...tdRegistry) genieql.LookupTypeDef
 }
 
 func composeTypeDefinitions(definitions ...tdRegistry) tdRegistry {
-	return func(e string) (d genieql.NullableTypeDefinition, err error) {
+	return func(e string) (d genieql.ColumnDefinition, err error) {
 		for _, registry := range definitions {
 			if d, err = registry(e); err == nil {
 				return d, nil

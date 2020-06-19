@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"database/sql"
 	"go/ast"
 	"go/types"
 	"io"
@@ -11,29 +10,17 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 )
 
-// DefaultNullableTypes returns true, if the provided type maps to one
-// of the database/sql builtin NullableTypes. It also returns the RHS of the assignment
-// expression. i.e.) if given an int32 field it'll return int32(c0.Int64) as the expression.
-func DefaultNullableTypes(dst, from ast.Expr) (ast.Expr, bool) {
-	return stdlib.NullableType(dst, from)
-}
-
-// DefaultLookupNullableType determine the nullable type if one is known.
-// if no nullable type is found it returns the original expression.
-func DefaultLookupNullableType(typ ast.Expr) ast.Expr {
-	return stdlib.LookupNullableType(typ)
-}
-
 // DefaultTypeDefinitions determine the type definition for an expression.
-func DefaultTypeDefinitions(s string) (genieql.NullableTypeDefinition, error) {
+func DefaultTypeDefinitions(s string) (genieql.ColumnDefinition, error) {
 	return stdlib.LookupType(s)
 }
 
 type config struct {
 	Name  string
-	Types []genieql.NullableTypeDefinition
+	Types []genieql.ColumnDefinition
 }
 
 // ReadDriver - reads a driver from an io.Reader
@@ -57,44 +44,18 @@ func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 }
 
 // NewDriver build a driver from the nullable types
-func NewDriver(types ...genieql.NullableTypeDefinition) genieql.Driver {
-	mapping := make(map[string]genieql.NullableTypeDefinition, len(types))
-	for _, _type := range types {
-		mapping[_type.Type] = _type
-	}
-	return genieql.NewDriver(nullableTypeLookup(mapping), nullableTypes(mapping), types...)
+func NewDriver(types ...genieql.ColumnDefinition) genieql.Driver {
+	return genieql.NewDriver(types...)
 }
 
-func nullableTypeLookup(_types map[string]genieql.NullableTypeDefinition) func(dst, from ast.Expr) (ast.Expr, bool) {
-	return func(dst, from ast.Expr) (ast.Expr, bool) {
-		var (
-			expr ast.Expr
-			orig = dst
-		)
-
-		if x, ok := dst.(*ast.StarExpr); ok {
-			dst = x.X
-		}
-
-		if _type, ok := _types[types.ExprString(dst)]; ok {
-			if expr = typeToExpr(from, _type.NullField); _type.CastRequired {
-				expr = castedTypeToExpr(dst, expr)
-			}
-			return expr, true
-		}
-
-		return orig, false
-	}
-}
-
-func nullableTypes(_types map[string]genieql.NullableTypeDefinition) func(typ ast.Expr) ast.Expr {
+func nullableTypes(_types map[string]genieql.ColumnDefinition) func(typ ast.Expr) ast.Expr {
 	return func(typ ast.Expr) ast.Expr {
 		if x, ok := typ.(*ast.StarExpr); ok {
 			typ = x.X
 		}
 
 		if _type, ok := _types[types.ExprString(typ)]; ok {
-			return MustParseExpr(_type.NullType)
+			return astutil.MustParseExpr(_type.ColumnType)
 		}
 
 		return typ
@@ -109,12 +70,10 @@ func init() {
 const StandardLib = "genieql.default"
 
 var stdlib = NewDriver(
-	genieql.NullableTypeDefinition{
-		Type:      "sql.NullString",
-		Native:    stringExprString,
-		NullType:  "sql.NullString",
-		NullField: "String",
-		Decoder:   &sql.NullString{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullString",
+		Native:     stringExprString,
+		ColumnType: "sql.NullString",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.String)
@@ -126,12 +85,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "sql.NullInt64",
-		Native:    intExprString,
-		NullType:  "sql.NullInt64",
-		NullField: "Int64",
-		Decoder:   &sql.NullInt64{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullInt64",
+		Native:     intExprString,
+		ColumnType: "sql.NullInt64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
@@ -143,13 +100,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "sql.NullInt32",
-		Native:       intExprString,
-		NullType:     "sql.NullInt32",
-		NullField:    "Int32",
-		CastRequired: true,
-		Decoder:      &sql.NullInt32{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullInt32",
+		Native:     intExprString,
+		ColumnType: "sql.NullInt32",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
@@ -161,13 +115,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "sql.NullFloat64",
-		Native:       float64ExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: true,
-		Decoder:      &sql.NullFloat64{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullFloat64",
+		Native:     float64ExprString,
+		ColumnType: "sql.NullFloat64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
@@ -179,12 +130,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "sql.NullBool",
-		Native:    boolExprString,
-		NullType:  "sql.NullBool",
-		NullField: "Bool",
-		Decoder:   &sql.NullBool{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullBool",
+		Native:     boolExprString,
+		ColumnType: "sql.NullBool",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
@@ -196,12 +145,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "sql.NullTime",
-		Native:    timeExprString,
-		NullType:  "sql.NullTime",
-		NullField: "Time",
-		Decoder:   &sql.NullTime{},
+	genieql.ColumnDefinition{
+		Type:       "sql.NullTime",
+		Native:     timeExprString,
+		ColumnType: "sql.NullTime",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time
@@ -213,13 +160,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "int",
-		Native:       intExprString,
-		NullType:     "sql.NullInt64",
-		NullField:    "Int64",
-		CastRequired: true,
-		Decoder:      &sql.NullInt64{},
+	genieql.ColumnDefinition{
+		Type:       "int",
+		Native:     intExprString,
+		ColumnType: "sql.NullInt64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
@@ -231,14 +175,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "*int",
-		Nullable:     true,
-		Native:       intExprString,
-		NullType:     "sql.NullInt64",
-		NullField:    "Int64",
-		CastRequired: true,
-		Decoder:      &sql.NullInt64{},
+	genieql.ColumnDefinition{
+		Type:       "*int",
+		Nullable:   true,
+		Native:     intExprString,
+		ColumnType: "sql.NullInt64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
@@ -250,13 +191,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "int32",
-		Native:       intExprString,
-		NullType:     "sql.NullInt32",
-		NullField:    "Int32",
-		CastRequired: false,
-		Decoder:      &sql.NullInt32{},
+	genieql.ColumnDefinition{
+		Type:       "int32",
+		Native:     intExprString,
+		ColumnType: "sql.NullInt32",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int32
@@ -268,14 +206,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "*int32",
-		Nullable:     true,
-		Native:       intExprString,
-		NullType:     "sql.NullInt32",
-		NullField:    "Int32",
-		CastRequired: false,
-		Decoder:      &sql.NullInt32{},
+	genieql.ColumnDefinition{
+		Type:       "*int32",
+		Nullable:   true,
+		Native:     intExprString,
+		ColumnType: "sql.NullInt32",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int32
@@ -287,13 +222,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "int64",
-		Native:       intExprString,
-		NullType:     "sql.NullInt64",
-		NullField:    "Int64",
-		CastRequired: false,
-		Decoder:      &sql.NullInt64{},
+	genieql.ColumnDefinition{
+		Type:       "int64",
+		Native:     intExprString,
+		ColumnType: "sql.NullInt64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int64
@@ -305,14 +237,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "*int64",
-		Nullable:     true,
-		Native:       intExprString,
-		NullType:     "sql.NullInt64",
-		NullField:    "Int64",
-		CastRequired: false,
-		Decoder:      &sql.NullInt64{},
+	genieql.ColumnDefinition{
+		Type:       "*int64",
+		Nullable:   true,
+		Native:     intExprString,
+		ColumnType: "sql.NullInt64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int64
@@ -324,13 +253,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "float32",
-		Native:       float64ExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: true,
-		Decoder:      &sql.NullFloat64{},
+	genieql.ColumnDefinition{
+		Type:       "float32",
+		Native:     float64ExprString,
+		ColumnType: "sql.NullFloat64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
@@ -342,14 +268,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "*float32",
-		Nullable:     true,
-		Native:       float64ExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: true,
-		Decoder:      &sql.NullFloat64{},
+	genieql.ColumnDefinition{
+		Type:       "*float32",
+		Nullable:   true,
+		Native:     float64ExprString,
+		ColumnType: "sql.NullFloat64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
@@ -361,13 +284,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "float64",
-		Native:       float64ExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: false,
-		Decoder:      &sql.NullFloat64{},
+	genieql.ColumnDefinition{
+		Type:       "float64",
+		Native:     float64ExprString,
+		ColumnType: "sql.NullFloat64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Float64
@@ -379,14 +299,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:         "*float64",
-		Nullable:     true,
-		Native:       float64ExprString,
-		NullType:     "sql.NullFloat64",
-		NullField:    "Float64",
-		CastRequired: false,
-		Decoder:      &sql.NullFloat64{},
+	genieql.ColumnDefinition{
+		Type:       "*float64",
+		Nullable:   true,
+		Native:     float64ExprString,
+		ColumnType: "sql.NullFloat64",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Float64
@@ -398,12 +315,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "bool",
-		Native:    boolExprString,
-		NullType:  "sql.NullBool",
-		NullField: "Bool",
-		Decoder:   &sql.NullBool{},
+	genieql.ColumnDefinition{
+		Type:       "bool",
+		Native:     boolExprString,
+		ColumnType: "sql.NullBool",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
@@ -415,13 +330,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "*bool",
-		Nullable:  true,
-		Native:    boolExprString,
-		NullType:  "sql.NullBool",
-		NullField: "Bool",
-		Decoder:   &sql.NullBool{},
+	genieql.ColumnDefinition{
+		Type:       "*bool",
+		Nullable:   true,
+		Native:     boolExprString,
+		ColumnType: "sql.NullBool",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
@@ -433,12 +346,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "time.Time",
-		Native:    timeExprString,
-		NullType:  "sql.NullTime",
-		NullField: "Time",
-		Decoder:   &sql.NullTime{},
+	genieql.ColumnDefinition{
+		Type:       "time.Time",
+		Native:     timeExprString,
+		ColumnType: "sql.NullTime",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time
@@ -450,13 +361,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "*time.Time",
-		Nullable:  true,
-		Native:    timeExprString,
-		NullType:  "sql.NullTime",
-		NullField: "Time",
-		Decoder:   &sql.NullTime{},
+	genieql.ColumnDefinition{
+		Type:       "*time.Time",
+		Nullable:   true,
+		Native:     timeExprString,
+		ColumnType: "sql.NullTime",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time
@@ -468,12 +377,10 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "string",
-		Native:    stringExprString,
-		NullType:  "sql.NullString",
-		NullField: "String",
-		Decoder:   &sql.NullString{},
+	genieql.ColumnDefinition{
+		Type:       "string",
+		Native:     stringExprString,
+		ColumnType: "sql.NullString",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.String
@@ -485,13 +392,11 @@ var stdlib = NewDriver(
 			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
-	genieql.NullableTypeDefinition{
-		Type:      "*string",
-		Nullable:  true,
-		Native:    stringExprString,
-		NullType:  "sql.NullString",
-		NullField: "String",
-		Decoder:   &sql.NullString{},
+	genieql.ColumnDefinition{
+		Type:       "*string",
+		Nullable:   true,
+		Native:     stringExprString,
+		ColumnType: "sql.NullString",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.String

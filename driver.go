@@ -25,14 +25,8 @@ var ErrDuplicateDriver = fmt.Errorf("driver has already been registered")
 
 var drivers = driverRegistry{}
 
-// NullableType interface for functions that resolve nullable types to their expression.
-type NullableType func(typ, from ast.Expr) (ast.Expr, bool)
-
-// LookupNullableType interface for functions that map type's to their nullable counter parts.
-type LookupNullableType func(typ ast.Expr) ast.Expr
-
 // LookupTypeDefinition converts a expression into a type definition.
-type LookupTypeDefinition func(typ ast.Expr) (NullableTypeDefinition, error)
+type LookupTypeDefinition func(typ ast.Expr) (ColumnDefinition, error)
 
 // RegisterDriver register a database driver with genieql. usually in an init function.
 func RegisterDriver(driver string, imp Driver) error {
@@ -62,9 +56,7 @@ func PrintRegisteredDrivers() {
 
 // Driver - driver specific details.
 type Driver interface {
-	LookupType(s string) (NullableTypeDefinition, error)
-	LookupNullableType(ast.Expr) ast.Expr
-	NullableType(typ, from ast.Expr) (ast.Expr, bool)
+	LookupType(s string) (ColumnDefinition, error)
 	Exported() (res map[string]reflect.Value)
 }
 
@@ -73,17 +65,15 @@ type decoder interface {
 	sqldriver.Valuer
 }
 
-// NullableTypeDefinition defines a type supported by the driver.
-type NullableTypeDefinition struct {
-	Type         string // dialect type
-	Native       string // golang type
-	NullType     string
-	NullField    string
-	Nullable     bool // does this type represent a pointer type.
-	CastRequired bool
-	Decoder      decoder
-	Decode       string // template function that decodes from the Driver type to Native type
-	Encode       string // template function that encodes from the Native type to Driver type
+// ColumnDefinition defines a type supported by the driver.
+type ColumnDefinition struct {
+	Type       string // dialect type
+	Native     string // golang type
+	ColumnType string // sql type
+	Nullable   bool   // does this type represent a pointer type.
+	PrimaryKey bool   // is the column part of the primary key
+	Decode     string // template function that decodes from the Driver type to Native type
+	Encode     string // template function that encodes from the Native type to Driver type
 }
 
 type driverRegistry map[string]Driver
@@ -108,28 +98,24 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 }
 
 // NewDriver builds a new driver from the component parts
-func NewDriver(nt NullableType, lnt LookupNullableType, supported ...NullableTypeDefinition) Driver {
-	return driver{nt: nt, lnt: lnt, supported: supported}
+func NewDriver(supported ...ColumnDefinition) Driver {
+	return driver{supported: supported}
 }
 
 type driver struct {
-	nt        NullableType
-	lnt       LookupNullableType
-	supported []NullableTypeDefinition
+	supported []ColumnDefinition
 }
 
-func (t driver) LookupType(l string) (NullableTypeDefinition, error) {
+func (t driver) LookupType(l string) (ColumnDefinition, error) {
 	for _, s := range t.supported {
 		if s.Type == l {
 			return s, nil
 		}
 	}
 
-	return NullableTypeDefinition{}, errors.New("missing type")
+	return ColumnDefinition{}, errors.New("missing type")
 }
 
-func (t driver) LookupNullableType(typ ast.Expr) ast.Expr         { return t.lnt(typ) }
-func (t driver) NullableType(typ, from ast.Expr) (ast.Expr, bool) { return t.nt(typ, from) }
 func (t driver) Exported() (res map[string]reflect.Value) {
 	res = map[string]reflect.Value{}
 	for _, d := range t.supported {

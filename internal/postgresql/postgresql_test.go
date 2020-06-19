@@ -3,15 +3,18 @@ package postgresql_test
 import (
 	"bitbucket.org/jatone/genieql"
 
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	. "bitbucket.org/jatone/genieql/internal/postgresql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Postgresql", func() {
-	Describe("Dialect", func() {
+var _ = Describe("postgresql", func() {
+	Describe("dialect", func() {
+		driver := genieql.MustLookupDriver(drivers.PGX)
 		It("should return the columns in the query in sorted order", func() {
 			info, err := NewDialect(DB).ColumnInformationForQuery(
+				driver,
 				"SELECT xact_rollback, conflicts, blks_read, blks_hit FROM pg_stat_database",
 			)
 			Expect(err).ToNot(HaveOccurred())
@@ -19,7 +22,7 @@ var _ = Describe("Postgresql", func() {
 		})
 
 		It("should return the columns in the table in the sorted order", func() {
-			info, err := NewDialect(DB).ColumnInformationForTable("pg_stat_database")
+			info, err := NewDialect(DB).ColumnInformationForTable(driver, "pg_stat_database")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(
 				genieql.ColumnInfoSet(info).ColumnNames(),

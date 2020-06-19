@@ -148,14 +148,10 @@ func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.Col
 				continue
 			}
 
-			c, err := column.MapColumn(&ast.SelectorExpr{
+			cMap = append(cMap, column.MapColumn(&ast.SelectorExpr{
 				Sel: ast.NewIdent(aliaser.Alias(column.Name)),
 				X:   arg,
-			})
-			if err != nil {
-				return []genieql.ColumnMap{}, err
-			}
-			cMap = append(cMap, c)
+			}))
 		}
 	}
 

@@ -38,15 +38,15 @@ func StructOptionColumnsStrategy(strategy columnsStrategy) StructOption {
 
 // StructOptionTableStrategy convience function for creating a table based structure.
 func StructOptionTableStrategy(table string) StructOption {
-	return StructOptionColumnsStrategy(func(d genieql.Dialect) ([]genieql.ColumnInfo, error) {
-		return d.ColumnInformationForTable(table)
+	return StructOptionColumnsStrategy(func(ctx Context) ([]genieql.ColumnInfo, error) {
+		return ctx.Dialect.ColumnInformationForTable(ctx.Driver, table)
 	})
 }
 
 // StructOptionQueryStrategy convience function for creating a query based structure.
 func StructOptionQueryStrategy(query string) StructOption {
-	return StructOptionColumnsStrategy(func(d genieql.Dialect) ([]genieql.ColumnInfo, error) {
-		return d.ColumnInformationForQuery(query)
+	return StructOptionColumnsStrategy(func(ctx Context) ([]genieql.ColumnInfo, error) {
+		return ctx.Dialect.ColumnInformationForQuery(ctx.Driver, query)
 	})
 }
 
@@ -144,7 +144,7 @@ func StructureFromGenDecl(decl *ast.GenDecl, columnStrategyBuilder func(string) 
 	return g
 }
 
-type columnsStrategy func(genieql.Dialect) ([]genieql.ColumnInfo, error)
+type columnsStrategy func(Context) ([]genieql.ColumnInfo, error)
 type structure struct {
 	Context
 	Name           string
@@ -170,7 +170,7 @@ type {{.Name}} struct {
 		columns []genieql.ColumnInfo
 	)
 
-	if columns, err = t.columns(t.Context.Dialect); err != nil {
+	if columns, err = t.columns(t.Context); err != nil {
 		return err
 	}
 

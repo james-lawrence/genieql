@@ -233,7 +233,7 @@ func MapFieldsToTypExpr(args ...*ast.Field) []ast.Expr {
 			f.Names = []*ast.Ident{ast.NewIdent(fmt.Sprintf("f%d", idx))}
 		}
 
-		for _ = range f.Names {
+		for range f.Names {
 			r = append(r, f.Type)
 		}
 
@@ -329,4 +329,14 @@ func StructureFieldSelectors(local *ast.Field, fields ...*ast.Field) []ast.Expr 
 	}
 
 	return selectors
+}
+
+// MustParseExpr panics if the string cannot be parsed into an expression.
+func MustParseExpr(in string) ast.Expr {
+	expr, err := parser.ParseExpr(in)
+	if err != nil {
+		panic(err)
+	}
+
+	return expr
 }

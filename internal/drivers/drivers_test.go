@@ -51,8 +51,8 @@ var _ = Describe("drivers", func() {
 
 	var (
 		exampleDriver = NewDriver(
-			genieql.NullableTypeDefinition{Type: "string", NullType: "sql.NullString", NullField: "String"},
-			genieql.NullableTypeDefinition{Type: "int", NullType: "sql.NullInt64", NullField: "Int64"},
+			genieql.ColumnDefinition{Type: "string", ColumnType: "sql.NullString", NullField: "String"},
+			genieql.ColumnDefinition{Type: "int", ColumnType: "sql.NullInt64", NullField: "Int64"},
 		)
 	)
 	DescribeTable("driver lookup nullable",

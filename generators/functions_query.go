@@ -14,7 +14,6 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
 const defaultQueryParamName = "q"
@@ -387,13 +386,8 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 	)
 
 	cToP := func(columns []genieql.ColumnMap) (result []ast.Expr) {
-		lookupTypeInfo := composeTypeDefinitionsExpr(t.Context.Driver.LookupType, drivers.DefaultTypeDefinitions)
 		for i, c := range columns {
-			if _, err := lookupTypeInfo(c.Type); err == nil {
-				result = append(result, c.Local(i))
-			} else {
-				result = append(result, astutil.Expr(c.Name))
-			}
+			result = append(result, c.Local(i))
 		}
 		return result
 	}
@@ -482,9 +476,9 @@ func defaultQueryFuncTemplate(ctx Context) *template.Template {
 		defaultQueryFuncMap = template.FuncMap{
 			"ellipsis": func(columns []genieql.ColumnMap) (results []genieql.ColumnMap) {
 				for _, c := range columns {
-					if _, ok := c.Type.(*ast.Ellipsis); ok {
-						continue
-					}
+					// if _, ok := c.Definition.Type.(*ast.Ellipsis); ok {
+					// 	continue
+					// }
 					results = append(results, c)
 				}
 

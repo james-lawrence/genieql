@@ -128,18 +128,21 @@ func Format(s string) (_ string, err error) {
 
 // LoadInformation loads table information based on the configuration and
 // table name.
-func LoadInformation(configuration Configuration, table string) (TableDetails, error) {
+func LoadInformation(configuration Configuration, table string) (details TableDetails, err error) {
 	var (
-		err     error
+		driver  Driver
 		dialect Dialect
-		details TableDetails
 	)
 
 	if dialect, err = LookupDialect(configuration); err != nil {
 		return details, err
 	}
 
-	details, err = LookupTableDetails(dialect, table)
+	if driver, err = LookupDriver(configuration.Driver); err != nil {
+		return details, err
+	}
+
+	details, err = LookupTableDetails(driver, dialect, table)
 
 	return details, err
 }

@@ -3,28 +3,25 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"sort"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
+// ColumnInfo describing a particular column from the database.
+// include the column definition, the column name.
 type ColumnInfo struct {
+	Definition ColumnDefinition
 	Name       string
-	Nullable   bool
-	PrimaryKey bool
-	Type       string
 }
 
-func (t ColumnInfo) MapColumn(x ast.Expr) (ColumnMap, error) {
-	typ, err := parser.ParseExpr(t.Type)
+// MapColumn map the column to a particular expression.
+func (t ColumnInfo) MapColumn(x ast.Expr) ColumnMap {
 	return ColumnMap{
-		Name:   t.Name,
-		Dst:    x,
-		PtrDst: t.Nullable,
-		Type:   typ,
-	}, err
+		ColumnInfo: t,
+		Dst:        x,
+	}
 }
 
 type lesser func(i, j ColumnInfo) bool
@@ -32,32 +29,19 @@ type lesser func(i, j ColumnInfo) bool
 // SortColumnInfo ...
 func SortColumnInfo(input []ColumnInfo) func(c lesser) []ColumnInfo {
 	return func(c lesser) []ColumnInfo {
-		sort.Sort(sortableColumnInfo{columns: input, lesser: c})
+		sort.Slice(input, func(i, j int) bool {
+			return c(input[i], input[j])
+		})
 		return input
 	}
 }
 
-type sortableColumnInfo struct {
-	lesser  lesser
-	columns []ColumnInfo
-}
-
-func (t sortableColumnInfo) Len() int {
-	return len(t.columns)
-}
-
-func (t sortableColumnInfo) Swap(i, j int) {
-	t.columns[i], t.columns[j] = t.columns[j], t.columns[i]
-}
-
-func (t sortableColumnInfo) Less(i, j int) bool {
-	return t.lesser(t.columns[i], t.columns[j])
-}
-
+// ByName comparison for ColumnInfo
 func ByName(i, j ColumnInfo) bool {
 	return i.Name < j.Name
 }
 
+// ColumnInfoSet a set of columns
 type ColumnInfoSet []ColumnInfo
 
 // ColumnNames returns the column names inside the ColumnInfoSet.
@@ -90,7 +74,7 @@ func (t ColumnInfoSet) PrimaryKey() ColumnInfoSet {
 
 // PrimaryKeyFilter - selects ColumnInfo which are part of the primary key.
 func PrimaryKeyFilter(column ColumnInfo) bool {
-	return column.PrimaryKey
+	return column.Definition.PrimaryKey
 }
 
 // NotPrimaryKeyFilter - inverse of PrimaryKeyFilter
@@ -186,13 +170,13 @@ type TableDetails struct {
 }
 
 // LookupTableDetails determines the table details for the given dialect.
-func LookupTableDetails(dialect Dialect, table string) (TableDetails, error) {
+func LookupTableDetails(driver Driver, dialect Dialect, table string) (TableDetails, error) {
 	var (
 		err     error
 		columns []ColumnInfo
 	)
 
-	if columns, err = dialect.ColumnInformationForTable(table); err != nil {
+	if columns, err = dialect.ColumnInformationForTable(driver, table); err != nil {
 		return TableDetails{}, err
 	}
 
@@ -216,7 +200,7 @@ func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) (
 	for _, column := range columns {
 		var matched *ast.Field
 		for _, field := range fields {
-			if matched = MapFieldToColumn(column, field, aliases...); matched != nil {
+			if matched = MapFieldToNativeType(column, field, aliases...); matched != nil {
 				break
 			}
 		}

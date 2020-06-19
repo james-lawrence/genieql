@@ -101,7 +101,7 @@ func (t transformer) transform(m []genieql.ColumnInfo) []string {
 
 func columnInfo(ctx Context, param *ast.Field) ([]genieql.ColumnInfo, error) {
 	if builtinType(param.Type) {
-		return builtinParamColumnInfo(param)
+		return builtinParamColumnInfo(ctx, param)
 	}
 	_, info, err := mappedParam(ctx, param)
 	return info, err
@@ -109,13 +109,19 @@ func columnInfo(ctx Context, param *ast.Field) ([]genieql.ColumnInfo, error) {
 
 // builtinParamColumnInfo converts a *ast.Field that represents a builtin type
 // (time.Time,int,float,bool, etc) into an array of ColumnInfo.
-func builtinParamColumnInfo(param *ast.Field) ([]genieql.ColumnInfo, error) {
-	columns := make([]genieql.ColumnInfo, 0, len(param.Names))
+func builtinParamColumnInfo(ctx Context, param *ast.Field) (columns []genieql.ColumnInfo, err error) {
+	columns = make([]genieql.ColumnInfo, 0, len(param.Names))
 	for _, name := range param.Names {
+		d, missing := ctx.Driver.LookupType(types.ExprString(param.Type))
+		if missing != nil {
+			return columns, err
+		}
+
 		columns = append(columns, genieql.ColumnInfo{
-			Name: name.Name,
-			Type: types.ExprString(param.Type),
+			Name:       name.Name,
+			Definition: d,
 		})
 	}
-	return columns, nil
+
+	return columns, err
 }

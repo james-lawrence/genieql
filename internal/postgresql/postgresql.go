@@ -75,12 +75,12 @@ func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer
 	return genieql.NewColumnInfoNameTransformer(`"`)
 }
 
-func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
+func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
-	return columnInformation(t.db, columnInformationQuery, table)
+	return columnInformation(d, t.db, columnInformationQuery, table)
 }
 
-func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
+func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `SELECT a.attname, a.atttypid, 'f' AS nullable, 'f' AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
 	const table = "genieql_query_columns_table"
 
@@ -95,10 +95,10 @@ func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieq
 		return nil, errors.Wrapf(err, "failure to execute %s", q)
 	}
 
-	return columnInformation(tx, columnInformationQuery, table)
+	return columnInformation(d, tx, columnInformationQuery, table)
 }
 
-func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, error) {
+func columnInformation(d genieql.Driver, q queryer, query, table string) ([]genieql.ColumnInfo, error) {
 	var (
 		err     error
 		rows    *sql.Rows
@@ -108,15 +108,20 @@ func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, er
 	if rows, err = q.Query(query, table); err != nil {
 		return nil, errors.Wrapf(err, "failed to query column information: %s, %s", query, table)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
-			info genieql.ColumnInfo
-			oid  int
-			expr ast.Expr
+			info       genieql.ColumnInfo
+			definition genieql.ColumnDefinition
+			oid        int
+			expr       ast.Expr
+			primary    bool
+			nullable   bool
+			name       string
 		)
 
-		if err = rows.Scan(&info.Name, &oid, &info.Nullable, &info.PrimaryKey); err != nil {
+		if err = rows.Scan(&name, &oid, &nullable, &primary); err != nil {
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
@@ -125,9 +130,15 @@ func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, er
 			continue
 		}
 
-		info.Type = types.ExprString(expr)
+		if definition, err = d.LookupType(types.ExprString(expr)); err != nil {
+			log.Println("skipping column", info.Name, "driver missing type", oid, "please open an issue")
+			continue
+		}
 
-		columns = append(columns, info)
+		columns = append(columns, genieql.ColumnInfo{
+			Name:       name,
+			Definition: definition,
+		})
 	}
 
 	columns = genieql.SortColumnInfo(columns)(genieql.ByName)

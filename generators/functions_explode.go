@@ -60,8 +60,8 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 			"type": func(field *ast.Field) ast.Expr {
 				return field.Type
 			},
-			"sqltype": func(d genieql.NullableTypeDefinition) string {
-				return d.NullType
+			"sqltype": func(d genieql.ColumnDefinition) string {
+				return d.ColumnType
 			},
 			"arguments": argumentsAsPointers,
 			"ast":       astPrint,
@@ -83,7 +83,7 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 			},
 			"cinfo": func(field *ast.Field) genieql.ColumnMap {
 				return genieql.ColumnMap{
-					Type: field.Type,
+					// Type: field.Type,
 					Dst: &ast.SelectorExpr{
 						X:   param.Names[0],
 						Sel: astutil.MapFieldsToNameIdent(field)[0],
@@ -140,7 +140,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		return nil, nil
 	}
 
-	nulltype := nulltypes(ctx)
+	// nulltype := nulltypes(ctx)
 	encoder := encode(ctx)
 	input := &ast.Ellipsis{Elt: typ.Type}
 	output := &ast.ArrayType{Elt: ast.NewIdent("interface{}"), Len: astutil.IntegerLiteral(n * len(selectors))}
@@ -163,7 +163,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 			encoded []ast.Stmt
 		)
 		info := genieql.ColumnMap{
-			Type: sel.Type,
+			// Type: sel.Type,
 			Dst: &ast.SelectorExpr{
 				X:   value,
 				Sel: astutil.MapFieldsToNameIdent(sel)[0],
@@ -188,7 +188,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		}
 		encodings = append(encodings, encoded...)
 
-		localspec = append(localspec, astutil.ValueSpec(nulltype(info.Type), info.Local(idx)))
+		// localspec = append(localspec, astutil.ValueSpec(nulltype(info.Type), info.Local(idx)))
 		assignrhs = append(assignrhs, info.Local(idx))
 	}
 
