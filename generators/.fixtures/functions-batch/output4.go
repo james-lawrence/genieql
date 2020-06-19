@@ -76,13 +76,21 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 					c6 sql.NullInt64
 					c7 sql.NullBool
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
+				c3.Valid = true
 				c3.Bool = v.D
+				c4.Valid = true
 				c4.Bool = v.E
+				c5.Valid = true
 				c5.Bool = v.F
+				c6.Valid = true
 				c6.Int64 = int64(*v.G)
+				c7.Valid = true
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
@@ -104,13 +112,21 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 					c6 sql.NullInt64
 					c7 sql.NullBool
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
+				c3.Valid = true
 				c3.Bool = v.D
+				c4.Valid = true
 				c4.Bool = v.E
+				c5.Valid = true
 				c5.Bool = v.F
+				c6.Valid = true
 				c6.Int64 = int64(*v.G)
+				c7.Valid = true
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
@@ -132,13 +148,21 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 					c6 sql.NullInt64
 					c7 sql.NullBool
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
+				c3.Valid = true
 				c3.Bool = v.D
+				c4.Valid = true
 				c4.Bool = v.E
+				c5.Valid = true
 				c5.Bool = v.F
+				c6.Valid = true
 				c6.Int64 = int64(*v.G)
+				c7.Valid = true
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
@@ -160,13 +184,21 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 					c6 sql.NullInt64
 					c7 sql.NullBool
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
+				c3.Valid = true
 				c3.Bool = v.D
+				c4.Valid = true
 				c4.Bool = v.E
+				c5.Valid = true
 				c5.Bool = v.F
+				c6.Valid = true
 				c6.Int64 = int64(*v.G)
+				c7.Valid = true
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}
@@ -188,13 +220,21 @@ func (t *batchFunction4) advance(q sqlx.Queryer, p ...StructA) (ExampleScanner, 
 					c6 sql.NullInt64
 					c7 sql.NullBool
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
+				c3.Valid = true
 				c3.Bool = v.D
+				c4.Valid = true
 				c4.Bool = v.E
+				c5.Valid = true
 				c5.Bool = v.F
+				c6.Valid = true
 				c6.Int64 = int64(*v.G)
+				c7.Valid = true
 				c7.Bool = *v.H
 				r[idx*8+0], r[idx*8+1], r[idx*8+2], r[idx*8+3], r[idx*8+4], r[idx*8+5], r[idx*8+6], r[idx*8+7] = c0, c1, c2, c3, c4, c5, c6, c7
 			}

@@ -466,7 +466,9 @@ func defaultQueryFuncTemplate(ctx Context) *template.Template {
 				{{ end }}
 			)
 			{{ range $index, $column := $filtered}}
-			{{ encode $index $column $root.Error | ast -}}
+			{{ range $_, $stmt := encode $index $column $root.Error -}}
+			{{ $stmt | ast }}
+			{{ end }}
 			{{ end }}
 			{{ end }}
 			return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})

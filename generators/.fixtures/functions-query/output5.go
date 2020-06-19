@@ -16,10 +16,19 @@ func queryFunction5(q sqlx.Queryer, query string, uuidArgument int, camelcaseArg
 		c4 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(uuidArgument)
+
+	c1.Valid = true
 	c1.Int64 = int64(camelcaseArgument)
+
+	c2.Valid = true
 	c2.Int64 = int64(snakecaseArgument)
+
+	c3.Valid = true
 	c3.Int64 = int64(uppercaseArgument)
+
+	c4.Valid = true
 	c4.Int64 = int64(lowercaseArgument)
 
 	return StaticExampleRowScanner(q.QueryRow(query, c0, c1, c2, c3, c4))

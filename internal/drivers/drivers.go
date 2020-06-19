@@ -122,6 +122,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
@@ -138,6 +139,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
@@ -155,6 +157,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
@@ -172,6 +175,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
@@ -188,6 +192,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
@@ -204,6 +209,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
@@ -221,6 +227,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
@@ -239,6 +246,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
@@ -256,6 +264,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
@@ -274,6 +283,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int32 = {{ .From | expr }}
 		}`,
 	},
@@ -291,6 +301,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
@@ -309,6 +320,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Int64 = {{ .From | expr }}
 		}`,
 	},
@@ -326,6 +338,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
@@ -344,6 +357,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 		}`,
 	},
@@ -361,6 +375,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
@@ -379,6 +394,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Float64 = {{ .From | expr }}
 		}`,
 	},
@@ -395,6 +411,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
@@ -412,6 +429,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Bool = {{ .From | expr }}
 		}`,
 	},
@@ -428,6 +446,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
@@ -445,6 +464,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.Time = {{ .From | expr }}
 		}`,
 	},
@@ -461,6 +481,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},
@@ -478,6 +499,7 @@ var stdlib = NewDriver(
 			}
 		}`,
 		Encode: `func() {
+			{{ .To | expr }}.Valid = true
 			{{ .To | expr }}.String = {{ .From | expr }}
 		}`,
 	},

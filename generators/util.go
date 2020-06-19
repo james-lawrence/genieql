@@ -113,9 +113,9 @@ func nulltypes(ctx Context) transforms {
 }
 
 // decode a column to a local variable.
-func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (ast.Stmt, error) {
+func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output ast.Stmt, err error) {
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
 			To   ast.Expr
@@ -145,14 +145,14 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (as
 			return nil, err
 		}
 
-		return gen.Body.List[0], nil
+		return gen.Body.List, nil
 	}
 }
 
 // encode a column to a local variable.
-func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (ast.Stmt, error) {
+func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output ast.Stmt, err error) {
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
 			To   ast.Expr
@@ -184,7 +184,7 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (as
 			return nil, err
 		}
 
-		return gen.Body.List[0], nil
+		return gen.Body.List, nil
 	}
 }
 

@@ -13,7 +13,10 @@ func queryFunction11(q sqlx.Queryer, query string, _type int, _func int) Example
 		c1 sql.NullInt64
 	)
 
+	c0.Valid = true
 	c0.Int64 = int64(_type)
+
+	c1.Valid = true
 	c1.Int64 = int64(_func)
 
 	return StaticExampleRowScanner(q.QueryRow(query, c0, c1))

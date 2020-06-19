@@ -371,7 +371,9 @@ func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ decode $index $column error | ast }}
+	{{ range $_, $stmt := decode $index $column error -}}
+	{{ $stmt | ast }}
+	{{ end}}
 	{{ end }}
 
 	return t.Rows.Err()
@@ -427,8 +429,10 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	}
 
 	{{ range $index, $column := .Columns}}
-	{{ decode $index $column error | ast }}
+	{{ range $_, $stmt := decode $index $column error -}}
+	{{ $stmt | ast }}
 	{{ end }}
+	{{- end }}
 
 	return nil
 }
@@ -500,7 +504,9 @@ func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
 		switch column {
 		{{- range $index, $column := .Columns}}
 		case cn{{$index}}:
-			{{ decode $index $column error | ast -}}
+			{{ range $_, $stmt := decode $index $column error -}}
+			{{ $stmt | ast }}
+			{{- end -}}
 		{{- end }}
 		}
 	}

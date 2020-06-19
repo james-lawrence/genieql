@@ -108,7 +108,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 
 	for idx, sel := range selectors {
 		var (
-			encoded ast.Stmt
+			encoded []ast.Stmt
 		)
 		info := genieql.ColumnMap{
 			Type: sel.Type,
@@ -134,7 +134,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		if encoded, err = encoder(idx, info, encoderErr); err != nil {
 			return nil, err
 		}
-		encodings = append(encodings, encoded)
+		encodings = append(encodings, encoded...)
 
 		localspec = append(localspec, astutil.ValueSpec(nulltype(info.Type), info.Local(idx)))
 		assignrhs = append(assignrhs, info.Local(idx))

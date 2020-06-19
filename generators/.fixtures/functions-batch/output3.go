@@ -71,8 +71,11 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 					c1 sql.NullInt64
 					c2 sql.NullInt64
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
@@ -89,8 +92,11 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 					c1 sql.NullInt64
 					c2 sql.NullInt64
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
@@ -107,8 +113,11 @@ func (t *batchFunction3) advance(q sqlx.Queryer, v ...custom) (ExampleScanner, [
 					c1 sql.NullInt64
 					c2 sql.NullInt64
 				)
+				c0.Valid = true
 				c0.Int64 = int64(v.A)
+				c1.Valid = true
 				c1.Int64 = int64(v.B)
+				c2.Valid = true
 				c2.Int64 = int64(v.C)
 				r[idx*3+0], r[idx*3+1], r[idx*3+2] = c0, c1, c2
 			}
