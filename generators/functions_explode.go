@@ -128,7 +128,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 			},
 		})
 
-		if encoded, err = encoder(info.Dst, idx, info); err != nil {
+		if encoded, err = encoder(idx, info, func(local string) ast.Node { return nil }); err != nil {
 			return nil, err
 		}
 		encodings = append(encodings, encoded)

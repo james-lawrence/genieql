@@ -25,7 +25,7 @@ var _ = Describe("Type1", func() {
 					tx, err := DB.Begin()
 					Expect(err).ToNot(HaveOccurred())
 					defer tx.Rollback()
-					scanner := NewType1ScannerStaticRow(tx.QueryRow(Type1Insert, explode(testEntry)...), nil)
+					scanner := NewType1ScannerStaticRow(tx.QueryRow(Type1Insert, explode(testEntry)...))
 					Expect(scanner.Scan(&found)).ToNot(HaveOccurred())
 					Expect(found.Field1).To(Equal(testEntry.Field1))
 					Expect(found.Field2).To(Equal(testEntry.Field2))

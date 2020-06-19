@@ -241,9 +241,13 @@ func (t scanner) Generate(dst io.Writer) error {
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
 		"nulltype":  nulltypes(t.Context),
-		"decode":    decode(t.Context),
-		"title":     stringsx.ToPublic,
-		"private":   stringsx.ToPrivate,
+		"decode": func(i int, c genieql.ColumnMap) (ast.Stmt, error) {
+			return decode(t.Context)(i, c, func(local string) ast.Node {
+				return ast.NewIdent(local)
+			})
+		},
+		"title":   stringsx.ToPublic,
+		"private": stringsx.ToPrivate,
 	}
 
 	if t.Mode.Enabled(ModeInterface) {

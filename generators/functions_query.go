@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"strings"
 	"text/template"
 
@@ -281,10 +280,21 @@ func NewQueryFunction(ctx Context, options ...QueryFunctionOption) genieql.Gener
 		// nothing to do here.
 	} else if queryPattern(pattern...) {
 		qf.QueryerFunction = ast.NewIdent("Query")
+		qf.ErrHandler = func(local string) ast.Node {
+			return astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil"), ast.NewIdent(local))
+		}
 	} else if queryRowPattern(pattern...) {
 		qf.QueryerFunction = ast.NewIdent("QueryRow")
+		qf.ErrHandler = func(local string) ast.Node {
+			return astutil.CallExpr(
+				&ast.SelectorExpr{
+					X:   astutil.CallExpr(qf.ScannerDecl.Name, ast.NewIdent("nil")),
+					Sel: ast.NewIdent("Err"),
+				},
+				ast.NewIdent(local),
+			)
+		}
 	} else {
-		log.Println(astutil.MapExprToString(pattern...))
 		return genieql.NewErrGenerator(errors.Errorf("a query function was not provided and failed to infer from the scanner function parameter list"))
 	}
 
@@ -303,6 +313,7 @@ type queryFunction struct {
 	Parameters      []*ast.Field
 	Template        *template.Template
 	Comment         *ast.CommentGroup
+	ErrHandler      func(string) ast.Node
 }
 
 func (t *queryFunction) Apply(options ...QueryFunctionOption) *queryFunction {
@@ -324,6 +335,7 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 		QueryParameters []ast.Expr
 		Comment         string
 		Columns         []genieql.ColumnMap
+		Error           func(string) ast.Node
 	}
 
 	const (
@@ -410,6 +422,7 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 		Parameters:   parameters,
 		Queryer:      query,
 		Columns:      columns,
+		Error:        t.ErrHandler,
 	}
 
 	return errors.Wrap(t.Template.Execute(dst, ctx), "failed to generate query function")
@@ -453,7 +466,7 @@ func defaultQueryFuncTemplate(ctx Context) *template.Template {
 				{{ end }}
 			)
 			{{ range $index, $column := $filtered}}
-			{{ encode $root.ScannerFunc $index $column | ast -}}
+			{{ encode $index $column $root.Error | ast -}}
 			{{ end }}
 			{{ end }}
 			return {{ .ScannerFunc | expr }}({{ .Queryer | expr }})
@@ -471,7 +484,6 @@ func defaultQueryFuncTemplate(ctx Context) *template.Template {
 
 				return results
 			},
-
 			"expr":      types.ExprString,
 			"arguments": argumentsTransform(argumentsNative(ctx)),
 			"encode":    encode(ctx),

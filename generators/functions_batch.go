@@ -75,11 +75,12 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 	}
 	ft.Params.List[1] = astutil.Field(elt, ft.Params.List[1].Names...)
 	field := ft.Params.List[1]
-	if !builtinType(elt) && !selectType(elt) {
-		if fields, err = mappedFields(ctx, field, ignoreSet...); err != nil {
-			return genieql.NewErrGenerator(errors.Wrap(err, "failed to map params"))
-		}
 
+	if columns, fields, err = mappedStructure(ctx, field, ignoreSet...); err != nil {
+		return genieql.NewErrGenerator(err)
+	}
+
+	if !builtinType(elt) && !selectType(elt) {
 		poptions = append(poptions, BatchFunctionExploder(fields...))
 	}
 
@@ -87,10 +88,6 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		return genieql.NewErrGenerator(err)
 	}
 	qf.Apply(qfoOptions...)
-
-	if _, columns, err = mappedParam(ctx, field); err != nil {
-		return genieql.NewErrGenerator(err)
-	}
 
 	builder := func(n int) ast.Decl {
 		return b("query", n, genieql.ColumnInfoSet(columns).ColumnNames()...)

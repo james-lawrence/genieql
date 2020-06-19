@@ -21,7 +21,7 @@ const pgxDefaultDecode = `func() {
 
 const pgxDefaultEncode = `func() {
 	if err := {{ .To | expr }}.Set({{.From | autoreference | expr}}); err != nil {
-		return {{ .Error | expr }}(nil).Err(err)
+		return {{ error "err" | ast }}
 	}
 }`
 

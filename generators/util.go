@@ -22,17 +22,16 @@ import (
 	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
-func genFunctionLiteral(example string, ctx interface{}) (output *ast.FuncLit, err error) {
+func genFunctionLiteral(example string, ctx interface{}, errorHandler func(string) ast.Node) (output *ast.FuncLit, err error) {
 	var (
 		ok     bool
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
+			"ast":           astutil.Print,
 			"expr":          types.ExprString,
 			"autoreference": autoreference,
-			"error": func(err error) ast.Node {
-				return astutil.Return()
-			},
+			"error":         errorHandler,
 		}
 	)
 
@@ -114,9 +113,9 @@ func nulltypes(ctx Context) transforms {
 }
 
 // decode a column to a local variable.
-func decode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
+func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	return func(i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
 			To   ast.Expr
@@ -142,7 +141,7 @@ func decode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
 			to = &ast.StarExpr{X: unwrapExpr(to)}
 		}
 
-		if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}); err != nil {
+		if gen, err = genFunctionLiteral(d.Decode, stmtCtx{Type: unwrapExpr(column.Type), From: local, To: to}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -151,9 +150,9 @@ func decode(ctx Context) func(int, genieql.ColumnMap) (ast.Stmt, error) {
 }
 
 // encode a column to a local variable.
-func encode(ctx Context) func(ast.Expr, int, genieql.ColumnMap) (ast.Stmt, error) {
+func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) (ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
-	return func(failure ast.Expr, i int, column genieql.ColumnMap) (output ast.Stmt, err error) {
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output ast.Stmt, err error) {
 		type stmtCtx struct {
 			Error ast.Expr
 			From  ast.Expr
@@ -182,8 +181,7 @@ func encode(ctx Context) func(ast.Expr, int, genieql.ColumnMap) (ast.Stmt, error
 			from = &ast.StarExpr{X: from}
 		}
 
-		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Error: failure, Type: unwrapExpr(column.Type), From: from, To: local}); err != nil {
-			log.Println("FAILED TO PARSE ENCODE", types.ExprString(from), d.Encode)
+		if gen, err = genFunctionLiteral(d.Encode, stmtCtx{Type: unwrapExpr(column.Type), From: from, To: local}, errHandler); err != nil {
 			return nil, err
 		}
 

@@ -85,6 +85,7 @@ var _ = Describe("Scanner", func() {
 			".fixtures/scanners/ipnet.go",
 			generators.ScannerOptionOutputMode(generators.ModeStatic|generators.ModeInterface),
 		),
+
 		Entry("[]net.IPNet",
 			`package example; type IPNetArray func(arg1 []net.IPNet)`,
 			".fixtures/scanners/ipnet_array.go",
