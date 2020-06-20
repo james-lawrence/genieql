@@ -1,8 +1,6 @@
 package drivers
 
 import (
-	"go/ast"
-	"go/types"
 	"io"
 	"io/ioutil"
 
@@ -10,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
 )
 
 // DefaultTypeDefinitions determine the type definition for an expression.
@@ -48,20 +45,6 @@ func NewDriver(types ...genieql.ColumnDefinition) genieql.Driver {
 	return genieql.NewDriver(types...)
 }
 
-func nullableTypes(_types map[string]genieql.ColumnDefinition) func(typ ast.Expr) ast.Expr {
-	return func(typ ast.Expr) ast.Expr {
-		if x, ok := typ.(*ast.StarExpr); ok {
-			typ = x.X
-		}
-
-		if _type, ok := _types[types.ExprString(typ)]; ok {
-			return astutil.MustParseExpr(_type.ColumnType)
-		}
-
-		return typ
-	}
-}
-
 func init() {
 	genieql.RegisterDriver(StandardLib, stdlib)
 }
@@ -97,7 +80,7 @@ var stdlib = NewDriver(
 		}`,
 		Encode: `func() {
 			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int64 = {{ .From | expr }}
+			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
 		}`,
 	},
 	genieql.ColumnDefinition{
@@ -112,7 +95,7 @@ var stdlib = NewDriver(
 		}`,
 		Encode: `func() {
 			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int32 = {{ .From | expr }}
+			{{ .To | expr }}.Int32 = int32({{ .From | expr }})
 		}`,
 	},
 	genieql.ColumnDefinition{
@@ -203,7 +186,7 @@ var stdlib = NewDriver(
 		}`,
 		Encode: `func() {
 			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int32 = {{ .From | expr }}
+			{{ .To | expr }}.Int32 = int32({{ .From | expr }})
 		}`,
 	},
 	genieql.ColumnDefinition{
@@ -219,7 +202,7 @@ var stdlib = NewDriver(
 		}`,
 		Encode: `func() {
 			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int32 = {{ .From | expr }}
+			{{ .To | expr }}.Int32 = int32({{ .From | expr }})
 		}`,
 	},
 	genieql.ColumnDefinition{

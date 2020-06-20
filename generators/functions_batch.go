@@ -89,7 +89,7 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 		tmp := []*ast.Field{}
 		for _, c := range cmap {
 			tmp = append(tmp, astutil.Field(
-				astutil.MustParseExpr(c.Definition.ColumnType),
+				astutil.MustParseExpr(c.Definition.Type),
 				ast.NewIdent(types.ExprString(determineIdent(c.Dst))),
 			))
 		}

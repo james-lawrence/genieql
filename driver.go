@@ -99,21 +99,24 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 
 // NewDriver builds a new driver from the component parts
 func NewDriver(supported ...ColumnDefinition) Driver {
-	return driver{supported: supported}
+	mapped := make(map[string]ColumnDefinition, len(supported))
+	for _, typedef := range supported {
+		mapped[typedef.Type] = typedef
+	}
+
+	return driver{supported: mapped}
 }
 
 type driver struct {
-	supported []ColumnDefinition
+	supported map[string]ColumnDefinition
 }
 
 func (t driver) LookupType(l string) (ColumnDefinition, error) {
-	for _, s := range t.supported {
-		if s.Type == l {
-			return s, nil
-		}
+	if typedef, ok := t.supported[l]; ok {
+		return typedef, nil
 	}
 
-	return ColumnDefinition{}, errors.New("missing type")
+	return ColumnDefinition{}, errors.Errorf("unsupported type: %s", l)
 }
 
 func (t driver) Exported() (res map[string]reflect.Value) {

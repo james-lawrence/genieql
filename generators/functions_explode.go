@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"io"
 	"strings"
 	"text/template"
@@ -55,8 +56,9 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 		`
 
 	var (
+		typedef             = composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 		defaultQueryFuncMap = template.FuncMap{
-			"typedef": composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions),
+			"typedef": typedef,
 			"type": func(field *ast.Field) ast.Expr {
 				return field.Type
 			},
@@ -82,8 +84,14 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 				return strings.Join(locals, ",")
 			},
 			"cinfo": func(field *ast.Field) genieql.ColumnMap {
+				td, err := typedef(field.Type)
+				if err != nil {
+					td = fallbackDefinition(types.ExprString(field.Type))
+				}
 				return genieql.ColumnMap{
-					// Type: field.Type,
+					ColumnInfo: genieql.ColumnInfo{
+						Definition: td,
+					},
 					Dst: &ast.SelectorExpr{
 						X:   param.Names[0],
 						Sel: astutil.MapFieldsToNameIdent(field)[0],
@@ -140,7 +148,6 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		return nil, nil
 	}
 
-	// nulltype := nulltypes(ctx)
 	encoder := encode(ctx)
 	input := &ast.Ellipsis{Elt: typ.Type}
 	output := &ast.ArrayType{Elt: ast.NewIdent("interface{}"), Len: astutil.IntegerLiteral(n * len(selectors))}
@@ -162,8 +169,17 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		var (
 			encoded []ast.Stmt
 		)
+
+		typex := types.ExprString(sel.Type)
+		typedef, err := ctx.Driver.LookupType(typex)
+		if err != nil {
+			typedef = fallbackDefinition(typex)
+		}
+
 		info := genieql.ColumnMap{
-			// Type: sel.Type,
+			ColumnInfo: genieql.ColumnInfo{
+				Definition: typedef,
+			},
 			Dst: &ast.SelectorExpr{
 				X:   value,
 				Sel: astutil.MapFieldsToNameIdent(sel)[0],
@@ -188,7 +204,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		}
 		encodings = append(encodings, encoded...)
 
-		// localspec = append(localspec, astutil.ValueSpec(nulltype(info.Type), info.Local(idx)))
+		localspec = append(localspec, astutil.ValueSpec(astutil.MustParseExpr(info.Definition.ColumnType), info.Local(idx)))
 		assignrhs = append(assignrhs, info.Local(idx))
 	}
 

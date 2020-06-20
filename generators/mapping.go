@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
-	"log"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -28,7 +27,6 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		}
 	}
 
-	log.Println("READING", pkg.Name, pkg.Dir, pkg.ImportPath, types.ExprString(determineType(param.Type)))
 	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
 		return m, infos, err
 	}
@@ -118,7 +116,6 @@ func mapColumns(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.C
 		return builtinParam(ctx, param)
 	}
 
-	log.Println("mapping structure")
 	return mapParam(ctx, param, ignoreSet...)
 }
 
