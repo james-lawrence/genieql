@@ -114,12 +114,12 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 	for rows.Next() {
 		var (
-			definition genieql.ColumnDefinition
-			oid        int
-			expr       ast.Expr
-			primary    bool
-			nullable   bool
-			name       string
+			columndef genieql.ColumnDefinition
+			oid       int
+			expr      ast.Expr
+			primary   bool
+			nullable  bool
+			name      string
 		)
 
 		if err = rows.Scan(&name, &oid, &nullable, &primary); err != nil {
@@ -131,22 +131,19 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 			continue
 		}
 
-		if definition, err = d.LookupType(types.ExprString(expr)); err != nil {
+		if columndef, err = d.LookupType(types.ExprString(expr)); err != nil {
 			log.Println("skipping column", name, "driver missing type", oid, "please open an issue")
 			continue
 		}
 
-		definition.Nullable = nullable
-		definition.PrimaryKey = primary
-		if definition.Nullable {
-			definition.Native = fmt.Sprintf("*%s", definition.Native)
-		}
+		columndef.Nullable = nullable
+		columndef.PrimaryKey = primary
 
-		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(definition))
+		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(columndef))
 
 		columns = append(columns, genieql.ColumnInfo{
 			Name:       name,
-			Definition: definition,
+			Definition: columndef,
 		})
 	}
 

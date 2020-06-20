@@ -139,7 +139,9 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 func fieldFromColumnInfo(ctx generators.Context, infos ...genieql.ColumnInfo) []*ast.Field {
 	r := make([]*ast.Field, 0, len(infos))
 	for _, info := range infos {
-		r = append(r, astutil.Field(ast.NewIdent(info.Definition.Native), ast.NewIdent(info.Name)))
+		// log.Println("generating field information", info.Name, info.Definition.Type, info.Definition.Native)
+		// log.Printf("generated %T - %s\n", astutil.MustParseExpr(info.Definition.Native), info.Definition.Native)
+		r = append(r, astutil.Field(astutil.MustParseExpr(info.Definition.Native), ast.NewIdent(info.Name)))
 	}
 	return r
 }

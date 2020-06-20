@@ -16,18 +16,10 @@ var _ = Describe("pq", func() {
 	})
 
 	DescribeTable("pqNullableTypes",
-		nullableTypeTest(genieql.MustLookupDriver(PQ).NullableType),
-		Entry("int", "int", false, "int"),
-		Entry("int pointer", "*int", false, "*int"),
-		Entry("time", "time.Time", true, "time.Time"),
-		Entry("time pointer", "*time.Time", true, "*time.Time"),
-	)
-
-	DescribeTable("pqLookupNullableType",
-		lookupNullableTypeTest(genieql.MustLookupDriver(PQ).LookupNullableType),
-		Entry("int", "int", "int"),
-		Entry("int pointer", "*int", "int"),
-		Entry("time", "time.Time", "time.Time"),
-		Entry("time pointer", "*time.Time", "time.Time"),
+		lookupDefinitionTest(genieql.MustLookupDriver(PQ).LookupType),
+		Entry("example 1 - int", "int", "pgtype.Int8", nil),
+		Entry("example 2 - *int", "*int", "pgtype.Int8", nil),
+		Entry("example 3 - time", "time.Time", "pgtype.Timestamptz", nil),
+		Entry("example 4 - *time", "*time.Time", "pgtype.Timestamptz", nil),
 	)
 })

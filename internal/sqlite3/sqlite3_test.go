@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/drivers"
 	. "bitbucket.org/jatone/genieql/internal/sqlite3"
 
 	. "github.com/onsi/ginkgo"
@@ -18,6 +19,7 @@ var _ = Describe("Sqlite3", func() {
 		dbfile  *os.File
 		db      *sql.DB
 		dialect genieql.Dialect
+		driver  = genieql.MustLookupDriver(drivers.StandardLib)
 	)
 
 	BeforeEach(func() {
@@ -78,23 +80,23 @@ var _ = Describe("Sqlite3", func() {
 	)
 
 	Describe("ColumnInformationForTable", func() {
-		It("should return an array of genieql.ColumnInfo", func() {
-			columnInfo, err := dialect.ColumnInformationForTable("example")
+		PIt("should return an array of genieql.ColumnInfo", func() {
+			columnInfo, err := dialect.ColumnInformationForTable(driver, "example")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(columnInfo).To(ConsistOf(
-				genieql.ColumnInfo{Name: "id", Nullable: false, PrimaryKey: true, Type: "integer"},
-				genieql.ColumnInfo{Name: "name", Nullable: true, PrimaryKey: false, Type: "text"},
+				genieql.ColumnInfo{Name: "id", Definition: genieql.ColumnDefinition{Nullable: false, PrimaryKey: true, Type: "integer"}},
+				genieql.ColumnInfo{Name: "name", Definition: genieql.ColumnDefinition{Nullable: true, PrimaryKey: false, Type: "text"}},
 			))
 		})
 	})
 
 	Describe("ColumnInformationForQuery", func() {
-		It("should return an array of genieql.ColumnInfo", func() {
-			columnInfo, err := dialect.ColumnInformationForQuery("SELECT id,name FROM example")
+		PIt("should return an array of genieql.ColumnInfo", func() {
+			columnInfo, err := dialect.ColumnInformationForQuery(driver, "SELECT id,name FROM example")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(columnInfo).To(ConsistOf(
-				genieql.ColumnInfo{Name: "id", Nullable: true, PrimaryKey: false, Type: "INT"},
-				genieql.ColumnInfo{Name: "name", Nullable: true, PrimaryKey: false, Type: "TEXT"},
+				genieql.ColumnInfo{Name: "id", Definition: genieql.ColumnDefinition{Nullable: true, PrimaryKey: false, Type: "INT"}},
+				genieql.ColumnInfo{Name: "name", Definition: genieql.ColumnDefinition{Nullable: true, PrimaryKey: false, Type: "TEXT"}},
 			))
 		})
 	})

@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"database/sql"
 	"time"
 
 	"bitbucket.org/jatone/genieql/internal/sqlx"
@@ -45,11 +44,12 @@ func exampleInsert(q sqlx.Queryer, arg1 example) ExampleScannerStaticRow {
 func exampleFindByCreated(q sqlx.Queryer, created time.Time) ExampleScannerStaticRow {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "created" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = created
+	if err := c0.Set(created); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -58,11 +58,12 @@ func exampleFindByCreated(q sqlx.Queryer, created time.Time) ExampleScannerStati
 func exampleLookupByCreated(q sqlx.Queryer, created time.Time) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "created" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = created
+	if err := c0.Set(created); err != nil {
+		return NewExampleScannerStatic(nil, err)
+	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
 }
@@ -71,11 +72,12 @@ func exampleLookupByCreated(q sqlx.Queryer, created time.Time) ExampleScanner {
 func exampleFindByEmail(q sqlx.Queryer, email string) ExampleScannerStaticRow {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "email" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = email
+	if err := c0.Set(email); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -84,11 +86,12 @@ func exampleFindByEmail(q sqlx.Queryer, email string) ExampleScannerStaticRow {
 func exampleLookupByEmail(q sqlx.Queryer, email string) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "email" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = email
+	if err := c0.Set(email); err != nil {
+		return NewExampleScannerStatic(nil, err)
+	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
 }
@@ -97,11 +100,12 @@ func exampleLookupByEmail(q sqlx.Queryer, email string) ExampleScanner {
 func exampleFindByID(q sqlx.Queryer, id int) ExampleScannerStaticRow {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "id" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(id)
+	if err := c0.Set(id); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -110,11 +114,12 @@ func exampleFindByID(q sqlx.Queryer, id int) ExampleScannerStaticRow {
 func exampleLookupByID(q sqlx.Queryer, id int) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "id" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(id)
+	if err := c0.Set(id); err != nil {
+		return NewExampleScannerStatic(nil, err)
+	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
 }
@@ -123,11 +128,12 @@ func exampleLookupByID(q sqlx.Queryer, id int) ExampleScanner {
 func exampleFindByUpdated(q sqlx.Queryer, updated time.Time) ExampleScannerStaticRow {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "updated" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = updated
+	if err := c0.Set(updated); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -136,11 +142,12 @@ func exampleFindByUpdated(q sqlx.Queryer, updated time.Time) ExampleScannerStati
 func exampleLookupByUpdated(q sqlx.Queryer, updated time.Time) ExampleScanner {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "updated" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = updated
+	if err := c0.Set(updated); err != nil {
+		return NewExampleScannerStatic(nil, err)
+	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
 }
@@ -149,11 +156,12 @@ func exampleLookupByUpdated(q sqlx.Queryer, updated time.Time) ExampleScanner {
 func exampleFindByKey(q sqlx.Queryer, id int) ExampleScannerStaticRow {
 	const query = `SELECT "created","email","id","updated" FROM example3 WHERE "id" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(id)
+	if err := c0.Set(id); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -162,15 +170,16 @@ func exampleFindByKey(q sqlx.Queryer, id int) ExampleScannerStaticRow {
 func exampleUpdateByID(q sqlx.Queryer, id int, update example) ExampleScannerStaticRow {
 	const query = `UPDATE example3 SET "created" = $1, "email" = $2, "updated" = $3 WHERE "id" = $4 RETURNING "created","email","updated"`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 		c1 pgtype.Timestamptz
 		c2 pgtype.Text
 		c3 pgtype.Int8
 		c4 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(id)
+	if err := c0.Set(id); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	if err := c1.Set(update.Created); err != nil {
 		return NewExampleScannerStaticRow(nil).Err(err)
@@ -195,11 +204,12 @@ func exampleUpdateByID(q sqlx.Queryer, id int, update example) ExampleScannerSta
 func exampleDeleteByID(q sqlx.Queryer, id int) ExampleScannerStaticRow {
 	const query = `DELETE FROM example3 WHERE "id" = $1 RETURNING "created","email","id","updated"`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(id)
+	if err := c0.Set(id); err != nil {
+		return NewExampleScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
 }

@@ -1,7 +1,6 @@
 package functions
 
 import (
-	"database/sql"
 	"net"
 	"time"
 
@@ -156,11 +155,12 @@ func Example1Insert(q sqlx.Queryer, arg1 Example1) Example1ScannerStaticRow {
 func Example1FindByBigintField(q sqlx.Queryer, bigintField int) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "bigint_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(bigintField)
+	if err := c0.Set(bigintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -169,11 +169,12 @@ func Example1FindByBigintField(q sqlx.Queryer, bigintField int) Example1ScannerS
 func Example1LookupByBigintField(q sqlx.Queryer, bigintField int) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "bigint_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(bigintField)
+	if err := c0.Set(bigintField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -238,11 +239,12 @@ func Example1LookupByBitVaryingField(q sqlx.Queryer, bitVaryingField []byte) Exa
 func Example1FindByBoolField(q sqlx.Queryer, boolField bool) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "bool_field" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = boolField
+	if err := c0.Set(boolField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -251,11 +253,12 @@ func Example1FindByBoolField(q sqlx.Queryer, boolField bool) Example1ScannerStat
 func Example1LookupByBoolField(q sqlx.Queryer, boolField bool) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "bool_field" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = boolField
+	if err := c0.Set(boolField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -292,11 +295,12 @@ func Example1LookupByByteArrayField(q sqlx.Queryer, byteArrayField []byte) Examp
 func Example1FindByCharacterField(q sqlx.Queryer, characterField string) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "character_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = characterField
+	if err := c0.Set(characterField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -305,11 +309,12 @@ func Example1FindByCharacterField(q sqlx.Queryer, characterField string) Example
 func Example1LookupByCharacterField(q sqlx.Queryer, characterField string) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "character_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = characterField
+	if err := c0.Set(characterField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -318,11 +323,12 @@ func Example1LookupByCharacterField(q sqlx.Queryer, characterField string) Examp
 func Example1FindByCharacterFixedField(q sqlx.Queryer, characterFixedField string) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "character_fixed_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = characterFixedField
+	if err := c0.Set(characterFixedField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -331,11 +337,12 @@ func Example1FindByCharacterFixedField(q sqlx.Queryer, characterFixedField strin
 func Example1LookupByCharacterFixedField(q sqlx.Queryer, characterFixedField string) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "character_fixed_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = characterFixedField
+	if err := c0.Set(characterFixedField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -372,11 +379,12 @@ func Example1LookupByCidrField(q sqlx.Queryer, cidrField net.IPNet) Example1Scan
 func Example1FindByDecimalField(q sqlx.Queryer, decimalField float64) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "decimal_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = decimalField
+	if err := c0.Set(decimalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -385,11 +393,12 @@ func Example1FindByDecimalField(q sqlx.Queryer, decimalField float64) Example1Sc
 func Example1LookupByDecimalField(q sqlx.Queryer, decimalField float64) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "decimal_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = decimalField
+	if err := c0.Set(decimalField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -398,11 +407,12 @@ func Example1LookupByDecimalField(q sqlx.Queryer, decimalField float64) Example1
 func Example1FindByDoublePrecisionField(q sqlx.Queryer, doublePrecisionField float64) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "double_precision_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = doublePrecisionField
+	if err := c0.Set(doublePrecisionField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -411,11 +421,12 @@ func Example1FindByDoublePrecisionField(q sqlx.Queryer, doublePrecisionField flo
 func Example1LookupByDoublePrecisionField(q sqlx.Queryer, doublePrecisionField float64) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "double_precision_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = doublePrecisionField
+	if err := c0.Set(doublePrecisionField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -536,11 +547,12 @@ func Example1LookupByInt8Array(q sqlx.Queryer, int8Array []int) Example1Scanner 
 func Example1FindByIntField(q sqlx.Queryer, intField int) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "int_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(intField)
+	if err := c0.Set(intField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -549,11 +561,12 @@ func Example1FindByIntField(q sqlx.Queryer, intField int) Example1ScannerStaticR
 func Example1LookupByIntField(q sqlx.Queryer, intField int) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "int_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(intField)
+	if err := c0.Set(intField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -674,11 +687,12 @@ func Example1LookupByMacaddrField(q sqlx.Queryer, macaddrField net.HardwareAddr)
 func Example1FindByNumericField(q sqlx.Queryer, numericField float64) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "numeric_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = numericField
+	if err := c0.Set(numericField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -687,37 +701,40 @@ func Example1FindByNumericField(q sqlx.Queryer, numericField float64) Example1Sc
 func Example1LookupByNumericField(q sqlx.Queryer, numericField float64) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "numeric_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float8
 	)
 
-	c0.Valid = true
-	c0.Float64 = numericField
+	if err := c0.Set(numericField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
 
 // Example1FindByRealField generated by genieql
-func Example1FindByRealField(q sqlx.Queryer, realField float64) Example1ScannerStaticRow {
+func Example1FindByRealField(q sqlx.Queryer, realField float32) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "real_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float4
 	)
 
-	c0.Valid = true
-	c0.Float64 = float64(realField)
+	if err := c0.Set(realField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
 
 // Example1LookupByRealField generated by genieql
-func Example1LookupByRealField(q sqlx.Queryer, realField float64) Example1Scanner {
+func Example1LookupByRealField(q sqlx.Queryer, realField float32) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "real_field" = $1`
 	var (
-		c0 sql.NullFloat64
+		c0 pgtype.Float4
 	)
 
-	c0.Valid = true
-	c0.Float64 = float64(realField)
+	if err := c0.Set(realField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -726,11 +743,12 @@ func Example1LookupByRealField(q sqlx.Queryer, realField float64) Example1Scanne
 func Example1FindBySmallintField(q sqlx.Queryer, smallintField int) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "smallint_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(smallintField)
+	if err := c0.Set(smallintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -739,11 +757,12 @@ func Example1FindBySmallintField(q sqlx.Queryer, smallintField int) Example1Scan
 func Example1LookupBySmallintField(q sqlx.Queryer, smallintField int) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "smallint_field" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(smallintField)
+	if err := c0.Set(smallintField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -752,11 +771,12 @@ func Example1LookupBySmallintField(q sqlx.Queryer, smallintField int) Example1Sc
 func Example1FindByTextField(q sqlx.Queryer, textField string) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "text_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = textField
+	if err := c0.Set(textField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -765,11 +785,12 @@ func Example1FindByTextField(q sqlx.Queryer, textField string) Example1ScannerSt
 func Example1LookupByTextField(q sqlx.Queryer, textField string) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "text_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = textField
+	if err := c0.Set(textField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -778,11 +799,12 @@ func Example1LookupByTextField(q sqlx.Queryer, textField string) Example1Scanner
 func Example1FindByTimestampField(q sqlx.Queryer, timestampField time.Time) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "timestamp_field" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = timestampField
+	if err := c0.Set(timestampField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -791,11 +813,12 @@ func Example1FindByTimestampField(q sqlx.Queryer, timestampField time.Time) Exam
 func Example1LookupByTimestampField(q sqlx.Queryer, timestampField time.Time) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "timestamp_field" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = timestampField
+	if err := c0.Set(timestampField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -832,11 +855,12 @@ func Example1LookupByUUIDArray(q sqlx.Queryer, uuidArray []string) Example1Scann
 func Example1FindByUUIDField(q sqlx.Queryer, uuidField string) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "uuid_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = uuidField
+	if err := c0.Set(uuidField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -845,11 +869,12 @@ func Example1FindByUUIDField(q sqlx.Queryer, uuidField string) Example1ScannerSt
 func Example1LookupByUUIDField(q sqlx.Queryer, uuidField string) Example1Scanner {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "uuid_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = uuidField
+	if err := c0.Set(uuidField); err != nil {
+		return NewExample1ScannerDynamic(nil, err)
+	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
 }
@@ -858,11 +883,12 @@ func Example1LookupByUUIDField(q sqlx.Queryer, uuidField string) Example1Scanner
 func Example1FindByKey(q sqlx.Queryer, uuidField string) Example1ScannerStaticRow {
 	const query = `SELECT "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field" FROM example1 WHERE "uuid_field" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = uuidField
+	if err := c0.Set(uuidField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -871,7 +897,7 @@ func Example1FindByKey(q sqlx.Queryer, uuidField string) Example1ScannerStaticRo
 func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Example1ScannerStaticRow {
 	const query = `UPDATE example1 SET "bigint_field" = $1, "bit_field" = $2, "bit_varying_field" = $3, "bool_field" = $4, "byte_array_field" = $5, "character_field" = $6, "character_fixed_field" = $7, "cidr_field" = $8, "decimal_field" = $9, "double_precision_field" = $10, "inet_field" = $11, "int2_array" = $12, "int4_array" = $13, "int8_array" = $14, "int_field" = $15, "interval_field" = $16, "json_field" = $17, "jsonb_field" = $18, "macaddr_field" = $19, "numeric_field" = $20, "real_field" = $21, "smallint_field" = $22, "text_field" = $23, "timestamp_field" = $24, "uuid_array" = $25 WHERE "uuid_field" = $26 RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array"`
 	var (
-		c0  sql.NullString
+		c0  pgtype.Text
 		c1  pgtype.Int8
 		c2  pgtype.Bit
 		c3  pgtype.Varbit
@@ -900,8 +926,9 @@ func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Examp
 		c26 pgtype.UUID
 	)
 
-	c0.Valid = true
-	c0.String = uuidField
+	if err := c0.Set(uuidField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	if err := c1.Set(update.BigintField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
@@ -1014,11 +1041,12 @@ func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Examp
 func Example1DeleteByID(q sqlx.Queryer, uuidField string) Example1ScannerStaticRow {
 	const query = `DELETE FROM example1 WHERE "uuid_field" = $1 RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = uuidField
+	if err := c0.Set(uuidField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
 }

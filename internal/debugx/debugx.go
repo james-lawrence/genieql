@@ -19,3 +19,8 @@ func Output(d int, s string) error {
 func Println(args ...interface{}) {
 	Output(2, fmt.Sprintln(args...))
 }
+
+// Printf debug output
+func Printf(format string, args ...interface{}) {
+	Output(2, fmt.Sprintf(format, args...))
+}

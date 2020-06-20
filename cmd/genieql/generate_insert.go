@@ -364,6 +364,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 		generators.QFOBuiltinQueryFromString(ctx.Dialect.Insert(1, t.table, genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
 		generators.QFOScanner(scannerFunction),
 		generators.QFOExplodeStructParam(field, fields...),
+		generators.QFOIgnore(t.defaults...),
 		generators.QFOQueryer("q", queryer),
 	)
 

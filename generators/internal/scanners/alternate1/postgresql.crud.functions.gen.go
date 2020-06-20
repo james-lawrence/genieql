@@ -1,7 +1,6 @@
 package alternate1
 
 import (
-	"database/sql"
 	"time"
 
 	"bitbucket.org/jatone/genieql/internal/sqlx"
@@ -70,11 +69,12 @@ func Type1Insert(q sqlx.Queryer, arg1 Type1) Type1ScannerStaticRow {
 func Type1FindByField1(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field1" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field1
+	if err := c0.Set(field1); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -83,11 +83,12 @@ func Type1FindByField1(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
 func Type1LookupByField1(q sqlx.Queryer, field1 string) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field1" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field1
+	if err := c0.Set(field1); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -96,11 +97,12 @@ func Type1LookupByField1(q sqlx.Queryer, field1 string) Type1Scanner {
 func Type1FindByField2(q sqlx.Queryer, field2 string) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field2" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field2
+	if err := c0.Set(field2); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -109,11 +111,12 @@ func Type1FindByField2(q sqlx.Queryer, field2 string) Type1ScannerStaticRow {
 func Type1LookupByField2(q sqlx.Queryer, field2 string) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field2" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field2
+	if err := c0.Set(field2); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -122,11 +125,12 @@ func Type1LookupByField2(q sqlx.Queryer, field2 string) Type1Scanner {
 func Type1FindByField3(q sqlx.Queryer, field3 bool) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field3" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = field3
+	if err := c0.Set(field3); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -135,11 +139,12 @@ func Type1FindByField3(q sqlx.Queryer, field3 bool) Type1ScannerStaticRow {
 func Type1LookupByField3(q sqlx.Queryer, field3 bool) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field3" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = field3
+	if err := c0.Set(field3); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -148,11 +153,12 @@ func Type1LookupByField3(q sqlx.Queryer, field3 bool) Type1Scanner {
 func Type1FindByField4(q sqlx.Queryer, field4 bool) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field4" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = field4
+	if err := c0.Set(field4); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -161,11 +167,12 @@ func Type1FindByField4(q sqlx.Queryer, field4 bool) Type1ScannerStaticRow {
 func Type1LookupByField4(q sqlx.Queryer, field4 bool) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field4" = $1`
 	var (
-		c0 sql.NullBool
+		c0 pgtype.Bool
 	)
 
-	c0.Valid = true
-	c0.Bool = field4
+	if err := c0.Set(field4); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -174,11 +181,12 @@ func Type1LookupByField4(q sqlx.Queryer, field4 bool) Type1Scanner {
 func Type1FindByField5(q sqlx.Queryer, field5 int) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field5" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(field5)
+	if err := c0.Set(field5); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -187,11 +195,12 @@ func Type1FindByField5(q sqlx.Queryer, field5 int) Type1ScannerStaticRow {
 func Type1LookupByField5(q sqlx.Queryer, field5 int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field5" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(field5)
+	if err := c0.Set(field5); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -200,11 +209,12 @@ func Type1LookupByField5(q sqlx.Queryer, field5 int) Type1Scanner {
 func Type1FindByField6(q sqlx.Queryer, field6 int) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field6" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(field6)
+	if err := c0.Set(field6); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -213,11 +223,12 @@ func Type1FindByField6(q sqlx.Queryer, field6 int) Type1ScannerStaticRow {
 func Type1LookupByField6(q sqlx.Queryer, field6 int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field6" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(field6)
+	if err := c0.Set(field6); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -226,11 +237,12 @@ func Type1LookupByField6(q sqlx.Queryer, field6 int) Type1Scanner {
 func Type1FindByField7(q sqlx.Queryer, field7 time.Time) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field7" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = field7
+	if err := c0.Set(field7); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -239,11 +251,12 @@ func Type1FindByField7(q sqlx.Queryer, field7 time.Time) Type1ScannerStaticRow {
 func Type1LookupByField7(q sqlx.Queryer, field7 time.Time) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field7" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = field7
+	if err := c0.Set(field7); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -252,11 +265,12 @@ func Type1LookupByField7(q sqlx.Queryer, field7 time.Time) Type1Scanner {
 func Type1FindByField8(q sqlx.Queryer, field8 time.Time) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field8" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = field8
+	if err := c0.Set(field8); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -265,11 +279,12 @@ func Type1FindByField8(q sqlx.Queryer, field8 time.Time) Type1ScannerStaticRow {
 func Type1LookupByField8(q sqlx.Queryer, field8 time.Time) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field8" = $1`
 	var (
-		c0 sql.NullTime
+		c0 pgtype.Timestamptz
 	)
 
-	c0.Valid = true
-	c0.Time = field8
+	if err := c0.Set(field8); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -278,11 +293,12 @@ func Type1LookupByField8(q sqlx.Queryer, field8 time.Time) Type1Scanner {
 func Type1FindByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "unmappedfield" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(unmappedfield)
+	if err := c0.Set(unmappedfield); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -291,11 +307,12 @@ func Type1FindByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1ScannerSta
 func Type1LookupByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1Scanner {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "unmappedfield" = $1`
 	var (
-		c0 sql.NullInt64
+		c0 pgtype.Int8
 	)
 
-	c0.Valid = true
-	c0.Int64 = int64(unmappedfield)
+	if err := c0.Set(unmappedfield); err != nil {
+		return NewType1ScannerStatic(nil, err)
+	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
 }
@@ -304,11 +321,12 @@ func Type1LookupByUnmappedfield(q sqlx.Queryer, unmappedfield int) Type1Scanner 
 func Type1FindByKey(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
 	const query = `SELECT "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield" FROM type1 WHERE "field1" = $1`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field1
+	if err := c0.Set(field1); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }
@@ -317,7 +335,7 @@ func Type1FindByKey(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
 func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerStaticRow {
 	const query = `UPDATE type1 SET "field2" = $1, "field3" = $2, "field4" = $3, "field5" = $4, "field6" = $5, "field7" = $6, "field8" = $7, "unmappedfield" = $8 WHERE "field1" = $9 RETURNING "field2","field3","field4","field5","field6","field7","field8","unmappedfield"`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 		c1 pgtype.Text
 		c2 pgtype.Text
 		c3 pgtype.Bool
@@ -329,8 +347,9 @@ func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerSt
 		c9 pgtype.Int4
 	)
 
-	c0.Valid = true
-	c0.String = field1
+	if err := c0.Set(field1); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	if err := c1.Set(update.Field1); err != nil {
 		return NewType1ScannerStaticRow(nil).Err(err)
@@ -375,11 +394,12 @@ func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerSt
 func Type1DeleteByID(q sqlx.Queryer, field1 string) Type1ScannerStaticRow {
 	const query = `DELETE FROM type1 WHERE "field1" = $1 RETURNING "field1","field2","field3","field4","field5","field6","field7","field8","unmappedfield"`
 	var (
-		c0 sql.NullString
+		c0 pgtype.Text
 	)
 
-	c0.Valid = true
-	c0.String = field1
+	if err := c0.Set(field1); err != nil {
+		return NewType1ScannerStaticRow(nil).Err(err)
+	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
 }

@@ -3,10 +3,13 @@ package sqlite3
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/debugx"
 )
 
 // Dialect constant representing the dialect name.
@@ -73,12 +76,12 @@ func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer
 	return genieql.NewColumnInfoNameTransformer("")
 }
 
-func (t dialectImplementation) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
+func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `PRAGMA table_info('%s')`
-	return columnInformation(t.db, columnInformationQuery, table)
+	return columnInformation(d, t.db, columnInformationQuery, table)
 }
 
-func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
+func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `PRAGMA table_info('%s')`
 	const table = "genieql_query_columns_table"
 
@@ -93,10 +96,10 @@ func (t dialectImplementation) ColumnInformationForQuery(query string) ([]genieq
 		return nil, errors.Wrapf(err, "failure to execute %s", q)
 	}
 
-	return columnInformation(tx, columnInformationQuery, table)
+	return columnInformation(d, tx, columnInformationQuery, table)
 }
 
-func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, error) {
+func columnInformation(d genieql.Driver, q queryer, query, table string) ([]genieql.ColumnInfo, error) {
 	var (
 		err     error
 		rows    *sql.Rows
@@ -109,23 +112,32 @@ func columnInformation(q queryer, query, table string) ([]genieql.ColumnInfo, er
 
 	for rows.Next() {
 		var (
+			columndef  genieql.ColumnDefinition
 			id         int         // ignored.
-			cName      string      // column name.
-			cType      string      // column type.
+			name       string      // column name.
+			expr       string      // column type.
 			nullable   int         // nullable.
 			defaultVal interface{} // ignored.
 			primary    int         // part of the primary key.
 		)
 
-		if err = rows.Scan(&id, &cName, &cType, &nullable, &defaultVal, &primary); err != nil {
+		if err = rows.Scan(&id, &name, &expr, &nullable, &defaultVal, &primary); err != nil {
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
+		if columndef, err = d.LookupType(expr); err != nil {
+			log.Println("skipping column", name, "driver missing type", expr, "please open an issue")
+			continue
+		}
+
+		columndef.Nullable = isNullable(nullable)
+		columndef.PrimaryKey = isPrimary(primary)
+
+		debugx.Println("found column", name, expr, spew.Sdump(columndef))
+
 		columns = append(columns, genieql.ColumnInfo{
-			Name:       cName,
-			Nullable:   isNullable(nullable),
-			PrimaryKey: isPrimary(primary),
-			Type:       cType, // TODO mapping function from sqlite to golang.
+			Name:       name,
+			Definition: columndef,
 		})
 	}
 

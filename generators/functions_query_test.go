@@ -318,5 +318,17 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
+		Entry(
+			"example 7 - ignored fields on structure",
+			".fixtures/functions-query/output12.go",
+			QFOName("queryFunction12"),
+			QFOSharedParameters(
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("arg")),
+			),
+			QFOScanner(exampleRowScanner),
+			QFOIgnore("g"),
+			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
+			QFOQueryerFunction(ast.NewIdent("QueryRow")),
+		),
 	)
 })

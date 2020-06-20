@@ -1,6 +1,8 @@
 package drivers_test
 
 import (
+	"errors"
+
 	"bitbucket.org/jatone/genieql"
 	. "bitbucket.org/jatone/genieql/internal/drivers"
 
@@ -15,46 +17,25 @@ var _ = Describe("pgx", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	DescribeTable("pgxNullableTypes",
-		nullableTypeTest(genieql.MustLookupDriver(PGX).NullableType),
-		Entry("float32 pointer", "*float32", true, "*float32"),
-		Entry("float32", "float32", true, "float32"),
-		Entry("float64 pointer", "*float64", true, "*float64"),
-		Entry("float64", "float64", true, "float64"),
-		Entry("string pointer", "*string", true, "*string"),
-		Entry("string", "string", true, "string"),
-		Entry("int16", "*int16", true, "*int16"),
-		Entry("int16", "int16", true, "int16"),
-		Entry("int32 pointer", "*int32", true, "*int32"),
-		Entry("int32", "int32", true, "int32"),
-		Entry("int64 pointer", "*int64", true, "*int64"),
-		Entry("int64", "int64", true, "int64"),
-		Entry("bool pointer", "*bool", true, "*bool"),
-		Entry("bool", "bool", true, "bool"),
-		Entry("time pointer", "*time.Time", true, "*time.Time"),
-		Entry("time", "time.Time", true, "time.Time"),
-		Entry("unimplemented type", "rune", false, "rune"),
-		Entry("unimplemented type pointer", "*rune", false, "*rune"),
-	)
-
-	DescribeTable("pgxLookupNullableType",
-		lookupNullableTypeTest(genieql.MustLookupDriver(PGX).LookupNullableType),
-		Entry("float32 pointer", "*float32", "float32"),
-		Entry("float32", "float32", "float32"),
-		Entry("float64 pointer", "*float64", "float64"),
-		Entry("float64", "float64", "float64"),
-		Entry("string pointer", "*string", "string"),
-		Entry("string", "string", "string"),
-		Entry("int16 pointer", "*int16", "int16"),
-		Entry("int16", "int16", "int16"),
-		Entry("int32 pointer", "*int32", "int32"),
-		Entry("int32", "int32", "int32"),
-		Entry("int64 pointer", "*int64", "int64"),
-		Entry("int64", "int64", "int64"),
-		Entry("bool pointer", "*bool", "bool"),
-		Entry("bool", "bool", "bool"),
-		Entry("time pointer", "*time.Time", "time.Time"),
-		Entry("time", "time.Time", "time.Time"),
-		Entry("unimplemented type", "rune", "rune"),
+	DescribeTable("LookupType",
+		lookupDefinitionTest(genieql.MustLookupDriver(PGX).LookupType),
+		Entry("example 1 - float32", "float32", "pgtype.Float4", nil),
+		Entry("example 2 - *float32", "*float32", "pgtype.Float4", nil),
+		Entry("example 3 - float64", "float64", "pgtype.Float8", nil),
+		Entry("example 4 - *float64", "*float64", "pgtype.Float8", nil),
+		Entry("example 5 - string", "string", "pgtype.Text", nil),
+		Entry("example 6 - *string", "*string", "pgtype.Text", nil),
+		Entry("example 7 - int16", "int16", "pgtype.Int2", nil),
+		Entry("example 8 - *int16", "*int16", "pgtype.Int2", nil),
+		Entry("example 9 - int32", "int32", "pgtype.Int4", nil),
+		Entry("example 10 - *int32", "*int32", "pgtype.Int4", nil),
+		Entry("example 11 - int64", "int64", "pgtype.Int8", nil),
+		Entry("example 12 - *int64", "*int64", "pgtype.Int8", nil),
+		Entry("example 13 - bool", "bool", "pgtype.Bool", nil),
+		Entry("example 14 - *bool", "*bool", "pgtype.Bool", nil),
+		Entry("example 15 - time.Time", "time.Time", "pgtype.Timestamptz", nil),
+		Entry("example 16 - *time.Time", "*time.Time", "pgtype.Timestamptz", nil),
+		Entry("example 17 - unimplemented", "rune", "", errors.New("failed")),
+		Entry("example 18 - unimplemented", "*rune", "", errors.New("failed")),
 	)
 })

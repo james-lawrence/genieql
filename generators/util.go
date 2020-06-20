@@ -186,9 +186,9 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			return nil, nil
 		}
 
-		typex := astutil.MustParseExpr(column.Definition.Type)
+		typex := astutil.MustParseExpr(column.Definition.Native)
 		from := unwrapExpr(column.Dst)
-		if _, ok := typex.(*ast.StarExpr); ok {
+		if column.Definition.Nullable {
 			from = &ast.StarExpr{X: from}
 		}
 
@@ -380,7 +380,9 @@ func allBuiltinTypes(xs ...ast.Expr) bool {
 }
 
 func builtinType(x ast.Expr) bool {
-	name := types.ExprString(x)
+	name := strings.ReplaceAll(types.ExprString(x), "*", "")
+	debugx.Printf("builType check %T - %s", x, name)
+
 	for _, t := range types.Typ {
 		if name == t.Name() {
 			return true
@@ -449,7 +451,7 @@ func determineIdent(x ast.Expr) *ast.Ident {
 	case *ast.SelectorExpr:
 		return real.Sel
 	default:
-		log.Printf("%T\n", x)
+		debugx.Printf("determineIdent: %T - %s", x, types.ExprString(x))
 		return nil
 	}
 }
@@ -458,10 +460,8 @@ func autoreference(x ast.Expr) ast.Expr {
 	x = unwrapExpr(x)
 	switch x := x.(type) {
 	case *ast.SelectorExpr:
-		// log.Printf("GENERATING REFERENCE: %T -> %s\n", x, types.ExprString(&ast.UnaryExpr{Op: token.AND, X: x}))
 		return &ast.UnaryExpr{Op: token.AND, X: x}
 	}
-	// log.Printf("GENERATING REFERENCE: %T -> %s\n", x, types.ExprString(x))
 	return x
 }
 
@@ -472,6 +472,7 @@ func determineType(x ast.Expr) ast.Expr {
 	case *ast.StarExpr:
 		return x.X
 	default:
+		debugx.Printf("determineType: %T - %s", x, types.ExprString(x))
 		return x
 	}
 }
@@ -485,6 +486,7 @@ func importPath(ctx Context, x ast.Expr) string {
 			}
 			return is.Name.Name
 		}
+
 		if src, err := parser.ParseFile(ctx.FileSet, ctx.FileSet.File(x.Pos()).Name(), nil, parser.ImportsOnly); err != nil {
 			panic(errors.Wrap(err, "failed to read the source file while determining import"))
 		} else {

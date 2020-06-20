@@ -80,10 +80,10 @@ func (t testDialect) ColumnNameTransformer() ColumnTransformer {
 	return NewColumnInfoNameTransformer("")
 }
 
-func (t testDialect) ColumnInformationForQuery(query string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformationForQuery(d Driver, query string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }
 
-func (t testDialect) ColumnInformationForTable(table string) ([]ColumnInfo, error) {
+func (t testDialect) ColumnInformationForTable(d Driver, table string) ([]ColumnInfo, error) {
 	return []ColumnInfo{}, nil
 }

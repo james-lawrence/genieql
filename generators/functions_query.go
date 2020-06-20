@@ -103,6 +103,13 @@ func QFOComment(c *ast.CommentGroup) QueryFunctionOption {
 	}
 }
 
+// QFOIgnore set the names of the fields to ignore.
+func QFOIgnore(ignore ...string) QueryFunctionOption {
+	return func(qf *queryFunction) {
+		qf.Ignore = ignore
+	}
+}
+
 // QFOFromComment extracts options from a ast.CommentGroup.
 func QFOFromComment(comments *ast.CommentGroup) ([]string, []QueryFunctionOption, error) {
 	var (
@@ -314,6 +321,7 @@ type queryFunction struct {
 	QueryerFunction *ast.Ident
 	QueryParameters []ast.Expr
 	Parameters      []*ast.Field
+	Ignore          []string
 	Template        *template.Template
 	Comment         *ast.CommentGroup
 	ErrHandler      func(string) ast.Node
@@ -374,9 +382,12 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 		}
 	}
 
-	if columns, err = mapFields(t.Context, t.Parameters); err != nil {
+	// log.Println("mapping fields", strings.Join(astutil.MapExprToString(astutil.MapFieldsToTypExpr(t.Parameters...)...), ","))
+	if columns, err = mapFields(t.Context, t.Parameters, t.Ignore...); err != nil {
 		return errors.Wrap(err, "failed to map fields")
 	}
+	// log.Println("parameters", len(t.Parameters), len(t.QueryParameters), len(columns))
+	// log.Println("mapping fields")
 
 	parameters = buildParameters(
 		t.BuiltinQuery == nil,
