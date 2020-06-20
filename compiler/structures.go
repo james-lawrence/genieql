@@ -5,21 +5,21 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/containous/yaegi/interp"
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql/astutil"
-	genieql2 "bitbucket.org/jatone/genieql/genieql"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	interp "bitbucket.org/jatone/genieql/interp"
 )
 
 // Structure matcher - identifies structure generators.
-func Structure(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
+func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
 		v             reflect.Value
-		f             func(genieql2.Structure)
+		f             func(interp.Structure)
 		ok            bool
-		gen           genieql2.Structure
+		gen           interp.Structure
 		formatted     string
 		structPattern = astutil.TypePattern(astutil.Expr("genieql.Structure"))
 	)
@@ -43,11 +43,11 @@ func Structure(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncD
 		return r, errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, pos.Name)
 	}
 
-	if f, ok = v.Interface().(func(genieql2.Structure)); !ok {
+	if f, ok = v.Interface().(func(interp.Structure)); !ok {
 		return r, errorsx.String("failed to type cast value")
 	}
 
-	gen = genieql2.NewStructure(ctx.Context, pos.Name.String())
+	gen = interp.NewStructure(ctx.Context, pos.Name.String())
 
 	f(gen)
 

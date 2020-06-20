@@ -6,7 +6,8 @@ import (
 	"context"
 	"time"
 
-	"bitbucket.org/jatone/genieql/genieql"
+	"bitbucket.org/jatone/genieql/internal/sqlx"
+	genieql "bitbucket.org/jatone/genieql/interp"
 )
 
 // Example1 ...

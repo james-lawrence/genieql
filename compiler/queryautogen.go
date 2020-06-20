@@ -5,18 +5,18 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/containous/yaegi/interp"
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
-	genieql2 "bitbucket.org/jatone/genieql/genieql"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	interp "bitbucket.org/jatone/genieql/interp"
 )
 
 // QueryAutogen matcher - generate crud functions
-func QueryAutogen(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
+func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		gen       genieql.Generator
 		formatted string
@@ -75,7 +75,7 @@ func QueryAutogen(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.Fun
 	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
 		var (
 			v       reflect.Value
-			f       func(genieql2.QueryAutogen)
+			f       func(interp.QueryAutogen)
 			scanner *ast.FuncDecl // scanner to use for the results.
 			ok      bool
 		)
@@ -89,7 +89,7 @@ func QueryAutogen(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.Fun
 			return errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, fn.Name)
 		}
 
-		if f, ok = v.Interface().(func(genieql2.QueryAutogen)); !ok {
+		if f, ok = v.Interface().(func(interp.QueryAutogen)); !ok {
 			return errors.Errorf("genieql.QueryAutogen - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, fn.Name)
 		}
 
@@ -97,7 +97,7 @@ func QueryAutogen(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.Fun
 			return errors.Errorf("genieql.QueryAutogen (%s.%s) - missing scanner", ctx.CurrentPackage.Name, fn.Name)
 		}
 
-		fgen := genieql2.NewQueryAutogen(
+		fgen := interp.NewQueryAutogen(
 			ctx.Context,
 			fn.Name.String(),
 			fn.Doc,

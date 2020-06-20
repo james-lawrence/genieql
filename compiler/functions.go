@@ -5,20 +5,20 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/containous/yaegi/interp"
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	genieql2 "bitbucket.org/jatone/genieql/genieql"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	interp "bitbucket.org/jatone/genieql/interp"
 )
 
 // Function matcher - identifies function generators.
-func Function(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
+func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		v           reflect.Value
-		f           func(genieql2.Function)
+		f           func(interp.Function)
 		ok          bool
 		gen         genieql.Generator
 		declPattern *ast.FuncType
@@ -64,11 +64,11 @@ func Function(ctx Context, i *interp.Interpreter, src *ast.File, fn *ast.FuncDec
 			return errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, fn.Name)
 		}
 
-		if f, ok = v.Interface().(func(genieql2.Function)); !ok {
+		if f, ok = v.Interface().(func(interp.Function)); !ok {
 			return errors.Errorf("genieql.Function - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, fn.Name)
 		}
 
-		fgen := genieql2.NewFunction(
+		fgen := interp.NewFunction(
 			ctx.Context,
 			fn.Name.String(),
 			declPattern,

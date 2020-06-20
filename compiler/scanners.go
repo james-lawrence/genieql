@@ -5,21 +5,21 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/containous/yaegi/interp"
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql/astutil"
-	genieql2 "bitbucket.org/jatone/genieql/genieql"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	interp "bitbucket.org/jatone/genieql/interp"
 )
 
 // Scanner matcher - identifies scanner generators.
-func Scanner(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
+func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
 		v           reflect.Value
-		f           func(genieql2.Scanner)
+		f           func(interp.Scanner)
 		ok          bool
-		gen         genieql2.Scanner
+		gen         interp.Scanner
 		declPattern *ast.FuncType
 		formatted   string
 		pattern     = astutil.TypePattern(astutil.Expr("genieql.Scanner"))
@@ -61,11 +61,11 @@ func Scanner(ctx Context, i *interp.Interpreter, src *ast.File, pos *ast.FuncDec
 		return r, errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, pos.Name)
 	}
 
-	if f, ok = v.Interface().(func(genieql2.Scanner)); !ok {
+	if f, ok = v.Interface().(func(interp.Scanner)); !ok {
 		return r, errors.Errorf("genieql.Scanner - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, pos.Name)
 	}
 
-	gen = genieql2.NewScanner(
+	gen = interp.NewScanner(
 		ctx.Context,
 		pos.Name.String(),
 		declPattern.Params,

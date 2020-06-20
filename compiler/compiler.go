@@ -14,9 +14,9 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/generators"
-	genieql2 "bitbucket.org/jatone/genieql/genieql"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	genieqlinterp "bitbucket.org/jatone/genieql/interp"
 	"github.com/containous/yaegi/interp"
 	"github.com/containous/yaegi/stdlib"
 	"github.com/pkg/errors"
@@ -127,21 +127,22 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
 
+	log.Println("build options", t.Build.GOPATH)
 	i := interp.New(interp.Options{
 		GoPath: t.Build.GOPATH,
 	})
 	i.Use(stdlib.Symbols)
 	i.Use(interp.Exports{
-		t.Context.Configuration.Driver: t.Context.Driver.Exported(),
-		"bitbucket.org/jatone/genieql/genieql": map[string]reflect.Value{
-			"Structure":    reflect.ValueOf((*genieql2.Structure)(nil)),
-			"Scanner":      reflect.ValueOf((*genieql2.Scanner)(nil)),
-			"Function":     reflect.ValueOf((*genieql2.Function)(nil)),
-			"Insert":       reflect.ValueOf((*genieql2.Insert)(nil)),
-			"QueryAutogen": reflect.ValueOf((*genieql2.QueryAutogen)(nil)),
-			"Camelcase":    reflect.ValueOf(genieql2.Camelcase),
-			"Table":        reflect.ValueOf(genieql2.Table),
-			"Query":        reflect.ValueOf(genieql2.Query),
+		"bitbucket.org/jatone/genieql/interp/driver": t.Context.Driver.Exported(),
+		"bitbucket.org/jatone/genieql/interp": map[string]reflect.Value{
+			"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
+			"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
+			"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
+			"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
+			"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
+			"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
+			"Table":        reflect.ValueOf(genieqlinterp.Table),
+			"Query":        reflect.ValueOf(genieqlinterp.Query),
 		},
 	})
 
