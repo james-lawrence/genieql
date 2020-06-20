@@ -77,7 +77,6 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 		mapping genieql.MappingConfig
 		details genieql.TableDetails
 	)
-	dialect := t.ctx.Dialect
 
 	t.ctx.Println("generation of", t.name, "initiated")
 	defer t.ctx.Println("generation of", t.name, "completed")
@@ -105,7 +104,7 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	if details, err = genieql.LookupTableDetails(dialect, t.table); err != nil {
+	if details, err = genieql.LookupTableDetails(t.ctx.Driver, t.ctx.Dialect, t.table); err != nil {
 		return err
 	}
 
@@ -135,7 +134,7 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 
 			sig := &ast.FuncType{
 				Params: &ast.FieldList{
-					List: []*ast.Field{astutil.Field(ast.NewIdent(column.Type), ast.NewIdent("c"))},
+					List: []*ast.Field{astutil.Field(ast.NewIdent(column.Definition.ColumnType), ast.NewIdent("c"))},
 				},
 			}
 			if err = GenerateComment(newFunctionComment(name)).Generate(dst); err != nil {

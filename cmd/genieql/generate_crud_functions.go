@@ -45,7 +45,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if columns, err = ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(ctx.Driver, t.table); err != nil {
 		return err
 	}
 

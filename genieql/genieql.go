@@ -14,28 +14,31 @@ type definition interface {
 
 // Query extracts table information from the database making it available for
 // further processing.
-func Query(d genieql.Dialect, query string) QueryInfo {
+func Query(driver genieql.Driver, dialect genieql.Dialect, query string) QueryInfo {
 	return QueryInfo{
-		Dialect: d,
+		Driver:  driver,
+		Dialect: dialect,
 		Query:   query,
 	}
 }
 
 // QueryInfo ...
 type QueryInfo struct {
+	Driver  genieql.Driver
 	Dialect genieql.Dialect
 	Query   string
 }
 
 // Columns ...
 func (t QueryInfo) Columns() ([]genieql.ColumnInfo, error) {
-	return t.Dialect.ColumnInformationForQuery(t.Query)
+	return t.Dialect.ColumnInformationForQuery(t.Driver, t.Query)
 }
 
 // Table extracts table information from the database making it available for
 // further processing.
-func Table(d genieql.Dialect, name string) TableInfo {
+func Table(driver genieql.Driver, d genieql.Dialect, name string) TableInfo {
 	return TableInfo{
+		Driver:  driver,
 		Dialect: d,
 		Name:    name,
 	}
@@ -43,13 +46,14 @@ func Table(d genieql.Dialect, name string) TableInfo {
 
 // TableInfo ...
 type TableInfo struct {
+	Driver  genieql.Driver
 	Dialect genieql.Dialect
 	Name    string
 }
 
 // Columns ...
 func (t TableInfo) Columns() ([]genieql.ColumnInfo, error) {
-	return t.Dialect.ColumnInformationForTable(t.Name)
+	return t.Dialect.ColumnInformationForTable(t.Driver, t.Name)
 }
 
 // Camelcase the column name.

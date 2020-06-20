@@ -78,17 +78,9 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 		c15 pgtype.Timestamptz
 		c16 pgtype.Timestamptz
 		c17 pgtype.Int4
-		c18 sql.NullString
-		c19 sql.NullString
-		c20 sql.NullBool
-		c21 sql.NullBool
-		c22 sql.NullInt64
-		c23 sql.NullInt64
-		c24 sql.NullTime
-		c25 sql.NullTime
 	)
 
-	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23, &c24, &c25); err != nil {
+	if err := t.Rows.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17); err != nil {
 		return err
 	}
 
@@ -162,46 +154,6 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	if err := c17.AssignTo(&t2.Unmappedfield); err != nil {
 		return err
-	}
-
-	if c18.Valid {
-		tmp := c18.String
-		t3.Field1 = tmp
-	}
-
-	if c19.Valid {
-		tmp := c19.String
-		*t3.Field2 = tmp
-	}
-
-	if c20.Valid {
-		tmp := c20.Bool
-		t3.Field3 = tmp
-	}
-
-	if c21.Valid {
-		tmp := c21.Bool
-		*t3.Field4 = tmp
-	}
-
-	if c22.Valid {
-		tmp := int(c22.Int64)
-		t3.Field5 = tmp
-	}
-
-	if c23.Valid {
-		tmp := int(c23.Int64)
-		*t3.Field6 = tmp
-	}
-
-	if c24.Valid {
-		tmp := c24.Time
-		t3.Field7 = tmp
-	}
-
-	if c25.Valid {
-		tmp := c25.Time
-		*t3.Field8 = tmp
 	}
 
 	return t.Rows.Err()
@@ -260,21 +212,13 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 		c15 pgtype.Timestamptz
 		c16 pgtype.Timestamptz
 		c17 pgtype.Int4
-		c18 sql.NullString
-		c19 sql.NullString
-		c20 sql.NullBool
-		c21 sql.NullBool
-		c22 sql.NullInt64
-		c23 sql.NullInt64
-		c24 sql.NullTime
-		c25 sql.NullTime
 	)
 
 	if t.err != nil {
 		return t.err
 	}
 
-	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17, &c18, &c19, &c20, &c21, &c22, &c23, &c24, &c25); err != nil {
+	if err := t.row.Scan(&c0, &c1, &c2, &c3, &c4, &c5, &c6, &c7, &c8, &c9, &c10, &c11, &c12, &c13, &c14, &c15, &c16, &c17); err != nil {
 		return err
 	}
 
@@ -348,46 +292,6 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	if err := c17.AssignTo(&t2.Unmappedfield); err != nil {
 		return err
-	}
-
-	if c18.Valid {
-		tmp := c18.String
-		t3.Field1 = tmp
-	}
-
-	if c19.Valid {
-		tmp := c19.String
-		*t3.Field2 = tmp
-	}
-
-	if c20.Valid {
-		tmp := c20.Bool
-		t3.Field3 = tmp
-	}
-
-	if c21.Valid {
-		tmp := c21.Bool
-		*t3.Field4 = tmp
-	}
-
-	if c22.Valid {
-		tmp := int(c22.Int64)
-		t3.Field5 = tmp
-	}
-
-	if c23.Valid {
-		tmp := int(c23.Int64)
-		*t3.Field6 = tmp
-	}
-
-	if c24.Valid {
-		tmp := c24.Time
-		t3.Field7 = tmp
-	}
-
-	if c25.Valid {
-		tmp := c25.Time
-		*t3.Field8 = tmp
 	}
 
 	return nil

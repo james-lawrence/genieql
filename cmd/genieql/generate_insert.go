@@ -214,7 +214,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if columns, err = ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(ctx.Driver, t.table); err != nil {
 		return err
 	}
 
@@ -311,7 +311,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 
-	if columns, err = ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(ctx.Driver, t.table); err != nil {
 		return err
 	}
 

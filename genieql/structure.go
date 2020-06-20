@@ -41,7 +41,7 @@ func (t *sconfig) Generate(dst io.Writer) error {
 	return generators.NewStructure(
 		generators.StructOptionContext(t.ctx),
 		generators.StructOptionName(t.name),
-		generators.StructOptionColumnsStrategy(func(genieql.Dialect) ([]genieql.ColumnInfo, error) {
+		generators.StructOptionColumnsStrategy(func(generators.Context) ([]genieql.ColumnInfo, error) {
 			return t.d.Columns()
 		}),
 		generators.StructOptionMappingConfigOptions(
@@ -56,11 +56,11 @@ func (t *sconfig) From(d definition) Structure {
 }
 
 func (t sconfig) Table(s string) definition {
-	return Table(t.ctx.Dialect, s)
+	return Table(t.ctx.Driver, t.ctx.Dialect, s)
 }
 
 func (t sconfig) Query(s string) definition {
-	return Query(t.ctx.Dialect, s)
+	return Query(t.ctx.Driver, t.ctx.Dialect, s)
 }
 
 // func (t sconfig) OptionTransformColumns(x ...func(genieql.ColumnInfo) genieql.ColumnInfo) Structure {

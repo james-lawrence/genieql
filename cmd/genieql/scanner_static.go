@@ -3,7 +3,6 @@ package main
 import (
 	"go/ast"
 	"go/build"
-	"go/token"
 	"log"
 	"os"
 
@@ -29,46 +28,36 @@ func (t staticScanner) Options() []scannerOption {
 	}
 }
 
-func (t *staticScanner) Execute(*kingpin.ParseContext) error {
+func (t *staticScanner) Execute(*kingpin.ParseContext) (err error) {
 	var (
-		err           error
-		columns       []genieql.ColumnInfo
-		config        genieql.Configuration
-		dialect       genieql.Dialect
-		mappingConfig genieql.MappingConfig
-		pkg           *build.Package
-		fset          = token.NewFileSet()
+		ctx     generators.Context
+		columns []genieql.ColumnInfo
+		mapping genieql.MappingConfig
 	)
-	pkgName, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if pkg, err = locatePackage(pkgName); err != nil {
+
+	pkgRelativePath, typName := t.scanner.extractPackageType(t.scanner.packageType)
+	if ctx, err = loadGeneratorContext(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
-	if config, dialect, mappingConfig, err = loadMappingContext(t.scanner.configName, pkg, typName, t.scanner.mapName); err != nil {
-		return err
-	}
-
-	if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForTable(ctx.Driver, t.table); err != nil {
 		return err
 	}
 
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
-	(&mappingConfig).Apply(
+	if err = ctx.Configuration.ReadMap(t.scanner.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
+		return err
+	}
+
+	(&mapping).Apply(
 		genieql.MCOColumns(columns...),
 	)
 
-	if err = config.WriteMap(t.scanner.mapName, mappingConfig); err != nil {
+	if err = ctx.Configuration.WriteMap(t.scanner.mapName, mapping); err != nil {
 		log.Fatalln(err)
 	}
 	// END HACK!
-
-	ctx := generators.Context{
-		CurrentPackage: pkg,
-		FileSet:        fset,
-		Configuration:  config,
-		Dialect:        dialect,
-	}
 
 	fields := []*ast.Field{&ast.Field{Names: []*ast.Ident{ast.NewIdent("arg0")}, Type: ast.NewIdent(typName)}}
 	gen := generators.NewScanner(
@@ -80,13 +69,13 @@ func (t *staticScanner) Execute(*kingpin.ParseContext) error {
 	)
 
 	hg := headerGenerator{
-		fset: fset,
-		pkg:  pkg,
+		fset: ctx.FileSet,
+		pkg:  ctx.CurrentPackage,
 		args: os.Args[1:],
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
+		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, gen),
 	}
 

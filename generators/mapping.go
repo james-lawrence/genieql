@@ -28,6 +28,7 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		}
 	}
 
+	log.Println("READING", pkg.Name, pkg.Dir, pkg.ImportPath, types.ExprString(determineType(param.Type)))
 	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
 		return m, infos, err
 	}

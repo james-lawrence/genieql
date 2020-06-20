@@ -38,6 +38,7 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 		columns []genieql.ColumnInfo
 		config  genieql.Configuration
 		dialect genieql.Dialect
+		driver  genieql.Driver
 		pkg     *build.Package
 	)
 
@@ -45,14 +46,18 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return err
+	}
+
 	if t.query != "" {
-		if columns, err = dialect.ColumnInformationForQuery(t.query); err != nil {
+		if columns, err = dialect.ColumnInformationForQuery(driver, t.query); err != nil {
 			return err
 		}
 	}
 
 	if t.table != "" {
-		if columns, err = dialect.ColumnInformationForTable(t.table); err != nil {
+		if columns, err = dialect.ColumnInformationForTable(driver, t.table); err != nil {
 			return err
 		}
 	}
@@ -63,10 +68,9 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 	}
 
 	m := genieql.MappingConfig{
-		Package:         pkg,
 		Type:            typ,
 		Transformations: t.transformations,
 	}
-	m.Apply(genieql.MCOColumns(columns...))
+	m.Apply(genieql.MCOColumns(columns...), genieql.MCOPackage(pkg))
 	return genieql.Map(config, t.name, m)
 }

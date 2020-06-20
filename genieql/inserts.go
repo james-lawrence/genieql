@@ -112,7 +112,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	if columns, err = t.ctx.Dialect.ColumnInformationForTable(t.table); err != nil {
+	if columns, err = t.ctx.Dialect.ColumnInformationForTable(t.ctx.Driver, t.table); err != nil {
 		return err
 	}
 

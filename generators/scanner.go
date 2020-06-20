@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
@@ -236,9 +235,6 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
-	for _, c := range ctx.Columns {
-		log.Println("COLUMNS", c.Name, spew.Sdump(c))
-	}
 	funcMap := template.FuncMap{
 		"ast":       astPrint,
 		"expr":      types.ExprString,
@@ -246,7 +242,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		"arguments": argumentsAsPointers,
 		"nulltype":  nulltypes(t.Context),
 		"typeexpr":  astutil.MustParseExpr,
-		"decode":    decode,
+		"decode":    decode(t.Context),
 		"error": func() func(string) ast.Node {
 			return func(local string) ast.Node {
 				return astutil.Return(

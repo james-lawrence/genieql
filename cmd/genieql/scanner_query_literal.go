@@ -33,10 +33,6 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if err = ctx.Configuration.ReadMap(t.scanner.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
-		return err
-	}
-
 	queryPkgName, queryConstName := t.scanner.extractPackageType(t.queryLiteral)
 	if pkg, err = locatePackage(queryPkgName); err != nil {
 		return err
@@ -50,13 +46,18 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if columns, err = ctx.Dialect.ColumnInformationForQuery(query); err != nil {
+	if columns, err = ctx.Dialect.ColumnInformationForQuery(ctx.Driver, query); err != nil {
 		return err
 	}
+
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
+	if err = ctx.Configuration.ReadMap(t.scanner.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
+		return err
+	}
+
 	if err = ctx.Configuration.WriteMap(t.scanner.mapName, mapping.Clone(genieql.MCOColumns(columns...))); err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	// END HACK!
 

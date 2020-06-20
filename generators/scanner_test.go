@@ -36,7 +36,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
 	panicOnError(err)
 
-	FDescribeTable("should build a scanner for builtin types",
+	DescribeTable("should build a scanner for builtin types",
 		func(definition, fixture string) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -73,7 +73,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 		Entry("scanner time.Time", `package example; type Time func(arg time.Time)`, ".fixtures/scanners/time.go"),
 		Entry("scanner multipleParams", `package example; type MultipleParam func(arg1, arg2 int, arg3 bool, arg4 string)`, ".fixtures/scanners/multiple_params.go"),
 		Entry("scanner private mode", `package example; type privateInt func(arg int)`, ".fixtures/scanners/private_int.go"),
-		FEntry("scanner using structure", `package example; type StructExample func(arg StructA)`, ".fixtures/scanners/struct_example.go"),
+		Entry("scanner using structure", `package example; type StructExample func(arg StructA)`, ".fixtures/scanners/struct_example.go"),
 	)
 
 	DescribeTable("should build scanners with only the specified outputs",

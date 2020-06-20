@@ -15,14 +15,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+type _package struct {
+	Name       string
+	Dir        string
+	ImportPath string
+}
+
 // MappingConfigOption (MCO) options for building MappingConfigs.
 type MappingConfigOption func(*MappingConfig)
 
 // MCOPackage set the package name for the configuration.
 func MCOPackage(p *build.Package) MappingConfigOption {
 	return func(mc *MappingConfig) {
-		dup := *p
-		mc.Package = &dup
+		mc.Package = _package{
+			Name:       p.Name,
+			Dir:        p.Dir,
+			ImportPath: p.ImportPath,
+		}
 	}
 }
 
@@ -65,7 +74,7 @@ func NewMappingConfig(options ...MappingConfigOption) MappingConfig {
 
 // MappingConfig TODO...
 type MappingConfig struct {
-	Package         *build.Package
+	Package         _package
 	Type            string
 	Transformations []string
 	RenameMap       map[string]string
@@ -116,13 +125,13 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", pkg.Name, t.Type)
 	}
 
 	columns = t.Columns
 	// if no columns are defined for the mapping lets generate it automatically (may result in incorrect results)
 	if len(columns) == 0 {
-		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", t.Package.Name, t.Type))
+		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", pkg.Name, t.Type))
 		// for now just support the CamelCase -> snakecase.
 		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
 	}

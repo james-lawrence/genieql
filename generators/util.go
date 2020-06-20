@@ -19,6 +19,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/debugx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
@@ -84,7 +85,7 @@ func argumentsNative(ctx Context) transforms {
 			return x
 		}
 
-		// log.Println("TRANSFORMING", types.ExprString(x), "->", types.ExprString(out))
+		debugx.Println("TRANSFORMING", types.ExprString(x), "->", types.ExprString(out))
 		return out
 	}
 }
@@ -113,33 +114,40 @@ func nulltypes(ctx Context) transforms {
 }
 
 // decode a column to a local variable.
-func decode(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
-	type stmtCtx struct {
-		From ast.Expr
-		To   ast.Expr
-		Type ast.Expr
+func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
+		type stmtCtx struct {
+			From ast.Expr
+			To   ast.Expr
+			Type ast.Expr
+		}
+
+		var (
+			local = column.Local(i)
+			gen   *ast.FuncLit
+		)
+
+		if column.Definition, err = lookupTypeDefinition(column.Definition.Type); err != nil {
+			return nil, err
+		}
+
+		if column.Definition.Decode == "" {
+			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
+		}
+
+		typex := astutil.MustParseExpr(column.Definition.Native)
+		to := column.Dst
+		if column.Definition.Nullable {
+			to = &ast.StarExpr{X: unwrapExpr(to)}
+		}
+
+		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
+			return nil, err
+		}
+
+		return gen.Body.List, nil
 	}
-
-	var (
-		local = column.Local(i)
-		gen   *ast.FuncLit
-	)
-
-	if column.Definition.Decode == "" {
-		return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
-	}
-
-	typex := astutil.MustParseExpr(column.Definition.Native)
-	to := column.Dst
-	if column.Definition.Nullable {
-		to = &ast.StarExpr{X: unwrapExpr(to)}
-	}
-
-	if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
-		return nil, err
-	}
-
-	return gen.Body.List, nil
 }
 
 // encode a column to a local variable.

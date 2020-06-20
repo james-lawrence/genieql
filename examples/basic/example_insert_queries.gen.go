@@ -16,14 +16,6 @@ func exampleInsertWithDefaultsExplode(arg1 *example) ([]interface{}, error) {
 		c1 pgtype.Text
 	)
 
-	if err := c0.Set(arg1.ID); err != nil {
-		return []interface{}(nil), err
-	}
-
-	if err := c1.Set(arg1.Email); err != nil {
-		return []interface{}(nil), err
-	}
-
 	return []interface{}{c0, c1}, nil
 }
 

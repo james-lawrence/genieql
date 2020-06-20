@@ -139,12 +139,7 @@ func (t funcGenerator) updateFunc(queryerOption generators.QueryFunctionOption, 
 func fieldFromColumnInfo(ctx generators.Context, infos ...genieql.ColumnInfo) []*ast.Field {
 	r := make([]*ast.Field, 0, len(infos))
 	for _, info := range infos {
-		ident := ast.NewIdent(info.Type)
-		if d, err := ctx.Driver.LookupType(info.Type); err == nil {
-			ident = ast.NewIdent(d.Native)
-		}
-
-		r = append(r, astutil.Field(ident, ast.NewIdent(info.Name)))
+		r = append(r, astutil.Field(ast.NewIdent(info.Definition.Native), ast.NewIdent(info.Name)))
 	}
 	return r
 }
