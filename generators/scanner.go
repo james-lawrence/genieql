@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
@@ -235,13 +236,17 @@ func (t scanner) Generate(dst io.Writer) error {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
+	for _, c := range ctx.Columns {
+		log.Println("COLUMNS", c.Name, spew.Sdump(c))
+	}
 	funcMap := template.FuncMap{
 		"ast":       astPrint,
 		"expr":      types.ExprString,
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
 		"nulltype":  nulltypes(t.Context),
-		"decode":    decode(t.Context),
+		"typeexpr":  astutil.MustParseExpr,
+		"decode":    decode,
 		"error": func() func(string) ast.Node {
 			return func(local string) ast.Node {
 				return astutil.Return(
@@ -364,7 +369,7 @@ type {{.Name | private}}Static struct {
 func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	var (
 		{{- range $index, $column := .Columns }}
-		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
+		{{ $column.Local $index }} {{ $column.Definition.ColumnType | typeexpr | expr -}}
 		{{ end }}
 	)
 
@@ -375,9 +380,8 @@ func (t {{.Name | private}}Static) Scan({{ .Parameters | arguments }}) error {
 	{{ range $index, $column := .Columns}}
 	{{ range $_, $stmt := decode $index $column error -}}
 	{{ $stmt | ast }}
-	{{ end}}
 	{{ end }}
-
+	{{ end }}
 	return t.Rows.Err()
 }
 
@@ -418,7 +422,7 @@ type {{.Name | title}}StaticRow struct {
 func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	var (
 		{{- range $index, $column := .Columns }}
-		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
+		{{ $column.Local $index }} {{ $column.Definition.ColumnType | typeexpr | expr -}}
 		{{ end }}
 	)
 
@@ -434,8 +438,7 @@ func (t {{.Name | title}}StaticRow) Scan({{ .Parameters | arguments }}) error {
 	{{ range $_, $stmt := decode $index $column error -}}
 	{{ $stmt | ast }}
 	{{ end }}
-	{{- end }}
-
+	{{ end }}
 	return nil
 }
 
@@ -477,7 +480,7 @@ func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
 		columns []string
 		dst     []interface{}
 		{{- range $index, $column := .Columns }}
-		{{ $column.Local $index }} {{ $column.Type | nulltype | expr -}}
+		{{ $column.Local $index }} {{ $column.Definition.ColumnType | typeexpr | expr -}}
 		{{ end }}
 	)
 

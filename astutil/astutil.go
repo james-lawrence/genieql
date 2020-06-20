@@ -335,7 +335,7 @@ func StructureFieldSelectors(local *ast.Field, fields ...*ast.Field) []ast.Expr 
 func MustParseExpr(in string) ast.Expr {
 	expr, err := parser.ParseExpr(in)
 	if err != nil {
-		panic(err)
+		panic(errors.Wrapf(err, "failed to parse (%s)", in))
 	}
 
 	return expr

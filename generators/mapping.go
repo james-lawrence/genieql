@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
+	"log"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -113,9 +114,10 @@ func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql
 func mapColumns(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
 	x := removeEllipsis(param.Type)
 	if builtinType(x) {
-		return builtinParam(param)
+		return builtinParam(ctx, param)
 	}
 
+	log.Println("mapping structure")
 	return mapParam(ctx, param, ignoreSet...)
 }
 
@@ -140,6 +142,7 @@ func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.Col
 	if m, columns, err = mappedParam(ctx, param); err != nil {
 		return cMap, err
 	}
+
 	aliaser := m.Aliaser()
 
 	for _, arg := range param.Names {

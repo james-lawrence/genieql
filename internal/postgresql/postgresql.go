@@ -7,9 +7,11 @@ import (
 	"go/types"
 	"log"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/debugx"
 	"bitbucket.org/jatone/genieql/internal/postgresql/internal"
 )
 
@@ -112,7 +114,6 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 	for rows.Next() {
 		var (
-			info       genieql.ColumnInfo
 			definition genieql.ColumnDefinition
 			oid        int
 			expr       ast.Expr
@@ -126,14 +127,22 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 		}
 
 		if expr = internal.OIDToType(oid); expr == nil {
-			log.Println("skipping column", info.Name, "unknown type identifier", oid, "please open an issue")
+			log.Println("skipping column", name, "unknown type identifier", oid, "please open an issue")
 			continue
 		}
 
 		if definition, err = d.LookupType(types.ExprString(expr)); err != nil {
-			log.Println("skipping column", info.Name, "driver missing type", oid, "please open an issue")
+			log.Println("skipping column", name, "driver missing type", oid, "please open an issue")
 			continue
 		}
+
+		definition.Nullable = nullable
+		definition.PrimaryKey = primary
+		if definition.Nullable {
+			definition.Native = fmt.Sprintf("*%s", definition.Native)
+		}
+
+		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(definition))
 
 		columns = append(columns, genieql.ColumnInfo{
 			Name:       name,

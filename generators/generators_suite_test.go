@@ -1,8 +1,6 @@
 package generators_test
 
 import (
-	"go/ast"
-	"go/parser"
 	"log"
 	"reflect"
 
@@ -24,28 +22,21 @@ func TestGenerators(t *testing.T) {
 type noopDriver struct{}
 
 func (t noopDriver) LookupType(s string) (td genieql.ColumnDefinition, b bool) { return td, b }
-func (t noopDriver) LookupNullableType(x ast.Expr) ast.Expr {
-	return x
-}
-
-func (t noopDriver) NullableType(typ, from ast.Expr) (ast.Expr, bool) {
-	return typ, false
-}
-
 func (t noopDriver) Exported() map[string]reflect.Value {
 	return map[string]reflect.Value{}
-}
-
-func mustParseExpr(s string) ast.Expr {
-	x, err := parser.ParseExpr(s)
-	panicOnError(err)
-	return x
 }
 
 func panicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func mustLookupType(d genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
+	if err != nil {
+		panic(err)
+	}
+	return d
 }
 
 type dialect struct{}
@@ -74,22 +65,22 @@ func (t dialect) ColumnNameTransformer() genieql.ColumnTransformer {
 	return genieql.NewColumnInfoNameTransformer("")
 }
 
-func (t dialect) ColumnInformationForTable(table string) ([]genieql.ColumnInfo, error) {
+func (t dialect) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	switch table {
 	case "struct_a":
 		return []genieql.ColumnInfo{
-			{Name: "a", Type: "int"},
-			{Name: "b", Type: "int"},
-			{Name: "c", Type: "int"},
-			{Name: "d", Type: "bool"},
-			{Name: "e", Type: "bool"},
-			{Name: "f", Type: "bool"},
+			{Name: "a", Definition: mustLookupType(d.LookupType("int"))},
+			{Name: "b", Definition: mustLookupType(d.LookupType("int"))},
+			{Name: "c", Definition: mustLookupType(d.LookupType("int"))},
+			{Name: "d", Definition: mustLookupType(d.LookupType("bool"))},
+			{Name: "e", Definition: mustLookupType(d.LookupType("bool"))},
+			{Name: "f", Definition: mustLookupType(d.LookupType("bool"))},
 		}, nil
 	default:
 		return []genieql.ColumnInfo(nil), nil
 	}
 }
 
-func (t dialect) ColumnInformationForQuery(query string) ([]genieql.ColumnInfo, error) {
+func (t dialect) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
 	return []genieql.ColumnInfo(nil), nil
 }

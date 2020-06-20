@@ -113,35 +113,33 @@ func nulltypes(ctx Context) transforms {
 }
 
 // decode a column to a local variable.
-func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
-	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
-		type stmtCtx struct {
-			From ast.Expr
-			To   ast.Expr
-			Type ast.Expr
-		}
-
-		var (
-			local = column.Local(i)
-			gen   *ast.FuncLit
-		)
-
-		if column.Definition.Decode == "" {
-			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
-		}
-
-		typex := astutil.MustParseExpr(column.Definition.ColumnType)
-		to := column.Dst
-		if column.Definition.Nullable {
-			to = &ast.StarExpr{X: unwrapExpr(to)}
-		}
-
-		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
-			return nil, err
-		}
-
-		return gen.Body.List, nil
+func decode(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
+	type stmtCtx struct {
+		From ast.Expr
+		To   ast.Expr
+		Type ast.Expr
 	}
+
+	var (
+		local = column.Local(i)
+		gen   *ast.FuncLit
+	)
+
+	if column.Definition.Decode == "" {
+		return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
+	}
+
+	typex := astutil.MustParseExpr(column.Definition.Native)
+	to := column.Dst
+	if column.Definition.Nullable {
+		to = &ast.StarExpr{X: unwrapExpr(to)}
+	}
+
+	if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
+		return nil, err
+	}
+
+	return gen.Body.List, nil
 }
 
 // encode a column to a local variable.
@@ -387,17 +385,19 @@ func builtinType(x ast.Expr) bool {
 
 // builtinParam converts a *ast.Field that represents a builtin type
 // (time.Time,int,float,bool, etc) into an array of ColumnMap.
-func builtinParam(param *ast.Field) ([]genieql.ColumnMap, error) {
+func builtinParam(ctx Context, param *ast.Field) ([]genieql.ColumnMap, error) {
 	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
+		typex := types.ExprString(param.Type)
+		typed, err := ctx.Driver.LookupType(typex)
+		if err != nil {
+			return columns, err
+		}
+
 		columns = append(columns, genieql.ColumnMap{
 			ColumnInfo: genieql.ColumnInfo{
-				Name: name.Name,
-				Definition: genieql.ColumnDefinition{
-					Type:       types.ExprString(param.Type),
-					Native:     types.ExprString(param.Type),
-					ColumnType: types.ExprString(param.Type),
-				},
+				Name:       name.Name,
+				Definition: typed,
 			},
 			Dst: &ast.StarExpr{X: name},
 		})
