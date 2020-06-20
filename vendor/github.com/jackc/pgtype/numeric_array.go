@@ -21,6 +21,13 @@ func (dst *NumericArray) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 
 	case []float32:
@@ -99,6 +106,18 @@ func (dst *NumericArray) Set(src interface{}) error {
 			}
 		}
 
+	case []Numeric:
+		if value == nil {
+			*dst = NumericArray{Status: Null}
+		} else if len(value) == 0 {
+			*dst = NumericArray{Status: Present}
+		} else {
+			*dst = NumericArray{
+				Elements:   value,
+				Dimensions: []ArrayDimension{{Length: int32(len(value)), LowerBound: 1}},
+				Status:     Present,
+			}
+		}
 	default:
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
@@ -109,7 +128,7 @@ func (dst *NumericArray) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *NumericArray) Get() interface{} {
+func (dst NumericArray) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst

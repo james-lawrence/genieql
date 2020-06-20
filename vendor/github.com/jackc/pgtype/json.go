@@ -18,6 +18,13 @@ func (dst *JSON) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 	case string:
 		*dst = JSON{Bytes: []byte(value), Status: Present}
@@ -53,7 +60,7 @@ func (dst *JSON) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *JSON) Get() interface{} {
+func (dst JSON) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		var i interface{}
@@ -164,4 +171,27 @@ func (src JSON) Value() (driver.Value, error) {
 	default:
 		return nil, errUndefined
 	}
+}
+
+func (src JSON) MarshalJSON() ([]byte, error) {
+	switch src.Status {
+	case Present:
+		return src.Bytes, nil
+	case Null:
+		return []byte("null"), nil
+	case Undefined:
+		return nil, errUndefined
+	}
+
+	return nil, errBadStatus
+}
+
+func (dst *JSON) UnmarshalJSON(b []byte) error {
+	if b == nil || string(b) == "null" {
+		*dst = JSON{Status: Null}
+	} else {
+		*dst = JSON{Bytes: b, Status: Present}
+	}
+	return nil
+
 }

@@ -3,17 +3,19 @@ package interp
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func (interp *Interpreter) importSrc(rPath, path, alias string) error {
+func (interp *Interpreter) importSrc(rPath, path string) (string, error) {
 	var dir string
 	var err error
 
+	log.Println("Importing", rPath, path)
 	if interp.srcPkg[path] != nil {
-		return nil
+		return interp.pkgNames[path], nil
 	}
 
 	// For relative import paths in the form "./xxx" or "../xxx", the initial
@@ -27,16 +29,17 @@ func (interp *Interpreter) importSrc(rPath, path, alias string) error {
 		}
 		dir = filepath.Join(filepath.Dir(interp.Name), rPath, path)
 	} else if dir, rPath, err = pkgDir(interp.context.GOPATH, rPath, path); err != nil {
-		return err
+		return "", err
 	}
+
 	if interp.rdir[path] {
-		return fmt.Errorf("import cycle not allowed\n\timports %s", path)
+		return "", fmt.Errorf("import cycle not allowed\n\timports %s", path)
 	}
 	interp.rdir[path] = true
 
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var initNodes []*node
@@ -46,76 +49,81 @@ func (interp *Interpreter) importSrc(rPath, path, alias string) error {
 	var root *node
 	var pkgName string
 
-	// Parse source files
+	// Parse source files.
 	for _, file := range files {
 		name := file.Name()
-		if skipFile(interp.context, name) {
+		if skipFile(&interp.context, name) {
 			continue
 		}
 
 		name = filepath.Join(dir, name)
 		var buf []byte
 		if buf, err = ioutil.ReadFile(name); err != nil {
-			return err
+			return "", err
 		}
 
 		var pname string
 		if pname, root, err = interp.ast(string(buf), name); err != nil {
-			return err
+			return "", err
 		}
 		if root == nil {
 			continue
 		}
+
+		if interp.astDot {
+			dotCmd := interp.dotCmd
+			if dotCmd == "" {
+				dotCmd = defaultDotCmd(name, "yaegi-ast-")
+			}
+			root.astDot(dotWriter(dotCmd), name)
+		}
 		if pkgName == "" {
 			pkgName = pname
 		} else if pkgName != pname {
-			return fmt.Errorf("found packages %s and %s in %s", pkgName, pname, dir)
+			return "", fmt.Errorf("found packages %s and %s in %s", pkgName, pname, dir)
 		}
 		rootNodes = append(rootNodes, root)
 
 		subRPath := effectivePkg(rPath, path)
 		var list []*node
-		list, err = interp.gta(root, subRPath)
+		list, err = interp.gta(root, subRPath, path)
 		if err != nil {
-			return err
+			return "", err
 		}
 		revisit[subRPath] = append(revisit[subRPath], list...)
 	}
 
-	// revisit incomplete nodes where GTA could not complete
+	// Revisit incomplete nodes where GTA could not complete.
 	for pkg, nodes := range revisit {
-		for _, n := range nodes {
-			if _, err = interp.gta(n, pkg); err != nil {
-				return err
-			}
+		if err = interp.gtaRetry(nodes, pkg, path); err != nil {
+			return "", err
 		}
 	}
 
 	// Generate control flow graphs
 	for _, root := range rootNodes {
 		var nodes []*node
-		if nodes, err = interp.cfg(root); err != nil {
-			return err
+		if nodes, err = interp.cfg(root, path); err != nil {
+			return "", err
 		}
 		initNodes = append(initNodes, nodes...)
 	}
 
 	// Register source package in the interpreter. The package contains only
 	// the global symbols in the package scope.
-	interp.srcPkg[path] = interp.scopes[pkgName].sym
+	interp.mutex.Lock()
+	interp.srcPkg[path] = interp.scopes[path].sym
+	interp.pkgNames[path] = pkgName
 
-	// Rename imported pkgName to alias if they are different
-	if pkgName != alias {
-		interp.scopes[alias] = interp.scopes[pkgName]
-		delete(interp.scopes, pkgName)
-	}
-
+	interp.frame.mutex.Lock()
 	interp.resizeFrame()
+	interp.frame.mutex.Unlock()
+	interp.mutex.Unlock()
 
 	// Once all package sources have been parsed, execute entry points then init functions
 	for _, n := range rootNodes {
 		if err = genRun(n); err != nil {
-			return err
+			return "", err
 		}
 		interp.run(n, nil)
 	}
@@ -129,7 +137,7 @@ func (interp *Interpreter) importSrc(rPath, path, alias string) error {
 		interp.run(n, interp.frame)
 	}
 
-	return nil
+	return pkgName, nil
 }
 
 // pkgDir returns the absolute path in filesystem for a package given its name and
@@ -185,7 +193,8 @@ func effectivePkg(root, path string) string {
 	for i := 0; i < len(splitPath); i++ {
 		part := splitPath[len(splitPath)-1-i]
 
-		if part == splitRoot[len(splitRoot)-1-rootIndex] {
+		index := len(splitRoot) - 1 - rootIndex
+		if index > 0 && part == splitRoot[index] && i != 0 {
 			prevRootIndex = rootIndex
 			rootIndex++
 		} else if prevRootIndex == rootIndex {

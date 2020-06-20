@@ -3,6 +3,7 @@ package pgtype
 import (
 	"database/sql/driver"
 	"encoding/binary"
+	"encoding/json"
 	"time"
 
 	"github.com/jackc/pgio"
@@ -26,9 +27,18 @@ func (dst *Date) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 	case time.Time:
 		*dst = Date{Time: value, Status: Present}
+	case string:
+		return dst.DecodeText(nil, []byte(value))
 	default:
 		if originalSrc, ok := underlyingTimeType(src); ok {
 			return dst.Set(originalSrc)
@@ -39,7 +49,7 @@ func (dst *Date) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *Date) Get() interface{} {
+func (dst Date) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		if dst.InfinityModifier != None {
@@ -207,4 +217,59 @@ func (src Date) Value() (driver.Value, error) {
 	default:
 		return nil, errUndefined
 	}
+}
+
+func (src Date) MarshalJSON() ([]byte, error) {
+	switch src.Status {
+	case Null:
+		return []byte("null"), nil
+	case Undefined:
+		return nil, errUndefined
+	}
+
+	if src.Status != Present {
+		return nil, errBadStatus
+	}
+
+	var s string
+
+	switch src.InfinityModifier {
+	case None:
+		s = src.Time.Format("2006-01-02")
+	case Infinity:
+		s = "infinity"
+	case NegativeInfinity:
+		s = "-infinity"
+	}
+
+	return json.Marshal(s)
+}
+
+func (dst *Date) UnmarshalJSON(b []byte) error {
+	var s *string
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+
+	if s == nil {
+		*dst = Date{Status: Null}
+		return nil
+	}
+
+	switch *s {
+	case "infinity":
+		*dst = Date{Status: Present, InfinityModifier: Infinity}
+	case "-infinity":
+		*dst = Date{Status: Present, InfinityModifier: -Infinity}
+	default:
+		t, err := time.ParseInLocation("2006-01-02", *s, time.UTC)
+		if err != nil {
+			return err
+		}
+
+		*dst = Date{Time: t, Status: Present}
+	}
+
+	return nil
 }

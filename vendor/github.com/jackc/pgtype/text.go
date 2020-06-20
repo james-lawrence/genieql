@@ -18,6 +18,13 @@ func (dst *Text) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 	case string:
 		*dst = Text{String: value, Status: Present}
@@ -43,7 +50,7 @@ func (dst *Text) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *Text) Get() interface{} {
+func (dst Text) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst.String
@@ -152,13 +159,17 @@ func (src Text) MarshalJSON() ([]byte, error) {
 }
 
 func (dst *Text) UnmarshalJSON(b []byte) error {
-	var s string
+	var s *string
 	err := json.Unmarshal(b, &s)
 	if err != nil {
 		return err
 	}
 
-	*dst = Text{String: s, Status: Present}
+	if s == nil {
+		*dst = Text{Status: Null}
+	} else {
+		*dst = Text{String: *s, Status: Present}
+	}
 
 	return nil
 }

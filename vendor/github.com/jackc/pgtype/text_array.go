@@ -21,6 +21,13 @@ func (dst *TextArray) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 
 	case []string:
@@ -42,6 +49,18 @@ func (dst *TextArray) Set(src interface{}) error {
 			}
 		}
 
+	case []Text:
+		if value == nil {
+			*dst = TextArray{Status: Null}
+		} else if len(value) == 0 {
+			*dst = TextArray{Status: Present}
+		} else {
+			*dst = TextArray{
+				Elements:   value,
+				Dimensions: []ArrayDimension{{Length: int32(len(value)), LowerBound: 1}},
+				Status:     Present,
+			}
+		}
 	default:
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
@@ -52,7 +71,7 @@ func (dst *TextArray) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *TextArray) Get() interface{} {
+func (dst TextArray) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst

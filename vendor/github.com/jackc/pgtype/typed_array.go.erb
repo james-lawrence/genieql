@@ -21,8 +21,16 @@ func (dst *<%= pgtype_array_type %>) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 	<% go_array_types.split(",").each do |t| %>
+	<% if t != "[]#{pgtype_element_type}" %>
 	case <%= t %>:
 		if value == nil {
 			*dst = <%= pgtype_array_type %>{Status: Null}
@@ -42,6 +50,19 @@ func (dst *<%= pgtype_array_type %>) Set(src interface{}) error {
 			}
 		}
 	<% end %>
+	<% end %>
+	case []<%= pgtype_element_type %>:
+		if value == nil {
+			*dst = <%= pgtype_array_type %>{Status: Null}
+		} else if len(value) == 0 {
+			*dst = <%= pgtype_array_type %>{Status: Present}
+		} else {
+			*dst = <%= pgtype_array_type %>{
+				Elements:   value,
+				Dimensions: []ArrayDimension{{Length: int32(len(value)), LowerBound: 1}},
+				Status    : Present,
+			}
+		}
 	default:
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
@@ -52,7 +73,7 @@ func (dst *<%= pgtype_array_type %>) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *<%= pgtype_array_type %>) Get() interface{} {
+func (dst <%= pgtype_array_type %>) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst
@@ -170,7 +191,7 @@ func (dst *<%= pgtype_array_type %>) DecodeBinary(ci *ConnInfo, src []byte) erro
 }
 <% end %>
 
-func (src *<%= pgtype_array_type %>) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
+func (src <%= pgtype_array_type %>) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
 	switch src.Status {
 	case Null:
 		return nil, nil
@@ -228,7 +249,7 @@ func (src *<%= pgtype_array_type %>) EncodeText(ci *ConnInfo, buf []byte) ([]byt
 }
 
 <% if binary_format == "true" %>
-	func (src *<%= pgtype_array_type %>) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
+	func (src <%= pgtype_array_type %>) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
 		switch src.Status {
 		case Null:
 			return nil, nil
@@ -292,7 +313,7 @@ func (dst *<%= pgtype_array_type %>) Scan(src interface{}) error {
 }
 
 // Value implements the database/sql/driver Valuer interface.
-func (src *<%= pgtype_array_type %>) Value() (driver.Value, error) {
+func (src <%= pgtype_array_type %>) Value() (driver.Value, error) {
 	buf, err := src.EncodeText(nil, nil)
 	if err != nil {
 		return nil, err

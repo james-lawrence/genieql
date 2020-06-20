@@ -3,6 +3,7 @@ package drivers
 import (
 	"io"
 	"io/ioutil"
+	"reflect"
 
 	yaml "github.com/go-yaml/yaml"
 	"github.com/pkg/errors"
@@ -37,12 +38,12 @@ func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 			nil, errors.Wrap(err, "failed to unmarshal driver")
 	}
 
-	return config.Name, NewDriver(config.Types...), nil
+	return config.Name, NewDriver("", map[string]reflect.Value{}, config.Types...), nil
 }
 
 // NewDriver build a driver from the nullable types
-func NewDriver(types ...genieql.ColumnDefinition) genieql.Driver {
-	return genieql.NewDriver(types...)
+func NewDriver(path string, exports map[string]reflect.Value, types ...genieql.ColumnDefinition) genieql.Driver {
+	return genieql.NewDriver(path, exports, types...)
 }
 
 func init() {
@@ -53,6 +54,8 @@ func init() {
 const StandardLib = "genieql.default"
 
 var stdlib = NewDriver(
+	"",
+	map[string]reflect.Value{},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullString",
 		Native:     stringExprString,

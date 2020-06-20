@@ -22,6 +22,13 @@ func (dst *CIDRArray) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 
 	case []*net.IPNet:
@@ -62,6 +69,18 @@ func (dst *CIDRArray) Set(src interface{}) error {
 			}
 		}
 
+	case []CIDR:
+		if value == nil {
+			*dst = CIDRArray{Status: Null}
+		} else if len(value) == 0 {
+			*dst = CIDRArray{Status: Present}
+		} else {
+			*dst = CIDRArray{
+				Elements:   value,
+				Dimensions: []ArrayDimension{{Length: int32(len(value)), LowerBound: 1}},
+				Status:     Present,
+			}
+		}
 	default:
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
@@ -72,7 +91,7 @@ func (dst *CIDRArray) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *CIDRArray) Get() interface{} {
+func (dst CIDRArray) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst

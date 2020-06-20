@@ -14,6 +14,7 @@ import (
 
 	// register the postgresql dialect
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/generators"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 
@@ -47,7 +48,7 @@ func main() {
 	astcli := astcli{}
 
 	gg := generator{
-		buildInfo: bi,
+		buildInfo: &bi,
 	}
 
 	generator := &generate{
@@ -57,7 +58,7 @@ func main() {
 		buildInfo: bi,
 	}
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
-	app.Flag("debug", "enable debug logging").BoolVar(&bi.DebugEnabled)
+	app.Flag("verbose", "increase logging").Short('v').Default("0").CounterVar(&bi.Verbosity)
 
 	astcli.configure(app)
 	bootstrap.configure(app)
@@ -68,11 +69,11 @@ func main() {
 
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {
 		fmts := "%s\n"
-		if bi.DebugEnabled {
+		if bi.Verbosity >= generators.VerbosityDebug {
 			fmts = "%+v\n"
 		}
+
 		log.Printf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, fmt.Sprintf("parsing failed: %s", strings.Join(os.Args, " ")))))
 		log.Fatalln(genieql.PrintDebug())
 	}
-
 }

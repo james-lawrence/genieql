@@ -1,12 +1,15 @@
 package drivers
 
 import (
+	"reflect"
+
 	"bitbucket.org/jatone/genieql"
+	"github.com/jackc/pgtype"
 )
 
 // implements the pgx driver https://github.com/jackc/pgx
 func init() {
-	genieql.RegisterDriver(PGX, NewDriver(pgx...))
+	genieql.RegisterDriver(PGX, NewDriver("github.com/jackc/pgtype", pgxexports(), pgx...))
 }
 
 // PGX - driver for github.com/jackc/pgx
@@ -24,9 +27,54 @@ const pgxDefaultEncode = `func() {
 	}
 }`
 
+func pgxexports() map[string]reflect.Value {
+	return map[string]reflect.Value{
+		"OIDValue":         reflect.ValueOf(&pgtype.OIDValue{}),
+		"CIDR":             reflect.ValueOf(&pgtype.CIDR{}),
+		"CIDRArray":        reflect.ValueOf(&pgtype.CIDRArray{}),
+		"Int2":             reflect.ValueOf(&pgtype.Int2{}),
+		"Int2Array":        reflect.ValueOf(&pgtype.Int2Array{}),
+		"Int4":             reflect.ValueOf(&pgtype.Int4{}),
+		"Int4Array":        reflect.ValueOf(&pgtype.Int4Array{}),
+		"Int8":             reflect.ValueOf(&pgtype.Int8{}),
+		"Int8Array":        reflect.ValueOf(&pgtype.Int8Array{}),
+		"Macaddr":          reflect.ValueOf(&pgtype.Macaddr{}),
+		"Name":             reflect.ValueOf(&pgtype.Name{}),
+		"Inet":             reflect.ValueOf(&pgtype.Inet{}),
+		"InetArray":        reflect.ValueOf(&pgtype.InetArray{}),
+		"Numeric":          reflect.ValueOf(&pgtype.Numeric{}),
+		"NumericArray":     reflect.ValueOf(&pgtype.NumericArray{}),
+		"Bytea":            reflect.ValueOf(&pgtype.Bytea{}),
+		"Bool":             reflect.ValueOf(&pgtype.Bool{}),
+		"BoolArray":        reflect.ValueOf(&pgtype.BoolArray{}),
+		"Timestamptz":      reflect.ValueOf(&pgtype.Timestamptz{}),
+		"TimestamptzArray": reflect.ValueOf(&pgtype.TimestamptzArray{}),
+		"Bit":              reflect.ValueOf(&pgtype.Bit{}),
+		"Varbit":           reflect.ValueOf(&pgtype.Varbit{}),
+		"Varchar":          reflect.ValueOf(&pgtype.Varchar{}),
+		"BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		"Float4":           reflect.ValueOf(&pgtype.Float4{}),
+		"Float4Array":      reflect.ValueOf(&pgtype.Float4Array{}),
+		"Float8":           reflect.ValueOf(&pgtype.Float8{}),
+		"Float8Array":      reflect.ValueOf(&pgtype.Float8Array{}),
+		"Interval":         reflect.ValueOf(&pgtype.Interval{}),
+		"JSON":             reflect.ValueOf(&pgtype.JSON{}),
+		"JSONB":            reflect.ValueOf(&pgtype.JSONB{}),
+		"Text":             reflect.ValueOf(&pgtype.Text{}),
+		"UUID":             reflect.ValueOf(&pgtype.UUID{}),
+		"UUIDArray":        reflect.ValueOf(&pgtype.UUIDArray{}),
+		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
+		// "JSONArray":        reflect.ValueOf(&pgtype.JSONArray{}),
+	}
+}
+
 var pgx = []genieql.ColumnDefinition{
 	{
-		Type:       "pgtype.OID",
+		Type:       "pgtype.OIDValue",
 		Native:     stringExprString,
 		ColumnType: "pgtype.OIDValue",
 		Decode:     pgxDefaultDecode,

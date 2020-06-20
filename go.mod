@@ -3,27 +3,24 @@ module bitbucket.org/jatone/genieql
 go 1.13
 
 require (
-	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38 // indirect
-	github.com/alecthomas/colour v0.1.0 // indirect
-	github.com/alecthomas/kingpin v2.2.4-0.20170205033136-4632cad00ac4+incompatible
-	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
-	github.com/alecthomas/template v0.0.0-20151201005709-14fd436dd20c // indirect
-	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/containous/yaegi v0.8.7
+	github.com/alecthomas/kingpin v2.2.6+incompatible
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
+	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/containous/yaegi v0.8.8
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-yaml/yaml v0.0.0-20170407172122-cd8b52f8269e
-	github.com/jackc/pgtype v1.0.2
-	github.com/jackc/pgx v3.6.0+incompatible
-	github.com/lib/pq v1.2.0
-	github.com/mattn/go-sqlite3 v1.2.1-0.20170529145928-83772a7051f5
-	github.com/onsi/ginkgo v1.2.1-0.20160219021059-ac3d45ddd7ef
-	github.com/onsi/gomega v0.0.0-20160207210700-c72df929b80e
-	github.com/pkg/errors v0.8.1
+	github.com/jackc/pgtype v1.3.0
+	github.com/jackc/pgx/v4 v4.6.0 // indirect
+	github.com/lib/pq v1.7.0
+	github.com/mattn/go-sqlite3 v1.14.0
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/onsi/ginkgo v1.13.0
+	github.com/onsi/gomega v1.10.1
+	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
-	github.com/serenize/snaker v0.0.0-20170425222638-1c7f65329f65
-	github.com/sergi/go-diff v1.1.0 // indirect
-	github.com/zieckey/goini v0.0.0-20160930104250-ef198e443302
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/tools v0.0.0-20191012152004-8de300cfc20a
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
+	github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
+	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
+	golang.org/x/tools v0.0.0-20200619210111-0f592d2728bb
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )

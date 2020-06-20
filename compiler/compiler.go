@@ -127,13 +127,13 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
 
-	log.Println("build options", t.Build.GOPATH)
+	t.Println("build options", t.Build.GOPATH)
+	t.Println("driver", t.Context.Configuration.Driver)
 	i := interp.New(interp.Options{
 		GoPath: t.Build.GOPATH,
 	})
 	i.Use(stdlib.Symbols)
 	i.Use(interp.Exports{
-		"bitbucket.org/jatone/genieql/interp/driver": t.Context.Driver.Exported(),
 		"bitbucket.org/jatone/genieql/interp": map[string]reflect.Value{
 			"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
 			"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
@@ -145,6 +145,14 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			"Query":        reflect.ValueOf(genieqlinterp.Query),
 		},
 	})
+
+	if path, exports := t.Context.Driver.Exported(); path != "" {
+		// yaegi has touble importing some packages (like pgtype)
+		// so allow drivers to export values.
+		i.Use(interp.Exports{
+			path: exports,
+		})
+	}
 
 	for _, file := range sources {
 		results = t.generators(i, file)
@@ -196,7 +204,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("generated code")
 
-		if err = panicSafe(func() error { _, bad := i.Eval(formatted); return bad }); err != nil {
+		if _, err := i.Eval(formatted); err != nil {
 			t.Println(formatted)
 			return errors.Wrapf(err, "%s: failed to update compilation context", r.Location)
 		}
@@ -210,22 +218,4 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		iox.Rewind(working),
 		iox.Error(io.Copy(dst, working)),
 	), "failed to write generated code")
-}
-
-func panicSafe(fn func() error) (err error) {
-	defer func() {
-		recovered := recover()
-		if recovered == nil {
-			return
-		}
-
-		if cause, ok := recovered.(error); ok {
-			log.Println("recovered panic", cause)
-			err = cause
-		}
-	}()
-
-	err = fn()
-
-	return err
 }

@@ -21,6 +21,13 @@ func (dst *BoolArray) Set(src interface{}) error {
 		return nil
 	}
 
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
+	}
+
 	switch value := src.(type) {
 
 	case []bool:
@@ -42,6 +49,18 @@ func (dst *BoolArray) Set(src interface{}) error {
 			}
 		}
 
+	case []Bool:
+		if value == nil {
+			*dst = BoolArray{Status: Null}
+		} else if len(value) == 0 {
+			*dst = BoolArray{Status: Present}
+		} else {
+			*dst = BoolArray{
+				Elements:   value,
+				Dimensions: []ArrayDimension{{Length: int32(len(value)), LowerBound: 1}},
+				Status:     Present,
+			}
+		}
 	default:
 		if originalSrc, ok := underlyingSliceType(src); ok {
 			return dst.Set(originalSrc)
@@ -52,7 +71,7 @@ func (dst *BoolArray) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *BoolArray) Get() interface{} {
+func (dst BoolArray) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst

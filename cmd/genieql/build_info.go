@@ -36,9 +36,9 @@ func mustBuildInfo() buildInfo {
 }
 
 type buildInfo struct {
-	DebugEnabled bool
-	WorkingDir   string
-	CurrentPKG   *build.Package
+	Verbosity  int
+	WorkingDir string
+	CurrentPKG *build.Package
 }
 
 func (t buildInfo) extractPackageType(s string) (string, string) {

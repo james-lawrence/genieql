@@ -2,6 +2,7 @@ package pgtype
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"strconv"
 
 	errors "golang.org/x/xerrors"
@@ -16,6 +17,13 @@ func (dst *Bool) Set(src interface{}) error {
 	if src == nil {
 		*dst = Bool{Status: Null}
 		return nil
+	}
+
+	if value, ok := src.(interface{ Get() interface{} }); ok {
+		value2 := value.Get()
+		if value2 != value {
+			return dst.Set(value2)
+		}
 	}
 
 	switch value := src.(type) {
@@ -37,7 +45,7 @@ func (dst *Bool) Set(src interface{}) error {
 	return nil
 }
 
-func (dst *Bool) Get() interface{} {
+func (dst Bool) Get() interface{} {
 	switch dst.Status {
 	case Present:
 		return dst.Bool
@@ -162,4 +170,37 @@ func (src Bool) Value() (driver.Value, error) {
 	default:
 		return nil, errUndefined
 	}
+}
+
+func (src Bool) MarshalJSON() ([]byte, error) {
+	switch src.Status {
+	case Present:
+		if src.Bool {
+			return []byte("true"), nil
+		} else {
+			return []byte("false"), nil
+		}
+	case Null:
+		return []byte("null"), nil
+	case Undefined:
+		return nil, errUndefined
+	}
+
+	return nil, errBadStatus
+}
+
+func (dst *Bool) UnmarshalJSON(b []byte) error {
+	var v *bool
+	err := json.Unmarshal(b, &v)
+	if err != nil {
+		return err
+	}
+
+	if v == nil {
+		*dst = Bool{Status: Null}
+	} else {
+		*dst = Bool{Bool: *v, Status: Present}
+	}
+
+	return nil
 }

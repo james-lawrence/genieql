@@ -57,7 +57,7 @@ func PrintRegisteredDrivers() {
 // Driver - driver specific details.
 type Driver interface {
 	LookupType(s string) (ColumnDefinition, error)
-	Exported() (res map[string]reflect.Value)
+	Exported() (string, map[string]reflect.Value)
 }
 
 type decoder interface {
@@ -98,17 +98,19 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 }
 
 // NewDriver builds a new driver from the component parts
-func NewDriver(supported ...ColumnDefinition) Driver {
+func NewDriver(path string, exports map[string]reflect.Value, supported ...ColumnDefinition) Driver {
 	mapped := make(map[string]ColumnDefinition, len(supported))
 	for _, typedef := range supported {
 		mapped[typedef.Type] = typedef
 	}
 
-	return driver{supported: mapped}
+	return driver{importPath: path, exports: exports, supported: mapped}
 }
 
 type driver struct {
-	supported map[string]ColumnDefinition
+	importPath string
+	exports    map[string]reflect.Value
+	supported  map[string]ColumnDefinition
 }
 
 func (t driver) LookupType(l string) (ColumnDefinition, error) {
@@ -119,22 +121,23 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 	return ColumnDefinition{}, errors.Errorf("unsupported type: %s", l)
 }
 
-func (t driver) Exported() (res map[string]reflect.Value) {
-	res = map[string]reflect.Value{}
-	for _, d := range t.supported {
-		_ = d
-		// TODO:
-		// if typ.Decoder == nil {
-		// 	continue
-		// }
+func (t driver) Exported() (path string, res map[string]reflect.Value) {
+	return t.importPath, t.exports
+	// res = map[string]reflect.Value{}
+	// for _, d := range t.supported {
+	// 	exported := reflect.ValueOf(struct{}{})
+	// 	if d.Decoder != nil {
+	// 		exported = reflect.ValueOf(d.Decoder)
+	// 	}
 
-		// switch idx := strings.IndexRune(typ.NullType, '.'); idx {
-		// case -1:
-		// 	res[typ.NullType] = reflect.ValueOf(typ.Decoder)
-		// default:
-		// 	res[typ.NullType[idx+1:]] = reflect.ValueOf(typ.Decoder)
-		// }
-	}
+	// 	log.Println("exporting", d.Type, spew.Sdump(d))
+	// 	switch idx := strings.IndexRune(d.ColumnType, '.'); idx {
+	// 	case -1:
+	// 		res[d.ColumnType] = exported
+	// 	default:
+	// 		res[d.ColumnType[idx+1:]] = exported
+	// 	}
+	// }
 
-	return res
+	// return res
 }

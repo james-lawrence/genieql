@@ -18,7 +18,7 @@ import (
 
 // general generator for genieql, will locate files to consider and process them.
 type generator struct {
-	buildInfo
+	*buildInfo
 	configName string
 	output     string
 }
@@ -49,6 +49,7 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	if ctx, err = loadGeneratorContext(build.Default, t.configName, pname, genieql.BuildTagIgnore, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
+	ctx.Verbosity = t.buildInfo.Verbosity
 
 	if taggedFiles, err = findTaggedFiles(pname, genieql.BuildTagGenerate); err != nil {
 		return err
@@ -71,7 +72,9 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	log.Println("compiling", bctx.GOPATH, len(filtered), "files")
+	log.Println("compiling", len(filtered), "files")
+	log.Println("GOPATH", bctx.GOPATH)
+
 	buf := bytes.NewBuffer(nil)
 	c := compiler.New(
 		ctx,
