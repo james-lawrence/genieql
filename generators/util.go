@@ -152,6 +152,7 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 
 // encode a column to a local variable.
 func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
 			From ast.Expr
@@ -163,6 +164,18 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			local = column.Local(i)
 			gen   *ast.FuncLit
 		)
+
+		if d, err := lookupTypeDefinition(column.Definition.Type); err == nil {
+			column.Definition = d
+		} else {
+			column.Definition = genieql.ColumnDefinition{
+				Type:       column.Definition.Type,
+				Native:     column.Definition.Type,
+				ColumnType: column.Definition.Type,
+			}
+		}
+
+		debugx.Println("type definition", spew.Sdump(column.Definition))
 
 		if column.Definition.Encode == "" {
 			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, column.Definition.Type, column.Definition.ColumnType)
@@ -396,10 +409,14 @@ func builtinType(x ast.Expr) bool {
 func builtinParam(ctx Context, param *ast.Field) ([]genieql.ColumnMap, error) {
 	columns := make([]genieql.ColumnMap, 0, len(param.Names))
 	for _, name := range param.Names {
-		typex := types.ExprString(param.Type)
+		typex := types.ExprString(removeEllipsis(param.Type))
 		typed, err := ctx.Driver.LookupType(typex)
 		if err != nil {
-			return columns, err
+			typed = genieql.ColumnDefinition{
+				Type:       typex,
+				ColumnType: typex,
+				Native:     typex,
+			}
 		}
 
 		columns = append(columns, genieql.ColumnMap{
@@ -410,6 +427,7 @@ func builtinParam(ctx Context, param *ast.Field) ([]genieql.ColumnMap, error) {
 			Dst: &ast.StarExpr{X: name},
 		})
 	}
+
 	return columns, nil
 }
 
