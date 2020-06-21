@@ -127,11 +127,13 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
 
-	t.Println("build options", t.Build.GOPATH)
-	t.Println("driver", t.Context.Configuration.Driver)
+	t.Context.Println("build.GOPATH", t.Build.GOPATH)
+	t.Context.Println("build.BuildTags", t.Build.BuildTags)
+
 	i := interp.New(interp.Options{
 		GoPath: t.Build.GOPATH,
 	})
+
 	i.Use(stdlib.Symbols)
 	i.Use(interp.Exports{
 		"bitbucket.org/jatone/genieql/interp": map[string]reflect.Value{
@@ -171,8 +173,9 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("generating code")
 
 		if err = r.Generator.Generate(buf); err != nil {
-			log.Printf("%+v\n", errors.Wrapf(err, "%s: failed to generate", r.Location))
-			continue
+			return errors.Wrapf(err, "%s: failed to generate", r.Location)
+			// log.Printf("%+v\n", )
+			// continue
 		}
 
 		t.Context.Debugln("writing generated code into buffer")
@@ -205,14 +208,11 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("generated code")
 
 		if _, err := i.Eval(formatted); err != nil {
-			t.Println(formatted)
-			return errors.Wrapf(err, "%s: failed to update compilation context", r.Location)
+			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
 
 		t.Context.Debugln("added generated code to evaluation context")
 	}
-
-	// time.Sleep(30 * time.Second)
 
 	return errors.Wrap(errorsx.Compact(
 		iox.Rewind(working),

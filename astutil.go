@@ -10,9 +10,11 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"os"
 	"strings"
 
+	"bitbucket.org/jatone/genieql/astutil"
 	"github.com/pkg/errors"
 )
 
@@ -33,12 +35,53 @@ const ErrAmbiguousPackage = errorString("ambiguous package, found multiple match
 // ErrDeclarationNotFound returned when the requested declaration could not be located.
 const ErrDeclarationNotFound = errorString("declaration not found")
 
-// ErrAmbiguousDeclaration returned when the requested declaration was located in multiple
-// locations.
-const ErrAmbiguousDeclaration = errorString("ambiguous declaration, found multiple matches")
-
 // ErrBasicLiteralNotFound returned when the requested literal could not be located.
 const ErrBasicLiteralNotFound = errorString("basic literal value not found")
+
+func newAmbiguousTypeSpec(fset *token.FileSet, found ...*ast.TypeSpec) (err ErrAmbiguousDeclaration) {
+	for _, n := range found {
+		err.Nodes = append(err.Nodes, n)
+	}
+	return ErrAmbiguousDeclaration{
+		FileSet: fset,
+		Nodes:   err.Nodes,
+	}
+}
+
+func newAmbiguousFuncDecl(fset *token.FileSet, found ...*ast.FuncDecl) (err ErrAmbiguousDeclaration) {
+	for _, n := range found {
+		err.Nodes = append(err.Nodes, n)
+	}
+	return ErrAmbiguousDeclaration{
+		FileSet: fset,
+		Nodes:   err.Nodes,
+	}
+}
+
+func newAmbiguousValueSpec(fset *token.FileSet, found ...*ast.ValueSpec) (err ErrAmbiguousDeclaration) {
+	for _, n := range found {
+		err.Nodes = append(err.Nodes, n)
+	}
+	return ErrAmbiguousDeclaration{
+		FileSet: fset,
+		Nodes:   err.Nodes,
+	}
+}
+
+// ErrAmbiguousDeclaration returned when the requested declaration was located in multiple
+// locations.
+type ErrAmbiguousDeclaration struct {
+	*token.FileSet
+	Nodes []ast.Node
+}
+
+func (t ErrAmbiguousDeclaration) Error() string {
+	s := "ambiguous declaration, found multiple matches\n"
+	for idx, n := range t.Nodes {
+		s += fmt.Sprintf("%d %s %s\n", idx, t.FileSet.PositionFor(n.Pos(), true).String(), astutil.MustPrint(n))
+	}
+	return s
+}
 
 // StrictPackageName only accepts packages that are an exact match.
 func StrictPackageName(name string) func(*build.Package) bool {
@@ -315,9 +358,23 @@ func (t utils) WalkFiles(delegate func(path string, file *ast.File), pkgset ...*
 	return nil
 }
 
+func pkgFileFilter(pkg *build.Package) func(os.FileInfo) bool {
+	allowed := make(map[string]struct{}, len(pkg.GoFiles))
+	for _, file := range pkg.GoFiles {
+		allowed[file] = struct{}{}
+	}
+
+	return func(info os.FileInfo) bool {
+		_, ok := allowed[info.Name()]
+		log.Println("allowing", info.Name(), ok)
+		return ok
+	}
+}
+
 func (t utils) ParsePackages(pkgset ...*build.Package) (result []*ast.Package, err error) {
 	for _, pkg := range pkgset {
-		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, nil, parser.ParseComments)
+		allowed := pkgFileFilter(pkg)
+		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, allowed, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
@@ -345,7 +402,7 @@ func (t utils) FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.
 	case x == 1:
 		return found[0], nil
 	default:
-		return &ast.TypeSpec{}, ErrAmbiguousDeclaration
+		return &ast.TypeSpec{}, newAmbiguousTypeSpec(t.fset, found...)
 	}
 }
 
@@ -367,7 +424,7 @@ func (t utils) FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDe
 	case x == 1:
 		return found[0], nil
 	default:
-		return &ast.FuncDecl{}, ErrAmbiguousDeclaration
+		return &ast.FuncDecl{}, newAmbiguousFuncDecl(t.fset, found...)
 	}
 }
 
@@ -428,7 +485,7 @@ func RetrieveBasicLiteralString(f ast.Filter, packageSet ...*ast.Package) (strin
 			}
 		}
 	default:
-		return "", ErrAmbiguousDeclaration
+		return "", newAmbiguousValueSpec(token.NewFileSet(), valueSpecs...)
 	}
 
 	return "", ErrBasicLiteralNotFound

@@ -101,7 +101,7 @@ var _ = Describe("Astutil", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			typ, err := NewUtils(fset).FindUniqueType(FilterName("Package"), p, p)
-			Expect(err).To(Equal(ErrAmbiguousDeclaration))
+			Expect(err).To(BeAssignableToTypeOf(ErrAmbiguousDeclaration{}))
 			Expect(typ).To(Equal(&ast.TypeSpec{}))
 		})
 
