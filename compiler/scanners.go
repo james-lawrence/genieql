@@ -26,12 +26,12 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	)
 
 	if len(pos.Type.Params.List) < 1 {
-		ctx.Debugln("no match not enough params", pos.Name.String(), ctx.Context.FileSet.PositionFor(pos.Pos(), true).String())
+		ctx.Debugln("no match not enough params", nodeInfo(ctx, pos))
 		return r, ErrNoMatch
 	}
 
 	if !pattern(astutil.MapFieldsToTypExpr(pos.Type.Params.List[:1]...)...) {
-		ctx.Traceln("no match pattern", pos.Name.String(), ctx.Context.FileSet.PositionFor(pos.Pos(), true).String())
+		ctx.Traceln("no match pattern", nodeInfo(ctx, pos))
 		return r, ErrNoMatch
 	}
 
@@ -47,10 +47,10 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	pos.Type.Params.List = pos.Type.Params.List[:1]
 
 	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Scanner (%s.%s)", ctx.CurrentPackage.Name, pos.Name)
+		return r, errors.Wrapf(err, "genieql.Scanner %s", nodeInfo(ctx, pos))
 	}
 
-	log.Printf("genieql.Scanner identified (%s.%s)\n", ctx.CurrentPackage.Name, pos.Name)
+	log.Printf("genieql.Scanner identified %s\n", nodeInfo(ctx, pos))
 	ctx.Debugln(formatted)
 
 	if _, err = i.Eval(formatted); err != nil {
@@ -58,11 +58,11 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	}
 
 	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
-		return r, errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, pos.Name)
+		return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, pos))
 	}
 
 	if f, ok = v.Interface().(func(interp.Scanner)); !ok {
-		return r, errors.Errorf("genieql.Scanner - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, pos.Name)
+		return r, errors.Errorf("genieql.Scanner - %s - unable to convert function to be invoked", nodeInfo(ctx, pos))
 	}
 
 	gen = interp.NewScanner(

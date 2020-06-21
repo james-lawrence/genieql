@@ -83,7 +83,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		return columns, infos, err
 	}
 
-	infos, _, err = m.MapFieldsToColumns(
+	infos, _, err = m.MapColumnsToFields(
 		ctx.FileSet,
 		ctx.CurrentPackage,
 		genieql.ColumnInfoSet(m.Columns).Filter(genieql.ColumnInfoFilterIgnore(ignoreSet...))...,

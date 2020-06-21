@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/x/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -70,11 +69,6 @@ type compiler interface {
 	Compile(Definition) (*ast.FuncDecl, error)
 }
 
-func defaultTransform(field *ast.Field) (*ast.Field, error) {
-	// log.Println("transforming field", field.Names, field.Type)
-	return field, nil
-}
-
 // Query function compiler
 type Query struct {
 	generators.Context
@@ -97,22 +91,11 @@ func (t Query) sanitizeFields(i *ast.Ident) *ast.Ident {
 }
 
 // transform placeholder...
-func (t Query) transformInputs(inputs ...*ast.Field) (output []ast.Expr) {
+func (t Query) transform(inputs ...*ast.Field) (output []ast.Expr) {
 	for _, i := range inputs {
 		output = append(output, astutil.MapFieldsToNameExpr(i)...)
 	}
 	return output
-}
-
-// transform placeholder...
-func (t Query) transform(inputs ...*ast.Field) (output []*ast.Field, err error) {
-	output = astutil.TransformFields(func(field *ast.Field) *ast.Field {
-		updated, failure := defaultTransform(field)
-		err = errorsx.Compact(err, failure)
-		return updated
-	}, inputs...)
-
-	return output, err
 }
 
 // Compile using the provided definition.
@@ -157,11 +140,6 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 
 	// prevent name collisions.
 	d.Signature.Params.List = generators.SanitizeFieldIdents(t.sanitizeFields, d.Signature.Params.List...)
-	// TODO: generate input transformation statements if necessary.
-	if d.Signature.Params.List, err = t.transform(d.Signature.Params.List...); err != nil {
-		return nil, err
-	}
-	// TODO: generate input transformation statements if necessary.
 
 	// setup function arguments.
 	finputs := []*ast.Field{astutil.Field(t.Queryer, queryerIdent)}
@@ -176,7 +154,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	}
 	qinputs = append(qinputs, query)
 	if len(t.QueryInputs) == 0 {
-		qinputs = append(qinputs, t.transformInputs(d.Signature.Params.List...)...)
+		qinputs = append(qinputs, t.transform(d.Signature.Params.List...)...)
 	} else {
 		qinputs = append(qinputs, t.QueryInputs...)
 	}

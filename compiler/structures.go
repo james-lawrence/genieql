@@ -29,10 +29,10 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 	}
 
 	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Structure (%s.%s)", ctx.CurrentPackage.Name, pos.Name)
+		return r, errors.Wrapf(err, "genieql.Structure %s", nodeInfo(ctx, pos))
 	}
 
-	log.Printf("genieql.Structure identified (%s.%s)\n", ctx.CurrentPackage.Name, pos.Name)
+	log.Printf("genieql.Structure identified %s\n", nodeInfo(ctx, pos))
 	ctx.Debugln(formatted)
 
 	if _, err = i.Eval(formatted); err != nil {
@@ -40,7 +40,7 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 	}
 
 	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
-		return r, errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, pos.Name)
+		return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, pos))
 	}
 
 	if f, ok = v.Interface().(func(interp.Structure)); !ok {

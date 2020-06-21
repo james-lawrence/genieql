@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -127,7 +126,7 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 			var (
 				n ast.Node
 			)
-			log.Println("generating", name)
+
 			query := details.Dialect.Select(details.Table, names, genieql.ColumnInfoSet(details.Columns[idx:idx+1]).ColumnNames())
 			qfn := defaults
 			qfn.Query = astutil.StringLiteral(query)

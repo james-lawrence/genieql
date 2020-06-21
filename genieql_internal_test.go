@@ -14,7 +14,7 @@ var _ = Describe("genieql", func() {
 	DescribeTable("mapColumns",
 		func(matched, unmatched []ColumnInfo, fields []*ast.Field, aliaser Aliaser) {
 			columns := append(matched, unmatched...)
-			mcolumns, munmatched := mapColumns(columns, fields, aliaser)
+			mcolumns, munmatched := mapInfo(columns, fields, aliaser)
 			Expect(mcolumns).To(Equal(matched))
 			Expect(munmatched).To(Equal(unmatched))
 		},

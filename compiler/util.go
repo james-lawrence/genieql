@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 
@@ -18,4 +19,14 @@ func formatSource(ctx Context, src *ast.File) (_ string, err error) {
 	}
 
 	return buf.String(), nil
+}
+
+func nodeInfo(ctx Context, n ast.Node) string {
+	pos := ctx.FileSet.PositionFor(n.Pos(), true).String()
+	switch n := n.(type) {
+	case *ast.FuncDecl:
+		return fmt.Sprintf("(%s.%s - %s)", ctx.CurrentPackage.Name, n.Name, pos)
+	default:
+		return fmt.Sprintf("(%s.%T - %s)", ctx.CurrentPackage.Name, n, pos)
+	}
 }

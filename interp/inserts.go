@@ -86,20 +86,43 @@ func (t *insert) Batch(size int) Insert {
 
 func (t *insert) Generate(dst io.Writer) (err error) {
 	var (
-		mapping genieql.MappingConfig
-		columns []genieql.ColumnInfo
-		fields  []*ast.Field
+		mapping    genieql.MappingConfig
+		columns    []genieql.ColumnInfo
+		cmaps      []genieql.ColumnMap
+		fields     []*ast.Field
+		qinputs    []ast.Expr
+		encodings  []ast.Stmt
+		localspec  []ast.Spec
+		transforms []ast.Stmt
 	)
+
 	driver := t.ctx.Driver
 	dialect := t.ctx.Dialect
 	fset := t.ctx.FileSet
 
 	t.ctx.Println("generation of", t.name, "initiated")
 	defer t.ctx.Println("generation of", t.name, "completed")
-	t.ctx.Debugln("insert type", types.ExprString(t.tf.Type))
+	t.ctx.Debugln("insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("insert table", t.table)
-	t.ctx.Debugln("insert package", t.ctx.CurrentPackage.Name)
-	t.ctx.Debugln("insert package", t.ctx.CurrentPackage.ImportPath)
+	errHandler := func(local string) ast.Node {
+		return astutil.Return(
+			astutil.CallExpr(
+				&ast.SelectorExpr{
+					X:   astutil.CallExpr(t.scanner.Name, ast.NewIdent("nil")),
+					Sel: ast.NewIdent("Err"),
+				},
+				ast.NewIdent(local),
+			),
+		)
+	}
+
+	if t.n > 1 {
+		errHandler = func(local string) ast.Node {
+			return astutil.Return(
+				astutil.CallExpr(t.scanner.Name, ast.NewIdent("nil"), ast.NewIdent(local)),
+			)
+		}
+	}
 
 	err = t.ctx.Configuration.ReadMap(
 		"default", // deprecated hopefully we'll be able to drop at some point.
@@ -116,7 +139,9 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	mapping.Apply(genieql.MCOColumns(columns...))
+	mapping.Apply(
+		genieql.MCOColumns(columns...),
+	)
 
 	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, t.ctx.CurrentPackage); err != nil {
 		return err
@@ -125,13 +150,38 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	ignore := genieql.ColumnInfoFilterIgnore(append(t.ignore, t.defaults...)...)
 	cset := genieql.ColumnInfoSet(columns)
 
-	if fields, _, err = mapping.MapFieldsToColumns(fset, t.ctx.CurrentPackage, cset.Filter(ignore)...); err != nil {
+	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], cset.Filter(ignore)...); err != nil {
 		return errors.Wrapf(
 			err,
-			"failed to map fields to columns for: %s:%s",
+			"failed to map columns for: %s:%s",
 			t.ctx.CurrentPackage.Name, types.ExprString(t.tf.Type),
 		)
 	}
+
+	encode := encode(t.ctx)
+	for idx, cmap := range cmaps {
+		var (
+			tmp []ast.Stmt
+		)
+
+		local := cmap.Local(idx)
+
+		if tmp, err = encode(idx, cmap, errHandler); err != nil {
+			return errors.Wrap(err, "failed to generate encode")
+		}
+
+		fields = append(fields, cmap.Field)
+		qinputs = append(qinputs, local)
+		encodings = append(encodings, tmp...)
+		localspec = append(localspec, astutil.ValueSpec(astutil.MustParseExpr(cmap.Definition.ColumnType), local))
+	}
+
+	transforms = []ast.Stmt{
+		&ast.DeclStmt{
+			Decl: astutil.VarList(localspec...),
+		},
+	}
+	transforms = append(transforms, encodings...)
 
 	g1 := generators.NewColumnConstants(
 		fmt.Sprintf("%sStaticColumns", t.name),
@@ -156,7 +206,8 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		),
 		Scanner:      t.scanner,
 		Queryer:      t.qf.Type,
-		QueryInputs:  astutil.StructureFieldSelectors(t.tf, fields...),
+		Transforms:   transforms,
+		QueryInputs:  qinputs,
 		ContextField: t.cf,
 	}
 

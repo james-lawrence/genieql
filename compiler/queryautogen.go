@@ -3,6 +3,7 @@ package compiler
 import (
 	"go/ast"
 	"io"
+	"log"
 	"reflect"
 
 	yaegi "github.com/containous/yaegi/interp"
@@ -27,12 +28,12 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	)
 
 	if len(fn.Type.Params.List) < 1 {
-		ctx.Traceln("no match not enough params", fn.Name.String(), ctx.Context.FileSet.PositionFor(fn.Pos(), true).String())
+		ctx.Traceln("no match not enough params", nodeInfo(ctx, fn))
 		return r, ErrNoMatch
 	}
 
 	if !pattern(astutil.MapFieldsToTypExpr(fn.Type.Params.List[:1]...)...) {
-		ctx.Traceln("no match pattern", fn.Name.String(), ctx.Context.FileSet.PositionFor(fn.Pos(), true).String())
+		ctx.Traceln("no match pattern", nodeInfo(ctx, fn))
 		return r, ErrNoMatch
 	}
 
@@ -49,7 +50,7 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	fn.Type.Results.List = []*ast.Field(nil)
 
 	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.QueryAutogen (%s.%s)", ctx.CurrentPackage.Name, fn.Name)
+		return r, errors.Wrapf(err, "genieql.QueryAutogen %s", nodeInfo(ctx, fn))
 	}
 
 	// restore the signature
@@ -69,7 +70,7 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	// extract the type argument from the function.
 	typ = fn.Type.Params.List[0]
 
-	ctx.Printf("genieql.QueryAutogen identified (%s.%s)\n", ctx.CurrentPackage.Name, fn.Name)
+	log.Printf("genieql.QueryAutogen identified %s\n", nodeInfo(ctx, fn))
 	ctx.Debugln(formatted)
 
 	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
@@ -86,15 +87,15 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 		}
 
 		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s.%s failed", ctx.CurrentPackage.Name, fn.Name)
+			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
 		}
 
 		if f, ok = v.Interface().(func(interp.QueryAutogen)); !ok {
-			return errors.Errorf("genieql.QueryAutogen - (%s.%s) - unable to convert function to be invoked", ctx.CurrentPackage.Name, fn.Name)
+			return errors.Errorf("genieql.QueryAutogen - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
 		}
 
 		if scanner = functions.DetectScanner(ctx.Context, fn.Type); scanner == nil {
-			return errors.Errorf("genieql.QueryAutogen (%s.%s) - missing scanner", ctx.CurrentPackage.Name, fn.Name)
+			return errors.Errorf("genieql.QueryAutogen %s - missing scanner", nodeInfo(ctx, fn))
 		}
 
 		fgen := interp.NewQueryAutogen(

@@ -2187,7 +2187,109 @@ func Example1InsertExplode(arg1 *Example1) ([]interface{}, error) {
 // Example1Insert insert a single example1 record.
 func Example1Insert(ctx context.Context, q sqlx.Queryer, e Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,DEFAULT) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
-	return NewExample1ScannerStaticRow(q.QueryRowContext(ctx, query, e.BigintField, e.BitField, e.BitVaryingField, e.BoolField, e.ByteArrayField, e.CharacterField, e.CharacterFixedField, e.CidrField, e.DecimalField, e.DoublePrecisionField, e.InetField, e.Int2Array, e.Int4Array, e.Int8Array, e.IntField, e.IntervalField, e.JSONField, e.JsonbField, e.MacaddrField, e.NumericField, e.RealField, e.SmallintField, e.TextField, e.TimestampField, e.UUIDArray))
+	var (
+		c0  pgtype.Int8
+		c1  pgtype.Bit
+		c2  pgtype.Varbit
+		c3  pgtype.Bool
+		c4  pgtype.Bytea
+		c5  pgtype.Varchar
+		c6  pgtype.BPChar
+		c7  pgtype.CIDR
+		c8  pgtype.Numeric
+		c9  pgtype.Float8
+		c10 pgtype.Inet
+		c11 pgtype.Int2Array
+		c12 pgtype.Int4Array
+		c13 pgtype.Int8Array
+		c14 pgtype.Int4
+		c15 pgtype.Interval
+		c16 pgtype.JSON
+		c17 pgtype.JSONB
+		c18 pgtype.Macaddr
+		c19 pgtype.Numeric
+		c20 pgtype.Float4
+		c21 pgtype.Int2
+		c22 pgtype.Text
+		c23 pgtype.Timestamptz
+		c24 pgtype.UUIDArray
+	)
+	if err := c0.Set(e.BigintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c1.Set(e.BitField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c2.Set(e.BitVaryingField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c3.Set(e.BoolField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c4.Set(e.ByteArrayField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c5.Set(e.CharacterField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c6.Set(e.CharacterFixedField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c7.Set(e.CidrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c8.Set(e.DecimalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c9.Set(e.DoublePrecisionField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c10.Set(e.InetField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c11.Set(e.Int2Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c12.Set(e.Int4Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c13.Set(e.Int8Array); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c14.Set(e.IntField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c15.Set(e.IntervalField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c16.Set(e.JSONField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c17.Set(e.JsonbField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c18.Set(e.MacaddrField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c19.Set(e.NumericField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c20.Set(e.RealField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c21.Set(e.SmallintField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c22.Set(e.TextField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c23.Set(e.TimestampField); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	if err := c24.Set(e.UUIDArray); err != nil {
+		return NewExample1ScannerStaticRow(nil).Err(err)
+	}
+	return NewExample1ScannerStaticRow(q.QueryRowContext(ctx, query, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24))
 }
 
 

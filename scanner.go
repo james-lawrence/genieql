@@ -7,7 +7,8 @@ import (
 
 type ColumnMap struct {
 	ColumnInfo
-	Dst ast.Expr
+	Dst   ast.Expr
+	Field *ast.Field
 }
 
 func (t ColumnMap) Local(i int) *ast.Ident {

@@ -53,7 +53,7 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if fields, _, err = mapping.MapFieldsToColumns(ctx.FileSet, ctx.CurrentPackage, columns...); err != nil {
+	if fields, _, err = mapping.MapColumnsToFields(ctx.FileSet, ctx.CurrentPackage, columns...); err != nil {
 		return errors.Wrapf(err, "failed to locate fields for %s", t.packageType)
 	}
 

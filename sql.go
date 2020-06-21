@@ -130,24 +130,29 @@ func ColumnInfoFilterIgnore(set ...string) func(ColumnInfo) bool {
 	}
 }
 
+// NewColumnInfoNameTransformer ...
 func NewColumnInfoNameTransformer(q string, aliasers ...Aliaser) ColumnInfoNameTransformer {
 	return ColumnInfoNameTransformer{Quote: q, Aliaser: AliaserChain(aliasers...)}
 }
 
+// ColumnInfoNameTransformer ...
 type ColumnInfoNameTransformer struct {
 	Quote string
 	Aliaser
 }
 
+// Transform ...
 func (t ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
 	return t.Quote + t.Aliaser.Alias(column.Name) + t.Quote
 }
 
+// ColumnValueTransformer ...
 type ColumnValueTransformer struct {
 	Defaults           []string
 	DialectTransformer ColumnTransformer
 }
 
+// Transform ...
 func (t ColumnValueTransformer) Transform(column ColumnInfo) string {
 	const defaultValue = "DEFAULT"
 	if stringsx.Contains(column.Name, t.Defaults...) {
@@ -187,9 +192,37 @@ func LookupTableDetails(driver Driver, dialect Dialect, table string) (TableDeta
 	}, nil
 }
 
-// mapColumns maps the columns to the fields using the aliases.
+// mapColumns maps the columns to the fields using the provided function.
 // returns mapped, unmapped columns.
-func mapColumns(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]ColumnInfo, []ColumnInfo) {
+func mapColumns(columns []ColumnInfo, fields []*ast.Field, m func(ColumnInfo, *ast.Field) *ColumnMap) ([]ColumnMap, []ColumnInfo) {
+	if len(fields) == 0 {
+		return []ColumnMap{}, columns
+	}
+
+	mColumns := make([]ColumnMap, 0, len(columns))
+	uColumns := make([]ColumnInfo, 0, len(columns))
+
+	for _, column := range columns {
+		var matched *ColumnMap
+		for _, field := range fields {
+			if matched = m(column, field); matched != nil {
+				break
+			}
+		}
+
+		if matched != nil {
+			mColumns = append(mColumns, *matched)
+		} else {
+			uColumns = append(uColumns, column)
+		}
+	}
+
+	return mColumns, uColumns
+}
+
+// mapInfo maps the columns to the fields using the aliases.
+// returns mapped, unmapped columns.
+func mapInfo(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]ColumnInfo, []ColumnInfo) {
 	if len(fields) == 0 {
 		return []ColumnInfo{}, columns
 	}

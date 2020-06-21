@@ -137,21 +137,56 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	}
 
 	// returns the sets of mapped and unmapped columns.
-	mColumns, uColumns := mapColumns(columns, fields, t.Aliaser())
+	mColumns, uColumns := mapInfo(columns, fields, t.Aliaser())
 	return mColumns, uColumns, nil
 }
 
 // MappedFields returns the fields that are mapped to columns.
 func (t MappingConfig) MappedFields(dialect Dialect, fset *token.FileSet, pkg *build.Package, ignoreColumnSet ...string) ([]*ast.Field, []*ast.Field, error) {
-	return t.MapFieldsToColumns(
+	return t.MapColumnsToFields(
 		fset,
 		pkg,
 		ColumnInfoSet(t.Columns).Filter(ColumnInfoFilterIgnore(ignoreColumnSet...))...,
 	)
 }
 
-// MapFieldsToColumns ...
-func (t MappingConfig) MapFieldsToColumns(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
+// MapColumns ...
+func (t MappingConfig) MapColumns(fset *token.FileSet, pkg *build.Package, local *ast.Ident, columns ...ColumnInfo) (cmap []ColumnMap, umap []ColumnInfo, err error) {
+	var (
+		fields []*ast.Field
+	)
+
+	if fields, err = t.TypeFields(fset, pkg); err != nil {
+		return cmap, umap, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+	}
+
+	mm := func(c ColumnInfo, f *ast.Field) (cmap *ColumnMap) {
+		var (
+			mapped *ast.Field
+		)
+
+		if mapped = MapFieldToNativeType(c, f, t.Aliaser()); mapped == nil {
+			return nil
+		}
+
+		typex := &ast.SelectorExpr{
+			X:   local,
+			Sel: astutil.MapFieldsToNameIdent(mapped)[0],
+		}
+
+		return &ColumnMap{
+			ColumnInfo: c,
+			Field:      mapped,
+			Dst:        typex,
+		}
+	}
+
+	cmap, umap = mapColumns(columns, fields, mm)
+	return cmap, umap, nil
+}
+
+// MapColumnsToFields ...
+func (t MappingConfig) MapColumnsToFields(fset *token.FileSet, pkg *build.Package, columns ...ColumnInfo) ([]*ast.Field, []*ast.Field, error) {
 	var (
 		err    error
 		fields []*ast.Field

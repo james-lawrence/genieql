@@ -1,11 +1,22 @@
 package genieql
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"io"
+	"log"
+	"text/template"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/debugx"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/pkg/errors"
 )
 
 type definition interface {
@@ -110,4 +121,87 @@ func firstComment(comments ...*ast.CommentGroup) *ast.CommentGroup {
 	}
 
 	return nil
+}
+
+// encode a column to a local variable.
+func encode(ctx generators.Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
+		type stmtCtx struct {
+			From ast.Expr
+			To   ast.Expr
+			Type ast.Expr
+		}
+
+		var (
+			local = column.Local(i)
+			gen   *ast.FuncLit
+		)
+
+		debugx.Println("type definition", spew.Sdump(column.Definition))
+
+		if column.Definition.Encode == "" {
+			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, column.Definition.Type, column.Definition.ColumnType)
+			return nil, nil
+		}
+
+		typex := astutil.MustParseExpr(column.Definition.Native)
+		from := unwrapExpr(column.Dst)
+		if column.Definition.Nullable {
+			from = &ast.StarExpr{X: from}
+		}
+
+		if gen, err = genFunctionLiteral(column.Definition.Encode, stmtCtx{Type: unwrapExpr(typex), From: from, To: local}, errHandler); err != nil {
+			return nil, err
+		}
+
+		return gen.Body.List, nil
+	}
+}
+
+func genFunctionLiteral(example string, ctx interface{}, errorHandler func(string) ast.Node) (output *ast.FuncLit, err error) {
+	var (
+		ok     bool
+		parsed ast.Node
+		buf    bytes.Buffer
+		m      = template.FuncMap{
+			"ast":           astutil.Print,
+			"expr":          types.ExprString,
+			"autoreference": autoreference,
+			"error":         errorHandler,
+		}
+	)
+
+	if err = template.Must(template.New("genFunctionLiteral").Funcs(m).Parse(example)).Execute(&buf, ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to generate from template")
+	}
+
+	if parsed, err = parser.ParseExpr(buf.String()); err != nil {
+		return nil, errors.Wrapf(err, "failed to parse function expression: %s", buf.String())
+	}
+
+	if output, ok = parsed.(*ast.FuncLit); !ok {
+		return nil, errors.Errorf("parsed template expected to result in *ast.FuncLit not %T: %s", example, parsed)
+	}
+
+	return output, nil
+}
+
+func autoreference(x ast.Expr) ast.Expr {
+	switch x := unwrapExpr(x).(type) {
+	case *ast.SelectorExpr:
+		return &ast.UnaryExpr{Op: token.AND, X: x}
+	default:
+		return x
+	}
+}
+
+func unwrapExpr(x ast.Expr) ast.Expr {
+	switch real := x.(type) {
+	case *ast.Ellipsis:
+		return real.Elt
+	case *ast.StarExpr:
+		return real.X
+	default:
+		return x
+	}
 }
