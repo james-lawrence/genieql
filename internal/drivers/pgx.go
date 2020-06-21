@@ -29,7 +29,7 @@ const pgxDefaultEncode = `func() {
 
 func pgxexports() map[string]reflect.Value {
 	return map[string]reflect.Value{
-		"OID":              reflect.ValueOf(&pgtype.OID{}),
+		"OID":              reflect.ValueOf(&pgtype.OIDValue{}),
 		"OIDValue":         reflect.ValueOf(&pgtype.OIDValue{}),
 		"CIDR":             reflect.ValueOf(&pgtype.CIDR{}),
 		"CIDRArray":        reflect.ValueOf(&pgtype.CIDRArray{}),
