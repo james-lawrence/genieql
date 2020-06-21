@@ -222,7 +222,7 @@ Args:
   <ip>        IP address to ping.
   [<count>]   Number of packets to send
 $ ping 1.2.3.4 5
-Would ping: 1.2.3.4 with timeout 5s and count 0
+Would ping: 1.2.3.4 with timeout 5s and count 5
 ```
 
 From the following source:
@@ -246,7 +246,7 @@ var (
 func main() {
   kingpin.Version("0.0.1")
   kingpin.Parse()
-  fmt.Printf("Would ping: %s with timeout %s and count %d", *ip, *timeout, *count)
+  fmt.Printf("Would ping: %s with timeout %s and count %d\n", *ip, *timeout, *count)
 }
 ```
 
@@ -387,7 +387,7 @@ func main() {
 
 Kingpin supports both flag and positional argument parsers for converting to
 Go types. For example, some included parsers are `Int()`, `Float()`,
-`Duration()` and `ExistingFile()`.
+`Duration()` and `ExistingFile()` (see [parsers.go](./parsers.go) for a complete list of included parsers).
 
 Parsers conform to Go's [`flag.Value`](http://godoc.org/flag#Value)
 interface, so any existing implementations will work.
@@ -461,7 +461,7 @@ Here are some examples of flags with various permutations:
 
     --name=NAME           // Flag(...).String()
     --name="Harry"        // Flag(...).Default("Harry").String()
-    --name=FULL-NAME      // flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()
+    --name=FULL-NAME      // Flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()
 
 ### Consuming all remaining arguments
 
@@ -581,7 +581,7 @@ Consider the case that you needed to read a local database or a file to
 provide suggestions. You can dynamically generate the options
 
 ```
-func listHosts(args []string) []string {
+func listHosts() []string {
   // Provide a dynamic list of hosts from a hosts file or otherwise
   // for bash completion. In this example we simply return static slice.
 

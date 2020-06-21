@@ -9,7 +9,6 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/containous/yaegi v0.8.8
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-yaml/yaml v0.0.0-20170407172122-cd8b52f8269e
 	github.com/jackc/pgtype v1.3.0
 	github.com/jackc/pgx/v4 v4.6.0 // indirect
 	github.com/lib/pq v1.7.0
@@ -23,4 +22,5 @@ require (
 	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 	golang.org/x/tools v0.0.0-20200619210111-0f592d2728bb
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

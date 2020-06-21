@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"reflect"
 
-	yaml "github.com/go-yaml/yaml"
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v3"
 
 	"bitbucket.org/jatone/genieql"
 )

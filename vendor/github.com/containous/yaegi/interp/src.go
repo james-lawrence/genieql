@@ -3,7 +3,6 @@ package interp
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +12,6 @@ func (interp *Interpreter) importSrc(rPath, path string) (string, error) {
 	var dir string
 	var err error
 
-	log.Println("Importing", rPath, path)
 	if interp.srcPkg[path] != nil {
 		return interp.pkgNames[path], nil
 	}
