@@ -29,6 +29,7 @@ const pgxDefaultEncode = `func() {
 
 func pgxexports() map[string]reflect.Value {
 	return map[string]reflect.Value{
+		"OID":              reflect.ValueOf(&pgtype.OID{}),
 		"OIDValue":         reflect.ValueOf(&pgtype.OIDValue{}),
 		"CIDR":             reflect.ValueOf(&pgtype.CIDR{}),
 		"CIDRArray":        reflect.ValueOf(&pgtype.CIDRArray{}),
@@ -73,6 +74,13 @@ func pgxexports() map[string]reflect.Value {
 }
 
 var pgx = []genieql.ColumnDefinition{
+	{
+		Type:       "pgtype.OID",
+		Native:     stringExprString,
+		ColumnType: "pgtype.OID",
+		Decode:     pgxDefaultDecode,
+		Encode:     pgxDefaultEncode,
+	},
 	{
 		Type:       "pgtype.OIDValue",
 		Native:     stringExprString,

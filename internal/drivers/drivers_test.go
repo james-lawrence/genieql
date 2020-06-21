@@ -2,6 +2,7 @@ package drivers_test
 
 import (
 	"errors"
+	"reflect"
 
 	"bitbucket.org/jatone/genieql"
 	. "bitbucket.org/jatone/genieql/internal/drivers"
@@ -13,6 +14,8 @@ import (
 var _ = Describe("drivers", func() {
 	var (
 		exampleDriver = NewDriver(
+			"",
+			map[string]reflect.Value{},
 			genieql.ColumnDefinition{Type: "string", ColumnType: "sql.NullString", Native: "string"},
 			genieql.ColumnDefinition{Type: "*string", ColumnType: "sql.NullString", Native: "*string"},
 			genieql.ColumnDefinition{Type: "int", ColumnType: "sql.NullInt64", Native: "int"},

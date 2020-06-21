@@ -1,7 +1,6 @@
 package genieql
 
 import (
-	"go/ast"
 	"reflect"
 
 	. "github.com/onsi/ginkgo"
@@ -49,8 +48,6 @@ var _ = Describe("Driver", func() {
 type testDriver struct{}
 
 func (t testDriver) LookupType(s string) (td ColumnDefinition, b error) { return td, b }
-func (t testDriver) LookupNullableType(ast.Expr) ast.Expr                     { return nil }
-func (t testDriver) NullableType(typ, from ast.Expr) (ast.Expr, bool)         { return nil, false }
-func (t testDriver) Exported() map[string]reflect.Value {
-	return map[string]reflect.Value{}
+func (t testDriver) Exported() (string, map[string]reflect.Value) {
+	return "", map[string]reflect.Value{}
 }
