@@ -35,14 +35,14 @@ type Configuration struct {
 }
 
 // ReadMap the column -> struct mapping from disk cache.
-func (t Configuration) ReadMap(name string, m *MappingConfig, options ...MappingConfigOption) error {
+func (t Configuration) ReadMap(m *MappingConfig, options ...MappingConfigOption) error {
 	m.Apply(options...)
-	return ReadMapper(t, name, m)
+	return ReadMapper(t, "default", m)
 }
 
 // WriteMap persists the column -> struct mapping to disk cache.
-func (t Configuration) WriteMap(name string, m MappingConfig) error {
-	return WriteMapper(t, name, m)
+func (t Configuration) WriteMap(m MappingConfig) error {
+	return WriteMapper(t, "default", m)
 }
 
 // Bootstrap takes a db connection url and creates a genieql

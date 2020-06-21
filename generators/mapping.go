@@ -27,7 +27,7 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		}
 	}
 
-	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
+	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
 		return m, infos, err
 	}
 
@@ -55,7 +55,7 @@ func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Fi
 		}
 	}
 
-	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
+	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
 		return infos, err
 	}
 
@@ -79,7 +79,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		return columns, infos, err
 	}
 
-	if err = ctx.Configuration.ReadMap("default", &m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(unwrapExpr(param.Type)))); err != nil {
+	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(unwrapExpr(param.Type)))); err != nil {
 		return columns, infos, err
 	}
 

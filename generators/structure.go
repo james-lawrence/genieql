@@ -185,7 +185,7 @@ type {{.Name}} struct {
 		)...,
 	)
 
-	if err = t.Context.Configuration.WriteMap("default", mapping); err != nil {
+	if err = t.Context.Configuration.WriteMap(mapping); err != nil {
 		return err
 	}
 

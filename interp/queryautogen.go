@@ -93,7 +93,6 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 	}
 
 	err = t.ctx.Configuration.ReadMap(
-		"default", // deprecated hopefully we'll be able to drop at some point.
 		&mapping,
 		genieql.MCOPackage(t.ctx.CurrentPackage),
 		genieql.MCOType(types.ExprString(t.tf.Type)),

@@ -100,7 +100,7 @@ func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) 
 	return configuration, dialect, err
 }
 
-func loadMappingContext(config string, pkg *build.Package, typ, mName string) (genieql.Configuration, genieql.Dialect, genieql.MappingConfig, error) {
+func loadMappingContext(config string, pkg *build.Package, typ string) (genieql.Configuration, genieql.Dialect, genieql.MappingConfig, error) {
 	var (
 		err           error
 		configuration genieql.Configuration
@@ -114,7 +114,7 @@ func loadMappingContext(config string, pkg *build.Package, typ, mName string) (g
 		),
 	)
 
-	if err = configuration.ReadMap(mName, &mapping, genieql.MCOPackage(pkg), genieql.MCOType(typ)); err != nil {
+	if err = configuration.ReadMap(&mapping, genieql.MCOPackage(pkg), genieql.MCOType(typ)); err != nil {
 		return configuration, dialect, mapping, err
 	}
 

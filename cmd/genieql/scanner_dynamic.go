@@ -40,7 +40,7 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if err = ctx.Configuration.ReadMap(t.scanner.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
+	if err = ctx.Configuration.ReadMap(&mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return err
 	}
 
@@ -50,7 +50,7 @@ func (t *dynamicScanner) Execute(*kingpin.ParseContext) (err error) {
 
 	// BEGIN HACK! apply the table to the mapping and then save it to disk.
 	// this allows the new generator to pick it up.
-	if err = ctx.Configuration.WriteMap(t.scanner.mapName, mapping.Clone(genieql.MCOColumns(columns...))); err != nil {
+	if err = ctx.Configuration.WriteMap(mapping.Clone(genieql.MCOColumns(columns...))); err != nil {
 		log.Fatalln(err)
 	}
 	// END HACK!

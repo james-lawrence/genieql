@@ -218,7 +218,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if err = ctx.Configuration.ReadMap(t.mapName, &mapping, genieql.MCOColumns(columns...), genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
+	if err = ctx.Configuration.ReadMap(&mapping, genieql.MCOColumns(columns...), genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return err
 	}
 
@@ -307,7 +307,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if err = ctx.Configuration.ReadMap(t.mapName, &mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
+	if err = ctx.Configuration.ReadMap(&mapping, genieql.MCOPackage(ctx.CurrentPackage), genieql.MCOType(typName)); err != nil {
 		return errors.Wrap(err, "failed to load mapping context")
 	}
 
