@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"io"
 	"io/ioutil"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -195,8 +194,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("reformatting buffer")
 
 		if err = genieql.ReformatFile(working); err != nil {
-			log.Println("FAILED", buf.String())
-			return errors.Wrapf(err, "%s: failed to reformat to working file", r.Location)
+			return errors.Wrapf(err, "%s\n%s: failed to reformat to working file", buf.String(), r.Location)
 		}
 
 		t.Context.Debugln("evaluating buffer")
