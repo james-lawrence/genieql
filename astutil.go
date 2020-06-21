@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -366,15 +365,13 @@ func pkgFileFilter(pkg *build.Package) func(os.FileInfo) bool {
 
 	return func(info os.FileInfo) bool {
 		_, ok := allowed[info.Name()]
-		log.Println("allowing", info.Name(), ok)
 		return ok
 	}
 }
 
 func (t utils) ParsePackages(pkgset ...*build.Package) (result []*ast.Package, err error) {
 	for _, pkg := range pkgset {
-		allowed := pkgFileFilter(pkg)
-		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, allowed, parser.ParseComments)
+		pkgs, err := parser.ParseDir(t.fset, pkg.Dir, pkgFileFilter(pkg), parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
