@@ -34,7 +34,7 @@ const pgxTimeDecode = `func() {
 	case pgtype.NegativeInfinity:
 		{{.To | expr }} = time.Unix(math.MinInt64, math.MinInt64)
 	default:
-		if err := {{ .From | expr }}.AssignTo(&i.LastCheckedAt); err != nil {
+		if err := {{ .From | expr }}.AssignTo({{ .To | autoreference | expr }}); err != nil {
 			return err
 		}
 	}
