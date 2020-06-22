@@ -27,6 +27,19 @@ const pgxDefaultEncode = `func() {
 	}
 }`
 
+const pgxTimeDecode = `func() {
+	switch {{ .From | expr }}.InfinityModifier {
+	case pgtype.Infinity:
+		{{ .To | expr }} = time.Unix(math.MaxInt64, math.MaxInt64)
+	case pgtype.NegativeInfinity:
+		{{.To | expr }} = time.Unix(math.MinInt64, math.MinInt64)
+	default:
+		if err := {{ .From | expr }}.AssignTo(&i.LastCheckedAt); err != nil {
+			return err
+		}
+	}
+}`
+
 func pgxexports() map[string]reflect.Value {
 	return map[string]reflect.Value{
 		"OID":              reflect.ValueOf(&pgtype.OIDValue{}),
@@ -66,6 +79,8 @@ func pgxexports() map[string]reflect.Value {
 		"TextArray":        reflect.ValueOf(&pgtype.TextArray{}),
 		"UUID":             reflect.ValueOf(&pgtype.UUID{}),
 		"UUIDArray":        reflect.ValueOf(&pgtype.UUIDArray{}),
+		"Infinity":         reflect.ValueOf(pgtype.Infinity),
+		"NegativeInfinity": reflect.ValueOf(pgtype.NegativeInfinity),
 		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
 		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
 		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
@@ -247,14 +262,14 @@ var pgx = []genieql.ColumnDefinition{
 		Type:       "pgtype.Timestamp",
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamp",
-		Decode:     pgxDefaultDecode,
+		Decode:     pgxTimeDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
 		Type:       "pgtype.Timestamptz",
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamptz",
-		Decode:     pgxDefaultDecode,
+		Decode:     pgxTimeDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
@@ -531,7 +546,7 @@ var pgx = []genieql.ColumnDefinition{
 		Type:       "time.Time",
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamptz",
-		Decode:     pgxDefaultDecode,
+		Decode:     pgxTimeDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
@@ -539,7 +554,7 @@ var pgx = []genieql.ColumnDefinition{
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamptz",
 		Nullable:   true,
-		Decode:     pgxDefaultDecode,
+		Decode:     pgxTimeDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
