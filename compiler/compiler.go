@@ -194,7 +194,6 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("reformatting buffer")
 
 		if err = genieql.ReformatFile(working); err != nil {
-			buf.Truncate(0)
 			return errors.Wrapf(err, "%s\n%s: failed to reformat to working file", buf.String(), r.Location)
 		}
 
@@ -207,7 +206,6 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("generated code")
 
 		if _, err := i.Eval(formatted); err != nil {
-			formatted = ""
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
 
