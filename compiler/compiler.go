@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"io"
 	"io/ioutil"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -110,6 +111,14 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	}
 
 	defer func() {
+		if err != nil {
+			if formatted, err := iox.ReadString(working); err != nil {
+				log.Println(errors.Wrapf(err, "failed to read working file"))
+			} else {
+				t.Context.Traceln(formatted)
+			}
+		}
+
 		failed := errorsx.Compact(
 			working.Sync(),
 			working.Close(),
@@ -173,8 +182,6 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		if err = r.Generator.Generate(buf); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
-			// log.Printf("%+v\n", )
-			// continue
 		}
 
 		t.Context.Debugln("writing generated code into buffer")

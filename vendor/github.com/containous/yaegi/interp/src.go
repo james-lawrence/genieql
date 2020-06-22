@@ -2,8 +2,8 @@ package interp
 
 import (
 	"fmt"
+	"go/build"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -26,11 +26,14 @@ func (interp *Interpreter) importSrc(rPath, path string) (string, error) {
 			rPath = "."
 		}
 		dir = filepath.Join(filepath.Dir(interp.Name), rPath, path)
-	} else if dir, rPath, err = pkgDir(interp.context.GOPATH, rPath, path); err != nil {
+	} else if dir, rPath, err = pkgDir(&interp.context, rPath, path); err != nil {
 		return "", err
 	}
 
 	if interp.rdir[path] {
+		// TODO: importing the source can trigger panics, which leaves
+		// interp.rdir in a dirty state causing this error it be incorrect
+		// if the package failed to be imported.
 		return "", fmt.Errorf("import cycle not allowed\n\timports %s", path)
 	}
 	interp.rdir[path] = true
@@ -140,25 +143,12 @@ func (interp *Interpreter) importSrc(rPath, path string) (string, error) {
 
 // pkgDir returns the absolute path in filesystem for a package given its name and
 // the root of the subtree dependencies.
-func pkgDir(goPath string, root, path string) (string, string, error) {
-	rPath := filepath.Join(root, "vendor")
-	dir := filepath.Join(goPath, "src", rPath, path)
-
-	if _, err := os.Stat(dir); err == nil {
-		return dir, rPath, nil // found!
+func pkgDir(ctx *build.Context, root, path string) (string, string, error) {
+	if pkg, err := ctx.Import(path, ".", build.FindOnly); err == nil {
+		return pkg.Dir, pkg.Root, nil
 	}
 
-	dir = filepath.Join(goPath, "src", effectivePkg(root, path))
-
-	if _, err := os.Stat(dir); err == nil {
-		return dir, root, nil // found!
-	}
-
-	if len(root) == 0 {
-		return "", "", fmt.Errorf("unable to find source related to: %q", path)
-	}
-
-	return pkgDir(goPath, previousRoot(root), path)
+	return pkgDir(ctx, previousRoot(root), path)
 }
 
 // Find the previous source root. (vendor > vendor > ... > GOPATH)

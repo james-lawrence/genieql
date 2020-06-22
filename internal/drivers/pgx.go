@@ -48,6 +48,7 @@ func pgxexports() map[string]reflect.Value {
 		"Bytea":            reflect.ValueOf(&pgtype.Bytea{}),
 		"Bool":             reflect.ValueOf(&pgtype.Bool{}),
 		"BoolArray":        reflect.ValueOf(&pgtype.BoolArray{}),
+		"Timestamp":        reflect.ValueOf(&pgtype.Timestamp{}),
 		"Timestamptz":      reflect.ValueOf(&pgtype.Timestamptz{}),
 		"TimestamptzArray": reflect.ValueOf(&pgtype.TimestamptzArray{}),
 		"Bit":              reflect.ValueOf(&pgtype.Bit{}),
