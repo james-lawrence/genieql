@@ -164,10 +164,11 @@ func genFunctionLiteral(example string, ctx interface{}, errorHandler func(strin
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
-			"ast":           astutil.Print,
-			"expr":          types.ExprString,
-			"autoreference": autoreference,
-			"error":         errorHandler,
+			"ast":             astutil.Print,
+			"expr":            types.ExprString,
+			"autodereference": autodereference,
+			"autoreference":   autoreference,
+			"error":           errorHandler,
 		}
 	)
 
@@ -203,5 +204,16 @@ func unwrapExpr(x ast.Expr) ast.Expr {
 		return real.X
 	default:
 		return x
+	}
+}
+
+func autodereference(x ast.Expr) ast.Expr {
+	x = unwrapExpr(x)
+	switch x := x.(type) {
+	case *ast.SelectorExpr:
+		return x
+	default:
+		// log.Printf("autodereference: %T - %s\n", x, types.ExprString(x))
+		return &ast.UnaryExpr{Op: token.MUL, X: x}
 	}
 }

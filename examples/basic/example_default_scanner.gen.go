@@ -2,6 +2,8 @@ package basic
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -71,8 +73,17 @@ func (t exampleScannerStatic) Scan(arg0 *example) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&arg0.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		arg0.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		arg0.Created = tmp
+	default:
+		if err := c0.AssignTo(&arg0.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&arg0.Email); err != nil {
@@ -83,8 +94,17 @@ func (t exampleScannerStatic) Scan(arg0 *example) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&arg0.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		arg0.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		arg0.Updated = tmp
+	default:
+		if err := c3.AssignTo(&arg0.Updated); err != nil {
+			return err
+		}
 	}
 
 	return t.Rows.Err()
@@ -139,8 +159,17 @@ func (t ExampleScannerStaticRow) Scan(arg0 *example) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&arg0.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		arg0.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		arg0.Created = tmp
+	default:
+		if err := c0.AssignTo(&arg0.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&arg0.Email); err != nil {
@@ -151,8 +180,17 @@ func (t ExampleScannerStaticRow) Scan(arg0 *example) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&arg0.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		arg0.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		arg0.Updated = tmp
+	default:
+		if err := c3.AssignTo(&arg0.Updated); err != nil {
+			return err
+		}
 	}
 
 	return nil

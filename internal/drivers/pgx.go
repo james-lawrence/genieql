@@ -27,12 +27,15 @@ const pgxDefaultEncode = `func() {
 	}
 }`
 
+// {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 const pgxTimeDecode = `func() {
 	switch {{ .From | expr }}.InfinityModifier {
 	case pgtype.Infinity:
-		{{ .To | expr }} = time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 	case pgtype.NegativeInfinity:
-		{{.To | expr }} = time.Unix(math.MinInt64, math.MinInt64)
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 	default:
 		if err := {{ .From | expr }}.AssignTo({{ .To | autoreference | expr }}); err != nil {
 			return err

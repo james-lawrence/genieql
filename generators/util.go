@@ -29,10 +29,11 @@ func genFunctionLiteral(example string, ctx interface{}, errorHandler func(strin
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
-			"ast":           astutil.Print,
-			"expr":          types.ExprString,
-			"autoreference": autoreference,
-			"error":         errorHandler,
+			"ast":             astutil.Print,
+			"expr":            types.ExprString,
+			"autodereference": autodereference,
+			"autoreference":   autoreference,
+			"error":           errorHandler,
 		}
 	)
 
@@ -118,9 +119,10 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
-			From ast.Expr
-			To   ast.Expr
-			Type ast.Expr
+			From   ast.Expr
+			To     ast.Expr
+			Type   ast.Expr
+			Column genieql.ColumnMap
 		}
 
 		var (
@@ -128,12 +130,10 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			gen   *ast.FuncLit
 		)
 
-		if column.Definition, err = lookupTypeDefinition(column.Definition.Type); err != nil {
-			return nil, err
-		}
-
 		if column.Definition.Decode == "" {
-			return nil, errors.Errorf("invalid type definition: %s", spew.Sdump(column.Definition))
+			if column.Definition, err = lookupTypeDefinition(column.Definition.Type); err != nil {
+				return nil, errors.Wrapf(err, "invalid type definition: %s", spew.Sdump(column.Definition))
+			}
 		}
 
 		typex := astutil.MustParseExpr(column.Definition.Native)
@@ -142,7 +142,7 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			to = &ast.StarExpr{X: unwrapExpr(to)}
 		}
 
-		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -451,8 +451,19 @@ func determineIdent(x ast.Expr) *ast.Ident {
 	case *ast.SelectorExpr:
 		return real.Sel
 	default:
-		debugx.Printf("determineIdent: %T - %s", x, types.ExprString(x))
+		debugx.Printf("determineIdent: %T - %s\n", x, types.ExprString(x))
 		return nil
+	}
+}
+
+func autodereference(x ast.Expr) ast.Expr {
+	x = unwrapExpr(x)
+	switch x := x.(type) {
+	case *ast.SelectorExpr:
+		return x
+	default:
+		// log.Printf("autodereference: %T - %s\n", x, types.ExprString(x))
+		return &ast.UnaryExpr{Op: token.MUL, X: x}
 	}
 }
 

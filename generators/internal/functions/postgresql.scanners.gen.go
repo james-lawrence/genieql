@@ -2,6 +2,8 @@ package functions
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -185,8 +187,17 @@ func (t example1ScannerStatic) Scan(e *Example1) error {
 		return err
 	}
 
-	if err := c23.AssignTo(&e.TimestampField); err != nil {
-		return err
+	switch c23.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.TimestampField = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.TimestampField = tmp
+	default:
+		if err := c23.AssignTo(&e.TimestampField); err != nil {
+			return err
+		}
 	}
 
 	if err := c24.AssignTo(&e.UUIDArray); err != nil {
@@ -363,8 +374,17 @@ func (t Example1ScannerStaticRow) Scan(e *Example1) error {
 		return err
 	}
 
-	if err := c23.AssignTo(&e.TimestampField); err != nil {
-		return err
+	switch c23.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.TimestampField = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.TimestampField = tmp
+	default:
+		if err := c23.AssignTo(&e.TimestampField); err != nil {
+			return err
+		}
 	}
 
 	if err := c24.AssignTo(&e.UUIDArray); err != nil {
@@ -628,8 +648,17 @@ func (t example1ScannerDynamic) Scan(e *Example1) error {
 				return err
 			}
 		case cn23:
-			if err := c23.AssignTo(&e.TimestampField); err != nil {
-				return err
+			switch c23.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.TimestampField = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.TimestampField = tmp
+			default:
+				if err := c23.AssignTo(&e.TimestampField); err != nil {
+					return err
+				}
 			}
 		case cn24:
 			if err := c24.AssignTo(&e.UUIDArray); err != nil {
@@ -743,8 +772,17 @@ func (t example2ScannerStatic) Scan(e *Example2) error {
 		return err
 	}
 
-	if err := c4.AssignTo(&e.TimestampField); err != nil {
-		return err
+	switch c4.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.TimestampField = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.TimestampField = tmp
+	default:
+		if err := c4.AssignTo(&e.TimestampField); err != nil {
+			return err
+		}
 	}
 
 	if err := c5.AssignTo(&e.UUIDArray); err != nil {
@@ -826,8 +864,17 @@ func (t Example2ScannerStaticRow) Scan(e *Example2) error {
 		return err
 	}
 
-	if err := c4.AssignTo(&e.TimestampField); err != nil {
-		return err
+	switch c4.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.TimestampField = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.TimestampField = tmp
+	default:
+		if err := c4.AssignTo(&e.TimestampField); err != nil {
+			return err
+		}
 	}
 
 	if err := c5.AssignTo(&e.UUIDArray); err != nil {
@@ -939,8 +986,17 @@ func (t example2ScannerDynamic) Scan(e *Example2) error {
 				return err
 			}
 		case cn4:
-			if err := c4.AssignTo(&e.TimestampField); err != nil {
-				return err
+			switch c4.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.TimestampField = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.TimestampField = tmp
+			default:
+				if err := c4.AssignTo(&e.TimestampField); err != nil {
+					return err
+				}
 			}
 		case cn5:
 			if err := c5.AssignTo(&e.UUIDArray); err != nil {
@@ -1035,8 +1091,17 @@ func (t example3ScannerStatic) Scan(e *Example3) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&e.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Created = tmp
+	default:
+		if err := c0.AssignTo(&e.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&e.Email); err != nil {
@@ -1047,8 +1112,17 @@ func (t example3ScannerStatic) Scan(e *Example3) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&e.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Updated = tmp
+	default:
+		if err := c3.AssignTo(&e.Updated); err != nil {
+			return err
+		}
 	}
 
 	return t.Rows.Err()
@@ -1103,8 +1177,17 @@ func (t Example3ScannerStaticRow) Scan(e *Example3) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&e.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Created = tmp
+	default:
+		if err := c0.AssignTo(&e.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&e.Email); err != nil {
@@ -1115,8 +1198,17 @@ func (t Example3ScannerStaticRow) Scan(e *Example3) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&e.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Updated = tmp
+	default:
+		if err := c3.AssignTo(&e.Updated); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1192,8 +1284,17 @@ func (t example3ScannerDynamic) Scan(e *Example3) error {
 	for _, column := range columns {
 		switch column {
 		case cn0:
-			if err := c0.AssignTo(&e.Created); err != nil {
-				return err
+			switch c0.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.Created = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.Created = tmp
+			default:
+				if err := c0.AssignTo(&e.Created); err != nil {
+					return err
+				}
 			}
 		case cn1:
 			if err := c1.AssignTo(&e.Email); err != nil {
@@ -1204,8 +1305,17 @@ func (t example3ScannerDynamic) Scan(e *Example3) error {
 				return err
 			}
 		case cn3:
-			if err := c3.AssignTo(&e.Updated); err != nil {
-				return err
+			switch c3.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.Updated = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.Updated = tmp
+			default:
+				if err := c3.AssignTo(&e.Updated); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1292,8 +1402,17 @@ func (t example4ScannerStatic) Scan(e *Example4) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&e.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Created = tmp
+	default:
+		if err := c0.AssignTo(&e.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&e.Email); err != nil {
@@ -1304,8 +1423,17 @@ func (t example4ScannerStatic) Scan(e *Example4) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&e.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Updated = tmp
+	default:
+		if err := c3.AssignTo(&e.Updated); err != nil {
+			return err
+		}
 	}
 
 	return t.Rows.Err()
@@ -1360,8 +1488,17 @@ func (t Example4ScannerStaticRow) Scan(e *Example4) error {
 		return err
 	}
 
-	if err := c0.AssignTo(&e.Created); err != nil {
-		return err
+	switch c0.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Created = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Created = tmp
+	default:
+		if err := c0.AssignTo(&e.Created); err != nil {
+			return err
+		}
 	}
 
 	if err := c1.AssignTo(&e.Email); err != nil {
@@ -1372,8 +1509,17 @@ func (t Example4ScannerStaticRow) Scan(e *Example4) error {
 		return err
 	}
 
-	if err := c3.AssignTo(&e.Updated); err != nil {
-		return err
+	switch c3.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		e.Updated = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e.Updated = tmp
+	default:
+		if err := c3.AssignTo(&e.Updated); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1449,8 +1595,17 @@ func (t example4ScannerDynamic) Scan(e *Example4) error {
 	for _, column := range columns {
 		switch column {
 		case cn0:
-			if err := c0.AssignTo(&e.Created); err != nil {
-				return err
+			switch c0.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.Created = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.Created = tmp
+			default:
+				if err := c0.AssignTo(&e.Created); err != nil {
+					return err
+				}
 			}
 		case cn1:
 			if err := c1.AssignTo(&e.Email); err != nil {
@@ -1461,8 +1616,17 @@ func (t example4ScannerDynamic) Scan(e *Example4) error {
 				return err
 			}
 		case cn3:
-			if err := c3.AssignTo(&e.Updated); err != nil {
-				return err
+			switch c3.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				e.Updated = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				e.Updated = tmp
+			default:
+				if err := c3.AssignTo(&e.Updated); err != nil {
+					return err
+				}
 			}
 		}
 	}

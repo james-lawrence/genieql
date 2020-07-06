@@ -2,6 +2,8 @@ package alternate2
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -100,12 +102,30 @@ func (t type1ScannerStatic) Scan(sp0 *Type1) error {
 		return err
 	}
 
-	if err := c6.AssignTo(&sp0.Field7); err != nil {
-		return err
+	switch c6.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		sp0.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		sp0.Field7 = tmp
+	default:
+		if err := c6.AssignTo(&sp0.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c7.AssignTo(&sp0.Field8); err != nil {
-		return err
+	switch c7.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		sp0.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		sp0.Field8 = &tmp
+	default:
+		if err := c7.AssignTo(&sp0.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c8.AssignTo(&sp0.Unmappedfield); err != nil {
@@ -193,12 +213,30 @@ func (t Type1ScannerStaticRow) Scan(sp0 *Type1) error {
 		return err
 	}
 
-	if err := c6.AssignTo(&sp0.Field7); err != nil {
-		return err
+	switch c6.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		sp0.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		sp0.Field7 = tmp
+	default:
+		if err := c6.AssignTo(&sp0.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c7.AssignTo(&sp0.Field8); err != nil {
-		return err
+	switch c7.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		sp0.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		sp0.Field8 = &tmp
+	default:
+		if err := c7.AssignTo(&sp0.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c8.AssignTo(&sp0.Unmappedfield); err != nil {
@@ -322,12 +360,30 @@ func (t type1ScannerDynamic) Scan(sp0 *Type1) error {
 				return err
 			}
 		case cn6:
-			if err := c6.AssignTo(&sp0.Field7); err != nil {
-				return err
+			switch c6.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				sp0.Field7 = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				sp0.Field7 = tmp
+			default:
+				if err := c6.AssignTo(&sp0.Field7); err != nil {
+					return err
+				}
 			}
 		case cn7:
-			if err := c7.AssignTo(&sp0.Field8); err != nil {
-				return err
+			switch c7.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				sp0.Field8 = &tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				sp0.Field8 = &tmp
+			default:
+				if err := c7.AssignTo(&sp0.Field8); err != nil {
+					return err
+				}
 			}
 		case cn8:
 			if err := c8.AssignTo(&sp0.Unmappedfield); err != nil {

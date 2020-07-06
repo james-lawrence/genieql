@@ -31,6 +31,12 @@ func Example3(gql genieql.Structure) {
 	)
 }
 
+func Timestamp(gql genieql.Structure) {
+	gql.From(
+		gql.Table("timestamp_examples"),
+	)
+}
+
 // CustomScanner generates a scanner that consumes the given parameters.
 func CustomScanner(gql genieql.Scanner, output func(i1, i2 int, b1 bool, t1 time.Time)) {}
 
@@ -42,6 +48,9 @@ func Example2Scanner(genieql.Scanner, func(Example2)) {}
 
 // CombinedScanner generates a scanner that consumes the given parameters.
 func CombinedScanner(genieql.Scanner, func(e1 Example1, e2 Example2)) {}
+
+// TimestampScanner generates a scanner that consumes the given parameters.
+func TimestampScanner(genieql.Scanner, func(Timestamp)) {}
 
 // Example1FindByX1 generates function
 func Example1FindByX1(

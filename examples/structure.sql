@@ -50,3 +50,10 @@ CREATE TABLE IF NOT EXISTS example4 (
   created timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
   updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS timestamp_examples (
+  uuid uuid PRIMARY KEY,
+  "timestamp" timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
+  "timestamptz" timestamptz NOT NULL DEFAULT current_timestamp,
+  "timestamptz_nullable" timestamptz DEFAULT current_timestamp
+);

@@ -2,6 +2,8 @@ package basic
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -74,8 +76,17 @@ func (t exampleScannerDynamic) Scan(arg0 *example) error {
 	for _, column := range columns {
 		switch column {
 		case cn0:
-			if err := c0.AssignTo(&arg0.Created); err != nil {
-				return err
+			switch c0.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				arg0.Created = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				arg0.Created = tmp
+			default:
+				if err := c0.AssignTo(&arg0.Created); err != nil {
+					return err
+				}
 			}
 		case cn1:
 			if err := c1.AssignTo(&arg0.Email); err != nil {
@@ -86,8 +97,17 @@ func (t exampleScannerDynamic) Scan(arg0 *example) error {
 				return err
 			}
 		case cn3:
-			if err := c3.AssignTo(&arg0.Updated); err != nil {
-				return err
+			switch c3.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				arg0.Updated = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				arg0.Updated = tmp
+			default:
+				if err := c3.AssignTo(&arg0.Updated); err != nil {
+					return err
+				}
 			}
 		}
 	}

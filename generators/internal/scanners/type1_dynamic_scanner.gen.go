@@ -2,6 +2,8 @@ package scanners
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"github.com/jackc/pgtype"
 )
@@ -114,12 +116,30 @@ func (t type1ScannerDynamic) Scan(arg0 *Type1) error {
 				return err
 			}
 		case cn6:
-			if err := c6.AssignTo(&arg0.Field7); err != nil {
-				return err
+			switch c6.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				arg0.Field7 = tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				arg0.Field7 = tmp
+			default:
+				if err := c6.AssignTo(&arg0.Field7); err != nil {
+					return err
+				}
 			}
 		case cn7:
-			if err := c7.AssignTo(&arg0.Field8); err != nil {
-				return err
+			switch c7.InfinityModifier {
+			case pgtype.Infinity:
+				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				arg0.Field8 = &tmp
+			case pgtype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				arg0.Field8 = &tmp
+			default:
+				if err := c7.AssignTo(&arg0.Field8); err != nil {
+					return err
+				}
 			}
 		}
 	}

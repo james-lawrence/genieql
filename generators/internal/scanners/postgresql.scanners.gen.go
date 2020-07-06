@@ -2,6 +2,8 @@ package scanners
 
 import (
 	"database/sql"
+	"math"
+	"time"
 
 	"bitbucket.org/jatone/genieql/generators/internal/scanners/alternate1"
 	"bitbucket.org/jatone/genieql/generators/internal/scanners/alternate2"
@@ -116,12 +118,30 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 		return err
 	}
 
-	if err := c6.AssignTo(&t1.Field7); err != nil {
-		return err
+	switch c6.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t1.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t1.Field7 = tmp
+	default:
+		if err := c6.AssignTo(&t1.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c7.AssignTo(&t1.Field8); err != nil {
-		return err
+	switch c7.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t1.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t1.Field8 = &tmp
+	default:
+		if err := c7.AssignTo(&t1.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c8.AssignTo(&t1.Unmappedfield); err != nil {
@@ -152,12 +172,30 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 		return err
 	}
 
-	if err := c15.AssignTo(&t2.Field7); err != nil {
-		return err
+	switch c15.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t2.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t2.Field7 = tmp
+	default:
+		if err := c15.AssignTo(&t2.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c16.AssignTo(&t2.Field8); err != nil {
-		return err
+	switch c16.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t2.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t2.Field8 = &tmp
+	default:
+		if err := c16.AssignTo(&t2.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c17.AssignTo(&t2.Unmappedfield); err != nil {
@@ -188,12 +226,30 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 		return err
 	}
 
-	if err := c24.AssignTo(&t3.Field7); err != nil {
-		return err
+	switch c24.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t3.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t3.Field7 = tmp
+	default:
+		if err := c24.AssignTo(&t3.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c25.AssignTo(&t3.Field8); err != nil {
-		return err
+	switch c25.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t3.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t3.Field8 = &tmp
+	default:
+		if err := c25.AssignTo(&t3.Field8); err != nil {
+			return err
+		}
 	}
 
 	return t.Rows.Err()
@@ -294,12 +350,30 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 		return err
 	}
 
-	if err := c6.AssignTo(&t1.Field7); err != nil {
-		return err
+	switch c6.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t1.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t1.Field7 = tmp
+	default:
+		if err := c6.AssignTo(&t1.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c7.AssignTo(&t1.Field8); err != nil {
-		return err
+	switch c7.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t1.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t1.Field8 = &tmp
+	default:
+		if err := c7.AssignTo(&t1.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c8.AssignTo(&t1.Unmappedfield); err != nil {
@@ -330,12 +404,30 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 		return err
 	}
 
-	if err := c15.AssignTo(&t2.Field7); err != nil {
-		return err
+	switch c15.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t2.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t2.Field7 = tmp
+	default:
+		if err := c15.AssignTo(&t2.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c16.AssignTo(&t2.Field8); err != nil {
-		return err
+	switch c16.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t2.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t2.Field8 = &tmp
+	default:
+		if err := c16.AssignTo(&t2.Field8); err != nil {
+			return err
+		}
 	}
 
 	if err := c17.AssignTo(&t2.Unmappedfield); err != nil {
@@ -366,12 +458,30 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 		return err
 	}
 
-	if err := c24.AssignTo(&t3.Field7); err != nil {
-		return err
+	switch c24.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t3.Field7 = tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t3.Field7 = tmp
+	default:
+		if err := c24.AssignTo(&t3.Field7); err != nil {
+			return err
+		}
 	}
 
-	if err := c25.AssignTo(&t3.Field8); err != nil {
-		return err
+	switch c25.InfinityModifier {
+	case pgtype.Infinity:
+		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		t3.Field8 = &tmp
+	case pgtype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		t3.Field8 = &tmp
+	default:
+		if err := c25.AssignTo(&t3.Field8); err != nil {
+			return err
+		}
 	}
 
 	return nil
