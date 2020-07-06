@@ -136,7 +136,13 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 			continue
 		}
 
-		columndef.Nullable = nullable
+		switch columndef.Native {
+		case "[]byte":
+			columndef.Nullable = false
+		default:
+			columndef.Nullable = nullable
+		}
+
 		columndef.PrimaryKey = primary
 
 		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(columndef))
