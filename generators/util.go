@@ -31,6 +31,7 @@ func genFunctionLiteral(example string, ctx interface{}, errorHandler func(strin
 		m      = template.FuncMap{
 			"ast":             astutil.Print,
 			"expr":            types.ExprString,
+			"localident":      localIdent,
 			"autodereference": autodereference,
 			"autoreference":   autoreference,
 			"error":           errorHandler,
@@ -453,6 +454,17 @@ func determineIdent(x ast.Expr) *ast.Ident {
 	default:
 		debugx.Printf("determineIdent: %T - %s\n", x, types.ExprString(x))
 		return nil
+	}
+}
+
+func localIdent(x ast.Expr) ast.Expr {
+	switch real := x.(type) {
+	case *ast.StarExpr:
+		// log.Printf("localIdent - star: %T - %s\n", real.X, types.ExprString(real.X))
+		return real.X
+	default:
+		// log.Printf("localIdent: %T - %s\n", real, types.ExprString(real))
+		return real
 	}
 }
 

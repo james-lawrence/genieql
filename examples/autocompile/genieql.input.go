@@ -72,3 +72,7 @@ func Example1LookupBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Quer
 func Example1Insert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {
 	gql.Into("example1").Default("uuid_field")
 }
+
+func TimestampInsert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow {
+	gql.Into("timestamp_examples").Default("id")
+}

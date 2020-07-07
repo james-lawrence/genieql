@@ -22,7 +22,7 @@ const pgxDefaultDecode = `func() {
 }`
 
 const pgxDefaultEncode = `func() {
-	if err := {{ .To | expr }}.Set({{.From | expr}}); err != nil {
+	if err := {{ .To | expr }}.Set({{.From | localident | expr}}); err != nil {
 		{{ error "err" | ast }}
 	}
 }`
@@ -84,11 +84,6 @@ func pgxexports() map[string]reflect.Value {
 		"UUIDArray":        reflect.ValueOf(&pgtype.UUIDArray{}),
 		"Infinity":         reflect.ValueOf(pgtype.Infinity),
 		"NegativeInfinity": reflect.ValueOf(pgtype.NegativeInfinity),
-		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
-		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
-		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
-		// "BPChar":           reflect.ValueOf(&pgtype.BPChar{}),
-		// "JSONArray":        reflect.ValueOf(&pgtype.JSONArray{}),
 	}
 }
 
