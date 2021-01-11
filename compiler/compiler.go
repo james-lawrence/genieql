@@ -13,13 +13,13 @@ import (
 	"sort"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/compiler/stdlib"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
 	genieqlinterp "bitbucket.org/jatone/genieql/interp"
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
 	"github.com/pkg/errors"
+	"github.com/traefik/yaegi/interp"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)

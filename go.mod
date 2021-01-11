@@ -7,7 +7,6 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/containous/yaegi v0.8.8
 	github.com/davecgh/go-spew v1.1.1
 	github.com/jackc/pgtype v1.3.0
 	github.com/jackc/pgx/v4 v4.6.0 // indirect
@@ -19,6 +18,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
+	github.com/traefik/yaegi v0.9.9
 	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 	golang.org/x/tools v0.0.0-20200619210111-0f592d2728bb
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

@@ -4,8 +4,8 @@ import (
 	"go/build"
 	"log"
 
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
+	"bitbucket.org/jatone/genieql/compiler/stdlib"
+	"github.com/traefik/yaegi/interp"
 )
 
 func main() {

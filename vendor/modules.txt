@@ -10,10 +10,6 @@ github.com/alecthomas/template/parse
 github.com/alecthomas/units
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
-# github.com/containous/yaegi v0.8.8
-## explicit
-github.com/containous/yaegi/interp
-github.com/containous/yaegi/stdlib
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -87,6 +83,9 @@ github.com/satori/go.uuid
 # github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
 ## explicit
 github.com/serenize/snaker
+# github.com/traefik/yaegi v0.9.9
+## explicit
+github.com/traefik/yaegi/interp
 # github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 ## explicit
 github.com/zieckey/goini
