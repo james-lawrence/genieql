@@ -383,6 +383,12 @@ func (interp *Interpreter) Eval(src string) (res reflect.Value, err error) {
 	return interp.eval(src, "", true)
 }
 
+// GenieqlEval evaluates Go code represented as a string. Eval returns the last result
+// computed by the interpreter, and a non nil error in case of failure.
+func (interp *Interpreter) GenieqlEval(name, src string) (res reflect.Value, err error) {
+	return interp.eval(src, name, true)
+}
+
 // EvalPath evaluates Go code located at path and returns the last result computed
 // by the interpreter, and a non nil error in case of failure.
 // The main function of the main package is executed if present.

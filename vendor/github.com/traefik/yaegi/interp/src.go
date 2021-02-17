@@ -2,6 +2,7 @@ package interp
 
 import (
 	"fmt"
+	"go/build"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,12 +34,12 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 			rPath = "."
 		}
 		dir = filepath.Join(filepath.Dir(interp.name), rPath, importPath)
-	} else if dir, rPath, err = pkgDir(interp.context.GOPATH, rPath, importPath); err != nil {
+	} else if dir, rPath, err = pkgDir(&interp.context, rPath, importPath); err != nil {
 		// Try again, assuming a root dir at the source location.
 		if rPath, err = interp.rootFromSourceLocation(); err != nil {
 			return "", err
 		}
-		if dir, rPath, err = pkgDir(interp.context.GOPATH, rPath, importPath); err != nil {
+		if dir, rPath, err = pkgDir(&interp.context, rPath, importPath); err != nil {
 			return "", err
 		}
 	}
@@ -181,31 +182,34 @@ func (interp *Interpreter) rootFromSourceLocation() (string, error) {
 
 // pkgDir returns the absolute path in filesystem for a package given its import path
 // and the root of the subtree dependencies.
-func pkgDir(goPath string, root, importPath string) (string, string, error) {
+func pkgDir(ctx *build.Context, root, path string) (pdir string, proot string, err error) {
 	rPath := filepath.Join(root, "vendor")
-	dir := filepath.Join(goPath, "src", rPath, importPath)
+	dir := filepath.Join(ctx.GOPATH, "src", rPath, path)
 
 	if _, err := os.Stat(dir); err == nil {
 		return dir, rPath, nil // found!
 	}
 
-	dir = filepath.Join(goPath, "src", effectivePkg(root, importPath))
-
+	dir = filepath.Join(ctx.GOPATH, "src", effectivePkg(root, path))
 	if _, err := os.Stat(dir); err == nil {
 		return dir, root, nil // found!
 	}
 
 	if len(root) == 0 {
-		return "", "", fmt.Errorf("unable to find source related to: %q", importPath)
+		if pkg, err := ctx.Import(path, ".", build.FindOnly); err == nil {
+			return pkg.Dir, pkg.Root, nil
+		}
+
+		return "", "", fmt.Errorf("unable to find source related to: %q", path)
 	}
 
-	rootPath := filepath.Join(goPath, "src", root)
+	rootPath := filepath.Join(ctx.GOPATH, "src", root)
 	prevRoot, err := previousRoot(rootPath, root)
 	if err != nil {
 		return "", "", err
 	}
 
-	return pkgDir(goPath, prevRoot, importPath)
+	return pkgDir(ctx, prevRoot, path)
 }
 
 const vendor = "vendor"

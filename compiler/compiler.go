@@ -212,7 +212,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("generated code")
 
-		if _, err := i.Eval(formatted); err != nil {
+		if _, err := i.GenieqlEval(r.Location, formatted); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
 
