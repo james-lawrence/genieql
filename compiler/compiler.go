@@ -18,8 +18,8 @@ import (
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
 	genieqlinterp "bitbucket.org/jatone/genieql/interp"
+	"github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
-	"github.com/traefik/yaegi/interp"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)
@@ -212,7 +212,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("generated code")
 
-		if _, err := i.GenieqlEval(r.Location, formatted); err != nil {
+		if _, err := i.Eval(formatted); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
 

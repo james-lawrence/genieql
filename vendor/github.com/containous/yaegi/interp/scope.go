@@ -6,10 +6,10 @@ import (
 	"strconv"
 )
 
-// A sKind represents the kind of symbol.
+// A sKind represents the kind of symbol
 type sKind uint
 
-// Symbol kinds for the Go interpreter.
+// Symbol kinds for the Go interpreter
 const (
 	undefSym sKind = iota
 	binSym         // Binary from runtime
@@ -53,6 +53,8 @@ type symbol struct {
 	rval    reflect.Value // default value (used for constants)
 	builtin bltnGenerator // Builtin function or nil
 	global  bool          // true if symbol is defined in global space
+	// TODO: implement constant checking
+	//constant bool             // true if symbol value is constant
 }
 
 // scope type stores symbols in maps, and frame layout as array of types
@@ -72,28 +74,26 @@ type symbol struct {
 // execution to the index in frame, created exactly from the types layout.
 //
 type scope struct {
-	anc         *scope             // ancestor upper scope
-	child       []*scope           // included scopes
+	anc         *scope             // Ancestor upper scope
 	def         *node              // function definition node this scope belongs to, or nil
 	loop        *node              // loop exit node for break statement
 	loopRestart *node              // loop restart node for continue statement
 	pkgID       string             // unique id of package in which scope is defined
-	types       []reflect.Type     // frame layout, may be shared by same level scopes
-	level       int                // frame level: number of frame indirections to access var during execution
-	sym         map[string]*symbol // map of symbols defined in this current scope
+	types       []reflect.Type     // Frame layout, may be shared by same level scopes
+	level       int                // Frame level: number of frame indirections to access var during execution
+	sym         map[string]*symbol // Map of symbols defined in this current scope
 	global      bool               // true if scope refers to global space (single frame for universe and package level scopes)
 	iota        int                // iota value in this scope
 }
 
-// push creates a new child scope and chain it to the current one.
+// push creates a new scope and chain it to the current one
 func (s *scope) push(indirect bool) *scope {
-	sc := &scope{anc: s, level: s.level, sym: map[string]*symbol{}}
-	s.child = append(s.child, sc)
+	sc := scope{anc: s, level: s.level, sym: map[string]*symbol{}}
 	if indirect {
 		sc.types = []reflect.Type{}
 		sc.level = s.level + 1
 	} else {
-		// Propagate size, types, def and global as scopes at same level share the same frame.
+		// propagate size, types, def and global as scopes at same level share the same frame
 		sc.types = s.types
 		sc.def = s.def
 		sc.global = s.global
@@ -101,7 +101,7 @@ func (s *scope) push(indirect bool) *scope {
 	}
 	// inherit loop state and pkgID from ancestor
 	sc.loop, sc.loopRestart, sc.pkgID = s.loop, s.loopRestart, s.pkgID
-	return sc
+	return &sc
 }
 
 func (s *scope) pushBloc() *scope { return s.push(false) }
@@ -109,57 +109,29 @@ func (s *scope) pushFunc() *scope { return s.push(true) }
 
 func (s *scope) pop() *scope {
 	if s.level == s.anc.level {
-		// Propagate size and types, as scopes at same level share the same frame.
+		// propagate size and types, as scopes at same level share the same frame
 		s.anc.types = s.types
 	}
 	return s.anc
 }
 
-func (s *scope) upperLevel() *scope {
-	level := s.level
-	for s != nil && s.level == level {
-		s = s.anc
-	}
-	return s
-}
-
 // lookup searches for a symbol in the current scope, and upper ones if not found
 // it returns the symbol, the number of indirections level from the current scope
-// and status (false if no result).
+// and status (false if no result)
 func (s *scope) lookup(ident string) (*symbol, int, bool) {
 	level := s.level
-	for {
+	for s != nil {
 		if sym, ok := s.sym[ident]; ok {
-			if sym.global {
-				return sym, globalFrame, true
-			}
 			return sym, level - s.level, true
-		}
-		if s.anc == nil {
-			break
 		}
 		s = s.anc
 	}
 	return nil, 0, false
 }
 
-// lookdown searches for a symbol in the current scope and included ones, recursively.
-// It returns the first found symbol and true, or nil and false.
-func (s *scope) lookdown(ident string) (*symbol, bool) {
-	if sym, ok := s.sym[ident]; ok {
-		return sym, true
-	}
-	for _, c := range s.child {
-		if sym, ok := c.lookdown(ident); ok {
-			return sym, true
-		}
-	}
-	return nil, false
-}
-
 func (s *scope) rangeChanType(n *node) *itype {
 	if sym, _, found := s.lookup(n.child[1].ident); found {
-		if t := sym.typ; len(n.child) == 3 && t != nil && (t.cat == chanT || t.cat == chanRecvT) {
+		if t := sym.typ; len(n.child) == 3 && t != nil && t.cat == chanT {
 			return t
 		}
 	}
@@ -169,31 +141,13 @@ func (s *scope) rangeChanType(n *node) *itype {
 		return nil
 	}
 	switch {
-	case c.typ.cat == chanT, c.typ.cat == chanRecvT:
+	case c.typ.cat == chanT:
 		return c.typ
 	case c.typ.cat == valueT && c.typ.rtype.Kind() == reflect.Chan:
 		return &itype{cat: chanT, val: &itype{cat: valueT, rtype: c.typ.rtype.Elem()}}
 	}
 
 	return nil
-}
-
-// fixType returns the input type, or a valid default type for untyped constant.
-func (s *scope) fixType(t *itype) *itype {
-	if !t.untyped || t.cat != valueT {
-		return t
-	}
-	switch typ := t.TypeOf(); typ.Kind() {
-	case reflect.Int64:
-		return s.getType("int")
-	case reflect.Uint64:
-		return s.getType("uint")
-	case reflect.Float64:
-		return s.getType("float64")
-	case reflect.Complex128:
-		return s.getType("complex128")
-	}
-	return t
 }
 
 func (s *scope) getType(ident string) *itype {
@@ -206,7 +160,7 @@ func (s *scope) getType(ident string) *itype {
 	return t
 }
 
-// add adds a type to the scope types array, and returns its index.
+// add adds a type to the scope types array, and returns its index
 func (s *scope) add(typ *itype) (index int) {
 	if typ == nil {
 		log.Panic("nil type")

@@ -6,8 +6,8 @@ import (
 	"log"
 	"reflect"
 
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -56,7 +56,7 @@ func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl
 	ctx.Debugln(formatted)
 
 	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
-		if _, err = i.GenieqlEval(nodeInfo(ctx, fn), formatted); err != nil {
+		if _, err = i.Eval(formatted); err != nil {
 			ctx.Println(formatted)
 			return errors.Wrap(err, "failed to compile source")
 		}

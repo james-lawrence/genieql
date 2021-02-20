@@ -5,8 +5,8 @@ import (
 	"log"
 	"reflect"
 
+	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/x/errorsx"
@@ -35,7 +35,7 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 	log.Printf("genieql.Structure identified %s\n", nodeInfo(ctx, pos))
 	ctx.Debugln(formatted)
 
-	if _, err = i.GenieqlEval(nodeInfo(ctx, pos), formatted); err != nil {
+	if _, err = i.Eval(formatted); err != nil {
 		return r, errors.Wrap(err, "failed to compile source")
 	}
 

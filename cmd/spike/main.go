@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"bitbucket.org/jatone/genieql/compiler/stdlib"
-	"github.com/traefik/yaegi/interp"
+	"github.com/containous/yaegi/interp"
 )
 
 func main() {

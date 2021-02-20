@@ -5,15 +5,8 @@ import (
 	"reflect"
 )
 
-const (
-	notInFrame  = -1 // value of node.findex for literal values (not in frame)
-	globalFrame = -1 // value of node.level for global symbols
-)
-
 func valueGenerator(n *node, i int) func(*frame) reflect.Value {
 	switch n.level {
-	case globalFrame:
-		return func(f *frame) reflect.Value { return valueOf(f.root.data, i) }
 	case 0:
 		return func(f *frame) reflect.Value { return valueOf(f.data, i) }
 	case 1:
@@ -40,30 +33,6 @@ func valueOf(data []reflect.Value, i int) reflect.Value {
 	return reflect.Value{}
 }
 
-func genValueBinMethodOnInterface(n *node, defaultGen func(*frame) reflect.Value) func(*frame) reflect.Value {
-	if n == nil || n.child == nil || n.child[0] == nil ||
-		n.child[0].child == nil || n.child[0].child[0] == nil {
-		return defaultGen
-	}
-	if n.child[0].child[1] == nil || n.child[0].child[1].ident == "" {
-		return defaultGen
-	}
-	value0 := genValue(n.child[0].child[0])
-
-	return func(f *frame) reflect.Value {
-		val, ok := value0(f).Interface().(valueInterface)
-		if !ok {
-			return defaultGen(f)
-		}
-		typ := val.node.typ
-		if typ.node != nil || typ.cat != valueT {
-			return defaultGen(f)
-		}
-		meth, _ := typ.rtype.MethodByName(n.child[0].child[1].ident)
-		return meth.Func
-	}
-}
-
 func genValueRecvIndirect(n *node) func(*frame) reflect.Value {
 	v := genValueRecv(n)
 	return func(f *frame) reflect.Value { return v(f).Elem() }
@@ -73,35 +42,6 @@ func genValueRecv(n *node) func(*frame) reflect.Value {
 	v := genValue(n.recv.node)
 	fi := n.recv.index
 
-	if len(fi) == 0 {
-		return v
-	}
-
-	return func(f *frame) reflect.Value {
-		r := v(f)
-		if r.Kind() == reflect.Ptr {
-			r = r.Elem()
-		}
-		return r.FieldByIndex(fi)
-	}
-}
-
-func genValueBinRecv(n *node, recv *receiver) func(*frame) reflect.Value {
-	value := genValue(n)
-	binValue := genValue(recv.node)
-
-	v := func(f *frame) reflect.Value {
-		if def, ok := value(f).Interface().(*node); ok {
-			if def != nil && def.recv != nil && def.recv.val.IsValid() {
-				return def.recv.val
-			}
-		}
-
-		ival, _ := binValue(f).Interface().(valueInterface)
-		return ival.value
-	}
-
-	fi := recv.index
 	if len(fi) == 0 {
 		return v
 	}
@@ -178,16 +118,18 @@ func genValue(n *node) func(*frame) reflect.Value {
 			return func(f *frame) reflect.Value { return v }
 		}
 		if n.sym != nil {
-			i := n.sym.index
-			if i < 0 {
+			if n.sym.index < 0 {
 				return genValue(n.sym.node)
 			}
+			i := n.sym.index
 			if n.sym.global {
-				return func(f *frame) reflect.Value { return f.root.data[i] }
+				return func(f *frame) reflect.Value {
+					return n.interp.frame.data[i]
+				}
 			}
 			return valueGenerator(n, i)
 		}
-		if n.findex == notInFrame {
+		if n.findex < 0 {
 			var v reflect.Value
 			if w, ok := n.val.(reflect.Value); ok {
 				v = w
@@ -213,36 +155,17 @@ func genValueArray(n *node) func(*frame) reflect.Value {
 
 func genValueRangeArray(n *node) func(*frame) reflect.Value {
 	value := genValue(n)
-
-	switch {
-	case n.typ.TypeOf().Kind() == reflect.Ptr:
-		// dereference array pointer, to support array operations on array pointer
+	// dereference array pointer, to support array operations on array pointer
+	if n.typ.TypeOf().Kind() == reflect.Ptr {
 		return func(f *frame) reflect.Value {
 			return value(f).Elem()
 		}
-	case n.typ.val != nil && n.typ.val.cat == interfaceT:
-		return func(f *frame) reflect.Value {
-			val := value(f)
-			v := []valueInterface{}
-			for i := 0; i < val.Len(); i++ {
-				switch av := val.Index(i).Interface().(type) {
-				case []valueInterface:
-					v = append(v, av...)
-				case valueInterface:
-					v = append(v, av)
-				default:
-					panic(n.cfgErrorf("invalid type %v", val.Index(i).Type()))
-				}
-			}
-			return reflect.ValueOf(v)
-		}
-	default:
-		return func(f *frame) reflect.Value {
-			// This is necessary to prevent changes in the returned
-			// reflect.Value being reflected back to the value used
-			// for the range expression.
-			return reflect.ValueOf(value(f).Interface())
-		}
+	}
+	return func(f *frame) reflect.Value {
+		// This is necessary to prevent changes in the returned
+		// reflect.Value being reflected back to the value used
+		// for the range expression.
+		return reflect.ValueOf(value(f).Interface())
 	}
 }
 
@@ -256,6 +179,16 @@ func genValueInterfaceArray(n *node) func(*frame) reflect.Value {
 		}
 
 		return v
+	}
+}
+
+func genValueInterfacePtr(n *node) func(*frame) reflect.Value {
+	value := genValue(n)
+
+	return func(f *frame) reflect.Value {
+		v := reflect.New(interf).Elem()
+		v.Set(value(f))
+		return v.Addr()
 	}
 }
 
@@ -275,6 +208,18 @@ func genValueInterface(n *node) func(*frame) reflect.Value {
 			nod = vi.node
 		}
 		return reflect.ValueOf(valueInterface{nod, v})
+	}
+}
+
+func genValueDerefInterfacePtr(n *node) func(*frame) reflect.Value {
+	value := genValue(n)
+
+	return func(f *frame) reflect.Value {
+		v := value(f)
+		if v.IsZero() {
+			return v
+		}
+		return v.Elem().Elem()
 	}
 }
 
@@ -302,17 +247,6 @@ func genValueOutput(n *node, t reflect.Type) func(*frame) reflect.Value {
 	return value
 }
 
-func valueInterfaceValue(v reflect.Value) reflect.Value {
-	for {
-		vv, ok := v.Interface().(valueInterface)
-		if !ok {
-			break
-		}
-		v = vv.value
-	}
-	return v
-}
-
 func genValueInterfaceValue(n *node) func(*frame) reflect.Value {
 	value := genValue(n)
 
@@ -323,7 +257,7 @@ func genValueInterfaceValue(n *node) func(*frame) reflect.Value {
 			v.Set(zeroInterfaceValue())
 			v = value(f)
 		}
-		return valueInterfaceValue(v)
+		return v.Interface().(valueInterface).value
 	}
 }
 
@@ -335,68 +269,7 @@ func genValueNode(n *node) func(*frame) reflect.Value {
 	}
 }
 
-func genValueRecursiveInterface(n *node, t reflect.Type) func(*frame) reflect.Value {
-	value := genValue(n)
-
-	return func(f *frame) reflect.Value {
-		vv := value(f)
-		v := reflect.New(t).Elem()
-		toRecursive(v, vv)
-		return v
-	}
-}
-
-func toRecursive(dest, src reflect.Value) {
-	if !src.IsValid() {
-		return
-	}
-
-	switch dest.Kind() {
-	case reflect.Map:
-		v := reflect.MakeMapWithSize(dest.Type(), src.Len())
-		for _, kv := range src.MapKeys() {
-			vv := reflect.New(dest.Type().Elem()).Elem()
-			toRecursive(vv, src.MapIndex(kv))
-			vv.SetMapIndex(kv, vv)
-		}
-		dest.Set(v)
-	case reflect.Slice:
-		l := src.Len()
-		v := reflect.MakeSlice(dest.Type(), l, l)
-		for i := 0; i < l; i++ {
-			toRecursive(v.Index(i), src.Index(i))
-		}
-		dest.Set(v)
-	case reflect.Ptr:
-		v := reflect.New(dest.Type().Elem()).Elem()
-		s := src
-		if s.Elem().Kind() != reflect.Struct { // In the case of *interface{}, we want *struct{}
-			s = s.Elem()
-		}
-		toRecursive(v, s)
-		dest.Set(v.Addr())
-	default:
-		dest.Set(src)
-	}
-}
-
-func genValueRecursiveInterfacePtrValue(n *node) func(*frame) reflect.Value {
-	value := genValue(n)
-
-	return func(f *frame) reflect.Value {
-		v := value(f)
-		if v.IsZero() {
-			return v
-		}
-		return v.Elem().Elem()
-	}
-}
-
 func vInt(v reflect.Value) (i int64) {
-	if c := vConstantValue(v); c != nil {
-		i, _ = constant.Int64Val(constant.ToInt(c))
-		return i
-	}
 	switch v.Type().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		i = v.Int()
@@ -407,14 +280,14 @@ func vInt(v reflect.Value) (i int64) {
 	case reflect.Complex64, reflect.Complex128:
 		i = int64(real(v.Complex()))
 	}
+	if v.Type().Implements(constVal) {
+		c := v.Interface().(constant.Value)
+		i, _ = constant.Int64Val(constant.ToInt(c))
+	}
 	return
 }
 
 func vUint(v reflect.Value) (i uint64) {
-	if c := vConstantValue(v); c != nil {
-		i, _ = constant.Uint64Val(constant.ToInt(c))
-		return i
-	}
 	switch v.Type().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		i = uint64(v.Int())
@@ -425,16 +298,15 @@ func vUint(v reflect.Value) (i uint64) {
 	case reflect.Complex64, reflect.Complex128:
 		i = uint64(real(v.Complex()))
 	}
+	if v.Type().Implements(constVal) {
+		c := v.Interface().(constant.Value)
+		iv, _ := constant.Int64Val(constant.ToInt(c))
+		i = uint64(iv)
+	}
 	return
 }
 
 func vComplex(v reflect.Value) (c complex128) {
-	if c := vConstantValue(v); c != nil {
-		c = constant.ToComplex(c)
-		rel, _ := constant.Float64Val(constant.Real(c))
-		img, _ := constant.Float64Val(constant.Imag(c))
-		return complex(rel, img)
-	}
 	switch v.Type().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		c = complex(float64(v.Int()), 0)
@@ -445,14 +317,17 @@ func vComplex(v reflect.Value) (c complex128) {
 	case reflect.Complex64, reflect.Complex128:
 		c = v.Complex()
 	}
+	if v.Type().Implements(constVal) {
+		con := v.Interface().(constant.Value)
+		con = constant.ToComplex(con)
+		rel, _ := constant.Float64Val(constant.Real(con))
+		img, _ := constant.Float64Val(constant.Imag(con))
+		c = complex(rel, img)
+	}
 	return
 }
 
 func vFloat(v reflect.Value) (i float64) {
-	if c := vConstantValue(v); c != nil {
-		i, _ = constant.Float64Val(constant.ToFloat(c))
-		return i
-	}
 	switch v.Type().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		i = float64(v.Int())
@@ -463,15 +338,11 @@ func vFloat(v reflect.Value) (i float64) {
 	case reflect.Complex64, reflect.Complex128:
 		i = real(v.Complex())
 	}
-	return
-}
-
-func vString(v reflect.Value) (s string) {
-	if c := vConstantValue(v); c != nil {
-		s = constant.StringVal(c)
-		return s
+	if v.Type().Implements(constVal) {
+		c := v.Interface().(constant.Value)
+		i, _ = constant.Float64Val(constant.ToFloat(c))
 	}
-	return v.String()
+	return
 }
 
 func vConstantValue(v reflect.Value) (c constant.Value) {

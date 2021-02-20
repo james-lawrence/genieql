@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// astDot displays an AST in graphviz dot(1) format using dotty(1) co-process.
+// astDot displays an AST in graphviz dot(1) format using dotty(1) co-process
 func (n *node) astDot(out io.Writer, name string) {
 	fmt.Fprintf(out, "digraph ast {\n")
 	fmt.Fprintf(out, "labelloc=\"t\"\n")
@@ -19,7 +19,7 @@ func (n *node) astDot(out io.Writer, name string) {
 		var label string
 		switch n.kind {
 		case basicLit, identExpr:
-			label = strings.ReplaceAll(n.ident, "\"", "\\\"")
+			label = strings.Replace(n.ident, "\"", "\\\"", -1)
 		default:
 			if n.action != aNop {
 				label = n.action.String()
@@ -36,7 +36,7 @@ func (n *node) astDot(out io.Writer, name string) {
 	fmt.Fprintf(out, "}\n")
 }
 
-// cfgDot displays a CFG in graphviz dot(1) format using dotty(1) co-process.
+// cfgDot displays a CFG in graphviz dot(1) format using dotty(1) co-process
 func (n *node) cfgDot(out io.Writer) {
 	fmt.Fprintf(out, "digraph cfg {\n")
 	n.Walk(nil, func(n *node) {
@@ -66,7 +66,7 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-// dotWriter returns an output stream to a dot(1) co-process where to write data in .dot format.
+// dotWriter returns an output stream to a dot(1) co-process where to write data in .dot format
 func dotWriter(dotCmd string) io.WriteCloser {
 	if dotCmd == "" {
 		return nopCloser{ioutil.Discard}

@@ -1,21 +1,15 @@
 package interp
 
-import (
-	"path/filepath"
-	"reflect"
-)
+import "reflect"
 
 // gta performs a global types analysis on the AST, registering types,
 // variables and functions symbols at package level, prior to CFG.
 // All function bodies are skipped. GTA is necessary to handle out of
 // order declarations and multiple source files packages.
-// rpath is the relative path to the directory containing the source for the package.
-func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, error) {
-	sc := interp.initScopePkg(importPath)
+func (interp *Interpreter) gta(root *node, rpath, pkgID string) ([]*node, error) {
+	sc := interp.initScopePkg(pkgID)
 	var err error
 	var revisit []*node
-
-	baseName := filepath.Base(interp.fset.Position(root.pos).Filename)
 
 	root.Walk(func(n *node) bool {
 		if err != nil {
@@ -25,7 +19,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 		case constDecl:
 			// Early parse of constDecl subtree, to compute all constant
 			// values which may be used in further declarations.
-			if _, err = interp.cfg(n, importPath); err != nil {
+			if _, err = interp.cfg(n, pkgID); err != nil {
 				// No error processing here, to allow recovery in subtree nodes.
 				err = nil
 			}
@@ -53,7 +47,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 				dest, src := n.child[i], n.child[sbase+i]
 				val := reflect.ValueOf(sc.iota)
 				if n.anc.kind == constDecl {
-					if _, err2 := interp.cfg(n, importPath); err2 != nil {
+					if _, err2 := interp.cfg(n, pkgID); err2 != nil {
 						// Constant value can not be computed yet.
 						// Come back when child dependencies are known.
 						revisit = append(revisit, n)
@@ -79,8 +73,8 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 				if typ.isBinMethod {
 					typ = &itype{cat: valueT, rtype: typ.methodCallType(), isBinMethod: true, scope: sc}
 				}
-				if sc.sym[dest.ident] == nil || sc.sym[dest.ident].typ.incomplete {
-					sc.sym[dest.ident] = &symbol{kind: varSym, global: true, index: sc.add(typ), typ: typ, rval: val, node: n}
+				if sc.sym[dest.ident] == nil {
+					sc.sym[dest.ident] = &symbol{kind: varSym, global: true, index: sc.add(typ), typ: typ, rval: val}
 				}
 				if n.anc.kind == constDecl {
 					sc.sym[dest.ident].kind = constSym
@@ -109,34 +103,17 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 				}
 			}
 			for _, c := range n.child[:l] {
-				asImportName := filepath.Join(c.ident, baseName)
-				sym, exists := sc.sym[asImportName]
-				if !exists {
-					sc.sym[c.ident] = &symbol{index: sc.add(n.typ), kind: varSym, global: true, typ: n.typ, node: n}
-					continue
-				}
-				c.level = globalFrame
-
-				// redeclaration error
-				if sym.typ.node != nil && sym.typ.node.anc != nil {
-					prevDecl := n.interp.fset.Position(sym.typ.node.anc.pos)
-					err = n.cfgErrorf("%s redeclared in this block\n\tprevious declaration at %v", c.ident, prevDecl)
-					return false
-				}
-				err = n.cfgErrorf("%s redeclared in this block", c.ident)
-				return false
+				sc.sym[c.ident] = &symbol{index: sc.add(n.typ), kind: varSym, global: true, typ: n.typ}
 			}
 
 		case funcDecl:
 			if n.typ, err = nodeType(interp, sc, n.child[2]); err != nil {
 				return false
 			}
-			ident := n.child[1].ident
-			switch {
-			case isMethod(n):
+			if isMethod(n) {
 				// Add a method symbol in the receiver type name space
 				var rcvrtype *itype
-				n.ident = ident
+				n.ident = n.child[1].ident
 				rcvr := n.child[0].child[0]
 				rtn := rcvr.lastChild()
 				typeName := rtn.ident
@@ -146,7 +123,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 					elementType := sc.getType(typeName)
 					if elementType == nil {
 						// Add type if necessary, so method can be registered
-						sc.sym[typeName] = &symbol{kind: typeSym, typ: &itype{name: typeName, path: importPath, incomplete: true, node: rtn.child[0], scope: sc}}
+						sc.sym[typeName] = &symbol{kind: typeSym, typ: &itype{name: typeName, path: rpath, incomplete: true, node: rtn.child[0], scope: sc}}
 						elementType = sc.sym[typeName].typ
 					}
 					rcvrtype = &itype{cat: ptrT, val: elementType, incomplete: elementType.incomplete, node: rtn, scope: sc}
@@ -155,22 +132,14 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 					rcvrtype = sc.getType(typeName)
 					if rcvrtype == nil {
 						// Add type if necessary, so method can be registered
-						sc.sym[typeName] = &symbol{kind: typeSym, typ: &itype{name: typeName, path: importPath, incomplete: true, node: rtn, scope: sc}}
+						sc.sym[typeName] = &symbol{kind: typeSym, typ: &itype{name: typeName, path: rpath, incomplete: true, node: rtn, scope: sc}}
 						rcvrtype = sc.sym[typeName].typ
 					}
 				}
 				rcvrtype.method = append(rcvrtype.method, n)
 				n.child[0].child[0].lastChild().typ = rcvrtype
-			case ident == "init":
-				// init functions do not get declared as per the Go spec.
-			default:
-				asImportName := filepath.Join(ident, baseName)
-				if _, exists := sc.sym[asImportName]; exists {
-					// redeclaration error
-					err = n.cfgErrorf("%s redeclared in this block", ident)
-					return false
-				}
-				// Add a function symbol in the package name space except for init
+			} else {
+				// Add a function symbol in the package name space
 				sc.sym[n.child[1].ident] = &symbol{kind: funcSym, typ: n.typ, node: n, index: -1}
 			}
 			if !n.typ.isComplete() {
@@ -181,10 +150,10 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 		case importSpec:
 			var name, ipath string
 			if len(n.child) == 2 {
-				ipath = constToString(n.child[1].rval)
+				ipath = n.child[1].rval.String()
 				name = n.child[0].ident
 			} else {
-				ipath = constToString(n.child[0].rval)
+				ipath = n.child[0].rval.String()
 			}
 			// Try to import a binary package first, or a source package
 			var pkgName string
@@ -203,21 +172,10 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 					if name == "" {
 						name = identifier.FindString(ipath)
 					}
-					// imports of a same package are all mapped in the same scope, so we cannot just
-					// map them by their names, otherwise we could have collisions from same-name
-					// imports in different source files of the same package. Therefore, we suffix
-					// the key with the basename of the source file.
-					name = filepath.Join(name, baseName)
-					if _, exists := sc.sym[name]; !exists {
-						sc.sym[name] = &symbol{kind: pkgSym, typ: &itype{cat: binPkgT, path: ipath, scope: sc}}
-						break
-					}
 
-					// redeclaration error. Not caught by the parser.
-					err = n.cfgErrorf("%s redeclared in this block", name)
-					return false
+					sc.sym[name] = &symbol{kind: pkgSym, typ: &itype{cat: binPkgT, path: ipath, scope: sc}}
 				}
-			} else if pkgName, err = interp.importSrc(rpath, ipath, NoTest); err == nil {
+			} else if pkgName, err = interp.importSrc(rpath, ipath); err == nil {
 				sc.types = interp.universe.types
 				switch name {
 				case "_": // no import of symbols
@@ -231,15 +189,8 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 					if name == "" {
 						name = pkgName
 					}
-					name = filepath.Join(name, baseName)
-					if _, exists := sc.sym[name]; !exists {
-						sc.sym[name] = &symbol{kind: pkgSym, typ: &itype{cat: srcPkgT, path: ipath, scope: sc}}
-						break
-					}
 
-					// redeclaration error
-					err = n.cfgErrorf("%s redeclared as imported package name", name)
-					return false
+					sc.sym[name] = &symbol{kind: pkgSym, typ: &itype{cat: srcPkgT, path: ipath, scope: sc}}
 				}
 			} else {
 				err = n.cfgErrorf("import %q error: %v", ipath, err)
@@ -249,39 +200,21 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 			typeName := n.child[0].ident
 			var typ *itype
 			if typ, err = nodeType(interp, sc, n.child[1]); err != nil {
-				err = nil
-				revisit = append(revisit, n)
 				return false
 			}
-
-			switch n.child[1].kind {
-			case identExpr, selectorExpr:
-				n.typ = &itype{cat: aliasT, val: typ, name: typeName, path: importPath, field: typ.field, incomplete: typ.incomplete, scope: sc, node: n.child[0]}
+			if n.child[1].kind == identExpr {
+				n.typ = &itype{cat: aliasT, val: typ, name: typeName, path: rpath, field: typ.field, incomplete: typ.incomplete, scope: sc, node: n.child[0]}
 				copy(n.typ.method, typ.method)
-			default:
+			} else {
 				n.typ = typ
 				n.typ.name = typeName
-				n.typ.path = importPath
+				n.typ.path = rpath
 			}
-
-			asImportName := filepath.Join(typeName, baseName)
-			if _, exists := sc.sym[asImportName]; exists {
-				// redeclaration error
-				err = n.cfgErrorf("%s redeclared in this block", typeName)
-				return false
-			}
-			sym, exists := sc.sym[typeName]
-			if !exists {
+			// Type may be already declared for a receiver in a method function
+			if sc.sym[typeName] == nil {
 				sc.sym[typeName] = &symbol{kind: typeSym}
 			} else {
-				if sym.typ != nil && (len(sym.typ.method) > 0) {
-					// Type has already been seen as a receiver in a method function
-					n.typ.method = append(n.typ.method, sym.typ.method...)
-				} else {
-					// TODO(mpl): figure out how to detect redeclarations without breaking type aliases.
-					// Allow redeclarations for now.
-					sc.sym[typeName] = &symbol{kind: typeSym}
-				}
+				n.typ.method = append(n.typ.method, sc.sym[typeName].typ.method...)
 			}
 			sc.sym[typeName].typ = n.typ
 			if !n.typ.isComplete() {
@@ -299,11 +232,11 @@ func (interp *Interpreter) gta(root *node, rpath, importPath string) ([]*node, e
 }
 
 // gtaRetry (re)applies gta until all global constants and types are defined.
-func (interp *Interpreter) gtaRetry(nodes []*node, importPath string) error {
+func (interp *Interpreter) gtaRetry(nodes []*node, rpath, pkgID string) error {
 	revisit := []*node{}
 	for {
 		for _, n := range nodes {
-			list, err := interp.gta(n, importPath, importPath)
+			list, err := interp.gta(n, rpath, pkgID)
 			if err != nil {
 				return err
 			}

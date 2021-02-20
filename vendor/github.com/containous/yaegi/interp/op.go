@@ -20,7 +20,7 @@ func add(n *node) {
 	case reflect.String:
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValue(c1)
 			n.exec = func(f *frame) bltn {
 				dest(f).SetString(s0 + v1(f).String())
@@ -28,7 +28,7 @@ func add(n *node) {
 			}
 		case c1.rval.IsValid():
 			v0 := genValue(c0)
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			n.exec = func(f *frame) bltn {
 				dest(f).SetString(v0(f).String() + s1)
 				return next
@@ -165,7 +165,7 @@ func addConst(n *node) {
 		v := constant.BinaryOp(vConstantValue(v0), token.ADD, vConstantValue(v1))
 		n.rval.Set(reflect.ValueOf(v))
 	case isString(t):
-		n.rval.SetString(vString(v0) + vString(v1))
+		n.rval.SetString(v0.String() + v1.String())
 	case isComplex(t):
 		n.rval.SetComplex(vComplex(v0) + vComplex(v1))
 	case isFloat(t):
@@ -701,16 +701,7 @@ func quoConst(n *node) {
 	n.rval = reflect.New(t).Elem()
 	switch {
 	case isConst:
-		var operator token.Token
-		// When the result of the operation is expected to be an int (because both
-		// operands are ints), we want to force the type of the whole expression to be an
-		// int (and not a float), which is achieved by using the QUO_ASSIGN operator.
-		if n.typ.untyped && isInt(n.typ.rtype) {
-			operator = token.QUO_ASSIGN
-		} else {
-			operator = token.QUO
-		}
-		v := constant.BinaryOp(vConstantValue(v0), operator, vConstantValue(v1))
+		v := constant.BinaryOp(vConstantValue(v0), token.QUO, vConstantValue(v1))
 		n.rval.Set(reflect.ValueOf(v))
 	case isComplex(t):
 		n.rval.SetComplex(vComplex(v0) / vComplex(v1))
@@ -876,7 +867,7 @@ func shl(n *node) {
 
 func shlConst(n *node) {
 	v0, v1 := n.child[0].rval, n.child[1].rval
-	isConst := (v0.IsValid() && isConstantValue(v0.Type()))
+	isConst := (v0.IsValid() && isConstantValue(v0.Type())) && (v1.IsValid() && isConstantValue(v1.Type()))
 	t := n.typ.rtype
 	if isConst {
 		t = constVal
@@ -884,7 +875,8 @@ func shlConst(n *node) {
 	n.rval = reflect.New(t).Elem()
 	switch {
 	case isConst:
-		v := constant.Shift(vConstantValue(v0), token.SHL, uint(vUint(v1)))
+		s, _ := constant.Uint64Val(vConstantValue(v1))
+		v := constant.Shift(vConstantValue(v0), token.SHL, uint(s))
 		n.rval.Set(reflect.ValueOf(v))
 	case isUint(t):
 		n.rval.SetUint(vUint(v0) << vUint(v1))
@@ -961,7 +953,7 @@ func shr(n *node) {
 
 func shrConst(n *node) {
 	v0, v1 := n.child[0].rval, n.child[1].rval
-	isConst := (v0.IsValid() && isConstantValue(v0.Type()))
+	isConst := (v0.IsValid() && isConstantValue(v0.Type())) && (v1.IsValid() && isConstantValue(v1.Type()))
 	t := n.typ.rtype
 	if isConst {
 		t = constVal
@@ -969,7 +961,8 @@ func shrConst(n *node) {
 	n.rval = reflect.New(t).Elem()
 	switch {
 	case isConst:
-		v := constant.Shift(vConstantValue(v0), token.SHR, uint(vUint(v1)))
+		s, _ := constant.Uint64Val(vConstantValue(v1))
+		v := constant.Shift(vConstantValue(v0), token.SHR, uint(s))
 		n.rval.Set(reflect.ValueOf(v))
 	case isUint(t):
 		n.rval.SetUint(vUint(v0) >> vUint(v1))
@@ -1215,7 +1208,7 @@ func addAssign(n *node) {
 		switch typ.Kind() {
 		case reflect.String:
 			v0 := genValueString(c0)
-			v1 := vString(c1.rval)
+			v1 := c1.rval.String()
 			n.exec = func(f *frame) bltn {
 				v, s := v0(f)
 				v.SetString(s + v1)
@@ -1966,10 +1959,10 @@ func bitNotConst(n *node) {
 	case isConst:
 		v := constant.UnaryOp(token.XOR, vConstantValue(v0), 0)
 		n.rval.Set(reflect.ValueOf(v))
-	case isUint(t):
-		n.rval.SetUint(^v0.Uint())
 	case isInt(t):
 		n.rval.SetInt(^v0.Int())
+	case isUint(t):
+		n.rval.SetUint(^v0.Uint())
 	}
 }
 
@@ -1985,10 +1978,10 @@ func negConst(n *node) {
 	case isConst:
 		v := constant.UnaryOp(token.SUB, vConstantValue(v0), 0)
 		n.rval.Set(reflect.ValueOf(v))
-	case isUint(t):
-		n.rval.SetUint(-v0.Uint())
 	case isInt(t):
 		n.rval.SetInt(-v0.Int())
+	case isUint(t):
+		n.rval.SetUint(-v0.Uint())
 	case isFloat(t):
 		n.rval.SetFloat(-v0.Float())
 	case isComplex(t):
@@ -2024,10 +2017,10 @@ func posConst(n *node) {
 	case isConst:
 		v := constant.UnaryOp(token.ADD, vConstantValue(v0), 0)
 		n.rval.Set(reflect.ValueOf(v))
-	case isUint(t):
-		n.rval.SetUint(+v0.Uint())
 	case isInt(t):
 		n.rval.SetInt(+v0.Int())
+	case isUint(t):
+		n.rval.SetUint(+v0.Uint())
 	case isFloat(t):
 		n.rval.SetFloat(+v0.Float())
 	case isComplex(t):
@@ -2040,85 +2033,11 @@ func equal(n *node) {
 	dest := genValueOutput(n, reflect.TypeOf(true))
 	c0, c1 := n.child[0], n.child[1]
 
-	if c0.typ.cat == aliasT || c1.typ.cat == aliasT {
-		switch {
-		case c0.rval.IsValid():
-			i0 := c0.rval.Interface()
-			v1 := genValue(c1)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i1 := v1(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i1 := v1(f).Interface()
-					dest(f).SetBool(i0 == i1)
-					return tnext
-				}
-			}
-		case c1.rval.IsValid():
-			i1 := c1.rval.Interface()
-			v0 := genValue(c0)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					dest(f).SetBool(i0 == i1)
-					return tnext
-				}
-			}
-		default:
-			v0 := genValue(c0)
-			v1 := genValue(c1)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					i1 := v1(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					i1 := v1(f).Interface()
-					dest(f).SetBool(i0 == i1)
-					return tnext
-				}
-			}
-		}
-		return
-	}
-
 	switch t0, t1 := c0.typ.TypeOf(), c1.typ.TypeOf(); {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -2139,7 +2058,7 @@ func equal(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -2547,7 +2466,7 @@ func greater(n *node) {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -2568,7 +2487,7 @@ func greater(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -2836,7 +2755,7 @@ func greaterEqual(n *node) {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -2857,7 +2776,7 @@ func greaterEqual(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3125,7 +3044,7 @@ func lower(n *node) {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3146,7 +3065,7 @@ func lower(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3414,7 +3333,7 @@ func lowerEqual(n *node) {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3435,7 +3354,7 @@ func lowerEqual(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3699,85 +3618,11 @@ func notEqual(n *node) {
 	dest := genValueOutput(n, reflect.TypeOf(true))
 	c0, c1 := n.child[0], n.child[1]
 
-	if c0.typ.cat == aliasT || c1.typ.cat == aliasT {
-		switch {
-		case c0.rval.IsValid():
-			i0 := c0.rval.Interface()
-			v1 := genValue(c1)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i1 := v1(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i1 := v1(f).Interface()
-					dest(f).SetBool(i0 != i1)
-					return tnext
-				}
-			}
-		case c1.rval.IsValid():
-			i1 := c1.rval.Interface()
-			v0 := genValue(c0)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					dest(f).SetBool(i0 != i1)
-					return tnext
-				}
-			}
-		default:
-			v0 := genValue(c0)
-			v1 := genValue(c1)
-			if n.fnext != nil {
-				fnext := getExec(n.fnext)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					i1 := v1(f).Interface()
-					if i0 != i1 {
-						dest(f).SetBool(true)
-						return tnext
-					}
-					dest(f).SetBool(false)
-					return fnext
-				}
-			} else {
-				dest := genValue(n)
-				n.exec = func(f *frame) bltn {
-					i0 := v0(f).Interface()
-					i1 := v1(f).Interface()
-					dest(f).SetBool(i0 != i1)
-					return tnext
-				}
-			}
-		}
-		return
-	}
-
 	switch t0, t1 := c0.typ.TypeOf(), c1.typ.TypeOf(); {
 	case isString(t0) || isString(t1):
 		switch {
 		case c0.rval.IsValid():
-			s0 := vString(c0.rval)
+			s0 := c0.rval.String()
 			v1 := genValueString(n.child[1])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)
@@ -3798,7 +3643,7 @@ func notEqual(n *node) {
 				}
 			}
 		case c1.rval.IsValid():
-			s1 := vString(c1.rval)
+			s1 := c1.rval.String()
 			v0 := genValueString(n.child[0])
 			if n.fnext != nil {
 				fnext := getExec(n.fnext)

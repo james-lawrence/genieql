@@ -1,7 +1,6 @@
 package interp
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/constant"
@@ -10,14 +9,13 @@ import (
 	"go/token"
 	"reflect"
 	"strconv"
-	"strings"
 	"sync/atomic"
 )
 
-// nkind defines the kind of AST, i.e. the grammar category.
+// nkind defines the kind of AST, i.e. the grammar category
 type nkind uint
 
-// Node kinds for the go language.
+// Node kinds for the go language
 const (
 	undefNode nkind = iota
 	addressExpr
@@ -33,8 +31,6 @@ const (
 	caseBody
 	caseClause
 	chanType
-	chanTypeSend
-	chanTypeRecv
 	commClause
 	commClauseDefault
 	compositeLitExpr
@@ -51,14 +47,12 @@ const (
 	fieldList
 	fileStmt
 	forStmt0     // for {}
-	forStmt1     // for init; ; {}
-	forStmt2     // for cond {}
-	forStmt3     // for init; cond; {}
-	forStmt4     // for ; ; post {}
-	forStmt5     // for ; cond; post {}
-	forStmt6     // for init; ; post {}
-	forStmt7     // for init; cond; post {}
-	forRangeStmt // for range {}
+	forStmt1     // for cond {}
+	forStmt2     // for init; cond; {}
+	forStmt3     // for ; cond; post {}
+	forStmt3a    // for init; ; post {}
+	forStmt4     // for init; cond; post {}
+	forRangeStmt // for range
 	funcDecl
 	funcLit
 	funcType
@@ -115,8 +109,6 @@ var kinds = [...]string{
 	caseBody:          "caseBody",
 	caseClause:        "caseClause",
 	chanType:          "chanType",
-	chanTypeSend:      "chanTypeSend",
-	chanTypeRecv:      "chanTypeRecv",
 	commClause:        "commClause",
 	commClauseDefault: "commClauseDefault",
 	compositeLitExpr:  "compositeLitExpr",
@@ -136,10 +128,8 @@ var kinds = [...]string{
 	forStmt1:          "forStmt1",
 	forStmt2:          "forStmt2",
 	forStmt3:          "forStmt3",
+	forStmt3a:         "forStmt3a",
 	forStmt4:          "forStmt4",
-	forStmt5:          "forStmt5",
-	forStmt6:          "forStmt6",
-	forStmt7:          "forStmt7",
 	forRangeStmt:      "forRangeStmt",
 	funcDecl:          "funcDecl",
 	funcType:          "funcType",
@@ -189,15 +179,13 @@ func (k nkind) String() string {
 	return "nKind(" + strconv.Itoa(int(k)) + ")"
 }
 
-// astError represents an error during AST build stage.
+// astError represents an error during AST build stage
 type astError error
 
-// action defines the node action to perform at execution.
+// action defines the node action to perform at execution
 type action uint
 
-// Node actions for the go language.
-// It is important for type checking that *Assign directly
-// follows it non-assign counterpart.
+// Node actions for the go language
 const (
 	aNop action = iota
 	aAddr
@@ -327,15 +315,6 @@ func (a action) String() string {
 	return "Action(" + strconv.Itoa(int(a)) + ")"
 }
 
-func isAssignAction(a action) bool {
-	switch a {
-	case aAddAssign, aAndAssign, aAndNotAssign, aMulAssign, aOrAssign,
-		aQuoAssign, aRemAssign, aShlAssign, aShrAssign, aSubAssign, aXorAssign:
-		return true
-	}
-	return false
-}
-
 func (interp *Interpreter) firstToken(src string) token.Token {
 	var s scanner.Scanner
 	file := interp.fset.AddFile("", interp.fset.Base(), len(src))
@@ -345,48 +324,30 @@ func (interp *Interpreter) firstToken(src string) token.Token {
 	return tok
 }
 
-func ignoreError(err error, src string) bool {
-	se, ok := err.(scanner.ErrorList)
-	if !ok {
-		return false
-	}
-	if len(se) == 0 {
-		return false
-	}
-	return ignoreScannerError(se[0], src)
-}
-
-func wrapInMain(src string) string {
-	return fmt.Sprintf("package main; func main() {%s}", src)
-}
-
 // Note: no type analysis is performed at this stage, it is done in pre-order
-// processing of CFG, in order to accommodate forward type declarations.
+// processing of CFG, in order to accommodate forward type declarations
 
 // ast parses src string containing Go code and generates the corresponding AST.
 // The package name and the AST root node are returned.
-// The given name is used to set the filename of the relevant source file in the
-// interpreter's FileSet.
-func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error) {
+func (interp *Interpreter) ast(src, name string) (string, *node, error) {
+	inRepl := name == ""
 	var inFunc bool
-	mode := parser.DeclarationErrors
+	var mode parser.Mode
 
 	// Allow incremental parsing of declarations or statements, by inserting
 	// them in a pseudo file package or function. Those statements or
-	// declarations will be always evaluated in the global scope.
-	var tok token.Token
-	if inc {
-		tok = interp.firstToken(src)
-		switch tok {
+	// declarations will be always evaluated in the global scope
+	if inRepl {
+		switch interp.firstToken(src) {
 		case token.PACKAGE:
-			// nothing to do.
+			// nothing to do
 		case token.CONST, token.FUNC, token.IMPORT, token.TYPE, token.VAR:
 			src = "package main;" + src
 		default:
 			inFunc = true
-			src = wrapInMain(src)
+			src = "package main; func main() {" + src + "}"
 		}
-		// Parse comments in REPL mode, to allow tag setting.
+		// Parse comments in REPL mode, to allow tag setting
 		mode |= parser.ParseComments
 	}
 
@@ -396,22 +357,7 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 
 	f, err := parser.ParseFile(interp.fset, name, src, mode)
 	if err != nil {
-		// only retry if we're on an expression/statement about a func
-		if !inc || tok != token.FUNC {
-			return "", nil, err
-		}
-		// do not bother retrying if we know it's an error we're going to ignore later on.
-		if ignoreError(err, src) {
-			return "", nil, err
-		}
-		// do not lose initial error, in case retrying fails.
-		initialError := err
-		// retry with default source code "wrapping", in the main function scope.
-		src := wrapInMain(strings.TrimPrefix(src, "package main;"))
-		f, err = parser.ParseFile(interp.fset, name, src, mode)
-		if err != nil {
-			return "", nil, initialError
-		}
+		return "", nil, err
 	}
 
 	setYaegiTags(&interp.context, f.Comments)
@@ -526,11 +472,19 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 			n.ident = a.Value
 			switch a.Kind {
 			case token.CHAR:
-				// Char cannot be converted to a const here as we cannot tell the type.
 				v, _, _, _ := strconv.UnquoteChar(a.Value[1:len(a.Value)-1], '\'')
 				n.rval = reflect.ValueOf(v)
-			case token.FLOAT, token.IMAG, token.INT, token.STRING:
+			case token.FLOAT:
 				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
+				n.rval = reflect.ValueOf(v)
+			case token.IMAG:
+				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
+				n.rval = reflect.ValueOf(v)
+			case token.INT:
+				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
+				n.rval = reflect.ValueOf(v)
+			case token.STRING:
+				v, _ := strconv.Unquote(a.Value)
 				n.rval = reflect.ValueOf(v)
 			}
 			st.push(n, nod)
@@ -611,14 +565,7 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 			st.push(addChild(&root, anc, pos, caseClause, aCase), nod)
 
 		case *ast.ChanType:
-			switch a.Dir {
-			case ast.SEND | ast.RECV:
-				st.push(addChild(&root, anc, pos, chanType, aNop), nod)
-			case ast.SEND:
-				st.push(addChild(&root, anc, pos, chanTypeSend, aNop), nod)
-			case ast.RECV:
-				st.push(addChild(&root, anc, pos, chanTypeRecv, aNop), nod)
-			}
+			st.push(addChild(&root, anc, pos, chanType, aNop), nod)
 
 		case *ast.CommClause:
 			kind := commClause
@@ -658,23 +605,23 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 		case *ast.ForStmt:
 			// Disambiguate variants of FOR statements with a node kind per variant
 			var kind nkind
-			switch {
-			case a.Cond == nil && a.Init == nil && a.Post == nil:
-				kind = forStmt0
-			case a.Cond == nil && a.Init != nil && a.Post == nil:
-				kind = forStmt1
-			case a.Cond != nil && a.Init == nil && a.Post == nil:
-				kind = forStmt2
-			case a.Cond != nil && a.Init != nil && a.Post == nil:
-				kind = forStmt3
-			case a.Cond == nil && a.Init == nil && a.Post != nil:
-				kind = forStmt4
-			case a.Cond != nil && a.Init == nil && a.Post != nil:
-				kind = forStmt5
-			case a.Cond == nil && a.Init != nil && a.Post != nil:
-				kind = forStmt6
-			case a.Cond != nil && a.Init != nil && a.Post != nil:
-				kind = forStmt7
+			if a.Cond == nil {
+				if a.Init != nil && a.Post != nil {
+					kind = forStmt3a
+				} else {
+					kind = forStmt0
+				}
+			} else {
+				switch {
+				case a.Init == nil && a.Post == nil:
+					kind = forStmt1
+				case a.Init != nil && a.Post == nil:
+					kind = forStmt2
+				case a.Init == nil && a.Post != nil:
+					kind = forStmt3
+				default:
+					kind = forStmt4
+				}
 			}
 			st.push(addChild(&root, anc, pos, kind, aNop), nod)
 
@@ -836,7 +783,7 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 			}
 
 		case *ast.UnaryExpr:
-			kind := unaryExpr
+			var kind = unaryExpr
 			var act action
 			switch a.Op {
 			case token.ADD:
@@ -890,12 +837,9 @@ func (interp *Interpreter) ast(src, name string, inc bool) (string, *node, error
 	})
 	if inFunc {
 		// Incremental parsing: statements were inserted in a pseudo function.
-		// Set root to function body so its statements are evaluated in global scope.
+		// Set root to function body so its statements are evaluated in global scope
 		root = root.child[1].child[3]
 		root.anc = nil
-	}
-	if pkgName == "" {
-		return "", root, errors.New("no package name found")
 	}
 	return pkgName, root, err
 }
@@ -926,7 +870,7 @@ func (s *nodestack) top() astNode {
 	return astNode{}
 }
 
-// dup returns a duplicated node subtree.
+// dup returns a duplicated node subtree
 func (interp *Interpreter) dup(nod, anc *node) *node {
 	nindex := atomic.AddInt64(&interp.nindex, 1)
 	n := *nod
