@@ -25,5 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
 
-// replace github.com/containous/yaegi => github.com/james-lawrence/yaegi v0.8.9-0.20210220084843-ca146ece0f2f
-replace github.com/containous/yaegi => ../yaegi
+replace github.com/containous/yaegi => github.com/james-lawrence/yaegi v0.8.8-modules-enh
