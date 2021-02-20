@@ -27,11 +27,11 @@ const pgxDefaultEncode = `func() {
 	}
 }`
 
-// {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+// https://stackoverflow.com/questions/25065055/what-is-the-maximum-time-time-in-go
 const pgxTimeDecode = `func() {
 	switch {{ .From | expr }}.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
