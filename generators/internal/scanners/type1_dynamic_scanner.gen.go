@@ -118,7 +118,7 @@ func (t type1ScannerDynamic) Scan(arg0 *Type1) error {
 		case cn6:
 			switch c6.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				arg0.Field7 = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -131,7 +131,7 @@ func (t type1ScannerDynamic) Scan(arg0 *Type1) error {
 		case cn7:
 			switch c7.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				arg0.Field8 = &tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)

@@ -140,7 +140,7 @@ func (t timestampScannerStatic) Scan(sp0 *Timestamp) error {
 
 	switch c0.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.Timestamp = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -153,7 +153,7 @@ func (t timestampScannerStatic) Scan(sp0 *Timestamp) error {
 
 	switch c1.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.Timestamptz = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -166,7 +166,7 @@ func (t timestampScannerStatic) Scan(sp0 *Timestamp) error {
 
 	switch c2.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestamptzNullable = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -235,7 +235,7 @@ func (t TimestampScannerStaticRow) Scan(sp0 *Timestamp) error {
 
 	switch c0.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.Timestamp = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -248,7 +248,7 @@ func (t TimestampScannerStaticRow) Scan(sp0 *Timestamp) error {
 
 	switch c1.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.Timestamptz = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -261,7 +261,7 @@ func (t TimestampScannerStaticRow) Scan(sp0 *Timestamp) error {
 
 	switch c2.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestamptzNullable = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -351,7 +351,7 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 		case cn0:
 			switch c0.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				sp0.Timestamp = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -364,7 +364,7 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 		case cn1:
 			switch c1.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				sp0.Timestamptz = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -377,7 +377,7 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 		case cn2:
 			switch c2.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				sp0.TimestamptzNullable = &tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -490,7 +490,7 @@ func (t customScannerStatic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 
 	switch c3.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		*t1 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -567,7 +567,7 @@ func (t CustomScannerStaticRow) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error
 
 	switch c3.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		*t1 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -665,7 +665,7 @@ func (t customScannerDynamic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 		case cn3:
 			switch c3.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				*t1 = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -876,7 +876,7 @@ func (t example1ScannerStatic) Scan(sp0 *Example1) error {
 
 	switch c23.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1063,7 +1063,7 @@ func (t Example1ScannerStaticRow) Scan(sp0 *Example1) error {
 
 	switch c23.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1337,7 +1337,7 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 		case cn23:
 			switch c23.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				sp0.TimestampField = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1461,7 +1461,7 @@ func (t example2ScannerStatic) Scan(sp0 *Example2) error {
 
 	switch c4.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1553,7 +1553,7 @@ func (t Example2ScannerStaticRow) Scan(sp0 *Example2) error {
 
 	switch c4.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		sp0.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1675,7 +1675,7 @@ func (t example2ScannerDynamic) Scan(sp0 *Example2) error {
 		case cn4:
 			switch c4.InfinityModifier {
 			case pgtype.Infinity:
-				tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				sp0.TimestampField = tmp
 			case pgtype.NegativeInfinity:
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1898,7 +1898,7 @@ func (t combinedScannerStatic) Scan(e1 *Example1, e2 *Example2) error {
 
 	switch c23.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e1.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -1935,7 +1935,7 @@ func (t combinedScannerStatic) Scan(e1 *Example1, e2 *Example2) error {
 
 	switch c30.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e2.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -2129,7 +2129,7 @@ func (t CombinedScannerStaticRow) Scan(e1 *Example1, e2 *Example2) error {
 
 	switch c23.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e1.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -2166,7 +2166,7 @@ func (t CombinedScannerStaticRow) Scan(e1 *Example1, e2 *Example2) error {
 
 	switch c30.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e2.TimestampField = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)

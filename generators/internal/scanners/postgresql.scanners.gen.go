@@ -120,7 +120,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c6.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t1.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -133,7 +133,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c7.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t1.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -174,7 +174,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c15.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t2.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -187,7 +187,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c16.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t2.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -228,7 +228,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c24.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t3.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -241,7 +241,7 @@ func (t comboScannerStatic) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, t3 
 
 	switch c25.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t3.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -352,7 +352,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c6.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t1.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -365,7 +365,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c7.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t1.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -406,7 +406,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c15.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t2.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -419,7 +419,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c16.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t2.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -460,7 +460,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c24.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t3.Field7 = tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
@@ -473,7 +473,7 @@ func (t ComboScannerStaticRow) Scan(t1 *alternate1.Type1, t2 *alternate2.Type1, 
 
 	switch c25.InfinityModifier {
 	case pgtype.Infinity:
-		tmp := time.Unix(math.MaxInt64, math.MaxInt64)
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		t3.Field8 = &tmp
 	case pgtype.NegativeInfinity:
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
