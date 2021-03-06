@@ -529,29 +529,41 @@ func (t *ASTPrinter) Err() error {
 
 // PrintPackage inserts the package and a preface at into the ast.
 func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *build.Package, args []string) error {
-	file := &ast.File{
+	past := &ast.File{
 		Name: &ast.Ident{
 			Name: pkg.Name,
 		},
 	}
 
-	printer.FprintAST(dst, fset, file)
+	printer.FprintAST(dst, fset, past)
+
 	printer.Fprintf(dst, Preface, strings.Join(args, " "))
 
-	// check if executed by go generate
-	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
-		printer.Fprintf(
-			dst,
-			"// invoked by go generate @ %s/%s line %s",
-			os.Getenv("GOPACKAGE"),
-			os.Getenv("GOFILE"),
-			os.Getenv("GOLINE"),
-		)
-	}
+	printer.Fprintf(
+		dst,
+		debuggogen(),
+	)
 
 	printer.Fprintf(dst, "\n\n")
 
 	return errors.Wrap(printer.Err(), "failed to print the package header")
+}
+
+// debuggogen generates an informational string about the details of where go:generate
+// line that is triggered this process is located.
+func debuggogen() string {
+
+	// check if executed by go generate
+	if os.Getenv("GOPACKAGE") == "" && os.Getenv("GOFILE") == "" && os.Getenv("GOLINE") == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"// invoked by go generate @ %s/%s line %s",
+		os.Getenv("GOPACKAGE"),
+		os.Getenv("GOFILE"),
+		os.Getenv("GOLINE"),
+	)
 }
 
 // PrintDebug ...
@@ -560,17 +572,10 @@ func PrintDebug() string {
 		buffer bytes.Buffer
 	)
 
-	if os.Getenv("GOPACKAGE") != "" && os.Getenv("GOFILE") != "" && os.Getenv("GOLINE") != "" {
-		buffer.WriteString(
-			fmt.Sprintf(
-				"invoked by go generate @ %s/%s line %s\n",
-				os.Getenv("GOPACKAGE"),
-				os.Getenv("GOFILE"),
-				os.Getenv("GOLINE"),
-			),
-		)
-	}
-
+	buffer.WriteString(
+		debuggogen(),
+	)
+	buffer.WriteString("\n")
 	buffer.WriteString(strings.Join(os.Args[1:], " "))
 
 	return buffer.String()

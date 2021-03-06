@@ -6,11 +6,115 @@ package bootstrap
 
 import (
 	"fmt"
+	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 	"io"
+	"io/fs"
 	"strings"
 	"text/template"
+
+	"bitbucket.org/jatone/genieql"
 )
+
+type archive interface {
+	ReadDir(name string) ([]fs.DirEntry, error)
+}
+
+func parse(filename string) (fset *token.FileSet, filenode *ast.File, err error) {
+	fset = token.NewFileSet()
+	if filenode, err = parser.ParseFile(fset, filename, nil, parser.ParseComments); err != nil {
+		return fset, filenode, err
+	}
+	return fset, filenode, err
+}
+
+// Transformation to apply to the file.
+type Transformation func(*token.FileSet, *ast.File) error
+
+// TransformRenamePackage rename the package in the given file.
+func TransformRenamePackage(name string) Transformation {
+	return func(fset *token.FileSet, i *ast.File) (err error) {
+		i.Name.Name = name
+		return nil
+	}
+}
+
+// TransformBuildTags add tags to the given file
+func TransformBuildTags(tags ...string) Transformation {
+	return func(fset *token.FileSet, i *ast.File) (err error) {
+		var (
+			comment *ast.CommentGroup
+		)
+
+		// nothing to do.
+		if len(tags) == 0 {
+			return nil
+		}
+
+		for _, comment = range i.Comments {
+			if strings.HasPrefix(comment.Text(), "+build") {
+				break
+			}
+		}
+
+		if comment == nil {
+			comment = &ast.CommentGroup{
+				List: []*ast.Comment{
+					{Slash: i.Pos(), Text: "// +build"},
+				},
+			}
+			i.Comments = append(i.Comments, comment)
+		}
+
+		build := strings.TrimSpace(comment.Text())
+		build = "// " + build + " " + strings.Join(tags, " ")
+		comment.List = []*ast.Comment{
+			{Slash: comment.Pos(), Text: build},
+		}
+
+		return nil
+	}
+}
+
+// Transform the example archive for the given package.
+func Transform(pkg *build.Package, fset *token.FileSet, a fs.FS, transforms ...Transformation) (results map[fs.DirEntry]*ast.File, err error) {
+	results = make(map[fs.DirEntry]*ast.File)
+	err = fs.WalkDir(a, ".", func(path string, d fs.DirEntry, err error) error {
+		var (
+			src      fs.File
+			filenode *ast.File
+		)
+
+		if d.IsDir() && path == "." {
+			return nil
+		}
+
+		if d.IsDir() {
+			return fs.SkipDir
+		}
+
+		if src, err = a.Open(path); err != nil {
+			return err
+		}
+
+		if filenode, err = parser.ParseFile(fset, d.Name(), src, parser.ParseComments); err != nil {
+			return err
+		}
+
+		for _, transform := range transforms {
+			if err = transform(fset, filenode); err != nil {
+				return err
+			}
+		}
+
+		results[d] = filenode
+		return err
+	})
+
+	return results, err
+}
 
 // NewTableStructure builds a file for defining new structures from tables.
 func NewTableStructure(pkg *build.Package) Package {
@@ -149,4 +253,22 @@ package {{.Package.Name}}
 var packageTemplate = template.Must(template.New("").Funcs(defaultFuncsMap).Parse(_packageTemplate))
 var defaultFuncsMap = template.FuncMap{
 	"flattenTags": flattenTags,
+}
+
+// File - used to generate definition files from ast.File.
+type File struct {
+	Tokens    *token.FileSet
+	Package   *build.Package
+	Node      *ast.File
+	BuildTags []string
+}
+
+// Generate - writes the definition file to the provided destination.
+func (t File) Generate(dst io.Writer) error {
+	printer := genieql.ASTPrinter{}
+
+	printer.Fprintf(dst, flattenTags(t.BuildTags))
+	printer.FprintAST(dst, t.Tokens, t.Node)
+
+	return printer.Err()
 }

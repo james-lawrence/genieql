@@ -1,89 +1,87 @@
+// +build go1.16
+
 package main
 
 import (
+	"go/ast"
 	"go/build"
+	"go/token"
+	"io/fs"
 	"log"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	pbootstrap "bitbucket.org/jatone/genieql/bootstrap"
+	bstrap "bitbucket.org/jatone/genieql/bootstrap"
+	"bitbucket.org/jatone/genieql/bootstrap/autocompile"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/internal/x/errorsx"
 
 	"github.com/alecthomas/kingpin"
 )
 
 type bootstrapPackage struct {
 	buildInfo
-	definitionFileNames struct {
-		TableStructures string
-		Functions       string
-		Scanners        string
-		BatchInserts    string
-		GoGenerate      string
-	}
+	rename      map[string]string
 	importPaths []string
+	buildTags   []string
 }
 
 func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
+	rename := func(s string) string {
+		if u, ok := t.rename[s]; ok {
+			return u
+		}
+
+		return s
+	}
+
 	for _, importPath := range t.importPaths {
 		var (
-			err error
-			pkg *build.Package
+			err       error
+			pkg       *build.Package
+			templates map[fs.DirEntry]*ast.File
+			tokens    = token.NewFileSet()
 		)
-		log.Println("importPath", importPath)
+
+		transforms := []bstrap.Transformation{
+			bstrap.TransformRenamePackage(pkg.Name),
+			bstrap.TransformBuildTags(t.buildTags...),
+		}
+
 		if pkg, err = genieql.LocatePackage(importPath, build.Default, nil); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue
 		}
 
-		cmd.WriteStdoutOrFile(
-			printGenerator{delegate: pbootstrap.NewTableStructure(pkg)},
-			t.definitionFileNames.TableStructures,
-			cmd.DefaultWriteFlags,
-		)
+		if templates, err = bstrap.Transform(pkg, tokens, autocompile.Archive, transforms...); err != nil {
+			log.Println("failed to bootstrap package", importPath, err)
+			continue
+		}
 
-		cmd.WriteStdoutOrFile(
-			printGenerator{delegate: pbootstrap.NewScanners(pkg)},
-			t.definitionFileNames.Scanners,
-			cmd.DefaultWriteFlags,
-		)
+		for info, tmp := range templates {
+			err = errorsx.Compact(err, cmd.WriteStdoutOrFile(
+				printGenerator{delegate: bstrap.File{Tokens: tokens, Package: pkg, Node: tmp}},
+				filepath.Join(pkg.Dir, rename(info.Name())),
+				cmd.DefaultWriteFlags,
+			))
+		}
 
-		cmd.WriteStdoutOrFile(
-			printGenerator{delegate: pbootstrap.NewFunctions(pkg)},
-			t.definitionFileNames.Functions,
-			cmd.DefaultWriteFlags,
-		)
-
-		cmd.WriteStdoutOrFile(
-			printGenerator{delegate: pbootstrap.NewInsertBatch(pkg)},
-			t.definitionFileNames.BatchInserts,
-			cmd.DefaultWriteFlags,
-		)
-
-		cmd.WriteStdoutOrFile(
-			printGenerator{delegate: pbootstrap.NewGoGenerateDefinitions(pkg)},
-			t.definitionFileNames.GoGenerate,
-			cmd.DefaultWriteFlags,
-		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (t *bootstrapPackage) configure(bootstrap *kingpin.CmdClause) *kingpin.CmdClause {
-	bootstrap.Flag("tableStructureDefinitionsOutput", "filename for table structures definitions").
-		Default("00_structs.table.genieql.go").StringVar(&t.definitionFileNames.TableStructures)
-	bootstrap.Flag("scannerDefinitionsOutput", "filename for scanner definitions").
-		Default("01_scanners.genieql.go").StringVar(&t.definitionFileNames.Scanners)
-	bootstrap.Flag("functionDefinitionsOutput", "filename for functions definitions").
-		Default("02_functions.genieql.go").StringVar(&t.definitionFileNames.Functions)
-	bootstrap.Flag("batchInsertDefinitionsOutput", "filename for batch insert definitions").
-		Default("03_insert.batch.genieql.go").StringVar(&t.definitionFileNames.BatchInserts)
-	bootstrap.Flag("goGenerateOutput", "filename for the go generate file").
-		Default("10_genieql.go").StringVar(&t.definitionFileNames.GoGenerate)
-	bootstrap.Arg("package", "import paths where boilerplate configuration files will be generated").
+func (t *bootstrapPackage) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
+	t.rename = make(map[string]string)
+	cmd.Flag("rename", "rename a file from the archive").StringMapVar(&t.rename)
+	cmd.Flag("btag", "include additional build tags to the generated files").Hidden().StringsVar(&t.buildTags)
+	cmd.Arg("package", "import paths where boilerplate configuration files will be generated (--rename=genieql.cmd.go=bar.go)").
 		Default(t.CurrentPackageImport()).StringsVar(&t.importPaths)
 
-	bootstrap.Action(t.Bootstrap)
+	cmd.Action(t.Bootstrap)
 
-	return bootstrap
+	return cmd
 }

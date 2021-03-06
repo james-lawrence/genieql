@@ -38,7 +38,7 @@ func Timestamp(gql genieql.Structure) {
 }
 
 // CustomScanner generates a scanner that consumes the given parameters.
-func CustomScanner(gql genieql.Scanner, output func(i1, i2 int, b1 bool, t1 time.Time)) {}
+func CustomScanner(gql genieql.Scanner, pattern func(i1, i2 int, b1 bool, t1 time.Time)) {}
 
 // Example1Scanner generates a scanner that consumes the given parameters.
 func Example1Scanner(genieql.Scanner, func(Example1)) {}

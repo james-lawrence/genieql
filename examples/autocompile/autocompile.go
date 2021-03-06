@@ -1,6 +1,3 @@
+// Package autocompile provides an example of how to use the genieql interpreter
+// to generate DB code.
 package autocompile
-
-//go:generate genieql auto -o "genieql.gen.go"
-// to invoke:
-// export GOBIN=${HOME}/go/bin
-// go install bitbucket.org/jatone/genieql/cmd/... && go generate ./examples/autocompile/...
