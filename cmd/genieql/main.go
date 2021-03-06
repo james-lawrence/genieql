@@ -58,6 +58,13 @@ func main() {
 		buildInfo: bi,
 	}
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
+	app.Command("version", "print version").Action(func(*kingpin.ParseContext) error {
+		if bi, ok := debug.ReadBuildInfo(); ok {
+			fmt.Println(bi.Main.Version)
+		}
+		return nil
+	})
+
 	app.Flag("verbose", "increase logging").Short('v').Default("0").CounterVar(&bi.Verbosity)
 
 	astcli.configure(app)
