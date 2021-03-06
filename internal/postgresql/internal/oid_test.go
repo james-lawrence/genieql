@@ -21,6 +21,7 @@ var _ = Describe("Postgresql", func() {
 		},
 		Entry("handle booleans", pgtype.BoolOID, "pgtype.Bool"),
 		Entry("handle text", pgtype.TextOID, "pgtype.Text"),
+		Entry("handle text array", pgtype.TextArrayOID, "pgtype.TextArray"),
 		Entry("handle varchar", pgtype.VarcharOID, "pgtype.Varchar"),
 		Entry("handle inet", pgtype.InetOID, "pgtype.Inet"),
 		Entry("handle uuid", pgtype.UUIDOID, "pgtype.UUID"),

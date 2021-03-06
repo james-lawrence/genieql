@@ -236,6 +236,13 @@ var pgx = []genieql.ColumnDefinition{
 		Encode:     pgxDefaultEncode,
 	},
 	{
+		Type:       "pgtype.TextArray",
+		Native:     stringArrExpr,
+		ColumnType: "pgtype.TextArray",
+		Decode:     pgxDefaultDecode,
+		Encode:     pgxDefaultEncode,
+	},
+	{
 		Type:       "pgtype.Varchar",
 		Native:     stringExprString,
 		ColumnType: "pgtype.Varchar",

@@ -51,6 +51,8 @@ func OIDToType(oid int) ast.Expr {
 		return astutil.Expr("pgtype.Int8")
 	case pgtype.TextOID:
 		return astutil.Expr("pgtype.Text")
+	case pgtype.TextArrayOID:
+		return astutil.Expr("pgtype.TextArray")
 	case pgtype.VarcharOID:
 		return astutil.Expr("pgtype.Varchar")
 	case pgtype.JSONOID:
