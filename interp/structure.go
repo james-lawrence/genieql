@@ -1,6 +1,7 @@
 package genieql
 
 import (
+	"go/ast"
 	"io"
 
 	"bitbucket.org/jatone/genieql"
@@ -20,14 +21,15 @@ type Structure interface {
 
 // NewStructure instantiate a new structure generator. it uses the name of function
 // that calls Define as the name of the emitted type.
-func NewStructure(ctx generators.Context, name string) Structure {
-	return &sconfig{ctx: ctx, name: name}
+func NewStructure(ctx generators.Context, name string, comment *ast.CommentGroup) Structure {
+	return &sconfig{ctx: ctx, name: name, comment: comment}
 }
 
 type sconfig struct {
-	name string
-	d    definition
-	ctx  generators.Context
+	name    string
+	comment *ast.CommentGroup
+	d       definition
+	ctx     generators.Context
 }
 
 func (t *sconfig) Generate(dst io.Writer) error {
@@ -41,6 +43,7 @@ func (t *sconfig) Generate(dst io.Writer) error {
 	return generators.NewStructure(
 		generators.StructOptionContext(t.ctx),
 		generators.StructOptionName(t.name),
+		generators.StructOptionComment(t.comment),
 		generators.StructOptionColumnsStrategy(func(generators.Context) ([]genieql.ColumnInfo, error) {
 			return t.d.Columns()
 		}),

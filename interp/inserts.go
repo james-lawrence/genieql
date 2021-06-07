@@ -21,6 +21,7 @@ type Insert interface {
 	Into(string) Insert       // what table to insert into
 	Ignore(...string) Insert  // ignore the specified columns.
 	Default(...string) Insert // use the database default for the specified columns.
+	Batch(n int) Insert       // specify a batch insert
 }
 
 // NewInsert instantiate a new insert generator. it uses the name of function
@@ -224,7 +225,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 				n ast.Node
 			)
 
-			if err = GenerateComment(t.comment, newFunctionComment(t.name)).Generate(dst); err != nil {
+			if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
 				return err
 			}
 

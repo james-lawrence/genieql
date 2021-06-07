@@ -135,7 +135,7 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 					List: []*ast.Field{astutil.Field(ast.NewIdent(column.Definition.ColumnType), ast.NewIdent("c"))},
 				},
 			}
-			if err = GenerateComment(newFunctionComment(name)).Generate(dst); err != nil {
+			if err = generators.GenerateComment(generators.DefaultFunctionComment(name)).Generate(dst); err != nil {
 				return err
 			}
 			if n, err = qfn.Compile(functions.New(name, sig)); err != nil {

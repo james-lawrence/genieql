@@ -43,16 +43,16 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			tokens    = token.NewFileSet()
 		)
 
-		transforms := []bstrap.Transformation{
-			bstrap.TransformRenamePackage(pkg.Name),
-			bstrap.TransformBuildTags(t.buildTags...),
-		}
-
 		if pkg, err = genieql.LocatePackage(importPath, build.Default, nil); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue
 		}
 
+		transforms := []bstrap.Transformation{
+			bstrap.TransformRenamePackage(pkg.Name),
+			bstrap.TransformBuildTags(t.buildTags...),
+		}
+		
 		if templates, err = bstrap.Transform(pkg, tokens, autocompile.Archive, transforms...); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue

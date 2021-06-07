@@ -82,7 +82,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	if err = GenerateComment(t.comment, newFunctionComment(t.name)).Generate(dst); err != nil {
+	if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
 		return err
 	}
 

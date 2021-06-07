@@ -47,7 +47,7 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 		return r, errorsx.String("failed to type cast value")
 	}
 
-	gen = interp.NewStructure(ctx.Context, pos.Name.String())
+	gen = interp.NewStructure(ctx.Context, pos.Name.String(), pos.Doc)
 
 	f(gen)
 
