@@ -10,12 +10,10 @@ import (
 	"bitbucket.org/jatone/genieql/astutil"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	_ "github.com/lib/pq"
 
 	. "bitbucket.org/jatone/genieql/generators/functions"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

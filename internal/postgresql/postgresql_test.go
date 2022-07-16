@@ -5,7 +5,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	. "bitbucket.org/jatone/genieql/internal/postgresql"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -28,6 +28,7 @@ var _ = Describe("postgresql", func() {
 				genieql.ColumnInfoSet(info).ColumnNames(),
 			).To(
 				Equal([]string{
+					"active_time",
 					"blk_read_time",
 					"blk_write_time",
 					"blks_hit",
@@ -38,7 +39,13 @@ var _ = Describe("postgresql", func() {
 					"datid",
 					"datname",
 					"deadlocks",
+					"idle_in_transaction_time",
 					"numbackends",
+					"session_time",
+					"sessions",
+					"sessions_abandoned",
+					"sessions_fatal",
+					"sessions_killed",
 					"stats_reset",
 					"temp_bytes",
 					"temp_files",

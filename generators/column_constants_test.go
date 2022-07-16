@@ -7,19 +7,18 @@ import (
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = ginkgo.Describe("ColumnConstants", func() {
-	DescribeTable("should create a constant based on the table details",
+	ginkgo.DescribeTable("should create a constant based on the table details",
 		func(name string, columns []genieql.ColumnInfo, trans genieql.ColumnTransformer, result string) {
 			dst := bytes.NewBuffer([]byte{})
 			Expect(NewColumnConstants(name, trans, columns).Generate(dst)).ToNot(HaveOccurred())
 			Expect(dst.String()).To(Equal(result))
 		},
-		Entry(
+		ginkgo.Entry(
 			"simple columns",
 			"constant",
 			[]genieql.ColumnInfo{

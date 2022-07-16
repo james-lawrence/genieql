@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kingpin"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
 	// register the postgresql dialect

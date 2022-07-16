@@ -15,12 +15,10 @@ import (
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	_ "github.com/lib/pq"
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -59,7 +57,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 	builder := func(n int) ast.Decl {
 		return genieql.QueryLiteral("query", fmt.Sprintf("QUERY %d", n))
 	}
-	DescribeTable("batch insert scanner generator",
+	ginkgo.DescribeTable("batch insert scanner generator",
 		func(fixture string, maximum int, field *ast.Field, options ...BatchFunctionOption) {
 			var (
 				buffer    bytes.Buffer
@@ -81,7 +79,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"batch function (1) integers",
 			".fixtures/functions-batch/output1.go",
 			1,
@@ -94,7 +92,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				QFOQueryerFunction(ast.NewIdent("Query")),
 			),
 		),
-		Entry(
+		ginkgo.Entry(
 			"batch function (2) integers",
 			".fixtures/functions-batch/output2.go",
 			2,
@@ -107,7 +105,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				QFOQueryerFunction(ast.NewIdent("Query")),
 			),
 		),
-		Entry(
+		ginkgo.Entry(
 			"batch function (3) integers",
 			".fixtures/functions-batch/output3.go",
 			3,
@@ -123,7 +121,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 		),
 	)
 
-	DescribeTable("build a query function from a function prototype",
+	ginkgo.DescribeTable("build a query function from a function prototype",
 		func(prototype, fixture string, options ...BatchFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -153,7 +151,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"example 1 - structure insert",
 			"package example; type batchFunction4 func(q sqlx.Queryer, p [5]StructA) StaticExampleScanner",
 			".fixtures/functions-batch/output4.go",

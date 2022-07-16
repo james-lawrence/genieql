@@ -6,14 +6,14 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"testing"
 )
 
 func TestGenerators(t *testing.T) {
-	// log.SetOutput(ioutil.Discard)
+	// log.SetOutput(io.Discard)
 	log.SetFlags(log.Flags() | log.Lshortfile)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Generators Suite")

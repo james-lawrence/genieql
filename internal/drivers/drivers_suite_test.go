@@ -2,7 +2,7 @@ package drivers_test
 
 import (
 	"bitbucket.org/jatone/genieql"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"testing"

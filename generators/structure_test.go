@@ -12,12 +12,11 @@ import (
 
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -39,7 +38,7 @@ var _ = ginkgo.Describe("Structure", func() {
 	driver := genieql.MustLookupDriver(config.Driver)
 	dialect := genieql.MustLookupDialect(config)
 
-	DescribeTable("build a structure based on the definition file",
+	ginkgo.DescribeTable("build a structure based on the definition file",
 		func(definition, fixture string, builder func(string) StructOption, options ...StructOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -62,7 +61,7 @@ var _ = ginkgo.Describe("Structure", func() {
 			// fmt.Println("expected\n", string(expected))
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"type1 structure",
 			`package example; const MyStruct = "type1"`,
 			".fixtures/structures/type1.go",
@@ -76,7 +75,7 @@ var _ = ginkgo.Describe("Structure", func() {
 				Driver:         driver,
 			}),
 		),
-		Entry(
+		ginkgo.Entry(
 			"type1 structure with configuration",
 			`package example
 // additional documentation.
@@ -97,7 +96,7 @@ const Lowercase = "type1"
 		),
 	)
 
-	DescribeTable("not build a structure when there are problems with the definition file",
+	ginkgo.DescribeTable("not build a structure when there are problems with the definition file",
 		func(definition, expectedErr string, builder func(string) StructOption, options ...StructOption) {
 			fset := token.NewFileSet()
 
@@ -110,7 +109,7 @@ const Lowercase = "type1"
 				}
 			}
 		},
-		Entry(
+		ginkgo.Entry(
 			"invalid configuration",
 			`package example
 // genieql.options: general||alias=lowercase

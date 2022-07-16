@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/satori/go.uuid"
-
-	// load the postgresql driver
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
+	uuid "github.com/satori/go.uuid"
 )
 
 // TemplateDatabaseName template database name
@@ -20,29 +19,26 @@ func generatePostgresql(name, template string) string {
 }
 
 func destroyPostgresql(name string) string {
-	return fmt.Sprintf("DROP DATABASE \"%s\"", name)
+	return fmt.Sprintf("DROP DATABASE IF EXISTS \"%s\"", name)
 }
 
 func NewPostgresql(template string) (string, *sql.DB) {
 	name := uuid.NewV4().String()
-	psql := mustOpen(sql.Open("postgres", fmt.Sprintf(dbtemplate, "postgres")))
+	psql := mustOpen(fmt.Sprintf(dbtemplate, "postgres"))
 	defer psql.Close()
 	mustExec(psql.Exec(generatePostgresql(name, template)))
-	return name, mustOpen(sql.Open("postgres", fmt.Sprintf(dbtemplate, name)))
+	return name, mustOpen(fmt.Sprintf(dbtemplate, name))
 }
 
 func DestroyPostgresql(template, name string) {
-	psql := mustOpen(sql.Open("postgres", fmt.Sprintf(dbtemplate, "postgres")))
+	psql := mustOpen(fmt.Sprintf(dbtemplate, "postgres"))
 	defer psql.Close()
 	mustExec(psql.Exec(destroyPostgresql(name)))
 }
 
-func mustOpen(db *sql.DB, err error) *sql.DB {
-	if err != nil {
-		panic(err)
-	}
-
-	return db
+func mustOpen(cstring string) *sql.DB {
+	pcfg := mustParse(pgx.ParseConfig(cstring))
+	return stdlib.OpenDB(*pcfg)
 }
 
 func mustExec(result sql.Result, err error) sql.Result {
@@ -51,4 +47,12 @@ func mustExec(result sql.Result, err error) sql.Result {
 	}
 
 	return result
+}
+
+func mustParse(c *pgx.ConnConfig, err error) *pgx.ConnConfig {
+	if err != nil {
+		panic(err)
+	}
+
+	return c
 }

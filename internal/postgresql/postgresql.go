@@ -8,6 +8,8 @@ import (
 	"log"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
@@ -39,14 +41,13 @@ type queryer interface {
 
 type dialectFactory struct{}
 
-func (t dialectFactory) Connect(config genieql.Configuration) (genieql.Dialect, error) {
-	var (
-		err error
-		db  *sql.DB
-	)
+func (t dialectFactory) Connect(config genieql.Configuration) (_ genieql.Dialect, err error) {
+	pcfg, err := pgx.ParseConfig(config.ConnectionURL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to parse postgresql connection string: %s", config.ConnectionURL)
+	}
 
-	db, err = sql.Open(config.Dialect, config.ConnectionURL)
-	return dialectImplementation{db: db}, errors.Wrap(err, "failure to open database connection")
+	return dialectImplementation{db: stdlib.OpenDB(*pcfg)}, nil
 }
 
 type dialectImplementation struct {

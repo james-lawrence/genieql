@@ -3,7 +3,7 @@ package scanners_test
 import (
 	. "bitbucket.org/jatone/genieql/generators/internal/scanners"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"time"

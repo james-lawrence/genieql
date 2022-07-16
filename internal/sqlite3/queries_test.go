@@ -10,8 +10,7 @@ import (
 
 	. "bitbucket.org/jatone/genieql/internal/sqlite3"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

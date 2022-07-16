@@ -2,14 +2,13 @@ package genieql_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
 
 	. "bitbucket.org/jatone/genieql"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -73,7 +72,7 @@ var _ = Describe("Configuration", func() {
 
 		BeforeEach(func() {
 			var err error
-			tmpdir, err = ioutil.TempDir(".", "bootstrap")
+			tmpdir, err = os.MkdirTemp(".", "bootstrap")
 			Expect(err).ToNot(HaveOccurred())
 			uri, err = url.Parse("postgres://soandso:password@localhost:5432/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
@@ -112,7 +111,8 @@ var _ = Describe("Configuration", func() {
 
 		BeforeEach(func() {
 			var err error
-			tmpdir, err = ioutil.TempDir(".", "bootstrap")
+			tmpdir, err = os.MkdirTemp(".", "bootstrap")
+			tmpdir = filepath.Clean(tmpdir)
 			Expect(err).ToNot(HaveOccurred())
 			uri, err = url.Parse("postgres://soandso:password@localhost:5432/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
@@ -133,7 +133,7 @@ var _ = Describe("Configuration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			raw, err := ioutil.ReadFile(path)
+			raw, err := os.ReadFile(path)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(raw)).To(Equal(fmt.Sprintf(exampleBootstrapConfiguration, tmpdir)))
 		})

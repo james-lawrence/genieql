@@ -16,12 +16,10 @@ import (
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	_ "github.com/lib/pq"
 
 	. "bitbucket.org/jatone/genieql/generators"
 
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -100,7 +98,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 		},
 	}
 
-	DescribeTable("build a query function from a function prototype",
+	ginkgo.DescribeTable("build a query function from a function prototype",
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -128,50 +126,50 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"example 1 - with static query function",
 			"package example; type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
 			".fixtures/functions-query/output1.go",
 			QFOBuiltinQueryFromString(`SELECT * FROM example WHERE id = $1`),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 2 - with static query function",
 			`package example
 // genieql.options: query-literal=SELECT * FROM example WHERE id = $1
 type queryFunction1 func(q sqlx.Queryer, arg1 int) StaticExampleScanner`,
 			".fixtures/functions-query/output1.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 3 - allow provided query parameter",
 			"package example; type queryFunction2 func(q sqlx.Queryer, arg1 int) StaticExampleScanner",
 			".fixtures/functions-query/output2.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 4 - alternate scanner function support",
 			"package example; type queryFunction3 func(q sqlx.Queryer, arg1 int) StaticExampleRowScanner",
 			".fixtures/functions-query/output3.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 5 - ellipsis support",
 			"package example; type queryFunction4 func(q sqlx.Queryer, params ...interface{}) StaticExampleRowScanner",
 			".fixtures/functions-query/output4.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 6 - normalized parameter names",
 			"package example; type queryFunction5 func(q sqlx.Queryer, UUIDArgument int, CamelcaseArgument int, snakecase_argument int, UPPERCASE_ARGUMENT int, lowercase_argument int) StaticExampleRowScanner",
 			".fixtures/functions-query/output5.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 7 - structure parameter",
 			"package example; type queryFunction8 func(q sqlx.Queryer, arg1 StructA) StaticExampleScanner",
 			".fixtures/functions-query/output8.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 8 - structure pointer parameter",
 			"package example; type queryFunction9 func(q sqlx.Queryer, arg1 *StructA) StaticExampleScanner",
 			".fixtures/functions-query/output9.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 9 - parameter named query",
 			`package example
 // genieql.options: query-literal=SELECT * FROM example WHERE id = $1
@@ -180,7 +178,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		),
 	)
 
-	DescribeTable("build a query function from a function prototype",
+	ginkgo.DescribeTable("build a query function from a function prototype",
 		func(prototype, fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -208,7 +206,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"example 1 - should handle a basic literal query",
 			`package example; func queryFunction1(q sqlx.Queryer, arg1 int) StaticExampleScanner {
 	const query = `+"`SELECT * FROM example WHERE id = $1`"+`
@@ -216,7 +214,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 }`,
 			".fixtures/functions-query/output1.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 2 - should handle a query referenced by an ident query",
 			`package example; func queryFunction6(q sqlx.Queryer, arg1 int) StaticExampleScanner {
 	var query = HelloWorld
@@ -224,7 +222,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 }`,
 			".fixtures/functions-query/output6.go",
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 3 - should handle a query referencing another package ident.",
 			`package example; func queryFunction7(q sqlx.Queryer, arg1 int) StaticExampleScanner {
 	var query = mypkg.HelloWorld
@@ -234,7 +232,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 		),
 	)
 
-	DescribeTable("build a query function based on the options",
+	ginkgo.DescribeTable("build a query function based on the options",
 		func(fixture string, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -256,7 +254,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"example 1",
 			".fixtures/functions-query/output1.go",
 			QFOName("queryFunction1"),
@@ -265,7 +263,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOBuiltinQueryFromString("SELECT * FROM example WHERE id = $1"),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 2",
 			".fixtures/functions-query/output2.go",
 			QFOName("queryFunction2"),
@@ -274,7 +272,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("Query")),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 3 - use alternate scanner",
 			".fixtures/functions-query/output3.go",
 			QFOName("queryFunction3"),
@@ -282,7 +280,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOScanner(exampleRowScanner),
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 4 - ellipsis support",
 			".fixtures/functions-query/output4.go",
 			QFOName("queryFunction4"),
@@ -291,7 +289,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 5 - normalizing parameter names",
 			".fixtures/functions-query/output5.go",
 			QFOName("queryFunction5"),
@@ -306,7 +304,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 6 - reserved word in parameters",
 			".fixtures/functions-query/output11.go",
 			QFOName("queryFunction11"),
@@ -318,7 +316,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
 			QFOQueryerFunction(ast.NewIdent("QueryRow")),
 		),
-		Entry(
+		ginkgo.Entry(
 			"example 7 - ignored fields on structure",
 			".fixtures/functions-query/output12.go",
 			QFOName("queryFunction12"),

@@ -13,8 +13,7 @@ import (
 	. "bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -36,7 +35,7 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
 	panicOnError(err)
 
-	DescribeTable("build a exploding function based on the options",
+	ginkgo.DescribeTable("build a exploding function based on the options",
 		func(fixture string, param *ast.Field, fields []*ast.Field, options ...QueryFunctionOption) {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
@@ -59,7 +58,7 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
-		Entry(
+		ginkgo.Entry(
 			"example 1",
 			".fixtures/functions-explode/output1.go",
 			astutil.Field(ast.NewIdent("Foo"), ast.NewIdent("arg1")),
