@@ -22,7 +22,7 @@ const pgxDefaultDecode = `func() {
 }`
 
 const pgxDefaultEncode = `func() {
-	if err := {{ .To | expr }}.Set({{.From | localident | expr}}); err != nil {
+	if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
 		{{ error "err" | ast }}
 	}
 }`
@@ -39,6 +39,23 @@ const pgxTimeDecode = `func() {
 	default:
 		if err := {{ .From | expr }}.AssignTo({{ .To | autoreference | expr }}); err != nil {
 			return err
+		}
+	}
+}`
+
+const pgxTimeEncode = `func() {
+	switch {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }} {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := {{ .To | expr }}.Set(pgtype.Infinity); err != nil {
+			return []interface{}(nil), err
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := {{ .To | expr }}.Set(pgtype.NegativeInfinity); err != nil {
+			return []interface{}(nil), err
+		}
+	default:
+		if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
+			return []interface{}(nil), err
 		}
 	}
 }`
@@ -268,14 +285,14 @@ var pgx = []genieql.ColumnDefinition{
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamp",
 		Decode:     pgxTimeDecode,
-		Encode:     pgxDefaultEncode,
+		Encode:     pgxTimeEncode,
 	},
 	{
 		Type:       "pgtype.Timestamptz",
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamptz",
 		Decode:     pgxTimeDecode,
-		Encode:     pgxDefaultEncode,
+		Encode:     pgxTimeEncode,
 	},
 	{
 		Type:       "pgtype.Interval",
@@ -552,7 +569,7 @@ var pgx = []genieql.ColumnDefinition{
 		Native:     timeExprString,
 		ColumnType: "pgtype.Timestamptz",
 		Decode:     pgxTimeDecode,
-		Encode:     pgxDefaultEncode,
+		Encode:     pgxTimeEncode,
 	},
 	{
 		Type:       "*time.Time",
@@ -560,7 +577,7 @@ var pgx = []genieql.ColumnDefinition{
 		ColumnType: "pgtype.Timestamptz",
 		Nullable:   true,
 		Decode:     pgxTimeDecode,
-		Encode:     pgxDefaultEncode,
+		Encode:     pgxTimeEncode,
 	},
 	{
 		Type:       "bool",

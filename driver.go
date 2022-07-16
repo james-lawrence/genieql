@@ -123,21 +123,4 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 
 func (t driver) Exported() (path string, res map[string]reflect.Value) {
 	return t.importPath, t.exports
-	// res = map[string]reflect.Value{}
-	// for _, d := range t.supported {
-	// 	exported := reflect.ValueOf(struct{}{})
-	// 	if d.Decoder != nil {
-	// 		exported = reflect.ValueOf(d.Decoder)
-	// 	}
-
-	// 	log.Println("exporting", d.Type, spew.Sdump(d))
-	// 	switch idx := strings.IndexRune(d.ColumnType, '.'); idx {
-	// 	case -1:
-	// 		res[d.ColumnType] = exported
-	// 	default:
-	// 		res[d.ColumnType[idx+1:]] = exported
-	// 	}
-	// }
-
-	// return res
 }

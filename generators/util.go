@@ -164,9 +164,10 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
-			From ast.Expr
-			To   ast.Expr
-			Type ast.Expr
+			From   ast.Expr
+			To     ast.Expr
+			Type   ast.Expr
+			Column genieql.ColumnMap
 		}
 
 		var (
@@ -193,7 +194,7 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			from = &ast.StarExpr{X: from}
 		}
 
-		if gen, err = genFunctionLiteral(column.Definition.Encode, stmtCtx{Type: unwrapExpr(typex), From: from, To: local}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(column.Definition.Encode, stmtCtx{Type: unwrapExpr(typex), From: from, To: local, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -468,6 +469,7 @@ func localIdent(x ast.Expr) ast.Expr {
 	}
 }
 
+// dereference types
 func autodereference(x ast.Expr) ast.Expr {
 	x = unwrapExpr(x)
 	switch x := x.(type) {
