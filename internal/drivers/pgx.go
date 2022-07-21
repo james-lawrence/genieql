@@ -47,15 +47,15 @@ const pgxTimeEncode = `func() {
 	switch {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }} {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
 		if err := {{ .To | expr }}.Set(pgtype.Infinity); err != nil {
-			return []interface{}(nil), err
+			{{ error "err" | ast }}
 		}
 	case time.Unix(math.MinInt64, math.MinInt64):
 		if err := {{ .To | expr }}.Set(pgtype.NegativeInfinity); err != nil {
-			return []interface{}(nil), err
+			{{ error "err" | ast }}
 		}
 	default:
 		if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
-			return []interface{}(nil), err
+			{{ error "err" | ast }}
 		}
 	}
 }`
