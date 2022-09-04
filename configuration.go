@@ -2,7 +2,6 @@ package genieql
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -76,7 +75,7 @@ func WriteConfiguration(config Configuration) error {
 		return errors.Wrap(err, "failed to serialize configuration to yaml")
 	}
 
-	return errors.Wrap(ioutil.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
+	return errors.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
 // ReadConfiguration reads the genieql configuration file to the specified path.
@@ -86,7 +85,7 @@ func ReadConfiguration(config *Configuration) error {
 		raw []byte
 	)
 
-	if raw, err = ioutil.ReadFile(filepath.Join(config.Location, config.Name)); err != nil {
+	if raw, err = os.ReadFile(filepath.Join(config.Location, config.Name)); err != nil {
 		return errors.Wrap(err, "failed to read configuration file")
 	}
 

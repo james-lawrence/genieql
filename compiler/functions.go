@@ -11,7 +11,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	interp "bitbucket.org/jatone/genieql/interp"
 )
 

@@ -96,10 +96,14 @@ func selectPlaceholder(columns, defaults []string) []placeholder {
 	return placeholders
 }
 
+func quotedString(s string) string {
+	return `"` + s + `"`
+}
+
 func quotedColumns(columns ...string) []string {
 	results := make([]string, 0, len(columns))
 	for _, c := range columns {
-		results = append(results, `"`+c+`"`)
+		results = append(results, quotedString(c))
 	}
 	return results
 }

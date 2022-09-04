@@ -6,7 +6,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 )
 
 // Structure - configuration interface for generating structures.

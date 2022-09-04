@@ -7,6 +7,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"golang.org/x/text/transform"
 )
 
 // ColumnInfo describing a particular column from the database.
@@ -130,22 +131,6 @@ func ColumnInfoFilterIgnore(set ...string) func(ColumnInfo) bool {
 	}
 }
 
-// NewColumnInfoNameTransformer ...
-func NewColumnInfoNameTransformer(q string, aliasers ...Aliaser) ColumnInfoNameTransformer {
-	return ColumnInfoNameTransformer{Quote: q, Aliaser: AliaserChain(aliasers...)}
-}
-
-// ColumnInfoNameTransformer ...
-type ColumnInfoNameTransformer struct {
-	Quote string
-	Aliaser
-}
-
-// Transform ...
-func (t ColumnInfoNameTransformer) Transform(column ColumnInfo) string {
-	return t.Quote + t.Aliaser.Alias(column.Name) + t.Quote
-}
-
 // ColumnValueTransformer ...
 type ColumnValueTransformer struct {
 	Defaults           []string
@@ -222,7 +207,7 @@ func mapColumns(columns []ColumnInfo, fields []*ast.Field, m func(ColumnInfo, *a
 
 // mapInfo maps the columns to the fields using the aliases.
 // returns mapped, unmapped columns.
-func mapInfo(columns []ColumnInfo, fields []*ast.Field, aliases ...Aliaser) ([]ColumnInfo, []ColumnInfo) {
+func mapInfo(columns []ColumnInfo, fields []*ast.Field, aliases ...transform.Transformer) ([]ColumnInfo, []ColumnInfo) {
 	if len(fields) == 0 {
 		return []ColumnInfo{}, columns
 	}

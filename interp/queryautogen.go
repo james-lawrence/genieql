@@ -47,16 +47,15 @@ func NewQueryAutogen(
 }
 
 type queryAutogen struct {
-	ctx      generators.Context
-	name     string
-	table    string
-	defaults []string
-	ignore   []string
-	tf       *ast.Field    // type field.
-	cf       *ast.Field    // context field, can be nil.
-	qf       *ast.Field    // db Query field.
-	scanner  *ast.FuncDecl // scanner being used for results.
-	comment  *ast.CommentGroup
+	ctx     generators.Context
+	name    string
+	table   string
+	ignore  []string
+	tf      *ast.Field    // type field.
+	cf      *ast.Field    // context field, can be nil.
+	qf      *ast.Field    // db Query field.
+	scanner *ast.FuncDecl // scanner being used for results.
+	comment *ast.CommentGroup
 }
 
 // Into specify the table the data will be inserted into.
@@ -109,7 +108,7 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 	mg := make([]genieql.Generator, 0, 10)
 	ignore := genieql.ColumnInfoFilterIgnore(t.ignore...)
 	names := genieql.ColumnInfoSet(details.Columns).ColumnNames()
-	naturalKey := genieql.ColumnInfoSet(details.Columns).PrimaryKey()
+	// naturalKey := genieql.ColumnInfoSet(details.Columns).PrimaryKey()
 	defaults := functions.Query{
 		Context:      t.ctx,
 		Scanner:      t.scanner,
@@ -148,27 +147,27 @@ func (t *queryAutogen) Generate(dst io.Writer) (err error) {
 		mg = append(mg, g)
 	}
 
-	if len(naturalKey) > 0 {
-		// query := details.Dialect.Select(details.Table, names, naturalKey.ColumnNames())
-		// options = []generators.QueryFunctionOption{
-		// 	queryerOption,
-		// 	generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
-		// 	generators.QFOBuiltinQueryFromString(query),
-		// 	generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
-		// 	generators.QFOScanner(t.UniqScanner),
-		// }
-		// mg = append(mg, generators.NewQueryFunction(options...))
-		// mg = append(mg, t.updateFunc(queryerOption, naturalKey, names))
-		// query = details.Dialect.Delete(details.Table, names, naturalKey.ColumnNames())
-		// options = []generators.QueryFunctionOption{
-		// 	queryerOption,
-		// 	generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
-		// 	generators.QFOBuiltinQueryFromString(query),
-		// 	generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
-		// 	generators.QFOScanner(t.UniqScanner),
-		// }
-		// mg = append(mg, generators.NewQueryFunction(options...))
-	}
+	// if len(naturalKey) > 0 {
+	// 	query := details.Dialect.Select(details.Table, names, naturalKey.ColumnNames())
+	// 	options = []generators.QueryFunctionOption{
+	// 		queryerOption,
+	// 		generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
+	// 		generators.QFOBuiltinQueryFromString(query),
+	// 		generators.QFOName(fmt.Sprintf("%sFindByKey", t.Type)),
+	// 		generators.QFOScanner(t.UniqScanner),
+	// 	}
+	// 	mg = append(mg, generators.NewQueryFunction(options...))
+	// 	mg = append(mg, t.updateFunc(queryerOption, naturalKey, names))
+	// 	query = details.Dialect.Delete(details.Table, names, naturalKey.ColumnNames())
+	// 	options = []generators.QueryFunctionOption{
+	// 		queryerOption,
+	// 		generators.QFOSharedParameters(fieldFromColumnInfo(naturalKey...)...),
+	// 		generators.QFOBuiltinQueryFromString(query),
+	// 		generators.QFOName(fmt.Sprintf("%sDeleteByID", t.Type)),
+	// 		generators.QFOScanner(t.UniqScanner),
+	// 	}
+	// 	mg = append(mg, generators.NewQueryFunction(options...))
+	// }
 
 	return genieql.MultiGenerate(mg...).Generate(dst)
 }

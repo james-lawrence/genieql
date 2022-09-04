@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"github.com/alecthomas/kingpin"
 )
@@ -58,7 +59,7 @@ func loadGeneratorContext(bctx build.Context, name, pkg string, tags ...string) 
 		),
 	)
 
-	if dialect, err = genieql.LookupDialect(config); err != nil {
+	if dialect, err = dialects.LookupDialect(config); err != nil {
 		return ctx, err
 	}
 
@@ -93,7 +94,7 @@ func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) 
 		),
 	)
 
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
+	if dialect, err = dialects.LookupDialect(configuration); err != nil {
 		return configuration, dialect, err
 	}
 
@@ -118,7 +119,7 @@ func loadMappingContext(config string, pkg *build.Package, typ string) (genieql.
 		return configuration, dialect, mapping, err
 	}
 
-	if dialect, err = genieql.LookupDialect(configuration); err != nil {
+	if dialect, err = dialects.LookupDialect(configuration); err != nil {
 		return configuration, dialect, mapping, err
 	}
 

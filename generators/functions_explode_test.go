@@ -10,8 +10,10 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/dialects"
 	. "bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -25,7 +27,7 @@ func explodetest(config genieql.Configuration, driver genieql.Driver, pkg *build
 		Configuration:  config,
 		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),
-		Dialect:        dialect{},
+		Dialect:        dialects.Test{},
 		Driver:         driver,
 	}
 
@@ -58,10 +60,10 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 	)
 
 	stdlib, err := genieql.LookupDriver(drivers.StandardLib)
-	panicOnError(err)
+	errorsx.PanicOnError(err)
 
 	psql, err := genieql.LookupDriver(drivers.PGX)
-	panicOnError(err)
+	errorsx.PanicOnError(err)
 
 	ginkgo.DescribeTable("build a exploding function based on the options",
 		explodetest,

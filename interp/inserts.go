@@ -19,7 +19,7 @@ import (
 type Insert interface {
 	genieql.Generator         // must satisfy the generator interface
 	Into(string) Insert       // what table to insert into
-	Ignore(...string) Insert  // ignore the specified columns.
+	Ignore(...string) Insert  // do not attempt to insert the specified column.
 	Default(...string) Insert // use the database default for the specified columns.
 	Batch(n int) Insert       // specify a batch insert
 }
@@ -73,7 +73,7 @@ func (t *insert) Default(defaults ...string) Insert {
 	return t
 }
 
-// Ingore specify the table columns to ignore.
+// Ignore specify the table columns to ignore during insert.
 func (t *insert) Ignore(ignore ...string) Insert {
 	t.ignore = ignore
 	return t
@@ -147,10 +147,13 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	ignore := genieql.ColumnInfoFilterIgnore(append(t.ignore, t.defaults...)...)
+	ignored := genieql.ColumnInfoFilterIgnore(t.ignore...)
+	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
 	cset := genieql.ColumnInfoSet(columns)
+	ignoredcset := cset.Filter(ignored)
+	filteredcset := ignoredcset.Filter(defaulted)
 
-	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], cset.Filter(ignore)...); err != nil {
+	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], filteredcset...); err != nil {
 		return errors.Wrapf(
 			err,
 			"failed to map columns for: %s:%s",
@@ -189,7 +192,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 			Defaults:           t.defaults,
 			DialectTransformer: dialect.ColumnValueTransformer(),
 		},
-		columns,
+		ignoredcset,
 	)
 
 	g2 := generators.NewExploderFunction(
@@ -202,7 +205,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	qfn := functions.Query{
 		Context: t.ctx,
 		Query: astutil.StringLiteral(
-			dialect.Insert(t.n, t.table, genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults),
+			dialect.Insert(t.n, t.table, filteredcset.ColumnNames(), t.defaults),
 		),
 		Scanner:      t.scanner,
 		Queryer:      t.qf.Type,

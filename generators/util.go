@@ -59,14 +59,6 @@ func exprToArray(x ast.Expr) ast.Expr {
 	}
 }
 
-func fieldToType(f *ast.Field) ast.Expr {
-	return f.Type
-}
-
-func fieldToNames(f *ast.Field) []*ast.Ident {
-	return f.Names
-}
-
 type transforms func(x ast.Expr) ast.Expr
 
 func argumentsNative(ctx Context) transforms {
@@ -261,18 +253,6 @@ func normalizeFieldNames(fields ...*ast.Field) []*ast.Field {
 	return astutil.TransformFields(func(field *ast.Field) *ast.Field {
 		return astutil.Field(field.Type, normalizeIdent(field.Names)...)
 	}, fields...)
-}
-
-func mapFieldNames(m func(*ast.Field) *ast.Field, fields ...*ast.Field) []*ast.Field {
-	return astutil.TransformFields(m, fields...)
-}
-
-func mapIdent(m func(*ast.Ident) *ast.Ident, args ...*ast.Ident) []*ast.Ident {
-	result := make([]*ast.Ident, 0, len(args))
-	for _, f := range args {
-		result = append(result, m(f))
-	}
-	return result
 }
 
 // NormalizeIdent ensures ident obey the following:

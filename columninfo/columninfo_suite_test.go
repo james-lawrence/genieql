@@ -1,18 +1,15 @@
-package generators_test
+package columninfo_test
 
 import (
-	"io"
 	"log"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
-func TestGenerators(t *testing.T) {
-	log.SetOutput(io.Discard)
+func TestColumninfo(t *testing.T) {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Generators Suite")
+	RunSpecs(t, "Columninfo Suite")
 }

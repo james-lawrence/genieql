@@ -1,98 +1,16 @@
 package genieql
 
-import "fmt"
+import "golang.org/x/text/transform"
 
-// ErrMissingDialect - returned when a dialect has not been registered.
-type ErrMissingDialect interface {
-	MissingDialect() string
-}
-
-// IsMissingDialectErr determines if the given error is a missing dialect error.
-func IsMissingDialectErr(err error) bool {
-	_, ok := err.(ErrMissingDialect)
-	return ok
-}
-
-type errMissingDialect struct {
-	dialect string
-}
-
-func (t errMissingDialect) MissingDialect() string {
-	return t.dialect
-}
-
-func (t errMissingDialect) Error() string {
-	return fmt.Sprintf("dialect (%s) is not registered", t.dialect)
-}
-
-// ErrDuplicateDialect - returned when a dialect gets registered twice.
-var ErrDuplicateDialect = fmt.Errorf("dialect has already been registered")
-
-var dialects = dialectRegistry{}
-
-// RegisterDialect register a sql dialect with genieql. usually in an init function.
-func RegisterDialect(dialect string, imp DialectFactory) error {
-	return dialects.RegisterDialect(dialect, imp)
-}
-
-// LookupDialect lookup a registered dialect.
-func LookupDialect(config Configuration) (Dialect, error) {
-	var (
-		err     error
-		factory DialectFactory
-	)
-
-	if factory, err = dialects.LookupDialect(config.Dialect); err != nil {
-		return nil, err
-	}
-
-	return factory.Connect(config)
-}
-
-// MustLookupDialect lookup a gesitered dialect or panic
-func MustLookupDialect(c Configuration) Dialect {
-	d, err := LookupDialect(c)
-	if err != nil {
-		panic(err)
-	}
-
-	return d
-}
-
-// DialectFactory ...
-type DialectFactory interface {
-	Connect(Configuration) (Dialect, error)
-}
-
-// Dialect ...
+// Dialect interface for describing a sql dialect.
 type Dialect interface {
 	Insert(n int, table string, columns, defaults []string) string
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates, returning []string) string
 	Delete(table string, columns, predicates []string) string
 	ColumnValueTransformer() ColumnTransformer
-	ColumnNameTransformer() ColumnTransformer
+	ColumnNameTransformer(opts ...transform.Transformer) ColumnTransformer
 	ColumnInformationForTable(d Driver, table string) ([]ColumnInfo, error)
 	ColumnInformationForQuery(d Driver, query string) ([]ColumnInfo, error)
-}
-
-type dialectRegistry map[string]DialectFactory
-
-func (t dialectRegistry) RegisterDialect(dialect string, imp DialectFactory) error {
-	if _, exists := t[dialect]; exists {
-		return ErrDuplicateDialect
-	}
-
-	t[dialect] = imp
-
-	return nil
-}
-
-func (t dialectRegistry) LookupDialect(dialect string) (DialectFactory, error) {
-	impl, exists := t[dialect]
-	if !exists {
-		return nil, errMissingDialect{dialect: dialect}
-	}
-
-	return impl, nil
+	QuotedString(s string) string
 }

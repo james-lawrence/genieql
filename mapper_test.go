@@ -4,6 +4,7 @@ import (
 	"go/ast"
 
 	. "bitbucket.org/jatone/genieql"
+	"golang.org/x/text/transform"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -13,7 +14,7 @@ import (
 
 var _ = Describe("Mapper", func() {
 	DescribeTable("MapFieldToColumn",
-		func(column string, field *ast.Field, aliaser Aliaser) {
+		func(column string, field *ast.Field, aliaser transform.Transformer) {
 			matchFound := MapFieldToNativeType(ColumnInfo{Name: column}, field, aliaser)
 			Expect(matchFound).ToNot(BeNil())
 		},

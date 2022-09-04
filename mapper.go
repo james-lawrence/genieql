@@ -5,13 +5,14 @@ import (
 	"go/build"
 	"go/token"
 	"go/types"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/transformx"
 	"github.com/pkg/errors"
+	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 )
 
@@ -97,9 +98,9 @@ func (t MappingConfig) Clone(options ...MappingConfigOption) MappingConfig {
 }
 
 // Aliaser ...
-func (t MappingConfig) Aliaser() Aliaser {
+func (t MappingConfig) Aliaser() transform.Transformer {
 	alias := AliaserBuilder(t.Transformations...)
-	return AliaserFunc(func(name string) string {
+	return transformx.Full(func(name string) string {
 		// if the configuration explicitly renames
 		// a column use that value do not try to
 		// transform it.
@@ -107,7 +108,7 @@ func (t MappingConfig) Aliaser() Aliaser {
 			return v
 		}
 
-		return alias.Alias(name)
+		return transformx.String(name, alias)
 	})
 }
 
@@ -133,7 +134,7 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	if len(columns) == 0 {
 		log.Println(errors.Errorf("no defined columns for: %s.%s generating fake columns", pkg.Name, t.Type))
 		// for now just support the CamelCase -> snakecase.
-		columns = GenerateFakeColumnInfo(driver, AliaserChain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
+		columns = GenerateFakeColumnInfo(driver, transform.Chain(AliasStrategySnakecase, AliasStrategyLowercase), fields...)
 	}
 
 	// returns the sets of mapped and unmapped columns.
@@ -226,7 +227,7 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, d, 0666)
+	return os.WriteFile(path, d, 0666)
 }
 
 // ReadMapper loads the structure -> result row mapping from disk.
@@ -236,7 +237,7 @@ func ReadMapper(config Configuration, name string, m *MappingConfig) error {
 	)
 
 	path := filepath.Join(config.Location, config.Database, m.Package.Name, m.Type, name)
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -250,10 +251,10 @@ func Map(config Configuration, name string, m MappingConfig) error {
 }
 
 // MapFieldToNativeType maps a column to a field based on the provided aliases.
-func MapFieldToNativeType(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *ast.Field {
+func MapFieldToNativeType(c ColumnInfo, field *ast.Field, aliases ...transform.Transformer) *ast.Field {
 	for _, fieldName := range field.Names {
 		for _, aliaser := range aliases {
-			if aliaser.Alias(c.Name) == fieldName.Name {
+			if transformx.String(c.Name, aliaser) == fieldName.Name {
 				return astutil.Field(field.Type, fieldName)
 			}
 		}
@@ -262,10 +263,10 @@ func MapFieldToNativeType(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *a
 }
 
 // MapFieldToSQLType maps a column to a field based on the provided aliases uses the DB type for the field type.
-func MapFieldToSQLType(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *ast.Field {
+func MapFieldToSQLType(c ColumnInfo, field *ast.Field, aliases ...transform.Transformer) *ast.Field {
 	for _, fieldName := range field.Names {
 		for _, aliaser := range aliases {
-			if aliaser.Alias(c.Name) == fieldName.Name {
+			if transformx.String(c.Name, aliaser) == fieldName.Name {
 				return astutil.Field(astutil.MustParseExpr(c.Definition.ColumnType), fieldName)
 			}
 		}
@@ -274,7 +275,7 @@ func MapFieldToSQLType(c ColumnInfo, field *ast.Field, aliases ...Aliaser) *ast.
 }
 
 // GenerateFakeColumnInfo generate fake column info from a structure.
-func GenerateFakeColumnInfo(d Driver, aliaser Aliaser, fields ...*ast.Field) []ColumnInfo {
+func GenerateFakeColumnInfo(d Driver, aliaser transform.Transformer, fields ...*ast.Field) []ColumnInfo {
 	results := make([]ColumnInfo, 0, len(fields))
 	for _, field := range fields {
 		typedef, err := d.LookupType(types.ExprString(field.Type))
@@ -285,7 +286,7 @@ func GenerateFakeColumnInfo(d Driver, aliaser Aliaser, fields ...*ast.Field) []C
 
 		for _, name := range field.Names {
 			results = append(results, ColumnInfo{
-				Name:       aliaser.Alias(name.Name),
+				Name:       transformx.String(name.Name, aliaser),
 				Definition: typedef,
 			})
 		}

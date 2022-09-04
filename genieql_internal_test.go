@@ -4,6 +4,7 @@ import (
 	"go/ast"
 
 	"bitbucket.org/jatone/genieql/astutil"
+	"golang.org/x/text/transform"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,7 +12,7 @@ import (
 
 var _ = Describe("genieql", func() {
 	DescribeTable("mapColumns",
-		func(matched, unmatched []ColumnInfo, fields []*ast.Field, aliaser Aliaser) {
+		func(matched, unmatched []ColumnInfo, fields []*ast.Field, aliaser transform.Transformer) {
 			columns := append(matched, unmatched...)
 			mcolumns, munmatched := mapInfo(columns, fields, aliaser)
 			Expect(mcolumns).To(Equal(matched))

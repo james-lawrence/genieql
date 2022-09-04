@@ -5,10 +5,11 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 
@@ -34,7 +35,7 @@ var _ = Describe("Scanner", func() {
 	)
 
 	driver := genieql.MustLookupDriver(drivers.PGX)
-	dialect := genieql.MustLookupDialect(config)
+	dialect := dialects.MustLookupDialect(config)
 
 	DescribeTable("should build scanners with only the specified outputs",
 		func(definition, fixture string, options ...generators.ScannerOption) {
@@ -43,7 +44,7 @@ var _ = Describe("Scanner", func() {
 			fset := token.NewFileSet()
 
 			node, err := parser.ParseFile(fset, "generated", definition, 0)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(Succeed())
 
 			soc := generators.ScannerOptionContext(generators.Context{
 				Configuration:  config,
@@ -55,13 +56,13 @@ var _ = Describe("Scanner", func() {
 			buffer.WriteString("package generated\n\n")
 			for _, d := range genieql.SelectFuncType(genieql.FindTypes(node)...) {
 				for _, g := range generators.ScannerFromGenDecl(d, append(options, soc)...) {
-					Expect(g.Generate(buffer)).ToNot(HaveOccurred())
+					Expect(g.Generate(buffer)).To(Succeed())
 					buffer.WriteString("\n")
 				}
 			}
-			expected, err := ioutil.ReadFile(fixture)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			expected, err := os.ReadFile(fixture)
+			Expect(err).To(Succeed())
+			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).To(Succeed())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("int",

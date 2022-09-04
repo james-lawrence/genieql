@@ -1,3 +1,4 @@
+//go:build go1.16
 // +build go1.16
 
 package main
@@ -14,7 +15,7 @@ import (
 	bstrap "bitbucket.org/jatone/genieql/bootstrap"
 	"bitbucket.org/jatone/genieql/bootstrap/autocompile"
 	"bitbucket.org/jatone/genieql/cmd"
-	"bitbucket.org/jatone/genieql/internal/x/errorsx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 
 	"github.com/alecthomas/kingpin"
 )
@@ -52,7 +53,7 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			bstrap.TransformRenamePackage(pkg.Name),
 			bstrap.TransformBuildTags(t.buildTags...),
 		}
-		
+
 		if templates, err = bstrap.Transform(pkg, tokens, autocompile.Archive, transforms...); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue

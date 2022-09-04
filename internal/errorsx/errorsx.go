@@ -66,3 +66,12 @@ func StackChecksum(err error) string {
 	sum := hash.Sum(nil)
 	return hex.EncodeToString(sum[:])
 }
+
+// PanicOnError panic when error is seen.
+func PanicOnError(err error) {
+	if err == nil {
+		return
+	}
+
+	panic(err)
+}

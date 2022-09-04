@@ -5,11 +5,13 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"io"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 
+	"bitbucket.org/jatone/genieql/dialects"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	_ "github.com/jackc/pgx/v4"
@@ -36,7 +38,7 @@ var _ = ginkgo.Describe("Structure", func() {
 	)
 
 	driver := genieql.MustLookupDriver(config.Driver)
-	dialect := genieql.MustLookupDialect(config)
+	dialect := dialects.MustLookupDialect(config)
 
 	ginkgo.DescribeTable("build a structure based on the definition file",
 		func(definition, fixture string, builder func(string) StructOption, options ...StructOption) {
@@ -54,7 +56,7 @@ var _ = ginkgo.Describe("Structure", func() {
 					buffer.WriteString("\n")
 				}
 			}
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			// fmt.Println("output\n", formatted.String())
@@ -105,7 +107,7 @@ const Lowercase = "type1"
 
 			for _, d := range genieql.FindConstants(node) {
 				for _, g := range StructureFromGenDecl(d, builder, options...) {
-					Expect(g.Generate(ioutil.Discard)).To(MatchError(expectedErr))
+					Expect(g.Generate(io.Discard)).To(MatchError(expectedErr))
 				}
 			}
 		},

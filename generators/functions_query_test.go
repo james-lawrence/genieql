@@ -7,14 +7,15 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/drivers"
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 
 	. "bitbucket.org/jatone/genieql/generators"
@@ -68,7 +69,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 	)
 
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
-	panicOnError(err)
+	errorsx.PanicOnError(err)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
@@ -106,7 +107,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect{},
+				Dialect:        dialects.Test{},
 				Driver:         driver,
 			}
 
@@ -119,10 +120,10 @@ var _ = ginkgo.Describe("Query Functions", func() {
 				Expect(gen.Generate(buffer)).ToNot(HaveOccurred())
 			}
 			buffer.WriteString("\n")
-			// log.Println(buffer.String())
+
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
@@ -186,7 +187,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect{},
+				Dialect:        dialects.Test{},
 				Driver:         driver,
 			}
 
@@ -202,7 +203,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
@@ -241,7 +242,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect{},
+				Dialect:        dialects.Test{},
 				Driver:         driver,
 			}
 			buffer.WriteString("package example\n\n")
@@ -250,7 +251,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},

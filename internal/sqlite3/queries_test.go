@@ -2,7 +2,6 @@ package sqlite3_test
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"os"
 
 	// load in the sqllite driver.
@@ -61,7 +60,7 @@ var _ = Describe("queries", func() {
 				err error
 			)
 
-			dbfile, err = ioutil.TempFile(".sqllite", "")
+			dbfile, err = os.CreateTemp(".sqllite", "")
 			Expect(err).ToNot(HaveOccurred())
 
 			db, err = sql.Open("sqlite3", dbfile.Name())

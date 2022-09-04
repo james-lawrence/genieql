@@ -7,13 +7,14 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/drivers"
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 
 	. "bitbucket.org/jatone/genieql/generators"
@@ -38,7 +39,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 	)
 
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
-	panicOnError(err)
+	errorsx.PanicOnError(err)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
@@ -67,7 +68,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect{},
+				Dialect:        dialects.Test{},
 				Driver:         driver,
 			}
 			buffer.WriteString("package example\n\n")
@@ -75,7 +76,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			buffer.WriteString("\n")
 			// log.Println("GENERATED", buffer.String())
 			Expect(genieql.FormatOutput(&formatted, buffer.Bytes())).ToNot(HaveOccurred())
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
@@ -132,7 +133,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect{},
+				Dialect:        dialects.Test{},
 				Driver:         driver,
 			}
 
@@ -147,7 +148,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			buffer.WriteString("\n")
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},

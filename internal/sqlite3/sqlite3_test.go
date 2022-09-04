@@ -2,7 +2,6 @@ package sqlite3_test
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"os"
 
 	"bitbucket.org/jatone/genieql"
@@ -26,7 +25,7 @@ var _ = Describe("Sqlite3", func() {
 			err error
 		)
 
-		dbfile, err = ioutil.TempFile(".sqllite", "")
+		dbfile, err = os.CreateTemp(".sqllite", "")
 		Expect(err).ToNot(HaveOccurred())
 
 		db, err = sql.Open("sqlite3", dbfile.Name())

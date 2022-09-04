@@ -7,8 +7,11 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
+	"golang.org/x/text/transform"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/columninfo"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/debugx"
 )
 
@@ -27,7 +30,7 @@ func init() {
 		}
 	}
 
-	maybePanic(genieql.RegisterDialect(Dialect, dialectFactory{}))
+	maybePanic(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type queryer interface {
@@ -68,12 +71,12 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 
 func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransformer {
 	// TODO
-	return genieql.ColumnInfoNameTransformer{}
+	return columninfo.NewNameTransformer(transform.Nop)
 }
 
-func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer {
+func (t dialectImplementation) ColumnNameTransformer(opts ...transform.Transformer) genieql.ColumnTransformer {
 	// TODO
-	return genieql.NewColumnInfoNameTransformer("")
+	return columninfo.NewNameTransformer(transform.Nop, transform.Chain(opts...))
 }
 
 func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
@@ -97,6 +100,10 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 	}
 
 	return columnInformation(d, tx, columnInformationQuery, table)
+}
+
+func (t dialectImplementation) QuotedString(s string) string {
+	return s
 }
 
 func columnInformation(d genieql.Driver, q queryer, query, table string) ([]genieql.ColumnInfo, error) {
@@ -147,15 +154,9 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 }
 
 func isNullable(i int) bool {
-	if i == 0 {
-		return true
-	}
-	return false
+	return i == 0
 }
 
 func isPrimary(i int) bool {
-	if i == 0 {
-		return false
-	}
-	return true
+	return i == 0
 }

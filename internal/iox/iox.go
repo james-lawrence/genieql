@@ -2,7 +2,6 @@ package iox
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 // Rewind the io.Seeker
@@ -29,7 +28,7 @@ func ReadString(in io.Reader) (s string, err error) {
 		}
 	}
 
-	if raw, err = ioutil.ReadAll(in); err != nil {
+	if raw, err = io.ReadAll(in); err != nil {
 		return "", err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/transformx"
 	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
@@ -33,34 +34,6 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 
 	infos, _, err = m.MappedColumnInfo(ctx.Driver, ctx.Dialect, ctx.FileSet, pkg)
 	return m, infos, err
-}
-
-// converts a *ast.Field that represents a struct into a list of fields that map
-// to columns.
-func mappedFields(ctx Context, param *ast.Field, ignoreSet ...string) ([]*ast.Field, error) {
-	var (
-		err   error
-		infos []*ast.Field
-		m     genieql.MappingConfig
-		pkg   *build.Package
-	)
-
-	ipath := importPath(ctx, param.Type)
-
-	if ipath == ctx.CurrentPackage.ImportPath {
-		pkg = ctx.CurrentPackage
-	} else {
-		if pkg, err = genieql.LocatePackage(ipath, build.Default, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
-			return infos, err
-		}
-	}
-
-	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
-		return infos, err
-	}
-
-	infos, _, err = m.MappedFields(ctx.Dialect, ctx.FileSet, pkg, ignoreSet...)
-	return infos, err
 }
 
 func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnInfo, []*ast.Field, error) {
@@ -150,7 +123,7 @@ func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.Col
 			}
 
 			cMap = append(cMap, column.MapColumn(&ast.SelectorExpr{
-				Sel: ast.NewIdent(aliaser.Alias(column.Name)),
+				Sel: ast.NewIdent(transformx.String(column.Name, aliaser)),
 				X:   arg,
 			}))
 		}

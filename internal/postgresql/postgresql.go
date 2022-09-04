@@ -11,10 +11,14 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/pkg/errors"
+	"golang.org/x/text/transform"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/columninfo"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/debugx"
 	"bitbucket.org/jatone/genieql/internal/postgresql/internal"
+	"bitbucket.org/jatone/genieql/internal/transformx"
 )
 
 // Dialect constant representing the dialect name.
@@ -32,7 +36,7 @@ func init() {
 		}
 	}
 
-	maybePanic(genieql.RegisterDialect(Dialect, dialectFactory{}))
+	maybePanic(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type queryer interface {
@@ -74,8 +78,11 @@ func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransforme
 	return &columnValueTransformer{}
 }
 
-func (t dialectImplementation) ColumnNameTransformer() genieql.ColumnTransformer {
-	return genieql.NewColumnInfoNameTransformer(`"`)
+func (t dialectImplementation) ColumnNameTransformer(transforms ...transform.Transformer) genieql.ColumnTransformer {
+	return columninfo.NewNameTransformer(
+		transformx.Wrap("\""),
+		transform.Chain(transforms...),
+	)
 }
 
 func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
@@ -99,6 +106,10 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 	}
 
 	return columnInformation(d, tx, columnInformationQuery, table)
+}
+
+func (t dialectImplementation) QuotedString(s string) string {
+	return quotedString(s)
 }
 
 func columnInformation(d genieql.Driver, q queryer, query, table string) ([]genieql.ColumnInfo, error) {

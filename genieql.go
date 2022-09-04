@@ -4,7 +4,6 @@ package genieql
 import (
 	"go/format"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -54,7 +53,7 @@ func Reformat(in io.ReadWriteSeeker) (err error) {
 		return err
 	}
 
-	if raw, err = ioutil.ReadAll(in); err != nil {
+	if raw, err = io.ReadAll(in); err != nil {
 		return err
 	}
 
@@ -85,7 +84,7 @@ func ReformatFile(in *os.File) (err error) {
 		return err
 	}
 
-	if raw, err = ioutil.ReadAll(in); err != nil {
+	if raw, err = io.ReadAll(in); err != nil {
 		return err
 	}
 
@@ -124,27 +123,6 @@ func Format(s string) (_ string, err error) {
 	}
 
 	return string(raw), nil
-}
-
-// LoadInformation loads table information based on the configuration and
-// table name.
-func LoadInformation(configuration Configuration, table string) (details TableDetails, err error) {
-	var (
-		driver  Driver
-		dialect Dialect
-	)
-
-	if dialect, err = LookupDialect(configuration); err != nil {
-		return details, err
-	}
-
-	if driver, err = LookupDriver(configuration.Driver); err != nil {
-		return details, err
-	}
-
-	details, err = LookupTableDetails(driver, dialect, table)
-
-	return details, err
 }
 
 // ConfigurationDirectory determines the configuration directory based on the

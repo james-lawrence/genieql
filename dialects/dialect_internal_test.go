@@ -1,6 +1,7 @@
-package genieql
+package dialects
 
 import (
+	"bitbucket.org/jatone/genieql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -9,14 +10,14 @@ var _ = Describe("Dialect", func() {
 	Describe("dialectRegistry", func() {
 		Describe("RegisterDialect", func() {
 			It("should err if the dialect is already registered", func() {
-				dialect := testDialectFactory{}
+				dialect := factory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 				Expect(reg.RegisterDialect("testDialect", dialect)).To(MatchError(ErrDuplicateDialect))
 			})
 
 			It("should register a dialect", func() {
-				dialect := testDialectFactory{}
+				dialect := factory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 			})
@@ -32,7 +33,7 @@ var _ = Describe("Dialect", func() {
 
 			It("should return the dialect if its been registered", func() {
 				dialectName := "testDialect"
-				dialect := testDialectFactory{}
+				dialect := factory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect(dialectName, dialect)).ToNot(HaveOccurred())
 				foundDialect, err := reg.LookupDialect(dialectName)
@@ -43,47 +44,8 @@ var _ = Describe("Dialect", func() {
 	})
 })
 
-type testDialectFactory testDialect
+type factory Test
 
-func (t testDialectFactory) Connect(Configuration) (Dialect, error) {
-	return testDialect(t), nil
-}
-
-type testDialect struct {
-	insertq string
-	selectq string
-	updateq string
-	deleteq string
-}
-
-func (t testDialect) Insert(n int, table string, columns, defaults []string) string {
-	return t.insertq
-}
-
-func (t testDialect) Select(table string, columns, predicates []string) string {
-	return t.selectq
-}
-
-func (t testDialect) Update(table string, columns, predicates, returning []string) string {
-	return t.updateq
-}
-
-func (t testDialect) Delete(table string, columns, predicates []string) string {
-	return t.deleteq
-}
-
-func (t testDialect) ColumnValueTransformer() ColumnTransformer {
-	return NewColumnInfoNameTransformer("")
-}
-
-func (t testDialect) ColumnNameTransformer() ColumnTransformer {
-	return NewColumnInfoNameTransformer("")
-}
-
-func (t testDialect) ColumnInformationForQuery(d Driver, query string) ([]ColumnInfo, error) {
-	return []ColumnInfo{}, nil
-}
-
-func (t testDialect) ColumnInformationForTable(d Driver, table string) ([]ColumnInfo, error) {
-	return []ColumnInfo{}, nil
+func (t factory) Connect(genieql.Configuration) (genieql.Dialect, error) {
+	return genieql.Dialect(Test(t)), nil
 }

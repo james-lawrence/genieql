@@ -2,38 +2,18 @@ package genieql
 
 import (
 	"strings"
+	"unicode"
 
+	"bitbucket.org/jatone/genieql/internal/transformx"
 	"github.com/serenize/snaker"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
 )
-
-// Aliaser implementations auto generate aliases
-type Aliaser interface {
-	Alias(string) string
-}
-
-// AliaserFunc pure functional implementations of the Aliaser
-type AliaserFunc func(string) string
-
-// Alias see Aliaser
-func (t AliaserFunc) Alias(name string) string {
-	return t(name)
-}
-
-// AliaserChain TODO ...
-func AliaserChain(aliasers ...Aliaser) Aliaser {
-	return AliaserFunc(func(name string) string {
-		for _, aliaser := range aliasers {
-			name = aliaser.Alias(name)
-		}
-
-		return name
-	})
-}
 
 // AliaserBuilder looks up transformations by name, if any of transformations
 // do not exist returns nil.
-func AliaserBuilder(names ...string) Aliaser {
-	aliaserSet := make([]Aliaser, 0, len(names))
+func AliaserBuilder(names ...string) transform.Transformer {
+	aliaserSet := make([]transform.Transformer, 0, len(names))
 	for _, name := range names {
 		aliaser := AliaserSelect(name)
 		if aliaser == nil {
@@ -42,11 +22,11 @@ func AliaserBuilder(names ...string) Aliaser {
 		aliaserSet = append(aliaserSet, aliaser)
 	}
 
-	return AliaserChain(aliaserSet...)
+	return transform.Chain(aliaserSet...)
 }
 
 // AliaserSelect predefines common transformations for Aliases
-func AliaserSelect(aliasername string) Aliaser {
+func AliaserSelect(aliasername string) transform.Transformer {
 	switch strings.ToLower(aliasername) {
 	case "lowercase":
 		return AliasStrategyLowercase
@@ -62,13 +42,13 @@ func AliaserSelect(aliasername string) Aliaser {
 }
 
 // AliasStrategyLowercase strategy for lowercasing field names to match result fields.
-var AliasStrategyLowercase Aliaser = AliaserFunc(strings.ToLower)
+var AliasStrategyLowercase transform.Transformer = runes.Map(unicode.ToLower)
 
 // AliasStrategyUppercase strategy for uppercasing field names to match result fields.
-var AliasStrategyUppercase Aliaser = AliaserFunc(strings.ToUpper)
+var AliasStrategyUppercase transform.Transformer = runes.Map(unicode.ToUpper)
 
 // AliasStrategySnakecase strategy for snake casing field names to match result fields.
-var AliasStrategySnakecase Aliaser = AliaserFunc(snaker.CamelToSnake)
+var AliasStrategySnakecase transform.Transformer = transformx.Full(snaker.CamelToSnake)
 
 // AliasStrategyCamelcase strategy for camel casing field names to match result fields.
-var AliasStrategyCamelcase Aliaser = AliaserFunc(snaker.SnakeToCamel)
+var AliasStrategyCamelcase transform.Transformer = transformx.Full(snaker.SnakeToCamel)

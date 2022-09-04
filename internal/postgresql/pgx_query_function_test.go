@@ -5,11 +5,12 @@ import (
 	"go/ast"
 	"go/build"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 
@@ -35,7 +36,7 @@ var _ = Describe("Scanner", func() {
 	)
 
 	driver := genieql.MustLookupDriver(drivers.PGX)
-	dialect := genieql.MustLookupDialect(config)
+	dialect := dialects.MustLookupDialect(config)
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{
@@ -82,7 +83,7 @@ var _ = Describe("Scanner", func() {
 
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},

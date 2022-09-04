@@ -1,8 +1,6 @@
 package genieql
 
 import (
-	"database/sql"
-	sqldriver "database/sql/driver"
 	"fmt"
 	"go/ast"
 	"log"
@@ -58,11 +56,6 @@ func PrintRegisteredDrivers() {
 type Driver interface {
 	LookupType(s string) (ColumnDefinition, error)
 	Exported() (string, map[string]reflect.Value)
-}
-
-type decoder interface {
-	sql.Scanner
-	sqldriver.Valuer
 }
 
 // ColumnDefinition defines a type supported by the driver.

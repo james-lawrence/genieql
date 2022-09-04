@@ -9,6 +9,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/transformx"
 )
 
 // StructOption option to provide the structure function.
@@ -206,8 +207,10 @@ func (t structure) Generate(dst io.Writer) error {
 		Columns: mapping.Columns,
 	}
 
+	a := mapping.Aliaser()
+
 	return template.Must(template.New("scanner template").Funcs(template.FuncMap{
-		"transformation": mapping.Aliaser(),
+		"transformation": func(s string) string { return transformx.String(s, a) },
 		"type": func(s string) string {
 			if d, err := typeDefinitions(s); err == nil {
 				return d.Native
