@@ -167,13 +167,13 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			gen   *ast.FuncLit
 		)
 
-		if d, err := lookupTypeDefinition(column.Definition.Type); err == nil {
-			column.Definition = d
-		} else {
-			column.Definition = fallbackDefinition(column.Definition.Type)
+		if column.Definition.Encode == "" {
+			if d, err := lookupTypeDefinition(column.Definition.Type); err == nil {
+				column.Definition = d
+			} else {
+				column.Definition = fallbackDefinition(column.Definition.Type)
+			}
 		}
-
-		debugx.Println("type definition", spew.Sdump(column.Definition))
 
 		if column.Definition.Encode == "" {
 			log.Printf("skipping %s (%s -> %s) missing encode block\n", column.Name, column.Definition.Type, column.Definition.ColumnType)
@@ -363,7 +363,7 @@ func allBuiltinTypes(xs ...ast.Expr) bool {
 
 func builtinType(x ast.Expr) bool {
 	name := strings.ReplaceAll(types.ExprString(x), "*", "")
-	debugx.Printf("builType check %T - %s", x, name)
+	debugx.Printf("builtinType check %T - %s", x, name)
 
 	for _, t := range types.Typ {
 		if name == t.Name() {

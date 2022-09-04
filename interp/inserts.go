@@ -205,7 +205,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	qfn := functions.Query{
 		Context: t.ctx,
 		Query: astutil.StringLiteral(
-			dialect.Insert(t.n, t.table, filteredcset.ColumnNames(), t.defaults),
+			dialect.Insert(t.n, t.table, ignoredcset.ColumnNames(), t.defaults),
 		),
 		Scanner:      t.scanner,
 		Queryer:      t.qf.Type,

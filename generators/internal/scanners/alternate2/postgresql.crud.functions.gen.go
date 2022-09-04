@@ -66,7 +66,7 @@ func Type1Insert(q sqlx.Queryer, arg1 Type1) Type1ScannerStaticRow {
 		}
 	}
 
-	switch arg1.Field8 {
+	switch *arg1.Field8 {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
 		if err := c7.Set(pgtype.Infinity); err != nil {
 			return NewType1ScannerStaticRow(nil).Err(err)
@@ -457,7 +457,7 @@ func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerSt
 		}
 	}
 
-	switch update.Field8 {
+	switch *update.Field8 {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
 		if err := c8.Set(pgtype.Infinity); err != nil {
 			return NewType1ScannerStaticRow(nil).Err(err)

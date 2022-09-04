@@ -421,11 +421,6 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 		Ellipsis: isEllipsis(t.Parameters),
 	}
 
-	// log.Println()
-	// log.Println("PARAMS", strings.Join(astutil.MapExprToString(astutil.MapFieldsToTypExpr(t.Parameters...)...), ","))
-	// log.Println("QUERY PARAMS", strings.Join(astutil.MapExprToString(t.QueryParameters...), ","))
-	// log.Println("QUERY", astutil.MustPrint(query))
-
 	ctx := context{
 		Name:         t.Name,
 		Comment:      t.Comment.Text(),
