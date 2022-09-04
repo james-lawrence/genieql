@@ -53,16 +53,16 @@ func (t *generateInsert) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
 		"path of output file",
 	).Short('o').Default("").StringVar(&t.generateInsertConfig.output)
 
-	cmd = (&insertQueryCmd{
+	(&insertQueryCmd{
 		generateInsertConfig: &t.generateInsertConfig,
 	}).configure(insert.Command("constant", "output the query as a constant")).Default()
 
 	x := insert.Command("experimental", "experimental insert commands")
-	cmd = (&insertBatchCmd{
+	(&insertBatchCmd{
 		generateInsertConfig: &t.generateInsertConfig,
 	}).configure(x.Command("batch-function", "generate a batch insert function"))
 
-	cmd = (&insertFunctionCmd{
+	(&insertFunctionCmd{
 		generateInsertConfig: &t.generateInsertConfig,
 	}).configure(x.Command("function", "output the insert as a function"))
 
@@ -133,7 +133,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 			builder := func(local string, n int, columns ...string) ast.Decl {
 				return genieql.QueryLiteral(
 					local,
-					ctx.Dialect.Insert(n, table, columns, defaults),
+					ctx.Dialect.Insert(n, table, "", columns, defaults),
 				)
 			}
 
@@ -361,7 +361,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	cg := generators.NewQueryFunction(
 		ctx,
 		generators.QFOName(functionName),
-		generators.QFOBuiltinQueryFromString(ctx.Dialect.Insert(1, t.table, genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
+		generators.QFOBuiltinQueryFromString(ctx.Dialect.Insert(1, t.table, "", genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
 		generators.QFOScanner(scannerFunction),
 		generators.QFOExplodeStructParam(field, fields...),
 		generators.QFOIgnore(t.defaults...),

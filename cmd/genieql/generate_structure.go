@@ -179,60 +179,10 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) (err error) {
 	return nil
 }
 
-// GenerateQueryCLI creates a struct from the query specified from the command line.
-type GenerateQueryCLI struct {
-	buildInfo
-	query      string
-	typeName   string
-	output     string
-	configName string
-	pkg        string
-}
-
-func (t *GenerateQueryCLI) configure(cmd *kingpin.CmdClause) *kingpin.CmdClause {
-	cli := cmd.Command("cli", "generates a structure for the provided options and query").Action(t.execute)
-	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
-	cli.Flag("name", "name of the type to generate").StringVar(&t.typeName)
-	cli.Flag("output", "output filename").Short('o').StringVar(&t.output)
-	cli.Flag("package", "package to look for the type within").
-		Default(t.CurrentPackageImport()).StringVar(&t.pkg)
-	cli.Arg("query", "query to generate the mapping from").Required().StringVar(&t.query)
-
-	return cli
-}
-
-func (t *GenerateQueryCLI) execute(*kingpin.ParseContext) (err error) {
-	var (
-		ctx generators.Context
-	)
-
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg); err != nil {
-		return err
-	}
-
-	pg := printGenerator{
-		pkg: ctx.CurrentPackage,
-		delegate: generators.NewStructure(
-			generators.StructOptionContext(ctx),
-			generators.StructOptionName(t.typeName),
-			generators.StructOptionMappingConfigOptions(
-				genieql.MCOPackage(ctx.CurrentPackage),
-			),
-		),
-	}
-
-	if err = cmd.WriteStdoutOrFile(pg, t.output, cmd.DefaultWriteFlags); err != nil {
-		log.Fatalln(err)
-	}
-
-	return nil
-}
-
 // GenerateQueryConstants generates structures from the defined constant within
 // a file tagged with `//+build genieql,generate,structure,query`.
 type GenerateQueryConstants struct {
 	buildInfo
-	table      string
 	typeName   string
 	pkg        string
 	configName string

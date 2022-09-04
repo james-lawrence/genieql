@@ -52,7 +52,7 @@ func InsertExample1Explode(arg1 *StructA) ([]interface{}, error) {
 
 // InsertExample1
 func InsertExample1(ctx context.Context, q sqlx.Queryer, a StructA) ExampleScanner {
-	const query = `INSERT QUERY`
+	const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
 	var (
 		c0 sql.NullInt64
 		c1 sql.NullInt64

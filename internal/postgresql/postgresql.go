@@ -58,8 +58,8 @@ type dialectImplementation struct {
 	db *sql.DB
 }
 
-func (t dialectImplementation) Insert(n int, table string, columns, defaults []string) string {
-	return Insert(n, table, columns, defaults)
+func (t dialectImplementation) Insert(n int, table, conflict string, columns, defaults []string) string {
+	return Insert(n, table, conflict, columns, defaults)
 }
 
 func (t dialectImplementation) Select(table string, columns, predicates []string) string {
@@ -100,7 +100,7 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 	}
 	defer tx.Rollback()
 
-	q := fmt.Sprintf("CREATE TABLE %s AS (%s)", table, query)
+	q := fmt.Sprintf("CREATE TABLE %s AS (%s LIMIT 1)", table, query)
 	if _, err = tx.Exec(q); err != nil {
 		return nil, errors.Wrapf(err, "failure to execute %s", q)
 	}

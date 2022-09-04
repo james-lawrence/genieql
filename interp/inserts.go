@@ -22,6 +22,7 @@ type Insert interface {
 	Ignore(...string) Insert  // do not attempt to insert the specified column.
 	Default(...string) Insert // use the database default for the specified columns.
 	Batch(n int) Insert       // specify a batch insert
+	Conflict(string) Insert   // specify how conflicts should be handled.
 }
 
 // NewInsert instantiate a new insert generator. it uses the name of function
@@ -52,6 +53,7 @@ type insert struct {
 	n        int // number of records to support inserting
 	name     string
 	table    string
+	conflict string
 	defaults []string
 	ignore   []string
 	tf       *ast.Field    // type field.
@@ -82,6 +84,11 @@ func (t *insert) Ignore(ignore ...string) Insert {
 // Batch specify the maximum number of records to insert.
 func (t *insert) Batch(size int) Insert {
 	t.n = size
+	return t
+}
+
+func (t *insert) Conflict(s string) Insert {
+	t.conflict = s
 	return t
 }
 
@@ -205,7 +212,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	qfn := functions.Query{
 		Context: t.ctx,
 		Query: astutil.StringLiteral(
-			dialect.Insert(t.n, t.table, ignoredcset.ColumnNames(), t.defaults),
+			dialect.Insert(t.n, t.table, t.conflict, ignoredcset.ColumnNames(), t.defaults),
 		),
 		Scanner:      t.scanner,
 		Queryer:      t.qf.Type,

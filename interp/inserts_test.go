@@ -63,6 +63,7 @@ var _ = Describe("Insert", func() {
 		Dialect: dialects.Test{
 			Quote:             "\"",
 			CValueTransformer: columninfo.NewNameTransformer(),
+			QueryInsert:       "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict:",
 		},
 		Driver: driver,
 	}
@@ -95,7 +96,7 @@ var _ = Describe("Insert", func() {
 				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
 				rowsScanner,
 			).Into("foo"),
-			bytes.NewBuffer(testx.Fixture(".fixtures/inserts/example.1.go")),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.1.go"))),
 		),
 		Entry(
 			"example 2 - ignored fields",
@@ -136,5 +137,31 @@ var _ = Describe("Insert", func() {
 			).Into("foo").Ignore("a").Default("b"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.4.go"))),
 		),
+		Entry(
+			"example 5 - allow upserts",
+			NewInsert(
+				ctx,
+				"InsertExample5",
+				nil,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+				rowsScanner,
+			).Into("foo").Ignore("a").Default("b").Conflict("ON CONFLICT c = DEFAULT"),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.5.go"))),
+		),
+		// FEntry(
+		// 	"example 6 - batch",
+		// 	NewInsert(
+		// 		ctx,
+		// 		"InsertExample6",
+		// 		nil,
+		// 		astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+		// 		astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+		// 		astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+		// 		rowsScanner,
+		// 	).Into("foo").Batch(10).Ignore("a").Default("b").Conflict("ON CONFLICT c = DEFAULT"),
+		// 	io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.6.go"))),
+		// ),
 	)
 })

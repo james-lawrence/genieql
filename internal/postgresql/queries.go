@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 type columnValueTransformer struct {
@@ -18,7 +19,11 @@ func (t *columnValueTransformer) Transform(c genieql.ColumnInfo) string {
 }
 
 // Insert generate an insert query.
-func Insert(n int, table string, columns, defaulted []string) string {
+func Insert(n int, table string, conflict string, columns, defaulted []string) string {
+	const (
+		insertTmpl = "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict: RETURNING :gql.insert.returning:"
+	)
+	columnOrder := strings.Join(quotedColumns(columns...), ",")
 	offset := 1
 	values := make([]string, 0, n)
 	for i := 0; i < n; i++ {
@@ -28,8 +33,16 @@ func Insert(n int, table string, columns, defaulted []string) string {
 		p, offset = placeholders(offset, selectPlaceholder(columns, defaulted))
 		values = append(values, fmt.Sprintf("(%s)", strings.Join(p, ",")))
 	}
-	columnOrder := strings.Join(quotedColumns(columns...), ",")
-	return fmt.Sprintf(insertTmpl, table, columnOrder, strings.Join(values, ","), columnOrder)
+
+	replacements := strings.NewReplacer(
+		":gql.insert.tablename:", table,
+		":gql.insert.columns:", columnOrder,
+		":gql.insert.values:", strings.Join(values, ","),
+		":gql.insert.conflict:", stringsx.DefaultIfBlank(" "+conflict, ""),
+		":gql.insert.returning:", columnOrder,
+	)
+
+	return replacements.Replace(insertTmpl)
 }
 
 // Select generate a select query.
@@ -125,7 +138,6 @@ func (t offsetPlaceholder) String(offset int) (string, int) {
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"
-const insertTmpl = "INSERT INTO %s (%s) VALUES %s RETURNING %s"
 const updateTmpl = "UPDATE %s SET %s WHERE %s RETURNING %s"
 const deleteTmpl = "DELETE FROM %s WHERE %s RETURNING %s"
 const matchAllClause = "'t'"

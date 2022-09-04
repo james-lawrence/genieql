@@ -1,3 +1,4 @@
+//go:build genieql.generate
 // +build genieql.generate
 
 package autocompile
@@ -75,4 +76,8 @@ func Example1Insert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e E
 
 func TimestampInsert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow {
 	gql.Into("timestamp_examples").Default("id")
+}
+
+func ConflictInsert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow {
+	gql.Into("timestamp_examples").Default("id").Conflict("ON CONFLICT (id) DO NOTHING")
 }

@@ -3,14 +3,29 @@ package sqlite3
 import (
 	"fmt"
 	"strings"
+
+	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 )
 
 // Insert generate an insert query.
-func Insert(n int, table string, columns, defaulted []string) string {
+func Insert(n int, table, conflict string, columns, defaulted []string) string {
+	const (
+		insertTmpl = "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES (:gql.insert.values:):gql.insert.conflict:"
+	)
+
 	p, _ := placeholders(1, selectPlaceholder(columns, defaulted))
 	values := strings.Join(p, ",")
 	columnOrder := strings.Join(columns, ",")
-	return fmt.Sprintf(insertTmpl, table, columnOrder, values)
+
+	replacements := strings.NewReplacer(
+		":gql.insert.tablename:", table,
+		":gql.insert.columns:", columnOrder,
+		":gql.insert.values:", values,
+		":gql.insert.conflict:", stringsx.DefaultIfBlank(" "+conflict, ""),
+		":gql.insert.returning:", columnOrder,
+	)
+
+	return replacements.Replace(insertTmpl)
 }
 
 // Select generate a select query.
@@ -92,7 +107,6 @@ func (t offsetPlaceholder) String(offset int) (string, int) {
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"
-const insertTmpl = "INSERT INTO %s (%s) VALUES (%s)"
 const updateTmpl = "UPDATE %s SET %s WHERE %s"
 const deleteTmpl = "DELETE FROM %s WHERE %s"
 const matchAllClause = "'t'"

@@ -12,7 +12,7 @@ import (
 
 func TestFunctions(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Functions Suite")
+	RunSpecs(t, "Internal Functions Suite")
 }
 
 var (

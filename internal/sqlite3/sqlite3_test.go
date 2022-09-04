@@ -43,12 +43,12 @@ var _ = Describe("Sqlite3", func() {
 	})
 
 	DescribeTable("Insert",
-		func(table string, columns, defaults []string, query string) {
-			Expect(dialect.Insert(1, table, columns, defaults)).To(Equal(query))
+		func(table, conflict string, columns, defaults []string, query string) {
+			Expect(dialect.Insert(1, table, conflict, columns, defaults)).To(Equal(query))
 		},
-		Entry("example 1", "MyTable1", []string{"col1", "col2", "col3"}, []string{}, "INSERT INTO MyTable1 (col1,col2,col3) VALUES ($1,$2,$3)"),
-		Entry("example 2", "MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col4"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES ($1,$2,$3,DEFAULT)"),
-		Entry("example 3", "MyTable2", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES (DEFAULT,$1,DEFAULT,$2)"),
+		Entry("example 1", "MyTable1", "", []string{"col1", "col2", "col3"}, []string{}, "INSERT INTO MyTable1 (col1,col2,col3) VALUES ($1,$2,$3)"),
+		Entry("example 2", "MyTable2", "", []string{"col1", "col2", "col3", "col4"}, []string{"col4"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES ($1,$2,$3,DEFAULT)"),
+		Entry("example 3", "MyTable2", "", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, "INSERT INTO MyTable2 (col1,col2,col3,col4) VALUES (DEFAULT,$1,DEFAULT,$2)"),
 	)
 
 	DescribeTable("Select",
