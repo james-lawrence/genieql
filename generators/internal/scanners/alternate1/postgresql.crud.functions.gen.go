@@ -1,6 +1,7 @@
 package alternate1
 
 import (
+	"math"
 	"time"
 
 	"bitbucket.org/jatone/genieql/internal/sqlx"
@@ -50,12 +51,34 @@ func Type1Insert(q sqlx.Queryer, arg1 Type1) Type1ScannerStaticRow {
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c6.Set(arg1.Field7); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch arg1.Field7 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c6.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c6.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c6.Set(arg1.Field7); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
-	if err := c7.Set(arg1.Field8); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch arg1.Field8 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c7.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c7.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c7.Set(arg1.Field8); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c8.Set(arg1.Unmappedfield); err != nil {
@@ -240,8 +263,19 @@ func Type1FindByField7(q sqlx.Queryer, field7 time.Time) Type1ScannerStaticRow {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(field7); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch field7 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(field7); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
@@ -254,8 +288,19 @@ func Type1LookupByField7(q sqlx.Queryer, field7 time.Time) Type1Scanner {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(field7); err != nil {
-		return NewType1ScannerStatic(nil, err)
+	switch field7 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
+	default:
+		if err := c0.Set(field7); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
 	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
@@ -268,8 +313,19 @@ func Type1FindByField8(q sqlx.Queryer, field8 time.Time) Type1ScannerStaticRow {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(field8); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch field8 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(field8); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewType1ScannerStaticRow(q.QueryRow(query, c0))
@@ -282,8 +338,19 @@ func Type1LookupByField8(q sqlx.Queryer, field8 time.Time) Type1Scanner {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(field8); err != nil {
-		return NewType1ScannerStatic(nil, err)
+	switch field8 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
+	default:
+		if err := c0.Set(field8); err != nil {
+			return NewType1ScannerStatic(nil, err)
+		}
 	}
 
 	return NewType1ScannerStatic(q.Query(query, c0))
@@ -375,12 +442,34 @@ func Type1UpdateByID(q sqlx.Queryer, field1 string, update Type1) Type1ScannerSt
 		return NewType1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c7.Set(update.Field7); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch update.Field7 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c7.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c7.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c7.Set(update.Field7); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
-	if err := c8.Set(update.Field8); err != nil {
-		return NewType1ScannerStaticRow(nil).Err(err)
+	switch update.Field8 {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c8.Set(pgtype.Infinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c8.Set(pgtype.NegativeInfinity); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c8.Set(update.Field8); err != nil {
+			return NewType1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c9.Set(update.Unmappedfield); err != nil {

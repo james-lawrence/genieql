@@ -1,6 +1,7 @@
 package basic
 
 import (
+	"math"
 	"time"
 
 	"bitbucket.org/jatone/genieql/internal/sqlx"
@@ -21,8 +22,19 @@ func exampleInsert(q sqlx.Queryer, arg1 example) ExampleScannerStaticRow {
 		c3 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(arg1.Created); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch arg1.Created {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(arg1.Created); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c1.Set(arg1.Email); err != nil {
@@ -33,8 +45,19 @@ func exampleInsert(q sqlx.Queryer, arg1 example) ExampleScannerStaticRow {
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c3.Set(arg1.Updated); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch arg1.Updated {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c3.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c3.Set(arg1.Updated); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3))
@@ -47,8 +70,19 @@ func exampleFindByCreated(q sqlx.Queryer, created time.Time) ExampleScannerStati
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(created); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch created {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(created); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
@@ -61,8 +95,19 @@ func exampleLookupByCreated(q sqlx.Queryer, created time.Time) ExampleScanner {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(created); err != nil {
-		return NewExampleScannerStatic(nil, err)
+	switch created {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
+	default:
+		if err := c0.Set(created); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
 	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
@@ -131,8 +176,19 @@ func exampleFindByUpdated(q sqlx.Queryer, updated time.Time) ExampleScannerStati
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(updated); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch updated {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(updated); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0))
@@ -145,8 +201,19 @@ func exampleLookupByUpdated(q sqlx.Queryer, updated time.Time) ExampleScanner {
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(updated); err != nil {
-		return NewExampleScannerStatic(nil, err)
+	switch updated {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
+	default:
+		if err := c0.Set(updated); err != nil {
+			return NewExampleScannerStatic(nil, err)
+		}
 	}
 
 	return NewExampleScannerStatic(q.Query(query, c0))
@@ -181,8 +248,19 @@ func exampleUpdateByID(q sqlx.Queryer, id int, update example) ExampleScannerSta
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c1.Set(update.Created); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch update.Created {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c1.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c1.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c1.Set(update.Created); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c2.Set(update.Email); err != nil {
@@ -193,8 +271,19 @@ func exampleUpdateByID(q sqlx.Queryer, id int, update example) ExampleScannerSta
 		return NewExampleScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c4.Set(update.Updated); err != nil {
-		return NewExampleScannerStaticRow(nil).Err(err)
+	switch update.Updated {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c4.Set(pgtype.Infinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c4.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c4.Set(update.Updated); err != nil {
+			return NewExampleScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewExampleScannerStaticRow(q.QueryRow(query, c0, c1, c2, c3, c4))

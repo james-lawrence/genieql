@@ -1,6 +1,9 @@
 package functions
 
 import (
+	"math"
+	"time"
+
 	"bitbucket.org/jatone/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
 )
@@ -75,8 +78,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 					c2 pgtype.UUID
 					c3 pgtype.Timestamptz
 				)
-				if err := c0.Set(v.Created); err != nil {
-					return r, err
+				switch v.Created {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c0.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c0.Set(v.Created); err != nil {
+						return r, err
+					}
 				}
 				if err := c1.Set(v.Email); err != nil {
 					return r, err
@@ -84,8 +98,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				if err := c2.Set(v.ID); err != nil {
 					return r, err
 				}
-				if err := c3.Set(v.Updated); err != nil {
-					return r, err
+				switch v.Updated {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c3.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c3.Set(v.Updated); err != nil {
+						return r, err
+					}
 				}
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
@@ -109,8 +134,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 					c2 pgtype.UUID
 					c3 pgtype.Timestamptz
 				)
-				if err := c0.Set(v.Created); err != nil {
-					return r, err
+				switch v.Created {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c0.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c0.Set(v.Created); err != nil {
+						return r, err
+					}
 				}
 				if err := c1.Set(v.Email); err != nil {
 					return r, err
@@ -118,8 +154,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				if err := c2.Set(v.ID); err != nil {
 					return r, err
 				}
-				if err := c3.Set(v.Updated); err != nil {
-					return r, err
+				switch v.Updated {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c3.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c3.Set(v.Updated); err != nil {
+						return r, err
+					}
 				}
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
@@ -143,8 +190,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 					c2 pgtype.UUID
 					c3 pgtype.Timestamptz
 				)
-				if err := c0.Set(v.Created); err != nil {
-					return r, err
+				switch v.Created {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c0.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c0.Set(v.Created); err != nil {
+						return r, err
+					}
 				}
 				if err := c1.Set(v.Email); err != nil {
 					return r, err
@@ -152,8 +210,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				if err := c2.Set(v.ID); err != nil {
 					return r, err
 				}
-				if err := c3.Set(v.Updated); err != nil {
-					return r, err
+				switch v.Updated {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c3.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c3.Set(v.Updated); err != nil {
+						return r, err
+					}
 				}
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
@@ -177,8 +246,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 					c2 pgtype.UUID
 					c3 pgtype.Timestamptz
 				)
-				if err := c0.Set(v.Created); err != nil {
-					return r, err
+				switch v.Created {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c0.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c0.Set(v.Created); err != nil {
+						return r, err
+					}
 				}
 				if err := c1.Set(v.Email); err != nil {
 					return r, err
@@ -186,8 +266,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				if err := c2.Set(v.ID); err != nil {
 					return r, err
 				}
-				if err := c3.Set(v.Updated); err != nil {
-					return r, err
+				switch v.Updated {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c3.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c3.Set(v.Updated); err != nil {
+						return r, err
+					}
 				}
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}
@@ -211,8 +302,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 					c2 pgtype.UUID
 					c3 pgtype.Timestamptz
 				)
-				if err := c0.Set(v.Created); err != nil {
-					return r, err
+				switch v.Created {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c0.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c0.Set(v.Created); err != nil {
+						return r, err
+					}
 				}
 				if err := c1.Set(v.Email); err != nil {
 					return r, err
@@ -220,8 +322,19 @@ func (t *example4BatchInsertFunction) advance(q sqlx.Queryer, p ...Example4) (Ex
 				if err := c2.Set(v.ID); err != nil {
 					return r, err
 				}
-				if err := c3.Set(v.Updated); err != nil {
-					return r, err
+				switch v.Updated {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c3.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c3.Set(v.Updated); err != nil {
+						return r, err
+					}
 				}
 				r[idx*4+0], r[idx*4+1], r[idx*4+2], r[idx*4+3] = c0, c1, c2, c3
 			}

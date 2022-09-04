@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"math"
 	"net"
 	"time"
 
@@ -136,8 +137,19 @@ func Example1Insert(q sqlx.Queryer, arg1 Example1) Example1ScannerStaticRow {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c23.Set(arg1.TimestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil).Err(err)
+	switch arg1.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c23.Set(pgtype.Infinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c23.Set(arg1.TimestampField); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c24.Set(arg1.UUIDArray); err != nil {
@@ -802,8 +814,19 @@ func Example1FindByTimestampField(q sqlx.Queryer, timestampField time.Time) Exam
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(timestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil).Err(err)
+	switch timestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(timestampField); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	return NewExample1ScannerStaticRow(q.QueryRow(query, c0))
@@ -816,8 +839,19 @@ func Example1LookupByTimestampField(q sqlx.Queryer, timestampField time.Time) Ex
 		c0 pgtype.Timestamptz
 	)
 
-	if err := c0.Set(timestampField); err != nil {
-		return NewExample1ScannerDynamic(nil, err)
+	switch timestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewExample1ScannerDynamic(nil, err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExample1ScannerDynamic(nil, err)
+		}
+	default:
+		if err := c0.Set(timestampField); err != nil {
+			return NewExample1ScannerDynamic(nil, err)
+		}
 	}
 
 	return NewExample1ScannerDynamic(q.Query(query, c0))
@@ -1022,8 +1056,19 @@ func Example1UpdateByID(q sqlx.Queryer, uuidField string, update Example1) Examp
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
 
-	if err := c24.Set(update.TimestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil).Err(err)
+	switch update.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c24.Set(pgtype.Infinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c24.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c24.Set(update.TimestampField); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
 	}
 
 	if err := c25.Set(update.UUIDArray); err != nil {

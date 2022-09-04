@@ -1,6 +1,9 @@
 package definitions
 
 import (
+	"math"
+	"time"
+
 	"bitbucket.org/jatone/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
 )
@@ -166,8 +169,19 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				if err := c22.Set(v.TextField); err != nil {
 					return r, err
 				}
-				if err := c23.Set(v.TimestampField); err != nil {
-					return r, err
+				switch v.TimestampField {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c23.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c23.Set(v.TimestampField); err != nil {
+						return r, err
+					}
 				}
 				if err := c24.Set(v.UUIDArray); err != nil {
 					return r, err
@@ -288,8 +302,19 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				if err := c22.Set(v.TextField); err != nil {
 					return r, err
 				}
-				if err := c23.Set(v.TimestampField); err != nil {
-					return r, err
+				switch v.TimestampField {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c23.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c23.Set(v.TimestampField); err != nil {
+						return r, err
+					}
 				}
 				if err := c24.Set(v.UUIDArray); err != nil {
 					return r, err
@@ -410,8 +435,19 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				if err := c22.Set(v.TextField); err != nil {
 					return r, err
 				}
-				if err := c23.Set(v.TimestampField); err != nil {
-					return r, err
+				switch v.TimestampField {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c23.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c23.Set(v.TimestampField); err != nil {
+						return r, err
+					}
 				}
 				if err := c24.Set(v.UUIDArray); err != nil {
 					return r, err
@@ -532,8 +568,19 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				if err := c22.Set(v.TextField); err != nil {
 					return r, err
 				}
-				if err := c23.Set(v.TimestampField); err != nil {
-					return r, err
+				switch v.TimestampField {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c23.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c23.Set(v.TimestampField); err != nil {
+						return r, err
+					}
 				}
 				if err := c24.Set(v.UUIDArray); err != nil {
 					return r, err
@@ -654,8 +701,19 @@ func (t *example1BatchInsertFunction) advance(q sqlx.Queryer, p ...Example1) (Ex
 				if err := c22.Set(v.TextField); err != nil {
 					return r, err
 				}
-				if err := c23.Set(v.TimestampField); err != nil {
-					return r, err
+				switch v.TimestampField {
+				case time.Unix(math.MaxInt64-62135596800, 999999999):
+					if err := c23.Set(pgtype.Infinity); err != nil {
+						return r, err
+					}
+				case time.Unix(math.MinInt64, math.MinInt64):
+					if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+						return r, err
+					}
+				default:
+					if err := c23.Set(v.TimestampField); err != nil {
+						return r, err
+					}
 				}
 				if err := c24.Set(v.UUIDArray); err != nil {
 					return r, err

@@ -2637,8 +2637,19 @@ func Example1InsertExplode(arg1 *Example1) ([]interface{}, error) {
 		return []interface{}(nil), err
 	}
 
-	if err := c23.Set(arg1.TimestampField); err != nil {
-		return []interface{}(nil), err
+	switch arg1.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c23.Set(pgtype.Infinity); err != nil {
+			return []interface{}(nil), err
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+			return []interface{}(nil), err
+		}
+	default:
+		if err := c23.Set(arg1.TimestampField); err != nil {
+			return []interface{}(nil), err
+		}
 	}
 
 	if err := c24.Set(arg1.UUIDArray); err != nil {
@@ -2747,8 +2758,19 @@ func Example1Insert(ctx context.Context, q sqlx.Queryer, e Example1) Example1Sca
 	if err := c22.Set(e.TextField); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
 	}
-	if err := c23.Set(e.TimestampField); err != nil {
-		return NewExample1ScannerStaticRow(nil).Err(err)
+	switch e.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c23.Set(pgtype.Infinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c23.Set(pgtype.NegativeInfinity); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c23.Set(e.TimestampField); err != nil {
+			return NewExample1ScannerStaticRow(nil).Err(err)
+		}
 	}
 	if err := c24.Set(e.UUIDArray); err != nil {
 		return NewExample1ScannerStaticRow(nil).Err(err)
@@ -2768,16 +2790,49 @@ func TimestampInsertExplode(arg1 *Timestamp) ([]interface{}, error) {
 		c3 pgtype.Text
 	)
 
-	if err := c0.Set(arg1.Timestamp); err != nil {
-		return []interface{}(nil), err
+	switch arg1.Timestamp {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return []interface{}(nil), err
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return []interface{}(nil), err
+		}
+	default:
+		if err := c0.Set(arg1.Timestamp); err != nil {
+			return []interface{}(nil), err
+		}
 	}
 
-	if err := c1.Set(arg1.Timestamptz); err != nil {
-		return []interface{}(nil), err
+	switch arg1.Timestamptz {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c1.Set(pgtype.Infinity); err != nil {
+			return []interface{}(nil), err
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c1.Set(pgtype.NegativeInfinity); err != nil {
+			return []interface{}(nil), err
+		}
+	default:
+		if err := c1.Set(arg1.Timestamptz); err != nil {
+			return []interface{}(nil), err
+		}
 	}
 
-	if err := c2.Set(arg1.TimestamptzNullable); err != nil {
-		return []interface{}(nil), err
+	switch *arg1.TimestamptzNullable {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c2.Set(pgtype.Infinity); err != nil {
+			return []interface{}(nil), err
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c2.Set(pgtype.NegativeInfinity); err != nil {
+			return []interface{}(nil), err
+		}
+	default:
+		if err := c2.Set(arg1.TimestamptzNullable); err != nil {
+			return []interface{}(nil), err
+		}
 	}
 
 	if err := c3.Set(arg1.UUID); err != nil {
@@ -2796,14 +2851,47 @@ func TimestampInsert(ctx context.Context, q sqlx.Queryer, e Timestamp) Timestamp
 		c2 pgtype.Timestamptz
 		c3 pgtype.UUID
 	)
-	if err := c0.Set(e.Timestamp); err != nil {
-		return NewTimestampScannerStaticRow(nil).Err(err)
+	switch e.Timestamp {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c0.Set(pgtype.Infinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c0.Set(pgtype.NegativeInfinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c0.Set(e.Timestamp); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
 	}
-	if err := c1.Set(e.Timestamptz); err != nil {
-		return NewTimestampScannerStaticRow(nil).Err(err)
+	switch e.Timestamptz {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c1.Set(pgtype.Infinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c1.Set(pgtype.NegativeInfinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c1.Set(e.Timestamptz); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
 	}
-	if err := c2.Set(e.TimestamptzNullable); err != nil {
-		return NewTimestampScannerStaticRow(nil).Err(err)
+	switch *e.TimestamptzNullable {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		if err := c2.Set(pgtype.Infinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	case time.Unix(math.MinInt64, math.MinInt64):
+		if err := c2.Set(pgtype.NegativeInfinity); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
+	default:
+		if err := c2.Set(e.TimestamptzNullable); err != nil {
+			return NewTimestampScannerStaticRow(nil).Err(err)
+		}
 	}
 	if err := c3.Set(e.UUID); err != nil {
 		return NewTimestampScannerStaticRow(nil).Err(err)
