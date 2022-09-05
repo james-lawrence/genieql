@@ -30,7 +30,7 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 		return r, ErrNoMatch
 	}
 
-	if !pattern(astutil.MapFieldsToTypExpr(pos.Type.Params.List[:1]...)...) {
+	if !pattern(astutil.MapFieldsToTypeExpr(pos.Type.Params.List[:1]...)...) {
 		ctx.Traceln("no match pattern", nodeInfo(ctx, pos))
 		return r, ErrNoMatch
 	}

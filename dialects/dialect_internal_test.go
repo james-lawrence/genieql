@@ -1,7 +1,6 @@
 package dialects
 
 import (
-	"bitbucket.org/jatone/genieql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -10,14 +9,14 @@ var _ = Describe("Dialect", func() {
 	Describe("dialectRegistry", func() {
 		Describe("RegisterDialect", func() {
 			It("should err if the dialect is already registered", func() {
-				dialect := factory{}
+				dialect := TestFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 				Expect(reg.RegisterDialect("testDialect", dialect)).To(MatchError(ErrDuplicateDialect))
 			})
 
 			It("should register a dialect", func() {
-				dialect := factory{}
+				dialect := TestFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect("testDialect", dialect)).ToNot(HaveOccurred())
 			})
@@ -33,7 +32,7 @@ var _ = Describe("Dialect", func() {
 
 			It("should return the dialect if its been registered", func() {
 				dialectName := "testDialect"
-				dialect := factory{}
+				dialect := TestFactory{}
 				reg := dialectRegistry{}
 				Expect(reg.RegisterDialect(dialectName, dialect)).ToNot(HaveOccurred())
 				foundDialect, err := reg.LookupDialect(dialectName)
@@ -43,9 +42,3 @@ var _ = Describe("Dialect", func() {
 		})
 	})
 })
-
-type factory Test
-
-func (t factory) Connect(genieql.Configuration) (genieql.Dialect, error) {
-	return genieql.Dialect(Test(t)), nil
-}

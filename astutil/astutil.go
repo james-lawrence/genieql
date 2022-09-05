@@ -177,6 +177,11 @@ func Const(name string, x ast.Expr) ast.Decl {
 	return literalDecl(token.CONST, name, x)
 }
 
+// ConstantDecl create a constant declaration statement.
+func ConstDecl(q string, qe ast.Expr) *ast.DeclStmt {
+	return &ast.DeclStmt{Decl: Const(q, qe)}
+}
+
 // CallExpr - creates a function call expression with the provided argument
 // expressions.
 func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
@@ -224,9 +229,9 @@ func MapFieldsToNameIdent(args ...*ast.Field) []*ast.Ident {
 	return result
 }
 
-// MapFieldsToTypExpr - extracts the type for each name for each of the provided fields.
+// MapFieldsToTypeExpr - extracts the type for each name for each of the provided fields.
 // i.e.) a,b int, c string, d float is transformed into: int, int, string, float
-func MapFieldsToTypExpr(args ...*ast.Field) []ast.Expr {
+func MapFieldsToTypeExpr(args ...*ast.Field) []ast.Expr {
 	r := []ast.Expr{}
 	for idx, f := range args {
 		if len(f.Names) == 0 {

@@ -279,7 +279,7 @@ func NewQueryFunction(ctx Context, options ...QueryFunctionOption) genieql.Gener
 
 	qf.Apply(options...)
 
-	pattern := astutil.MapFieldsToTypExpr(qf.ScannerDecl.Type.Params.List...)
+	pattern := astutil.MapFieldsToTypeExpr(qf.ScannerDecl.Type.Params.List...)
 
 	// attempt to infer the type from the pattern of the scanner function.
 	if qf.QueryerFunction != nil {

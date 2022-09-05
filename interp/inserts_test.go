@@ -3,17 +3,10 @@ package genieql_test
 import (
 	"bytes"
 	"go/ast"
-	"go/build"
-	"go/token"
 	"io"
-	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
 	"bitbucket.org/jatone/genieql/internal/testx"
@@ -26,47 +19,11 @@ import (
 var _ = Describe("Insert", func() {
 	rowsScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("NewExampleScannerStatic"),
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					astutil.Field(astutil.Expr("*sql.Rows"), ast.NewIdent("rows")),
-					astutil.Field(astutil.Expr("error"), ast.NewIdent("err")),
-				},
-			},
-			Results: &ast.FieldList{
-				List: []*ast.Field{astutil.Field(ast.NewIdent("ExampleScanner"))},
-			},
-		},
+		Type: astutil.MustParseExpr("func(rows *sql.Rows, err error) ExampleScanner").(*ast.FuncType),
 	}
-
-	pkg := &build.Package{
-		Name: "example",
-		Dir:  ".fixtures",
-		GoFiles: []string{
-			"example.go",
-		},
-	}
-
-	configuration := genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
-		),
-	)
-
-	driver, err := genieql.LookupDriver(drivers.StandardLib)
+	config := DialectConfig1()
+	ctx, err := GeneratorContext(config)
 	errorsx.PanicOnError(err)
-
-	ctx := generators.Context{
-		Configuration:  configuration,
-		CurrentPackage: pkg,
-		FileSet:        token.NewFileSet(),
-		Dialect: dialects.Test{
-			Quote:             "\"",
-			CValueTransformer: columninfo.NewNameTransformer(),
-			QueryInsert:       "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict:",
-		},
-		Driver: driver,
-	}
 
 	DescribeTable(
 		"examples",
@@ -88,7 +45,7 @@ var _ = Describe("Insert", func() {
 				"InsertExample1",
 				&ast.CommentGroup{
 					List: []*ast.Comment{
-						{Text: "// InsertExample1"},
+						{Text: "// Basic Insert Example"},
 					},
 				},
 				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
@@ -150,18 +107,5 @@ var _ = Describe("Insert", func() {
 			).Into("foo").Ignore("a").Default("b").Conflict("ON CONFLICT c = DEFAULT"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.5.go"))),
 		),
-		// FEntry(
-		// 	"example 6 - batch",
-		// 	NewInsert(
-		// 		ctx,
-		// 		"InsertExample6",
-		// 		nil,
-		// 		astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
-		// 		astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
-		// 		astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
-		// 		rowsScanner,
-		// 	).Into("foo").Batch(10).Ignore("a").Default("b").Conflict("ON CONFLICT c = DEFAULT"),
-		// 	io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.6.go"))),
-		// ),
 	)
 })

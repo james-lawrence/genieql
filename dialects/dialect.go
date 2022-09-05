@@ -229,3 +229,9 @@ type offsetPlaceholder struct{}
 func (t offsetPlaceholder) String(offset int) (string, int) {
 	return fmt.Sprintf("$%d", offset), offset + 1
 }
+
+type TestFactory Test
+
+func (t TestFactory) Connect(genieql.Configuration) (genieql.Dialect, error) {
+	return genieql.Dialect(Test(t)), nil
+}

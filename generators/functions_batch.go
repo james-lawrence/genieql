@@ -65,7 +65,7 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 	)
 
 	// validition...
-	if len(ft.Params.List[1:]) > 1 && areArrayType(astutil.MapFieldsToTypExpr(ft.Params.List[1:]...)...) {
+	if len(ft.Params.List[1:]) > 1 && areArrayType(astutil.MapFieldsToTypeExpr(ft.Params.List[1:]...)...) {
 		return genieql.NewErrGenerator(errors.New("batch only supports a single array type parameter"))
 	}
 

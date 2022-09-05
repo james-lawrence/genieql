@@ -32,7 +32,7 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 		return r, ErrNoMatch
 	}
 
-	if !pattern(astutil.MapFieldsToTypExpr(fn.Type.Params.List[:1]...)...) {
+	if !pattern(astutil.MapFieldsToTypeExpr(fn.Type.Params.List[:1]...)...) {
 		ctx.Traceln("no match pattern", nodeInfo(ctx, fn))
 		return r, ErrNoMatch
 	}

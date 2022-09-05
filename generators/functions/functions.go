@@ -3,7 +3,10 @@ package functions
 import (
 	"fmt"
 	"go/ast"
+	"go/printer"
+	"go/token"
 	"go/types"
+	"io"
 	"log"
 	"strings"
 
@@ -55,7 +58,7 @@ func DetectContext(fnt *ast.FuncType) (r *ast.Field) {
 		return nil
 	}
 
-	pattern := astutil.MapFieldsToTypExpr(fnt.Params.List[0])
+	pattern := astutil.MapFieldsToTypeExpr(fnt.Params.List[0])
 
 	if contextPattern(pattern...) {
 		return fnt.Params.List[0]
@@ -121,7 +124,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 		return nil, errors.Errorf("a scanner was not provided")
 	}
 
-	pattern := astutil.MapFieldsToTypExpr(t.Scanner.Type.Params.List...)
+	pattern := astutil.MapFieldsToTypeExpr(t.Scanner.Type.Params.List...)
 
 	// attempt to infer the type from the pattern of the scanner function.
 	if t.QueryerFunction != nil {
@@ -152,6 +155,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	if t.ContextField != nil {
 		qinputs = append(qinputs, astutil.MapFieldsToNameExpr(t.ContextField)...)
 	}
+
 	qinputs = append(qinputs, query)
 	if len(t.QueryInputs) == 0 {
 		qinputs = append(qinputs, t.transform(d.Signature.Params.List...)...)
@@ -167,7 +171,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	d.Signature.Results = t.Scanner.Type.Results
 
 	stmts := []ast.Stmt{
-		&ast.DeclStmt{Decl: astutil.Const(types.ExprString(query), t.Query)},
+		astutil.ConstDecl(types.ExprString(query), t.Query),
 	}
 
 	if len(t.Transforms) > 0 {
@@ -190,6 +194,19 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 // Compile a definition using the provided compiler
 func Compile(d Definition, c compiler) (*ast.FuncDecl, error) {
 	return c.Compile(d)
+}
+
+// CompileInto the provided io.Writer
+func CompileInto(dst io.Writer, d Definition, c compiler) (err error) {
+	var (
+		n ast.Node
+	)
+
+	if n, err = Compile(d, c); err != nil {
+		return err
+	}
+
+	return printer.Fprint(dst, token.NewFileSet(), n)
 }
 
 // New function definition

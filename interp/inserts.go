@@ -3,8 +3,6 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
-	"go/printer"
-	"go/token"
 	"go/types"
 	"io"
 
@@ -21,7 +19,6 @@ type Insert interface {
 	Into(string) Insert       // what table to insert into
 	Ignore(...string) Insert  // do not attempt to insert the specified column.
 	Default(...string) Insert // use the database default for the specified columns.
-	Batch(n int) Insert       // specify a batch insert
 	Conflict(string) Insert   // specify how conflicts should be handled.
 }
 
@@ -44,13 +41,11 @@ func NewInsert(
 		cf:      cf,
 		tf:      tf,
 		scanner: scanner,
-		n:       1,
 	}
 }
 
 type insert struct {
 	ctx      generators.Context
-	n        int // number of records to support inserting
 	name     string
 	table    string
 	conflict string
@@ -78,12 +73,6 @@ func (t *insert) Default(defaults ...string) Insert {
 // Ignore specify the table columns to ignore during insert.
 func (t *insert) Ignore(ignore ...string) Insert {
 	t.ignore = ignore
-	return t
-}
-
-// Batch specify the maximum number of records to insert.
-func (t *insert) Batch(size int) Insert {
-	t.n = size
 	return t
 }
 
@@ -122,14 +111,6 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 				ast.NewIdent(local),
 			),
 		)
-	}
-
-	if t.n > 1 {
-		errHandler = func(local string) ast.Node {
-			return astutil.Return(
-				astutil.CallExpr(t.scanner.Name, ast.NewIdent("nil"), ast.NewIdent(local)),
-			)
-		}
 	}
 
 	err = t.ctx.Configuration.ReadMap(
@@ -210,15 +191,15 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	)
 
 	qfn := functions.Query{
-		Context: t.ctx,
-		Query: astutil.StringLiteral(
-			dialect.Insert(t.n, t.table, t.conflict, ignoredcset.ColumnNames(), t.defaults),
-		),
+		Context:      t.ctx,
 		Scanner:      t.scanner,
 		Queryer:      t.qf.Type,
 		Transforms:   transforms,
 		QueryInputs:  qinputs,
 		ContextField: t.cf,
+		Query: astutil.StringLiteral(
+			dialect.Insert(1, t.table, t.conflict, ignoredcset.ColumnNames(), t.defaults),
+		),
 	}
 
 	sig := &ast.FuncType{
@@ -231,19 +212,15 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		g1,
 		g2,
 		genieql.NewFuncGenerator(func(dst io.Writer) (err error) {
-			var (
-				n ast.Node
-			)
-
-			if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
+			if err = generators.GenerateComment(generators.DefaultFunctionComment(t.name), t.comment).Generate(dst); err != nil {
 				return err
 			}
 
-			if n, err = qfn.Compile(functions.New(t.name, sig)); err != nil {
+			if err = functions.CompileInto(dst, functions.New(t.name, sig), qfn); err != nil {
 				return err
 			}
 
-			return printer.Fprint(dst, token.NewFileSet(), n)
+			return nil
 		}),
 	).Generate(dst)
 }

@@ -3,7 +3,7 @@ package functions_test
 import (
 	"fmt"
 	"go/ast"
-	"io/ioutil"
+	"os"
 
 	"bitbucket.org/jatone/genieql"
 
@@ -63,7 +63,7 @@ var _ = Describe("Query Functions", func() {
 			)
 			Expect(err).To(Succeed())
 
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(generated).To(Equal(string(expected)))
 		},

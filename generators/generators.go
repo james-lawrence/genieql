@@ -106,7 +106,7 @@ func reserved(s string) bool {
 
 // GenerateComment generates a comment.
 func GenerateComment(comments ...*ast.CommentGroup) genieql.Generator {
-	doc := firstComment(comments...)
+	doc := mergeComments(comments...)
 	return genieql.NewFuncGenerator(func(dst io.Writer) (err error) {
 		for _, c := range doc.List {
 			if _, err = dst.Write([]byte(c.Text)); err != nil {
@@ -130,12 +130,18 @@ func DefaultFunctionComment(name string) *ast.CommentGroup {
 	}
 }
 
-func firstComment(comments ...*ast.CommentGroup) *ast.CommentGroup {
+func mergeComments(comments ...*ast.CommentGroup) (m *ast.CommentGroup) {
 	for _, c := range comments {
-		if c != nil {
-			return c
+		if c == nil {
+			continue
 		}
+
+		if m == nil {
+			m = c
+			continue
+		}
+		m.List = append(m.List, c.List...)
 	}
 
-	return nil
+	return m
 }

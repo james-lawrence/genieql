@@ -24,7 +24,7 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 		structPattern = astutil.TypePattern(astutil.Expr("genieql.Structure"))
 	)
 
-	if !structPattern(astutil.MapFieldsToTypExpr(pos.Type.Params.List...)...) {
+	if !structPattern(astutil.MapFieldsToTypeExpr(pos.Type.Params.List...)...) {
 		return r, ErrNoMatch
 	}
 

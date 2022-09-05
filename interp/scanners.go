@@ -35,7 +35,7 @@ func (t *scanner) Generate(dst io.Writer) error {
 	defer t.ctx.Println("generation of", t.name, "completed")
 
 	modes := generators.ScannerOptionNoop
-	if len(t.params.List) > 1 && !generators.AllBuiltinTypes(astutil.MapFieldsToTypExpr(t.params.List...)...) {
+	if len(t.params.List) > 1 && !generators.AllBuiltinTypes(astutil.MapFieldsToTypeExpr(t.params.List...)...) {
 		t.ctx.Println("multiple structures detected disabling dynamic scanner output for", t.name)
 		modes = generators.ScannerOptionOutputMode(generators.ModeInterface | generators.ModeStatic | generators.ModeStaticDisableColumns)
 	}
