@@ -191,6 +191,18 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	return combine(d, astutil.Block(stmts...)), nil
 }
 
+func NewFn(body ...ast.Stmt) Body {
+	return Body(body)
+}
+
+// Body function compile combinues a sequence of statements with the provided definition.
+type Body []ast.Stmt
+
+// Compile using the provided definition.
+func (t Body) Compile(d Definition) (_ *ast.FuncDecl, err error) {
+	return combine(d, astutil.Block(t...)), nil
+}
+
 // Compile a definition using the provided compiler
 func Compile(d Definition, c compiler) (*ast.FuncDecl, error) {
 	return c.Compile(d)
