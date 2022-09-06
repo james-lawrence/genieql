@@ -3,7 +3,7 @@ package functions
 import (
 	"fmt"
 	"go/ast"
-	"go/printer"
+	"go/format"
 	"go/token"
 	"go/types"
 	"io"
@@ -218,7 +218,7 @@ func CompileInto(dst io.Writer, d Definition, c compiler) (err error) {
 		return err
 	}
 
-	return printer.Fprint(dst, token.NewFileSet(), n)
+	return format.Node(dst, token.NewFileSet(), n)
 }
 
 // New function definition
@@ -245,7 +245,8 @@ func New(name string, signature *ast.FuncType, options ...Option) Definition {
 
 // Definition of a function.
 type Definition struct {
-	Name      string            // name of the generated function
+	Name      string // name of the generated function
+	Recv      *ast.FieldList
 	Comment   *ast.CommentGroup // comment of the generated function.
 	Signature *ast.FuncType     // signature of the generated function defining expected inputs and output.
 }
@@ -264,8 +265,15 @@ type Option func(*Definition)
 // OptionNoop do nothing
 func OptionNoop(*Definition) {}
 
+func OptionRecv(r *ast.FieldList) Option {
+	return func(d *Definition) {
+		d.Recv = r
+	}
+}
+
 func combine(d Definition, b *ast.BlockStmt) (res *ast.FuncDecl) {
 	return &ast.FuncDecl{
+		Recv: d.Recv,
 		Name: &ast.Ident{
 			Name: d.Name,
 		},

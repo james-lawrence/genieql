@@ -31,6 +31,13 @@ func Field(typ ast.Expr, names ...*ast.Ident) *ast.Field {
 	}
 }
 
+// Field builds an ast.Field from the given type and names.
+func FieldList(els ...*ast.Field) *ast.FieldList {
+	return &ast.FieldList{
+		List: els,
+	}
+}
+
 // SelExpr builds an *ast.SelectorExpr.
 func SelExpr(lhs, rhs string) *ast.SelectorExpr {
 	return &ast.SelectorExpr{
@@ -287,6 +294,14 @@ func TypePattern(pattern ...ast.Expr) func(...ast.Expr) bool {
 // IntegerLiteral builds a integer literal.
 func IntegerLiteral(n int) ast.Expr {
 	return &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(n)}
+}
+
+func BinaryExpr(lhs ast.Expr, op token.Token, rhs ast.Expr) *ast.BinaryExpr {
+	return &ast.BinaryExpr{
+		X:  lhs,
+		Op: op,
+		Y:  rhs,
+	}
 }
 
 // StringLiteral expression

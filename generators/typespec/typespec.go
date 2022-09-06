@@ -2,7 +2,7 @@ package typespec
 
 import (
 	"go/ast"
-	"go/printer"
+	"go/format"
 	"go/token"
 	"io"
 )
@@ -36,12 +36,20 @@ func (t GenDecl) Compile() (_ *ast.TypeSpec, err error) {
 // CompileInto the provided io.Writer
 func CompileInto(dst io.Writer, c compiler) (err error) {
 	var (
-		n ast.Node
+		n ast.Spec
 	)
 
 	if n, err = c.Compile(); err != nil {
 		return err
 	}
 
-	return printer.Fprint(dst, token.NewFileSet(), n)
+	decl := &ast.GenDecl{
+		TokPos: token.Pos(0),
+		Tok:    token.TYPE,
+		Specs: []ast.Spec{
+			n,
+		},
+	}
+
+	return format.Node(dst, token.NewFileSet(), []ast.Decl{decl})
 }

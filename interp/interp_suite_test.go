@@ -1,7 +1,6 @@
 package genieql_test
 
 import (
-	"fmt"
 	"go/build"
 	"go/token"
 	"io"
@@ -63,7 +62,7 @@ func DialectConfig1() genieql.Configuration {
 		QueryInsert:       "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict:",
 	}))
 	if err != nil {
-		fmt.Println("DERP", err)
+		log.Println("failed to register test dialect", dialect, err)
 	}
 	return genieql.Configuration{
 		Location: ".fixtures/.genieql",

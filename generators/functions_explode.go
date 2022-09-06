@@ -20,7 +20,6 @@ type exploderFunction struct {
 }
 
 func (t exploderFunction) Generate(dst io.Writer) error {
-	// return t.queryFunction.Generate(dst)
 	type context struct {
 		Name       string
 		Fields     []*ast.Field
@@ -249,13 +248,13 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 	}, nil
 }
 
-func buildExploderInvocations(n int, fun ast.Expr, arg ast.Expr) []ast.Expr {
-	r := make([]ast.Expr, 0, n)
-	for i := 0; i < n; i++ {
-		r = append(r, astutil.CallExpr(fun, arg))
-	}
-	return r
-}
+// func buildExploderInvocations(n int, fun ast.Expr, arg ast.Expr) []ast.Expr {
+// 	r := make([]ast.Expr, 0, n)
+// 	for i := 0; i < n; i++ {
+// 		r = append(r, astutil.CallExpr(fun, arg))
+// 	}
+// 	return r
+// }
 
 func buildExploderAssign(tmpName, exploderName ast.Expr, errReturn ast.Stmt, exploderArg []ast.Expr, selectors ...*ast.Field) []ast.Stmt {
 	if len(selectors) == 0 {

@@ -122,6 +122,16 @@ func GenerateComment(comments ...*ast.CommentGroup) genieql.Generator {
 	})
 }
 
+func GapLines(dst io.Writer, n int) (err error) {
+	for i := 0; i < n; i++ {
+		if _, err = fmt.Fprintln(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func DefaultFunctionComment(name string) *ast.CommentGroup {
 	return &ast.CommentGroup{
 		List: []*ast.Comment{

@@ -80,14 +80,15 @@ func (t *batch) Ignore(ignore ...string) InsertBatch {
 	return t
 }
 
-// Batch specify the maximum number of records to insert.
-func (t *batch) Batch(size int) InsertBatch {
-	t.n = size
+// Conflict specify how to handle conflict during an insert.
+func (t *batch) Conflict(s string) InsertBatch {
+	t.conflict = s
 	return t
 }
 
-func (t *batch) Conflict(s string) InsertBatch {
-	t.conflict = s
+// Batch specify the maximum number of records to insert.
+func (t *batch) Batch(size int) InsertBatch {
+	t.n = size
 	return t
 }
 
@@ -110,7 +111,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		Results: t.scanner.Type.Results,
 	}
 
-	typename := stringsx.ToPrivate(t.name + "Type")
+	typename := stringsx.ToPrivate(t.name)
 	initialize := functions.NewFn(
 		astutil.Return(
 			&ast.UnaryExpr{
@@ -119,11 +120,11 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 					Type: ast.NewIdent(typename),
 					Elts: []ast.Expr{
 						&ast.KeyValueExpr{
-							Key:   ast.NewIdent("ctx"),
+							Key:   t.cf.Names[0],
 							Value: t.cf.Names[0],
 						},
 						&ast.KeyValueExpr{
-							Key:   ast.NewIdent("q"),
+							Key:   t.qf.Names[0],
 							Value: t.qf.Names[0],
 						},
 						&ast.KeyValueExpr{
@@ -137,17 +138,144 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 	)
 
 	typedecl := typespec.NewType(typename, &ast.StructType{
+		Struct: token.Pos(0),
 		Fields: &ast.FieldList{
-			List: []*ast.Field{t.tf},
+			List: []*ast.Field{
+				t.cf,
+				t.qf,
+				astutil.Field(
+					&ast.ArrayType{Elt: t.tf.Type}, ast.NewIdent("remaining")),
+			},
 		},
 	})
+
+	fnrecv := astutil.FieldList(astutil.Field(&ast.StarExpr{X: astutil.Expr(typename)}, ast.NewIdent("t")))
+
+	scansig := &ast.FuncType{
+		Params: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(&ast.StarExpr{X: t.tf.Type}, t.tf.Names...),
+			},
+		},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(ast.NewIdent("error")),
+			},
+		},
+	}
+	scanfn := functions.NewFn(
+		astutil.Return(
+			astutil.CallExpr(
+				&ast.SelectorExpr{
+					X: astutil.SelExpr(
+						"t", "scanner",
+					),
+					Sel: ast.NewIdent("Scan"),
+				},
+				t.tf.Names[0],
+			),
+		),
+	)
+
+	errsig := &ast.FuncType{
+		Params: &ast.FieldList{},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(ast.NewIdent("error")),
+			},
+		},
+	}
+
+	errfn := functions.NewFn(
+		astutil.If(
+			nil,
+			astutil.BinaryExpr(astutil.SelExpr("t", "scanner"), token.EQL, ast.NewIdent("nil")),
+			astutil.Block(
+				astutil.Return(ast.NewIdent("nil")),
+			),
+			nil,
+		),
+		astutil.Return(
+			astutil.CallExpr(
+				astutil.SelExpr(
+					types.ExprString(
+						astutil.SelExpr(
+							"t", "scanner",
+						),
+					),
+					"Err",
+				),
+			),
+		),
+	)
+
+	closesig := &ast.FuncType{
+		Params: &ast.FieldList{},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(ast.NewIdent("error")),
+			},
+		},
+	}
+
+	closefn := functions.NewFn(
+		astutil.If(
+			nil,
+			astutil.BinaryExpr(astutil.SelExpr("t", "scanner"), token.EQL, ast.NewIdent("nil")),
+			astutil.Block(
+				astutil.Return(ast.NewIdent("nil")),
+			),
+			nil,
+		),
+		astutil.Return(
+			astutil.CallExpr(
+				astutil.SelExpr(
+					types.ExprString(
+						astutil.SelExpr(
+							"t", "scanner",
+						),
+					),
+					"Close",
+				),
+			),
+		),
+	)
+
+	nextsig := &ast.FuncType{
+		Params: &ast.FieldList{},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(ast.NewIdent("bool")),
+			},
+		},
+	}
+
+	nextfn := functions.NewFn(
+		astutil.Return(
+			ast.NewIdent("false"),
+		),
+	)
+
+	advancesig := &ast.FuncType{
+		Params:  &ast.FieldList{},
+		Results: &ast.FieldList{},
+	}
+	advancefn := functions.NewFn(
+		astutil.Return(
+			ast.NewIdent("false"),
+		),
+	)
 
 	return genieql.NewFuncGenerator(func(dst io.Writer) (err error) {
 		if err = generators.GenerateComment(generators.DefaultFunctionComment(t.name), t.comment).Generate(dst); err != nil {
 			return err
 		}
 
-		if err = functions.CompileInto(dst, functions.New(t.name, initializesig), initialize); err != nil {
+		if err = functions.CompileInto(dst, functions.New("New"+stringsx.ToPublic(t.name), initializesig), initialize); err != nil {
+			return err
+		}
+
+		if err = generators.GapLines(dst, 2); err != nil {
 			return err
 		}
 
@@ -155,82 +283,45 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 			return err
 		}
 
+		if err = generators.GapLines(dst, 2); err != nil {
+			return err
+		}
+
+		if err = functions.CompileInto(dst, functions.New("Scan", scansig, functions.OptionRecv(fnrecv)), scanfn); err != nil {
+			return err
+		}
+
+		if err = generators.GapLines(dst, 2); err != nil {
+			return err
+		}
+
+		if err = functions.CompileInto(dst, functions.New("Err", errsig, functions.OptionRecv(fnrecv)), errfn); err != nil {
+			return err
+		}
+
+		if err = generators.GapLines(dst, 2); err != nil {
+			return err
+		}
+
+		if err = functions.CompileInto(dst, functions.New("Close", closesig, functions.OptionRecv(fnrecv)), closefn); err != nil {
+			return err
+		}
+
+		if err = generators.GapLines(dst, 2); err != nil {
+			return err
+		}
+
+		if err = functions.CompileInto(dst, functions.New("Next", nextsig, functions.OptionRecv(fnrecv)), nextfn); err != nil {
+			return err
+		}
+
+		if err = generators.GapLines(dst, 2); err != nil {
+			return err
+		}
+
+		if err = functions.CompileInto(dst, functions.New("advance", advancesig, functions.OptionRecv(fnrecv)), advancefn); err != nil {
+			return err
+		}
 		return nil
 	}).Generate(dst)
 }
-
-const batchScannerTemplate = `// New{{.QueryFunction.Name | title}} creates a scanner that inserts a batch of
-// records into the database.
-func New{{.QueryFunction.Name | title}}({{ .Parameters | arguments }}) {{ .ScannerType | expr }} {
-	return &{{.QueryFunction.Name | private}}{
-		q: {{.QueryFunction.QueryerName}},
-		remaining: {{.Type | name }},
-	}
-}
-
-type {{.QueryFunction.Name | private}} struct {
-	q         {{.QueryFunction.Queryer | expr}}
-	remaining {{ .Type.Type | array | expr }}
-	scanner   {{ .ScannerType | expr }}
-}
-
-func (t *{{.QueryFunction.Name | private}}) Scan(dst *{{.Type.Type | expr}}) error {
-	return t.scanner.Scan(dst)
-}
-
-func (t *{{.QueryFunction.Name | private}}) Err() error {
-	if t.scanner == nil {
-		return nil
-	}
-
-	return t.scanner.Err()
-}
-
-func (t *{{.QueryFunction.Name | private}}) Close() error {
-	if t.scanner == nil {
-		return nil
-	}
-	return t.scanner.Close()
-}
-
-func (t *{{.QueryFunction.Name | private}}) Next() bool {
-	var (
-		advanced bool
-	)
-
-	if t.scanner != nil && t.scanner.Next() {
-		return true
-	}
-
-	// advance to the next check
-	if len(t.remaining) > 0 && t.Close() == nil {
-		t.scanner, t.remaining, advanced = t.advance(t.q, t.remaining...)
-		return advanced && t.scanner.Next()
-	}
-
-	return false
-}
-
-func (t *{{.QueryFunction.Name | private}}) advance(q sqlx.Queryer, {{.Type | name}} ...{{.Type.Type | expr}}) ({{ .ScannerType | expr }}, {{ .Type.Type | array | expr }}, bool) {
-	switch len({{.Type | name }}) {
-	case 0:
-		return nil, []{{.Type.Type | expr}}(nil), false
-	{{- range $ctx := .Statements }}
-	case {{ $ctx.Number }}:
-		{{ $ctx.BuiltinQuery | ast }}
-		{{ $ctx.Exploder | ast }}
-		{{ range $_, $stmt := $ctx.Explode }}
-		{{ $stmt | ast }}
-		{{ end }}
-		return {{ $.ScannerFunc | expr }}({{ $ctx.Queryer | expr }}), {{$.Type.Type | array | expr}}(nil), true
-	{{- end }}
-	default:
-		{{ .DefaultStatement.BuiltinQuery | ast }}
-		{{ .DefaultStatement.Exploder | ast }}
-		{{ range $_, $stmt := .DefaultStatement.Explode }}
-		{{ $stmt | ast }}
-		{{ end }}
-		return {{ .ScannerFunc | expr }}({{ .DefaultStatement.Queryer | expr }}), {{.Type | name}}[{{.DefaultStatement.Number}}:], true
-	}
-}
-`
