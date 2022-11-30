@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+	"golang.org/x/text/transform"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -136,6 +137,14 @@ func ScannerOptionIgnoreSet(n ...string) ScannerOption {
 	}
 }
 
+// ScannerOptionColumnNameTransformer specify transforms for the column name
+func ScannerOptionColumnNameTransformer(n ...transform.Transformer) ScannerOption {
+	return func(s *scanner) error {
+		s.columnNameTransformer = n
+		return nil
+	}
+}
+
 // ScannerFromGenDecl creates a structure generator from  from the provided *ast.GenDecl
 func ScannerFromGenDecl(decl *ast.GenDecl, providedOptions ...ScannerOption) []genieql.Generator {
 	g := make([]genieql.Generator, 0, len(decl.Specs)*2)
@@ -199,11 +208,12 @@ func newScanner(options ...ScannerOption) (scanner, error) {
 
 type scannerConfig struct {
 	Context
-	Name          string
-	interfaceName string
-	Mode          mode
-	Fields        *ast.FieldList
-	ignoreSet     []string
+	Name                  string
+	interfaceName         string
+	Mode                  mode
+	Fields                *ast.FieldList
+	ignoreSet             []string
+	columnNameTransformer []transform.Transformer
 }
 
 type scanner struct {
@@ -269,7 +279,9 @@ func (t scanner) Generate(dst io.Writer) error {
 			cc := NewColumnConstantFromFieldList(
 				t.Context,
 				fmt.Sprintf("%sStaticColumns", stringsx.ToPublic(t.Name)),
-				t.Dialect.ColumnNameTransformer(),
+				t.Dialect.ColumnNameTransformer(
+					t.columnNameTransformer...,
+				),
 				t.Fields,
 			)
 			if err = cc.Generate(dst); err != nil {
