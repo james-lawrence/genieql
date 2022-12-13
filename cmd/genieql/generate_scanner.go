@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/buildx"
 	"github.com/alecthomas/kingpin"
 )
 
@@ -58,7 +59,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) (err error) {
 		node *ast.File
 	)
 
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContext(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -116,11 +117,11 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
+	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 
-	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(ctx.Build, t.pkg, tags...)
 	if err != nil {
 		return err
 	}

@@ -131,7 +131,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 	t.CurrentPackage.GoFiles = append(t.CurrentPackage.GoFiles, filepath.Base(working.Name()))
 
-	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, os.Args[1:]); err != nil {
+	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs); err != nil {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
 

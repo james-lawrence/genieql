@@ -6,7 +6,6 @@ import (
 	"go/build"
 	"io"
 	"log"
-	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -18,7 +17,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 		taggedFiles TaggedFiles
 	)
 
-	if taggedFiles, err = FindTaggedFiles(ctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
+	if taggedFiles, err = FindTaggedFiles(ctx.Build, ctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
 
@@ -56,7 +55,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	}
 
 	gen := genieql.MultiGenerate(
-		genieql.NewCopyGenerator(bytes.NewBufferString("// +build !genieql.ignore")),
+		genieql.NewCopyGenerator(bytes.NewBufferString("//go:build !genieql.ignore\n// +build !genieql.ignore")),
 		genieql.NewCopyGenerator(buf),
 	)
 
@@ -89,25 +88,22 @@ func (t TaggedFiles) IsTagged(name string) bool {
 }
 
 // Locate files with the specified build tags
-func FindTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
+func FindTaggedFiles(bctx build.Context, path string, tags ...string) (TaggedFiles, error) {
 	var (
 		err         error
 		taggedFiles TaggedFiles
-		wd          string
 	)
 
-	if wd, err = os.Getwd(); err != nil {
-		return taggedFiles, err
-	}
-
-	normal, err := build.Default.Import(path, wd, build.IgnoreVendor)
+	nctx := bctx
+	nctx.BuildTags = []string{}
+	normal, err := nctx.Import(".", path, build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err
 	}
 
-	ctx := build.Default
+	ctx := bctx
 	ctx.BuildTags = tags
-	tagged, err := ctx.Import(path, wd, build.IgnoreVendor)
+	tagged, err := ctx.Import(".", path, build.IgnoreVendor)
 	if err != nil {
 		return taggedFiles, err
 	}

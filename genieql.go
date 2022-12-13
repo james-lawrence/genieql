@@ -39,6 +39,7 @@ func FormatOutput(dst io.Writer, raw []byte) (err error) {
 	}
 
 	_, err = dst.Write(raw)
+
 	return errors.Wrap(err, "failed to write to completed code to destination")
 }
 

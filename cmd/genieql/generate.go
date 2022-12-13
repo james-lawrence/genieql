@@ -2,12 +2,10 @@ package main
 
 import (
 	"go/build"
-	"go/token"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
 	"github.com/alecthomas/kingpin"
 )
 
@@ -41,44 +39,6 @@ func (t *generate) configure(app *kingpin.Application) *kingpin.CmdClause {
 	}).configure(x)
 
 	return cmd
-}
-
-func loadGeneratorContext(bctx build.Context, name, pkg string, tags ...string) (ctx generators.Context, err error) {
-	var (
-		config  genieql.Configuration
-		dialect genieql.Dialect
-		driver  genieql.Driver
-		bpkg    *build.Package
-	)
-
-	bctx.BuildTags = tags
-
-	config = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), name),
-		),
-	)
-
-	if dialect, err = dialects.LookupDialect(config); err != nil {
-		return ctx, err
-	}
-
-	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
-		return ctx, err
-	}
-
-	if bpkg, err = genieql.LocatePackage(pkg, bctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return ctx, err
-	}
-
-	return generators.Context{
-		Build:          bctx,
-		CurrentPackage: bpkg,
-		FileSet:        token.NewFileSet(),
-		Configuration:  config,
-		Dialect:        dialect,
-		Driver:         driver,
-	}, nil
 }
 
 func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) {

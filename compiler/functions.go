@@ -62,7 +62,7 @@ func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl
 		}
 
 		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s.%s failed", nodeInfo(ctx, fn))
+			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
 		}
 
 		if f, ok = v.Interface().(func(interp.Function)); !ok {

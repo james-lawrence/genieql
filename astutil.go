@@ -92,16 +92,16 @@ func StrictPackageName(name string) func(*build.Package) bool {
 // StrictPackageImport only accepts packages that are an exact match.
 func StrictPackageImport(name string) func(*build.Package) bool {
 	return func(pkg *build.Package) bool {
-		return pkg.ImportPath == name
+		return pkg.Dir == name
 	}
 }
 
 // LocatePackage finds a package by its name.
 func LocatePackage(pkgName string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
-	pkg, err = context.Import(pkgName, ".", build.IgnoreVendor&build.ImportComment)
+	pkg, err = context.Import(".", pkgName, build.IgnoreVendor&build.ImportComment)
 	_, noGoError := err.(*build.NoGoError)
 	if err != nil && !noGoError {
-		return nil, errors.Wrap(err, "failed to import the package")
+		return nil, errors.Wrapf(err, "failed to import the package: %s", pkgName)
 	}
 
 	if pkg != nil && (matches == nil || matches(pkg)) {

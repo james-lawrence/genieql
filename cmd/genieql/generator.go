@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"go/build"
 	"io"
+	"log"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/pkg/errors"
@@ -12,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/buildx"
 )
 
 // general generator for genieql, will locate files to consider and process them.
@@ -39,21 +41,16 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		buf   = bytes.NewBuffer(nil)
 	)
 
-	bctx := build.Default
-	bctx.BuildTags = []string{
-		genieql.BuildTagIgnore,
-		genieql.BuildTagGenerate,
-	}
-
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, pname, genieql.BuildTagIgnore, genieql.BuildTagGenerate); err != nil {
+	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate)), t.configName, pname); err != nil {
 		return err
 	}
 	ctx.Verbosity = t.buildInfo.Verbosity
 
-	if pname != ctx.CurrentPackage.Dir {
-		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, ctx.CurrentPackage.Dir)
+	if pname != ctx.CurrentPackage.ImportPath {
+		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, ctx.CurrentPackage.ImportPath)
 	}
 
+	log.Println("current package", ctx.CurrentPackage.Dir, ctx.CurrentPackage.ImportPath)
 	if err = compiler.Autocompile(ctx, buf); err != nil {
 		return err
 	}

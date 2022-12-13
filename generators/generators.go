@@ -7,8 +7,11 @@ import (
 	"go/token"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/dialects"
 )
 
 // Generators generate schema and configuration for testing.
@@ -35,6 +38,7 @@ type Context struct {
 	Dialect        genieql.Dialect
 	Driver         genieql.Driver
 	Verbosity      int
+	OSArgs         []string
 }
 
 // Println ...
@@ -154,4 +158,55 @@ func mergeComments(comments ...*ast.CommentGroup) (m *ast.CommentGroup) {
 	}
 
 	return m
+}
+
+type Option func(*Context)
+
+func OptionOSArgs(args ...string) Option {
+	return func(ctx *Context) {
+		ctx.OSArgs = args
+	}
+}
+
+func NewContext(bctx build.Context, name, pkg string, options ...Option) (ctx Context, err error) {
+	var (
+		config  genieql.Configuration
+		dialect genieql.Dialect
+		driver  genieql.Driver
+		bpkg    *build.Package
+	)
+
+	config = genieql.MustReadConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), name),
+		),
+	)
+
+	if dialect, err = dialects.LookupDialect(config); err != nil {
+		return ctx, err
+	}
+
+	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
+		return ctx, err
+	}
+
+	if bpkg, err = genieql.LocatePackage(pkg, bctx, genieql.StrictPackageImport(pkg)); err != nil {
+		return ctx, err
+	}
+
+	ctx = Context{
+		Build:          bctx,
+		CurrentPackage: bpkg,
+		FileSet:        token.NewFileSet(),
+		Configuration:  config,
+		Dialect:        dialect,
+		Driver:         driver,
+		OSArgs:         os.Args[1:],
+	}
+
+	for _, opt := range options {
+		opt(&ctx)
+	}
+
+	return ctx, nil
 }

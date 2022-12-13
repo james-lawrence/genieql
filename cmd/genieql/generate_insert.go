@@ -18,6 +18,7 @@ import (
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/crud"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 )
 
@@ -97,11 +98,11 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, t.pkg, tags...); err != nil {
+	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 
-	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(ctx.Build, t.pkg, tags...)
 	if err != nil {
 		return err
 	}
@@ -211,7 +212,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContext(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
@@ -304,7 +305,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if ctx, err = loadGeneratorContext(build.Default, t.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContext(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
