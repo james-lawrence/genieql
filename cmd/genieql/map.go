@@ -63,7 +63,7 @@ func (t *mapper) execute(ctx *kingpin.ParseContext) error {
 	}
 
 	pkgRelativePath, typ := t.extractPackageType(t.packageType)
-	if pkg, err = locatePackage(pkgRelativePath); err != nil {
+	if pkg, err = genieql.LocatePackage(pkgRelativePath, ".", build.Default, genieql.StrictPackageImport(pkgRelativePath)); err != nil {
 		return err
 	}
 

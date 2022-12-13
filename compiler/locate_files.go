@@ -120,6 +120,6 @@ func FindTaggedFiles(bctx build.Context, path string, tags ...string) (TaggedFil
 			taggedFiles.Files = append(taggedFiles.Files, t)
 		}
 	}
-
+	log.Println("TAGGED", taggedFiles.Empty())
 	return taggedFiles, nil
 }

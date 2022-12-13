@@ -67,7 +67,7 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) (err error) {
 		columns []genieql.ColumnInfo
 	)
 
-	if ctx, err = generators.NewContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -210,7 +210,7 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 

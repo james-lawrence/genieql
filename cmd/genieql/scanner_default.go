@@ -27,7 +27,7 @@ func (t *defaultScanner) Execute(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if ctx, err = generators.NewContext(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
 		return err
 	}
 

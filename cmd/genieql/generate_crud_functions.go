@@ -34,10 +34,15 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) (err error) {
 		mapping genieql.MappingConfig
 		columns []genieql.ColumnInfo
 		fields  []*ast.Field
+		pkg     *build.Package
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if ctx, err = generators.NewContext(build.Default, t.configName, pkgRelativePath); err != nil {
+	if pkg, err = genieql.LocatePackage(pkgRelativePath, ".", build.Default, nil); err != nil {
+		return err
+	}
+
+	if ctx, err = generators.NewContext(build.Default, t.configName, pkg); err != nil {
 		return err
 	}
 

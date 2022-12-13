@@ -25,20 +25,22 @@ var _ = Describe("Function Generation", func() {
 		Expect(err).To(Succeed())
 		bctx := build.Default
 		bctx.Dir = filepath.Join(wdir, dir)
-
-		pkg, err := bctx.ImportDir(dir, build.IgnoreVendor)
-		Expect(err).To(Succeed())
-
 		bctx = buildx.Clone(
 			bctx,
 			buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate),
 		)
-		ctx, err := generators.NewContext(bctx, "default.config", pkg.Dir, generators.OptionOSArgs())
+
+		pkg, err := bctx.ImportDir(dir, build.IgnoreVendor)
+		Expect(err).To(Succeed())
+
+		ctx, err := generators.NewContext(bctx, "default.config", pkg, generators.OptionOSArgs())
 		Expect(err).To(Succeed())
 
 		Expect(compiler.Autocompile(ctx, buf)).To(Succeed())
 		formatted, err := genieql.Format(buf.String())
 		Expect(err).To(Succeed())
+
+		// log.Println("generated\n", formatted)
 
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())

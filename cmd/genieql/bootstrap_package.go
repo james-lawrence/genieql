@@ -44,7 +44,7 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			tokens    = token.NewFileSet()
 		)
 
-		if pkg, err = genieql.LocatePackage(importPath, build.Default, nil); err != nil {
+		if pkg, err = genieql.LocatePackage(importPath, ".", build.Default, nil); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue
 		}

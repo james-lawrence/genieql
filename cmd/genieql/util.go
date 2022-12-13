@@ -13,11 +13,6 @@ import (
 	"bitbucket.org/jatone/genieql"
 )
 
-func locatePackage(pkg string) (bpkg *build.Package, err error) {
-	bpkg, err = genieql.LocatePackage(pkg, build.Default, genieql.StrictPackageImport(pkg))
-	return bpkg, errors.Wrapf(err, "failed to locate package: %s", pkg)
-}
-
 func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
 	var (
 		err error
@@ -25,7 +20,7 @@ func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args 
 	)
 	name, _ := bi.extractPackageType(pkgtype)
 
-	if pkg, err = genieql.LocatePackage(name, build.Default, genieql.StrictPackageImport(name)); err != nil {
+	if pkg, err = genieql.LocatePackage(name, ".", build.Default, genieql.StrictPackageImport(name)); err != nil {
 		return genieql.NewErrGenerator(errors.Wrapf(err, "failed to locate package: %s", name))
 	}
 

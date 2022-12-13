@@ -168,12 +168,23 @@ func OptionOSArgs(args ...string) Option {
 	}
 }
 
-func NewContext(bctx build.Context, name, pkg string, options ...Option) (ctx Context, err error) {
+func NewContextDeprecated(bctx build.Context, name string, pkg string, options ...Option) (ctx Context, err error) {
+	var (
+		bpkg *build.Package
+	)
+
+	if bpkg, err = genieql.LocatePackage(pkg, ".", bctx, genieql.StrictPackageImport(pkg)); err != nil {
+		return ctx, err
+	}
+
+	return NewContext(bctx, name, bpkg, options...)
+}
+
+func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
 	var (
 		config  genieql.Configuration
 		dialect genieql.Dialect
 		driver  genieql.Driver
-		bpkg    *build.Package
 	)
 
 	config = genieql.MustReadConfiguration(
@@ -190,13 +201,9 @@ func NewContext(bctx build.Context, name, pkg string, options ...Option) (ctx Co
 		return ctx, err
 	}
 
-	if bpkg, err = genieql.LocatePackage(pkg, bctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return ctx, err
-	}
-
 	ctx = Context{
 		Build:          bctx,
-		CurrentPackage: bpkg,
+		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),
 		Configuration:  config,
 		Dialect:        dialect,

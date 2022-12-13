@@ -39,9 +39,16 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 		tags        = []string{
 			"genieql", "generate", "functions",
 		}
+		pkg *build.Package
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
+	bctx := buildx.Clone(build.Default, buildx.Tags(tags...))
+
+	if pkg, err = genieql.LocatePackage(t.pkg, ".", build.Default, nil); err != nil {
+		return err
+	}
+
+	if ctx, err = generators.NewContext(bctx, t.configName, pkg); err != nil {
 		return err
 	}
 

@@ -98,7 +98,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if ctx, err = generators.NewContext(build.Default, t.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
@@ -305,7 +305,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.extractPackageType(t.packageType)
-	if ctx, err = generators.NewContext(build.Default, t.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.configName, pkgRelativePath); err != nil {
 		return err
 	}
 

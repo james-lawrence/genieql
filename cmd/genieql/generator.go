@@ -41,7 +41,7 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		buf   = bytes.NewBuffer(nil)
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate)), t.configName, pname); err != nil {
+	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate)), t.configName, pname); err != nil {
 		return err
 	}
 	ctx.Verbosity = t.buildInfo.Verbosity

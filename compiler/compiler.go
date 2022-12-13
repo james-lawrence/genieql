@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"go/ast"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -106,7 +105,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		printer = genieql.ASTPrinter{}
 	)
 
-	if working, err = ioutil.TempFile(t.Context.CurrentPackage.Dir, "genieql-*.go"); err != nil {
+	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql-*.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
 	}
 

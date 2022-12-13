@@ -29,12 +29,12 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) (err error) {
 	)
 
 	pkgRelativePath, typName := t.scanner.extractPackageType(t.scanner.packageType)
-	if ctx, err = generators.NewContext(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.scanner.configName, pkgRelativePath); err != nil {
 		return err
 	}
 
 	queryPkgName, queryConstName := t.scanner.extractPackageType(t.queryLiteral)
-	if pkg, err = locatePackage(queryPkgName); err != nil {
+	if pkg, err = genieql.LocatePackage(queryPkgName, ".", build.Default, genieql.StrictPackageImport(queryPkgName)); err != nil {
 		return err
 	}
 

@@ -59,7 +59,7 @@ func (t *generateScannerCLI) execute(*kingpin.ParseContext) (err error) {
 		node *ast.File
 	)
 
-	if ctx, err = generators.NewContext(build.Default, t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(build.Default, t.configName, t.pkg); err != nil {
 		return err
 	}
 
@@ -117,7 +117,7 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) (err error) {
 		}
 	)
 
-	if ctx, err = generators.NewContext(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
+	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(tags...)), t.configName, t.pkg); err != nil {
 		return err
 	}
 

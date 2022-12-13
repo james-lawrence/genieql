@@ -97,11 +97,11 @@ func StrictPackageImport(name string) func(*build.Package) bool {
 }
 
 // LocatePackage finds a package by its name.
-func LocatePackage(pkgName string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
-	pkg, err = context.Import(".", pkgName, build.IgnoreVendor&build.ImportComment)
+func LocatePackage(importPath, srcDir string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
+	pkg, err = context.Import(importPath, srcDir, build.IgnoreVendor&build.ImportComment)
 	_, noGoError := err.(*build.NoGoError)
 	if err != nil && !noGoError {
-		return nil, errors.Wrapf(err, "failed to import the package: %s", pkgName)
+		return nil, errors.Wrapf(err, "failed to import the package: %s", importPath)
 	}
 
 	if pkg != nil && (matches == nil || matches(pkg)) {
