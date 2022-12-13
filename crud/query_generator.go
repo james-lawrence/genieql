@@ -15,7 +15,7 @@ type Insert genieql.TableDetails
 func (t Insert) Build(n int, name string, defaults []string) genieql.Generator {
 	return generatorFunc(func(dst io.Writer) error {
 		names := genieql.ColumnInfoSet(t.Columns).ColumnNames()
-		query := t.Dialect.Insert(n, t.Table, "", names, defaults)
+		query := t.Dialect.Insert(n, t.Table, "", names, names, defaults)
 		return emit(dst, name, query)
 	})
 }

@@ -39,7 +39,7 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 		func {{.Name}}({{ .Parameters | arguments }}) ([]interface{}, error) {
 			var (
 				{{- range $index, $column := .Fields }}
-				c{{ $index }} {{ $column | type | typedef | sqltype -}}
+				c{{ $index }} {{ $column | type | typedef | sqltype -}} // {{ $column | name -}}
 				{{ end }}
 			)
 
@@ -96,6 +96,12 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 						Sel: astutil.MapFieldsToNameIdent(field)[0],
 					},
 				}
+			},
+			"name": func(field *ast.Field) string {
+				for _, n := range field.Names {
+					return n.Name
+				}
+				return ""
 			},
 		}
 		tmpl = template.Must(template.New("explode-function").Funcs(defaultQueryFuncMap).Parse(defaultQueryFunc))

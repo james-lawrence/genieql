@@ -44,7 +44,7 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 
 	bctx := buildx.Clone(build.Default, buildx.Tags(tags...))
 
-	if pkg, err = genieql.LocatePackage(t.pkg, ".", build.Default, nil); err != nil {
+	if pkg, err = genieql.LocatePackage(t.pkg, ".", bctx, nil); err != nil {
 		return err
 	}
 
@@ -93,7 +93,6 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 

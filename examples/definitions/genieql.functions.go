@@ -1,4 +1,5 @@
-//+build genieql,generate,functions
+//go:build genieql && generate && functions
+// +build genieql,generate,functions
 
 package definitions
 

@@ -42,7 +42,6 @@ func (t headerGenerator) Generate(dst io.Writer) error {
 }
 
 type printGenerator struct {
-	pkg      *build.Package
 	delegate genieql.Generator
 }
 
@@ -85,12 +84,11 @@ func (t printComments) Visit(node ast.Node) ast.Visitor {
 }
 
 func currentPackage(dir string) *build.Package {
-	log.Println("CURRENT PACKAGE", dir, "INITIATED")
 	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
 	if err != nil {
 		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
 	}
-	log.Println("CURRENT PACKAGE", dir, "COMPLETED")
+
 	return pkg
 }
 

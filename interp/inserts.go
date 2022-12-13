@@ -3,6 +3,7 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 	"io"
 
@@ -71,6 +72,9 @@ func (t *insert) Default(defaults ...string) Insert {
 }
 
 // Ignore specify the table columns to ignore during insert.
+// - ignored columns should be defaulted in the static columns.
+// - ignored columns should not be read from the structures during explode.
+// - ignored columns should not be returned by the query.
 func (t *insert) Ignore(ignore ...string) Insert {
 	t.ignore = ignore
 	return t
@@ -137,11 +141,12 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 
 	ignored := genieql.ColumnInfoFilterIgnore(t.ignore...)
 	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
+
 	cset := genieql.ColumnInfoSet(columns)
 	ignoredcset := cset.Filter(ignored)
-	filteredcset := ignoredcset.Filter(defaulted)
+	projectioncset := ignoredcset.Filter(defaulted)
 
-	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], filteredcset...); err != nil {
+	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], projectioncset...); err != nil {
 		return errors.Wrapf(
 			err,
 			"failed to map columns for: %s:%s",
@@ -164,7 +169,18 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		fields = append(fields, cmap.Field)
 		qinputs = append(qinputs, local)
 		encodings = append(encodings, tmp...)
-		localspec = append(localspec, astutil.ValueSpec(astutil.MustParseExpr(cmap.Definition.ColumnType), local))
+
+		vspec := astutil.ValueSpec(astutil.MustParseExpr(cmap.Definition.ColumnType), local)
+		vspec.Comment = &ast.CommentGroup{
+			List: []*ast.Comment{
+				{
+					Slash: token.Pos(0),
+					Text:  "// " + cmap.ColumnInfo.Name,
+				},
+			},
+		}
+
+		localspec = append(localspec, vspec)
 	}
 
 	transforms = []ast.Stmt{
@@ -177,10 +193,10 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	g1 := generators.NewColumnConstants(
 		fmt.Sprintf("%sStaticColumns", t.name),
 		genieql.ColumnValueTransformer{
-			Defaults:           t.defaults,
+			Defaults:           append(t.defaults, t.ignore...),
 			DialectTransformer: dialect.ColumnValueTransformer(),
 		},
-		ignoredcset,
+		cset,
 	)
 
 	g2 := generators.NewExploderFunction(
@@ -198,7 +214,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		QueryInputs:  qinputs,
 		ContextField: t.cf,
 		Query: astutil.StringLiteral(
-			dialect.Insert(1, t.table, t.conflict, ignoredcset.ColumnNames(), t.defaults),
+			dialect.Insert(1, t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...)),
 		),
 	}
 

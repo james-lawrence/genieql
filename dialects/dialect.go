@@ -103,7 +103,7 @@ type Test struct {
 	QueryDelete       string
 }
 
-func (t Test) Insert(n int, table, conflict string, columns, defaulted []string) string {
+func (t Test) Insert(n int, table, conflict string, columns, projection, defaults []string) string {
 	var (
 		insertTmpl = stringsx.DefaultIfBlank(t.QueryInsert, "INSERT QUERY")
 	)
@@ -113,7 +113,7 @@ func (t Test) Insert(n int, table, conflict string, columns, defaulted []string)
 		var (
 			p []string
 		)
-		p, offset = placeholders(offset, selectPlaceholder(columns, defaulted))
+		p, offset = placeholders(offset, selectPlaceholder(columns, defaults))
 		values = append(values, fmt.Sprintf("(%s)", strings.Join(p, ",")))
 	}
 

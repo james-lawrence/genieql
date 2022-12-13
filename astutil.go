@@ -92,7 +92,7 @@ func StrictPackageName(name string) func(*build.Package) bool {
 // StrictPackageImport only accepts packages that are an exact match.
 func StrictPackageImport(name string) func(*build.Package) bool {
 	return func(pkg *build.Package) bool {
-		return pkg.Dir == name
+		return pkg.ImportPath == name
 	}
 }
 

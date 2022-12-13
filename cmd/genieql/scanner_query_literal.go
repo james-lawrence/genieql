@@ -77,7 +77,6 @@ func (t *queryLiteral) Execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg:      pkg,
 		delegate: genieql.MultiGenerate(hg, gen),
 	}
 

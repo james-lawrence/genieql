@@ -82,7 +82,6 @@ func (t *generateCRUDFunctions) Execute(*kingpin.ParseContext) (err error) {
 	cg := crud.NewFunctions(ctx, mapping, stringsx.DefaultIfBlank(t.queryer, ctx.Configuration.Queryer), details, ctx.CurrentPackage.Name, typName, scanner, uniqScanner, fields)
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, cg),
 	}
 

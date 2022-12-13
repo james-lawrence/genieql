@@ -5,6 +5,8 @@ import (
 	"go/ast"
 	"go/printer"
 	"io"
+	"log"
+	"os"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -77,11 +79,12 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		Queryer:      qf.Type,
 		ContextField: cf,
 	}
-
+	log.Println("queryer", astutil.MustPrint(qf.Type))
 	if n, err = qfn.Compile(functions.New(t.name, t.signature)); err != nil {
 		return err
 	}
 
+	printer.Fprint(os.Stderr, t.ctx.FileSet, n)
 	if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
 		return err
 	}

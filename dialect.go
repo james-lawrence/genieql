@@ -4,7 +4,7 @@ import "golang.org/x/text/transform"
 
 // Dialect interface for describing a sql dialect.
 type Dialect interface {
-	Insert(n int, table string, conflict string, columns, defaults []string) string
+	Insert(n int, table string, conflict string, columns, projection, defaults []string) string
 	Select(table string, columns, predicates []string) string
 	Update(table string, columns, predicates, returning []string) string
 	Delete(table string, columns, predicates []string) string

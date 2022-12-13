@@ -1,3 +1,4 @@
+//go:build !genieql.ignore
 // +build !genieql.ignore
 
 package autocompile

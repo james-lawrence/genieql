@@ -135,7 +135,7 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 			builder := func(local string, n int, columns ...string) ast.Decl {
 				return genieql.QueryLiteral(
 					local,
-					ctx.Dialect.Insert(n, table, "", columns, defaults),
+					ctx.Dialect.Insert(n, table, "", columns, columns, defaults),
 				)
 			}
 
@@ -157,7 +157,6 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 
@@ -249,7 +248,6 @@ func (t *insertQueryCmd) execute(*kingpin.ParseContext) (err error) {
 	)
 	cg := crud.Insert(details).Build(t.batch, constName, t.defaults)
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 
@@ -363,7 +361,7 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	cg := generators.NewQueryFunction(
 		ctx,
 		generators.QFOName(functionName),
-		generators.QFOBuiltinQueryFromString(ctx.Dialect.Insert(1, t.table, "", genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
+		generators.QFOBuiltinQueryFromString(ctx.Dialect.Insert(1, t.table, "", genieql.ColumnInfoSet(columns).ColumnNames(), genieql.ColumnInfoSet(columns).ColumnNames(), t.defaults)),
 		generators.QFOScanner(scannerFunction),
 		generators.QFOExplodeStructParam(field, fields...),
 		generators.QFOIgnore(t.defaults...),
@@ -371,7 +369,6 @@ func (t *insertFunctionCmd) functionCmd(*kingpin.ParseContext) (err error) {
 	)
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, cc, ef, cg),
 	}
 

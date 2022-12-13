@@ -76,7 +76,6 @@ func (t *GenerateTableCLI) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg: ctx.CurrentPackage,
 		delegate: generators.NewStructure(
 			generators.StructOptionContext(ctx),
 			generators.StructOptionName(
@@ -170,7 +169,6 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, mg),
 	}
 
@@ -257,7 +255,6 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	pg := printGenerator{
-		pkg:      ctx.CurrentPackage,
 		delegate: genieql.MultiGenerate(hg, genieql.MultiGenerate(g...)),
 	}
 

@@ -140,7 +140,7 @@ func Assign(to []ast.Expr, tok token.Token, from []ast.Expr) *ast.AssignStmt {
 }
 
 // ValueSpec creates a value spec. i.e) x,y,z int
-func ValueSpec(typ ast.Expr, names ...*ast.Ident) ast.Spec {
+func ValueSpec(typ ast.Expr, names ...*ast.Ident) *ast.ValueSpec {
 	return &ast.ValueSpec{
 		Names: names,
 		Type:  typ,

@@ -68,7 +68,7 @@ func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl
 		if f, ok = v.Interface().(func(interp.Function)); !ok {
 			return errors.Errorf("genieql.Function - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
 		}
-
+		log.Println("checkpoint 1")
 		fgen := interp.NewFunction(
 			ctx.Context,
 			fn.Name.String(),

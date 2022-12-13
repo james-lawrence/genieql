@@ -53,7 +53,7 @@ type dialectImplementation struct {
 	db *sql.DB
 }
 
-func (t dialectImplementation) Insert(n int, table, conflict string, columns, defaults []string) string {
+func (t dialectImplementation) Insert(n int, table, conflict string, columns, projection, defaults []string) string {
 	return Insert(n, table, conflict, columns, defaults)
 }
 
