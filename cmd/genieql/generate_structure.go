@@ -9,8 +9,9 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/serenize/snaker"
@@ -121,12 +122,12 @@ func (t *GenerateTableConstants) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
 	if err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
+	if taggedFiles.Empty() {
 		log.Println("no files tagged")
 		// nothing to do.
 		return nil
@@ -212,12 +213,12 @@ func (t *GenerateQueryConstants) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
 	if err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
+	if taggedFiles.Empty() {
 		log.Println("no files tagged")
 		// nothing to do.
 		return nil

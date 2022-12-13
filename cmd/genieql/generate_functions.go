@@ -9,6 +9,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
 	"github.com/alecthomas/kingpin"
 )
@@ -33,7 +34,7 @@ func (t *generateFunctionTypes) configure(cmd *kingpin.CmdClause) *kingpin.CmdCl
 func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 	var (
 		ctx         generators.Context
-		taggedFiles TaggedFiles
+		taggedFiles compiler.TaggedFiles
 		tags        = []string{
 			"genieql", "generate", "functions",
 		}
@@ -43,11 +44,11 @@ func (t *generateFunctionTypes) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	if taggedFiles, err = findTaggedFiles(t.pkg, tags...); err != nil {
+	if taggedFiles, err = compiler.FindTaggedFiles(t.pkg, tags...); err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
+	if taggedFiles.Empty() {
 		// nothing to do.
 		log.Println("no files tagged, ignoring")
 		return nil

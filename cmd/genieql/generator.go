@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"go/ast"
 	"go/build"
-	"log"
-	"path/filepath"
+	"io"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/pkg/errors"
@@ -35,9 +33,10 @@ func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
 
 func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	var (
-		ctx         generators.Context
-		taggedFiles TaggedFiles
-		pname       = t.buildInfo.CurrentPackageImport()
+		ctx   generators.Context
+		pname = t.buildInfo.CurrentPackageImport()
+		dst   io.WriteCloser
+		buf   = bytes.NewBuffer(nil)
 	)
 
 	bctx := build.Default
@@ -51,50 +50,19 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	}
 	ctx.Verbosity = t.buildInfo.Verbosity
 
-	if taggedFiles, err = findTaggedFiles(pname, genieql.BuildTagGenerate); err != nil {
+	if pname != ctx.CurrentPackage.Dir {
+		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, ctx.CurrentPackage.Dir)
+	}
+
+	if err = compiler.Autocompile(ctx, buf); err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
-		// nothing to do.
-		log.Println("no files tagged, ignoring")
-		return nil
+	if dst, err = cmd.StdoutOrFile(t.output, cmd.DefaultWriteFlags); err != nil {
+		return errors.Wrap(err, "unable to setup output")
 	}
 
-	filtered := []*ast.File{}
-	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
-		if taggedFiles.IsTagged(filepath.Base(path)) {
-			filtered = append(filtered, file)
-		}
-	}, ctx.CurrentPackage)
-
-	if err != nil {
-		return err
-	}
-
-	log.Println("compiling", len(filtered), "files")
-	log.Println("GOPATH", bctx.GOPATH)
-
-	buf := bytes.NewBuffer(nil)
-	c := compiler.New(
-		ctx,
-		compiler.Structure,
-		compiler.Scanner,
-		compiler.Function,
-		compiler.Inserts,
-		compiler.QueryAutogen,
-	)
-
-	if err = c.Compile(buf, filtered...); err != nil {
-		return err
-	}
-
-	gen := genieql.MultiGenerate(
-		genieql.NewCopyGenerator(bytes.NewBufferString("// +build !genieql.ignore")),
-		genieql.NewCopyGenerator(buf),
-	)
-
-	if err = cmd.WriteStdoutOrFile(gen, t.output, cmd.DefaultWriteFlags); err != nil {
+	if _, err = io.Copy(dst, buf); err != nil {
 		return errors.Wrap(err, "failed to write generated code")
 	}
 

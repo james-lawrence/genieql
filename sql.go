@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"golang.org/x/text/transform"
 )
 

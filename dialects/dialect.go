@@ -6,8 +6,8 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/columninfo"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
 	"golang.org/x/text/transform"
 )
 

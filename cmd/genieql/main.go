@@ -16,7 +16,7 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/generators"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 
 	// register the drivers
 	_ "bitbucket.org/jatone/genieql/internal/drivers"

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 
 	"github.com/alecthomas/kingpin"
 )

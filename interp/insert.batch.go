@@ -11,7 +11,7 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/generators/typespec"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 )
 
 // InsertBatch configuration interface for generating batch inserts.

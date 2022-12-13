@@ -15,9 +15,10 @@ import (
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/crud"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/x/stringsx"
+	"bitbucket.org/jatone/genieql/internal/stringsx"
 )
 
 type generateInsertConfig struct {
@@ -100,12 +101,12 @@ func (t *insertBatchCmd) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
 	if err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
+	if taggedFiles.Empty() {
 		log.Println("no files tagged, ignoring")
 		// nothing to do.
 		return nil

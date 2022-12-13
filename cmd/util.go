@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/internal/iox"
 )
 
 type errWriter struct {
@@ -52,4 +53,14 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	}
 
 	return err
+}
+
+// StdoutOrFile returns a writer for the path or stdout
+func StdoutOrFile(fpath string, flags int) (dst io.WriteCloser, err error) {
+	if len(fpath) > 0 {
+		log.Println("writing results to", fpath)
+		return os.OpenFile(fpath, flags, 0666)
+	}
+
+	return iox.NoopWriteCloser{WriteCloser: os.Stdout}, nil
 }

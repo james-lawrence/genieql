@@ -7,7 +7,6 @@ import (
 	"go/token"
 	"io"
 	"log"
-	"os"
 
 	"github.com/pkg/errors"
 
@@ -90,67 +89,12 @@ func (t printComments) Visit(node ast.Node) ast.Visitor {
 	return t
 }
 
-// TaggedFiles used to check if a specific file had a specific set of tags.
-type TaggedFiles struct {
-	files []string
-}
-
-// IsTagged checks the provided file against the set of files with the tags.
-func (t TaggedFiles) IsTagged(name string) bool {
-	for _, tagged := range t.files {
-		if tagged == name {
-			return true
-		}
-	}
-
-	return false
-}
-
 func currentPackage(dir string) *build.Package {
 	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
 	if err != nil {
 		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
 	}
 	return pkg
-}
-
-func findTaggedFiles(path string, tags ...string) (TaggedFiles, error) {
-	var (
-		err         error
-		taggedFiles TaggedFiles
-		wd          string
-	)
-
-	if wd, err = os.Getwd(); err != nil {
-		return taggedFiles, err
-	}
-
-	normal, err := build.Default.Import(path, wd, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	ctx := build.Default
-	ctx.BuildTags = tags
-	tagged, err := ctx.Import(path, wd, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	for _, t := range tagged.GoFiles {
-		missing := true
-		for _, n := range normal.GoFiles {
-			if t == n {
-				missing = false
-			}
-		}
-
-		if missing {
-			taggedFiles.files = append(taggedFiles.files, t)
-		}
-	}
-
-	return taggedFiles, nil
 }
 
 func mapDeclsToGenerator(b func(*ast.GenDecl) []genieql.Generator, decls ...*ast.GenDecl) []genieql.Generator {

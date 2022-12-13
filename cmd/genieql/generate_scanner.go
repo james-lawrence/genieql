@@ -11,6 +11,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
 	"github.com/alecthomas/kingpin"
 )
@@ -119,12 +120,12 @@ func (t *generateScannerTypes) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 
-	taggedFiles, err := findTaggedFiles(t.pkg, tags...)
+	taggedFiles, err := compiler.FindTaggedFiles(t.pkg, tags...)
 	if err != nil {
 		return err
 	}
 
-	if len(taggedFiles.files) == 0 {
+	if taggedFiles.Empty() {
 		log.Println("no files tagged")
 		// nothing to do.
 		return nil

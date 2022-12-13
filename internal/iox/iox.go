@@ -34,3 +34,11 @@ func ReadString(in io.Reader) (s string, err error) {
 
 	return string(raw), nil
 }
+
+type NoopWriteCloser struct {
+	io.WriteCloser
+}
+
+func (t NoopWriteCloser) Close() error {
+	return nil
+}

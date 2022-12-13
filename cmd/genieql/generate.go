@@ -78,7 +78,7 @@ func loadGeneratorContext(bctx build.Context, name, pkg string, tags ...string) 
 		Configuration:  config,
 		Dialect:        dialect,
 		Driver:         driver,
-	}, err
+	}, nil
 }
 
 func loadContext(config string) (genieql.Configuration, genieql.Dialect, error) {
