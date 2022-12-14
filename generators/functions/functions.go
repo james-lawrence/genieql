@@ -100,12 +100,26 @@ func QueryInputsFromFields(inputs ...*ast.Field) (output []ast.Expr) {
 	return output
 }
 
-func ScannerErrorHandling(sid *ast.Ident) func(local string) ast.Node {
+var queryPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
+
+// var queryRowPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Row")...)
+
+func ScannerErrorHandling(scanner *ast.FuncDecl) func(local string) ast.Node {
+	pattern := astutil.MapFieldsToTypeExpr(scanner.Type.Params.List...)
+
+	if queryPattern(pattern...) {
+		return func(local string) ast.Node {
+			return astutil.Return(
+				astutil.CallExpr(scanner.Name, ast.NewIdent("nil"), ast.NewIdent(local)),
+			)
+		}
+	}
+
 	return func(local string) ast.Node {
 		return astutil.Return(
 			astutil.CallExpr(
 				&ast.SelectorExpr{
-					X:   astutil.CallExpr(sid, ast.NewIdent("nil")),
+					X:   astutil.CallExpr(scanner.Name, ast.NewIdent("nil")),
 					Sel: ast.NewIdent("Err"),
 				},
 				ast.NewIdent(local),

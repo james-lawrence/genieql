@@ -105,7 +105,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	t.ctx.Debugln("insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("insert table", t.table)
 
-	errHandler := functions.ScannerErrorHandling(t.scanner.Name)
+	errHandler := functions.ScannerErrorHandling(t.scanner)
 
 	err = t.ctx.Configuration.ReadMap(
 		&mapping,

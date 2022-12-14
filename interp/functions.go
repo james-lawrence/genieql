@@ -77,7 +77,8 @@ func (t *function) Generate(dst io.Writer) (err error) {
 	t.signature.Params.List = generators.NormalizeFieldNames(t.signature.Params.List...)
 
 	scanner := functions.DetectScanner(t.ctx, t.signature)
-	errHandler := functions.ScannerErrorHandling(scanner.Name)
+
+	errHandler := functions.ScannerErrorHandling(scanner)
 	encode := generators.ColumnMapEncoder(t.ctx)
 
 	if cmaps, err = functions.ColumnMapFromFields(t.ctx, t.signature.Params.List...); err != nil {
