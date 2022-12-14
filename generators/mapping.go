@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 )
@@ -18,7 +19,7 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		pkg *build.Package
 	)
 
-	ipath := importPath(ctx, unwrapExpr(param.Type))
+	ipath := importPath(ctx, astutil.UnwrapExpr(param.Type))
 
 	if ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
@@ -52,7 +53,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		return columns, infos, err
 	}
 
-	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(unwrapExpr(param.Type)))); err != nil {
+	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(astutil.UnwrapExpr(param.Type)))); err != nil {
 		return columns, infos, err
 	}
 
@@ -65,7 +66,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 	return m.Columns, infos, err
 }
 
-func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
+func MapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
 	result := make([]genieql.ColumnMap, 0, len(params))
 	for _, param := range params {
 		var (
@@ -73,7 +74,7 @@ func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql
 			columns []genieql.ColumnMap
 		)
 
-		if columns, err = mapColumns(ctx, param, ignoreSet...); err != nil {
+		if columns, err = MapField(ctx, param, ignoreSet...); err != nil {
 			return result, err
 		}
 
@@ -83,7 +84,7 @@ func mapFields(ctx Context, params []*ast.Field, ignoreSet ...string) ([]genieql
 	return result, nil
 }
 
-func mapColumns(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
+func MapField(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.ColumnMap, error) {
 	x := removeEllipsis(param.Type)
 	if builtinType(x) {
 		return builtinParam(ctx, param)

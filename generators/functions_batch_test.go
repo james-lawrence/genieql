@@ -89,7 +89,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			BatchFunctionQFOptions(
 				QFOName("batchFunction1"),
 				QFOScanner(exampleScanner),
-				QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
+				QFOQueryer("q", astutil.MustParseExpr(token.NewFileSet(), "sqlx.Queryer")),
 				QFOQueryerFunction(ast.NewIdent("Query")),
 			),
 		),
@@ -102,7 +102,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			BatchFunctionQFOptions(
 				QFOName("batchFunction2"),
 				QFOScanner(exampleScanner),
-				QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
+				QFOQueryer("q", astutil.MustParseExpr(token.NewFileSet(), "sqlx.Queryer")),
 				QFOQueryerFunction(ast.NewIdent("Query")),
 			),
 		),
@@ -116,7 +116,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			BatchFunctionQFOptions(
 				QFOName("batchFunction3"),
 				QFOScanner(exampleScanner),
-				QFOQueryer("q", astutil.MustParseExpr("sqlx.Queryer")),
+				QFOQueryer("q", astutil.MustParseExpr(token.NewFileSet(), "sqlx.Queryer")),
 				QFOQueryerFunction(ast.NewIdent("Query")),
 			),
 		),

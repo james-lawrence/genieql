@@ -151,9 +151,9 @@ func ValueSpec(typ ast.Expr, names ...*ast.Ident) *ast.ValueSpec {
 func VarList(specs ...ast.Spec) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok:    token.VAR,
-		Lparen: 1,
+		Lparen: specs[0].Pos(),
 		Specs:  specs,
-		Rparen: 1,
+		Rparen: specs[len(specs)-1].End(),
 	}
 }
 
@@ -352,11 +352,45 @@ func StructureFieldSelectors(local *ast.Field, fields ...*ast.Field) []ast.Expr 
 }
 
 // MustParseExpr panics if the string cannot be parsed into an expression.
-func MustParseExpr(in string) ast.Expr {
-	expr, err := parser.ParseExpr(in)
+func MustParseExpr(fs *token.FileSet, in string) ast.Expr {
+	expr, err := parser.ParseExprFrom(fs, "", []byte(in), 0)
 	if err != nil {
 		panic(errors.Wrapf(err, "failed to parse (%s)", in))
 	}
 
 	return expr
+}
+
+func DereferencedIdent(x ast.Expr) ast.Expr {
+	switch real := x.(type) {
+	case *ast.StarExpr:
+		// log.Printf("localIdent - star: %T - %s\n", real.X, types.ExprString(real.X))
+		return real.X
+	default:
+		// log.Printf("localIdent: %T - %s\n", real, types.ExprString(real))
+		return real
+	}
+}
+
+// dereference types
+func Dereference(x ast.Expr) ast.Expr {
+	x = UnwrapExpr(x)
+	switch x := x.(type) {
+	case *ast.SelectorExpr:
+		return x
+	default:
+		// log.Printf("autodereference: %T - %s\n", x, types.ExprString(x))
+		return &ast.UnaryExpr{Op: token.MUL, X: x}
+	}
+}
+
+func UnwrapExpr(x ast.Expr) ast.Expr {
+	switch real := x.(type) {
+	case *ast.Ellipsis:
+		return real.Elt
+	case *ast.StarExpr:
+		return real.X
+	default:
+		return x
+	}
 }

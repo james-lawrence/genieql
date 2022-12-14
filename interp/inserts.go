@@ -3,7 +3,6 @@ package genieql
 import (
 	"fmt"
 	"go/ast"
-	"go/token"
 	"go/types"
 	"io"
 
@@ -105,17 +104,8 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	defer t.ctx.Println("generation of", t.name, "completed")
 	t.ctx.Debugln("insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("insert table", t.table)
-	errHandler := func(local string) ast.Node {
-		return astutil.Return(
-			astutil.CallExpr(
-				&ast.SelectorExpr{
-					X:   astutil.CallExpr(t.scanner.Name, ast.NewIdent("nil")),
-					Sel: ast.NewIdent("Err"),
-				},
-				ast.NewIdent(local),
-			),
-		)
-	}
+
+	errHandler := functions.ScannerErrorHandling(t.scanner.Name)
 
 	err = t.ctx.Configuration.ReadMap(
 		&mapping,
@@ -154,7 +144,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		)
 	}
 
-	encode := encode(t.ctx)
+	encode := generators.ColumnMapEncoder(t.ctx)
 	for idx, cmap := range cmaps {
 		var (
 			tmp []ast.Stmt
@@ -170,12 +160,11 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		qinputs = append(qinputs, local)
 		encodings = append(encodings, tmp...)
 
-		vspec := astutil.ValueSpec(astutil.MustParseExpr(cmap.Definition.ColumnType), local)
+		vspec := astutil.ValueSpec(astutil.MustParseExpr(t.ctx.FileSet, cmap.Definition.ColumnType), local)
 		vspec.Comment = &ast.CommentGroup{
 			List: []*ast.Comment{
 				{
-					Slash: token.Pos(0),
-					Text:  "// " + cmap.ColumnInfo.Name,
+					Text: "// " + cmap.ColumnInfo.Name,
 				},
 			},
 		}

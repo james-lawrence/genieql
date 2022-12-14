@@ -241,7 +241,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		Parameters:    t.Fields.List,
 	}
 
-	if ctx.Columns, err = mapFields(t.Context, t.Fields.List, t.ignoreSet...); err != nil {
+	if ctx.Columns, err = MapFields(t.Context, t.Fields.List, t.ignoreSet...); err != nil {
 		return errors.Wrap(err, "failed to map fields")
 	}
 
@@ -251,7 +251,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		"scan":      scan,
 		"arguments": argumentsAsPointers,
 		"nulltype":  nulltypes(t.Context),
-		"typeexpr":  astutil.MustParseExpr,
+		"typeexpr":  func(x string) ast.Expr { return astutil.MustParseExpr(t.FileSet, x) },
 		"decode":    decode(t.Context),
 		"error": func() func(string) ast.Node {
 			return func(local string) ast.Node {

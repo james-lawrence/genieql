@@ -82,14 +82,14 @@ func batchGeneratorFromFuncType(ctx Context, name *ast.Ident, comment *ast.Comme
 
 	// this is super buggy
 	if !builtinType(elt) && !selectType(elt) {
-		if cmap, err = mapColumns(ctx, field, ignoreSet...); err != nil {
+		if cmap, err = MapField(ctx, field, ignoreSet...); err != nil {
 			return genieql.NewErrGenerator(err)
 		}
 
 		tmp := []*ast.Field{}
 		for _, c := range cmap {
 			tmp = append(tmp, astutil.Field(
-				astutil.MustParseExpr(c.Definition.Type),
+				astutil.MustParseExpr(token.NewFileSet(), c.Definition.Type),
 				ast.NewIdent(types.ExprString(determineIdent(c.Dst))),
 			))
 		}
@@ -281,7 +281,7 @@ func batchQueryFuncMap(ctx Context) template.FuncMap {
 		},
 		"title":    stringsx.ToPublic,
 		"private":  stringsx.ToPrivate,
-		"encode":   encode(ctx),
+		"encode":   ColumnMapEncoder(ctx),
 		"nulltype": nulltypes(ctx),
 	}
 }

@@ -267,7 +267,7 @@ func MapFieldToSQLType(c ColumnInfo, field *ast.Field, aliases ...transform.Tran
 	for _, fieldName := range field.Names {
 		for _, aliaser := range aliases {
 			if transformx.String(c.Name, aliaser) == fieldName.Name {
-				return astutil.Field(astutil.MustParseExpr(c.Definition.ColumnType), fieldName)
+				return astutil.Field(astutil.MustParseExpr(token.NewFileSet(), c.Definition.ColumnType), fieldName)
 			}
 		}
 	}

@@ -240,7 +240,7 @@ func extractOptionsFromParams(ctx Context, defaultedSet []string, fields ...*ast
 
 	for _, param := range paramsf {
 		param = normalizeFieldNames(param)[0]
-		if builtinType(unwrapExpr(param.Type)) {
+		if builtinType(astutil.UnwrapExpr(param.Type)) {
 			params = append(params, param)
 			queryParams = append(queryParams, astutil.MapFieldsToNameExpr(param)...)
 		} else {
@@ -383,7 +383,7 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 	}
 
 	// log.Println("mapping fields", strings.Join(astutil.MapExprToString(astutil.MapFieldsToTypExpr(t.Parameters...)...), ","))
-	if columns, err = mapFields(t.Context, t.Parameters, t.Ignore...); err != nil {
+	if columns, err = MapFields(t.Context, t.Parameters, t.Ignore...); err != nil {
 		return errors.Wrap(err, "failed to map fields")
 	}
 	// log.Println("parameters", len(t.Parameters), len(t.QueryParameters), len(columns))
@@ -399,7 +399,7 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 	cToP := func(columns []genieql.ColumnMap) (result []ast.Expr) {
 		for i, c := range columns {
 			if c.Definition.ColumnType == c.Definition.Native {
-				result = append(result, unwrapExpr(c.Dst))
+				result = append(result, astutil.UnwrapExpr(c.Dst))
 				continue
 			}
 			result = append(result, c.Local(i))
@@ -497,10 +497,10 @@ func defaultQueryFuncTemplate(ctx Context) *template.Template {
 			},
 			"expr":      types.ExprString,
 			"arguments": argumentsTransform(argumentsNative(ctx)),
-			"encode":    encode(ctx),
+			"encode":    ColumnMapEncoder(ctx),
 			"ast":       astPrint,
 			"nulltype":  nulltypes(ctx),
-			"typeexpr":  astutil.MustParseExpr,
+			"typeexpr":  func(x string) ast.Expr { return astutil.MustParseExpr(ctx.FileSet, x) },
 		}
 		defaultQueryFuncTemplate = template.Must(template.New("query-function").Funcs(defaultQueryFuncMap).Parse(defaultQueryFunc))
 	)

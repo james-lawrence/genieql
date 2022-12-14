@@ -23,26 +23,30 @@ import (
 	"bitbucket.org/jatone/genieql/internal/drivers"
 )
 
-func genFunctionLiteral(example string, ctx interface{}, errorHandler func(string) ast.Node) (output *ast.FuncLit, err error) {
+func genFunctionLiteral(ctx Context, example string, tctx interface{}, errorHandler func(string) ast.Node) (output *ast.FuncLit, err error) {
 	var (
 		ok     bool
 		parsed ast.Node
 		buf    bytes.Buffer
 		m      = template.FuncMap{
-			"ast":             astutil.Print,
-			"expr":            types.ExprString,
-			"localident":      localIdent,
-			"autodereference": autodereference,
+			"ast":  astutil.Print,
+			"expr": types.ExprString,
+			"debugexpr": func(x ast.Expr) ast.Expr {
+				log.Println("debugexpt", types.ExprString(x))
+				return x
+			},
+			"localident":      astutil.DereferencedIdent,
+			"autodereference": astutil.Dereference,
 			"autoreference":   autoreference,
 			"error":           errorHandler,
 		}
 	)
 
-	if err = template.Must(template.New("genFunctionLiteral").Funcs(m).Parse(example)).Execute(&buf, ctx); err != nil {
+	if err = template.Must(template.New("genFunctionLiteral").Funcs(m).Parse(example)).Execute(&buf, tctx); err != nil {
 		return nil, errors.Wrap(err, "failed to generate from template")
 	}
 
-	if parsed, err = parser.ParseExpr(buf.String()); err != nil {
+	if parsed, err = parser.ParseExprFrom(ctx.FileSet, "", buf.Bytes(), 0); err != nil {
 		return nil, errors.Wrapf(err, "failed to parse function expression: %s", buf.String())
 	}
 
@@ -129,13 +133,13 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			}
 		}
 
-		typex := astutil.MustParseExpr(column.Definition.Native)
+		typex := astutil.MustParseExpr(ctx.FileSet, column.Definition.Native)
 		to := column.Dst
 		if column.Definition.Nullable {
-			to = &ast.StarExpr{X: unwrapExpr(to)}
+			to = &ast.StarExpr{X: astutil.UnwrapExpr(to)}
 		}
 
-		if gen, err = genFunctionLiteral(column.Definition.Decode, stmtCtx{Type: unwrapExpr(typex), From: local, To: to, Column: column}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(ctx, column.Definition.Decode, stmtCtx{Type: astutil.UnwrapExpr(typex), From: local, To: to, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -151,8 +155,8 @@ func fallbackDefinition(s string) genieql.ColumnDefinition {
 	}
 }
 
-// encode a column to a local variable.
-func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+// ColumnMapEncoder a column to a local variable.
+func ColumnMapEncoder(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
 	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
@@ -180,13 +184,13 @@ func encode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			return nil, nil
 		}
 
-		typex := astutil.MustParseExpr(column.Definition.Native)
-		from := unwrapExpr(column.Dst)
+		typex := astutil.MustParseExpr(ctx.FileSet, column.Definition.Native)
+		from := astutil.UnwrapExpr(column.Dst)
 		if column.Definition.Nullable {
 			from = &ast.StarExpr{X: from}
 		}
 
-		if gen, err = genFunctionLiteral(column.Definition.Encode, stmtCtx{Type: unwrapExpr(typex), From: from, To: local, Column: column}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(ctx, column.Definition.Encode, stmtCtx{Type: astutil.UnwrapExpr(typex), From: from, To: local, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -415,17 +419,6 @@ func builtinParam(ctx Context, param *ast.Field) ([]genieql.ColumnMap, error) {
 	return columns, nil
 }
 
-func unwrapExpr(x ast.Expr) ast.Expr {
-	switch real := x.(type) {
-	case *ast.Ellipsis:
-		return real.Elt
-	case *ast.StarExpr:
-		return real.X
-	default:
-		return x
-	}
-}
-
 func determineIdent(x ast.Expr) *ast.Ident {
 	switch real := x.(type) {
 	case *ast.Ident:
@@ -438,31 +431,8 @@ func determineIdent(x ast.Expr) *ast.Ident {
 	}
 }
 
-func localIdent(x ast.Expr) ast.Expr {
-	switch real := x.(type) {
-	case *ast.StarExpr:
-		// log.Printf("localIdent - star: %T - %s\n", real.X, types.ExprString(real.X))
-		return real.X
-	default:
-		// log.Printf("localIdent: %T - %s\n", real, types.ExprString(real))
-		return real
-	}
-}
-
-// dereference types
-func autodereference(x ast.Expr) ast.Expr {
-	x = unwrapExpr(x)
-	switch x := x.(type) {
-	case *ast.SelectorExpr:
-		return x
-	default:
-		// log.Printf("autodereference: %T - %s\n", x, types.ExprString(x))
-		return &ast.UnaryExpr{Op: token.MUL, X: x}
-	}
-}
-
 func autoreference(x ast.Expr) ast.Expr {
-	x = unwrapExpr(x)
+	x = astutil.UnwrapExpr(x)
 	switch x := x.(type) {
 	case *ast.SelectorExpr:
 		return &ast.UnaryExpr{Op: token.AND, X: x}

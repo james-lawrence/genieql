@@ -84,21 +84,73 @@ type Query struct {
 	QueryInputs     []ast.Expr
 }
 
-func (t Query) sanitizeFields(i *ast.Ident) *ast.Ident {
+func SanitizeQueryIdents(i *ast.Ident) *ast.Ident {
 	switch i.Name {
 	case defaultQueryParamName, defaultQuery:
-		return ast.NewIdent("_genieql" + strings.Title(i.Name))
+		return ast.NewIdent("_genieql_" + i.Name)
 	}
 
 	return i
 }
 
-// transform placeholder...
-func (t Query) transform(inputs ...*ast.Field) (output []ast.Expr) {
+func QueryInputsFromFields(inputs ...*ast.Field) (output []ast.Expr) {
 	for _, i := range inputs {
 		output = append(output, astutil.MapFieldsToNameExpr(i)...)
 	}
 	return output
+}
+
+func ScannerErrorHandling(sid *ast.Ident) func(local string) ast.Node {
+	return func(local string) ast.Node {
+		return astutil.Return(
+			astutil.CallExpr(
+				&ast.SelectorExpr{
+					X:   astutil.CallExpr(sid, ast.NewIdent("nil")),
+					Sel: ast.NewIdent("Err"),
+				},
+				ast.NewIdent(local),
+			),
+		)
+	}
+}
+func QueryLiteralColumnMapReplacer(ctx generators.Context, columns ...genieql.ColumnMap) *strings.Replacer {
+	replacements := []string{}
+	cidx := ctx.Dialect.ColumnValueTransformer()
+	for _, c := range columns {
+		dst := types.ExprString(astutil.DereferencedIdent(c.Dst))
+		// log.Println(c.Name, "->", dst, spew.Sdump(c.Dst), spew.Sdump(astutil.DereferencedIdent(c.Dst)))
+		replacements = append(
+			replacements,
+			fmt.Sprintf("{%s.query.input}", dst), cidx.Transform(c.ColumnInfo),
+		)
+	}
+	// log.Println("REPLACEMENTS")
+	// for i := 0; i < len(replacements); i = i + 2 {
+	// 	log.Println(replacements[i], "->", replacements[i+1])
+	// }
+	return strings.NewReplacer(replacements...)
+}
+
+func ColumnMapFromFields(ctx generators.Context, inputs ...*ast.Field) (rcmaps []genieql.ColumnMap, err error) {
+	for _, input := range inputs {
+		for _, name := range input.Names {
+			var (
+				cmaps []genieql.ColumnMap
+			)
+
+			if cmaps, err = generators.MapField(ctx, astutil.Field(input.Type, name)); err != nil {
+				return rcmaps, errors.Wrapf(
+					err,
+					"failed to map columns for: %s:%s",
+					ctx.CurrentPackage.Name, types.ExprString(input.Type),
+				)
+			}
+
+			rcmaps = append(rcmaps, cmaps...)
+		}
+	}
+
+	return rcmaps, nil
 }
 
 // Compile using the provided definition.
@@ -142,7 +194,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	}
 
 	// prevent name collisions.
-	d.Signature.Params.List = generators.SanitizeFieldIdents(t.sanitizeFields, d.Signature.Params.List...)
+	d.Signature.Params.List = generators.SanitizeFieldIdents(SanitizeQueryIdents, d.Signature.Params.List...)
 
 	// setup function arguments.
 	finputs := []*ast.Field{astutil.Field(t.Queryer, queryerIdent)}
@@ -158,7 +210,7 @@ func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 
 	qinputs = append(qinputs, query)
 	if len(t.QueryInputs) == 0 {
-		qinputs = append(qinputs, t.transform(d.Signature.Params.List...)...)
+		qinputs = append(qinputs, QueryInputsFromFields(d.Signature.Params.List...)...)
 	} else {
 		qinputs = append(qinputs, t.QueryInputs...)
 	}

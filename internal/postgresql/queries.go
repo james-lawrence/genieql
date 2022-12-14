@@ -96,14 +96,16 @@ func placeholders(offset int, columns []placeholder) ([]string, int) {
 
 func selectPlaceholder(columns, defaults []string) []placeholder {
 	placeholders := make([]placeholder, 0, len(columns))
+	defaulted := make(map[string]struct{}, len(defaults))
+	for _, d := range defaults {
+		defaulted[d] = struct{}{}
+	}
+
 	for _, column := range columns {
 		var placeholder placeholder = offsetPlaceholder{}
-		// todo turn into a set.
-		for _, cut := range defaults {
-			if cut == column {
-				placeholder = defaultPlaceholder{}
-				break
-			}
+		if _, ok := defaulted[column]; ok {
+			placeholder = defaultPlaceholder{}
+			break
 		}
 		placeholders = append(placeholders, placeholder)
 	}

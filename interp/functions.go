@@ -1,17 +1,15 @@
 package genieql
 
 import (
-	"errors"
 	"go/ast"
 	"go/printer"
 	"io"
-	"log"
-	"os"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
+	"github.com/pkg/errors"
 )
 
 // Function configuration interface for generating functions.
@@ -51,9 +49,14 @@ func (t *function) Query(q string) Function {
 
 func (t *function) Generate(dst io.Writer) (err error) {
 	var (
-		n  *ast.FuncDecl
-		cf *ast.Field
-		qf *ast.Field
+		n          *ast.FuncDecl
+		cf         *ast.Field
+		qf         *ast.Field
+		cmaps      []genieql.ColumnMap
+		qinputs    []ast.Expr
+		encodings  []ast.Stmt
+		localspec  []ast.Spec
+		transforms []ast.Stmt
 	)
 
 	t.ctx.Println("generation of", t.name, "initiated")
@@ -72,19 +75,64 @@ func (t *function) Generate(dst io.Writer) (err error) {
 	qf = t.signature.Params.List[0]
 	t.signature.Params.List = t.signature.Params.List[1:]
 
+	scanner := functions.DetectScanner(t.ctx, t.signature)
+	errHandler := functions.ScannerErrorHandling(scanner.Name)
+	encode := generators.ColumnMapEncoder(t.ctx)
+
+	if cmaps, err = functions.ColumnMapFromFields(t.ctx, t.signature.Params.List...); err != nil {
+		return errors.Wrap(err, "unable to generate mapping")
+	}
+
+	for idx, cmap := range cmaps {
+		var (
+			tmp []ast.Stmt
+		)
+
+		local := cmap.Local(idx)
+
+		if tmp, err = encode(idx, cmap, errHandler); err != nil {
+			return errors.Wrap(err, "failed to generate encode")
+		}
+
+		qinputs = append(qinputs, local)
+		encodings = append(encodings, tmp...)
+
+		vspec := astutil.ValueSpec(astutil.MustParseExpr(t.ctx.FileSet, cmap.Definition.ColumnType), local)
+		vspec.Comment = &ast.CommentGroup{
+			List: []*ast.Comment{
+				{
+					Text: "// " + cmap.ColumnInfo.Name,
+				},
+			},
+		}
+
+		localspec = append(localspec, vspec)
+	}
+
+	transforms = []ast.Stmt{
+		&ast.DeclStmt{
+			Decl: astutil.VarList(localspec...),
+		},
+	}
+
+	transforms = append(transforms, encodings...)
+
 	qfn := functions.Query{
-		Context:      t.ctx,
-		Query:        astutil.StringLiteral(t.query),
-		Scanner:      functions.DetectScanner(t.ctx, t.signature),
+		Context: t.ctx,
+		Query: astutil.StringLiteral(
+			functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...).Replace(t.query),
+		),
+		Scanner:      scanner,
 		Queryer:      qf.Type,
 		ContextField: cf,
+		Transforms:   transforms,
+		QueryInputs:  qinputs,
 	}
-	log.Println("queryer", astutil.MustPrint(qf.Type))
+
 	if n, err = qfn.Compile(functions.New(t.name, t.signature)); err != nil {
 		return err
 	}
 
-	printer.Fprint(os.Stderr, t.ctx.FileSet, n)
 	if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
 		return err
 	}

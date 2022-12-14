@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 
 	"bitbucket.org/jatone/genieql/astutil"
@@ -29,7 +30,7 @@ const (
 )
 
 func typeToExpr(from ast.Expr, selector string) ast.Expr {
-	return astutil.MustParseExpr(fmt.Sprintf("%s.%s", types.ExprString(from), selector))
+	return astutil.MustParseExpr(token.NewFileSet(), fmt.Sprintf("%s.%s", types.ExprString(from), selector))
 }
 
 func castedTypeToExpr(castType, expr ast.Expr) ast.Expr {

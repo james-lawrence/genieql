@@ -141,7 +141,7 @@ func fieldFromColumnInfo(ctx generators.Context, infos ...genieql.ColumnInfo) []
 	for _, info := range infos {
 		// log.Println("generating field information", info.Name, info.Definition.Type, info.Definition.Native)
 		// log.Printf("generated %T - %s\n", astutil.MustParseExpr(info.Definition.Native), info.Definition.Native)
-		r = append(r, astutil.Field(astutil.MustParseExpr(info.Definition.Native), ast.NewIdent(info.Name)))
+		r = append(r, astutil.Field(astutil.MustParseExpr(ctx.FileSet, info.Definition.Native), ast.NewIdent(info.Name)))
 	}
 	return r
 }

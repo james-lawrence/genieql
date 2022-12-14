@@ -66,7 +66,7 @@ func NewExploderFunction(ctx Context, param *ast.Field, fields []*ast.Field, opt
 			},
 			"arguments": argumentsAsPointers,
 			"ast":       astPrint,
-			"encode":    encode(ctx),
+			"encode":    ColumnMapEncoder(ctx),
 			"error": func() func(string) ast.Node {
 				return func(local string) ast.Node {
 					return astutil.Return(
@@ -153,7 +153,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		return nil, nil
 	}
 
-	encoder := encode(ctx)
+	encoder := ColumnMapEncoder(ctx)
 	input := &ast.Ellipsis{Elt: typ.Type}
 	output := &ast.ArrayType{Elt: ast.NewIdent("interface{}"), Len: astutil.IntegerLiteral(n * len(selectors))}
 	returnc := ast.NewIdent("r")
@@ -209,7 +209,7 @@ func buildExploder(ctx Context, n int, name ast.Expr, typ *ast.Field, selectors 
 		}
 		encodings = append(encodings, encoded...)
 
-		localspec = append(localspec, astutil.ValueSpec(astutil.MustParseExpr(info.Definition.ColumnType), info.Local(idx)))
+		localspec = append(localspec, astutil.ValueSpec(astutil.MustParseExpr(ctx.FileSet, info.Definition.ColumnType), info.Local(idx)))
 		assignrhs = append(assignrhs, info.Local(idx))
 	}
 

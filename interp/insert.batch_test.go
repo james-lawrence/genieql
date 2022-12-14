@@ -2,6 +2,7 @@ package genieql_test
 
 import (
 	"go/ast"
+	"go/token"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	. "bitbucket.org/jatone/genieql/interp"
@@ -20,7 +21,7 @@ import (
 var _ = Describe("Batch Insert", func() {
 	rowsScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("NewExampleScannerStatic"),
-		Type: astutil.MustParseExpr("func(rows *sql.Rows, err error) ExampleScanner").(*ast.FuncType),
+		Type: astutil.MustParseExpr(token.NewFileSet(), "func(rows *sql.Rows, err error) ExampleScanner").(*ast.FuncType),
 	}
 
 	config := DialectConfig1()
