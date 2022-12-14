@@ -31,7 +31,7 @@ func Example1Insert2(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, a 
 
 func Example1Update(
 	gql genieql.Function,
-	pattern func(ctx context.Context, q sqlx.Queryer, i int, e1 Example1, e2 Example2) NewExample1ScannerStaticRow,
+	pattern func(ctx context.Context, q sqlx.Queryer, i int, camelCaseID int, snake_case int, e1 Example1, e2 Example2) NewExample1ScannerStaticRow,
 ) {
 	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField.query.input} RETURNING ` + Example1ScannerStaticColumns)
 }
