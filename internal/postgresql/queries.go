@@ -105,7 +105,6 @@ func selectPlaceholder(columns, defaults []string) []placeholder {
 		var placeholder placeholder = offsetPlaceholder{}
 		if _, ok := defaulted[column]; ok {
 			placeholder = defaultPlaceholder{}
-			break
 		}
 		placeholders = append(placeholders, placeholder)
 	}
