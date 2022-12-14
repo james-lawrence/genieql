@@ -184,6 +184,11 @@ func ColumnMapEncoder(ctx Context) func(int, genieql.ColumnMap, func(string) ast
 			return nil, nil
 		}
 
+		// if the mapping represents a variable that is a standalone DB native type then there is no encoding to do.
+		if _, ok := column.Dst.(*ast.Ident); ok && column.Definition.Type == column.Definition.ColumnType {
+			return nil, nil
+		}
+
 		typex := astutil.MustParseExpr(ctx.FileSet, column.Definition.Native)
 		from := astutil.UnwrapExpr(column.Dst)
 		if column.Definition.Nullable {

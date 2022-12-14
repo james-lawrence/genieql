@@ -96,6 +96,11 @@ func (t *function) Generate(dst io.Writer) (err error) {
 			return errors.Wrap(err, "failed to generate encode")
 		}
 
+		if tmp == nil {
+			qinputs = append(qinputs, ast.NewIdent(cmap.Name))
+			continue
+		}
+
 		qinputs = append(qinputs, local)
 		encodings = append(encodings, tmp...)
 

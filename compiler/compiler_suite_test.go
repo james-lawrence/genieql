@@ -1,6 +1,7 @@
 package compiler_test
 
 import (
+	"io"
 	"log"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 
 func TestCompiler(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
+	log.SetOutput(io.Discard)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Compiler Suite")
 }
