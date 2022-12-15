@@ -22,6 +22,12 @@ func Example2(gql genieql.Structure) {
 
 func Example1Scanner(genieql.Scanner, func(i Example1)) {}
 
+func ExampleComboScanner(
+	gql genieql.Scanner,
+	pattern func(i int, ts pgtype.Timestamp, e1 Example1, e2 Example2),
+) {
+}
+
 func Example1Insert1(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow {
 	gql.Into("example1").Default("uuid_field")
 }
@@ -48,5 +54,5 @@ func Example1Update3(
 	gql genieql.Function,
 	pattern func(ctx context.Context, q sqlx.Queryer, i int, ts pgtype.Timestamp) NewExample1ScannerStatic,
 ) {
-	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField.query.input} RETURNING ` + Example1ScannerStaticColumns)
+	gql = gql.Query(`UPDATE example2 SET WHERE id = {i.query.input} AND timestamp = {ts.query.input} RETURNING ` + Example1ScannerStaticColumns)
 }

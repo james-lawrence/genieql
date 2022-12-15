@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Function Generation", func() {
+var _ = Describe("Compiler generation test", func() {
 	DescribeTable("from fixtures", func(dir string, resultpath string) {
 		var (
 			err error
@@ -33,7 +33,13 @@ var _ = Describe("Function Generation", func() {
 		pkg, err := bctx.ImportDir(dir, build.IgnoreVendor)
 		Expect(err).To(Succeed())
 
-		ctx, err := generators.NewContext(bctx, "default.config", pkg, generators.OptionOSArgs())
+		ctx, err := generators.NewContext(
+			bctx,
+			"default.config",
+			pkg,
+			generators.OptionOSArgs(),
+			// generators.OptionDebug,
+		)
 		Expect(err).To(Succeed())
 
 		Expect(compiler.Autocompile(ctx, buf)).To(Succeed())

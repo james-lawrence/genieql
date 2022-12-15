@@ -16,14 +16,10 @@ import (
 // of ColumnInfo.
 func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos []genieql.ColumnInfo, err error) {
 	var (
-		pkg *build.Package
+		pkg *build.Package = ctx.CurrentPackage
 	)
 
-	ipath := importPath(ctx, astutil.UnwrapExpr(param.Type))
-
-	if ipath == ctx.CurrentPackage.ImportPath {
-		pkg = ctx.CurrentPackage
-	} else {
+	if ipath := importPath(ctx, astutil.UnwrapExpr(param.Type)); ipath != ctx.CurrentPackage.ImportPath {
 		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageImport(ipath)); err != nil {
 			return m, infos, err
 		}
@@ -46,8 +42,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		pkg     *build.Package
 	)
 
-	ipath := importPath(ctx, param.Type)
-	if ipath == ctx.CurrentPackage.ImportPath {
+	if ipath := importPath(ctx, param.Type); ipath == ctx.CurrentPackage.ImportPath {
 		pkg = ctx.CurrentPackage
 	} else if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
 		return columns, infos, err

@@ -241,7 +241,7 @@ func (t scanner) Generate(dst io.Writer) error {
 		Parameters:    t.Fields.List,
 	}
 
-	if ctx.Columns, err = MapFields(t.Context, t.Fields.List, t.ignoreSet...); err != nil {
+	if ctx.Columns, err = ColumnMapFromFields(t.Context, t.Fields.List...); err != nil {
 		return errors.Wrap(err, "failed to map fields")
 	}
 

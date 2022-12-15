@@ -145,40 +145,6 @@ func QueryLiteralColumnMapReplacer(ctx generators.Context, columns ...genieql.Co
 	return strings.NewReplacer(replacements...)
 }
 
-func ColumnMapFromFields(ctx generators.Context, inputs ...*ast.Field) (rcmaps []genieql.ColumnMap, err error) {
-	for _, input := range inputs {
-		for _, name := range input.Names {
-			var (
-				cmaps []genieql.ColumnMap
-			)
-
-			if cd, err := ctx.Driver.LookupType(types.ExprString(input.Type)); err == nil {
-				rcmaps = append(rcmaps, genieql.ColumnMap{
-					ColumnInfo: genieql.ColumnInfo{
-						Definition: cd,
-						Name:       name.String(),
-					},
-					Dst:   name,
-					Field: astutil.Field(input.Type, ast.NewIdent(name.String())),
-				})
-				continue
-			}
-
-			if cmaps, err = generators.MapField(ctx, astutil.Field(input.Type, name)); err != nil {
-				return rcmaps, errors.Wrapf(
-					err,
-					"failed to map columns for: %s:%s",
-					ctx.CurrentPackage.Name, types.ExprString(input.Type),
-				)
-			}
-
-			rcmaps = append(rcmaps, cmaps...)
-		}
-	}
-
-	return rcmaps, nil
-}
-
 // Compile using the provided definition.
 func (t Query) Compile(d Definition) (_ *ast.FuncDecl, err error) {
 	var (

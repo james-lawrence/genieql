@@ -1,17 +1,15 @@
 package compiler_test
 
 import (
-	"io"
-	"log"
 	"testing"
 
+	"bitbucket.org/jatone/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 func TestCompiler(t *testing.T) {
-	log.SetFlags(log.Lshortfile)
-	log.SetOutput(io.Discard)
+	testx.Logging()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Compiler Suite")
 }

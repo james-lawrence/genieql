@@ -73,15 +73,14 @@ func (t *function) Generate(dst io.Writer) (err error) {
 
 	// pop the queryer off the params.
 	qf = t.signature.Params.List[0]
-	t.signature.Params.List = t.signature.Params.List[1:]
-	t.signature.Params.List = generators.NormalizeFieldNames(t.signature.Params.List...)
+	t.signature.Params.List = generators.NormalizeFieldNames(t.signature.Params.List[1:]...)
 
 	scanner := functions.DetectScanner(t.ctx, t.signature)
 
 	errHandler := functions.ScannerErrorHandling(scanner)
 	encode := generators.ColumnMapEncoder(t.ctx)
 
-	if cmaps, err = functions.ColumnMapFromFields(t.ctx, t.signature.Params.List...); err != nil {
+	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.signature.Params.List...); err != nil {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
