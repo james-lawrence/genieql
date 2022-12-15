@@ -12,6 +12,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/jackc/pgtype v1.11.0
 	github.com/jackc/pgx/v4 v4.16.1
+	github.com/mattn/go-isatty v0.0.16
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
@@ -20,7 +21,6 @@ require (
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7
 	golang.org/x/tools v0.1.11
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

@@ -40,6 +40,9 @@ github.com/jackc/pgtype
 github.com/jackc/pgx/v4
 github.com/jackc/pgx/v4/internal/sanitize
 github.com/jackc/pgx/v4/stdlib
+# github.com/mattn/go-isatty v0.0.16
+## explicit
+github.com/mattn/go-isatty
 # github.com/mattn/go-sqlite3 v1.14.16
 ## explicit
 github.com/mattn/go-sqlite3
@@ -90,8 +93,7 @@ golang.org/x/mod/semver
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
-## explicit
+# golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
