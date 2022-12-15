@@ -18,7 +18,6 @@ import (
 type InsertBatch interface {
 	genieql.Generator              // must satisfy the generator interface
 	Into(string) InsertBatch       // what table to insert into
-	Ignore(...string) InsertBatch  // do not attempt to insert the specified column.
 	Default(...string) InsertBatch // use the database default for the specified columns.
 	Conflict(string) InsertBatch   // specify how conflicts should be handled.
 	Batch(n int) InsertBatch       // specify a batch insert
@@ -54,7 +53,6 @@ type batch struct {
 	table    string
 	conflict string
 	defaults []string
-	ignore   []string
 	tf       *ast.Field    // type field.
 	cf       *ast.Field    // context field, can be nil.
 	qf       *ast.Field    // db Query field.
@@ -71,12 +69,6 @@ func (t *batch) Into(s string) InsertBatch {
 // Default specify the table columns to be given their default values.
 func (t *batch) Default(defaults ...string) InsertBatch {
 	t.defaults = defaults
-	return t
-}
-
-// Ignore specify the table columns to ignore during insert.
-func (t *batch) Ignore(ignore ...string) InsertBatch {
-	t.ignore = ignore
 	return t
 }
 
@@ -251,18 +243,165 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 	}
 
 	nextfn := functions.NewFn(
+		astutil.DeclStmt(
+			astutil.VarList(
+				astutil.ValueSpec(ast.NewIdent("bool"), ast.NewIdent("advanced")),
+			),
+		),
+		astutil.If(
+			nil, astutil.BinaryExpr(
+				astutil.BinaryExpr(astutil.SelExpr("t", "scanner"), token.NEQ, ast.NewIdent("nil")),
+				token.LAND,
+				astutil.CallExpr(
+					&ast.SelectorExpr{
+						X:   astutil.SelExpr("t", "scanner"),
+						Sel: ast.NewIdent("Next"),
+					},
+				),
+			),
+			astutil.Block(
+				astutil.Return(ast.NewIdent("true")),
+			),
+			nil,
+		),
+		astutil.If(
+			nil, astutil.BinaryExpr(
+				astutil.BinaryExpr(astutil.CallExpr(ast.NewIdent("len"), astutil.SelExpr("t", "remaining")), token.GTR, astutil.IntegerLiteral(0)),
+				token.LAND,
+				astutil.BinaryExpr(
+					astutil.CallExpr(
+						astutil.SelExpr("t", "Close"),
+					),
+					token.EQL,
+					ast.NewIdent("nil"),
+				),
+			),
+			astutil.Block(
+				astutil.Assign(
+					astutil.ExprList(
+						astutil.SelExpr("t", "scanner"),
+						astutil.SelExpr("t", "remaining"),
+						ast.NewIdent("advanced"),
+					),
+					token.ASSIGN,
+					astutil.ExprList(
+						astutil.CallExprEllipsis(
+							astutil.SelExpr("t", "advance"),
+							astutil.SelExpr("t", "remaining"),
+						),
+					),
+				),
+				astutil.Return(
+					astutil.BinaryExpr(ast.NewIdent("advanced"), token.LAND, astutil.CallExpr(&ast.SelectorExpr{
+						X:   astutil.SelExpr("t", "scanner"),
+						Sel: ast.NewIdent("Next"),
+					})),
+				),
+			),
+			nil,
+		),
 		astutil.Return(
 			ast.NewIdent("false"),
 		),
 	)
 
 	advancesig := &ast.FuncType{
-		Params:  &ast.FieldList{},
-		Results: &ast.FieldList{},
+		Params: &ast.FieldList{
+			List: []*ast.Field{
+				astutil.Field(&ast.Ellipsis{Elt: t.tf.Type}, t.tf.Names[0]),
+			},
+		},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				t.scanner.Type.Results.List[0],
+				astutil.Field(&ast.ArrayType{Elt: t.tf.Type}),
+				astutil.Field(ast.NewIdent("bool")),
+			},
+		},
 	}
+
+	genscanning := func() *ast.BlockStmt {
+		stmts := make([]ast.Stmt, 0, t.n)
+		stmts = append(stmts, astutil.CaseClause(
+			astutil.ExprList(astutil.IntegerLiteral(0)),
+			astutil.Return(
+				ast.NewIdent("nil"),
+				astutil.CallExpr(
+					&ast.ArrayType{Elt: t.tf.Type},
+					ast.NewIdent("nil"),
+				),
+				ast.NewIdent("false"),
+			),
+		))
+
+		for i := 1; len(stmts) < cap(stmts); i++ {
+			stmts = append(stmts, astutil.CaseClause(
+				astutil.ExprList(astutil.IntegerLiteral(i)),
+				astutil.Return(
+					astutil.CallExpr(
+						t.scanner.Name,
+						astutil.CallExprEllipsis(
+							&ast.SelectorExpr{
+								X: astutil.SelExpr(
+									"t",
+									"q",
+								),
+								Sel: ast.NewIdent("QueryContext"),
+							},
+							ast.NewIdent("t.ctx"),
+							ast.NewIdent("query"),
+							&ast.SliceExpr{
+								X: ast.NewIdent("tmp"),
+							},
+						),
+					),
+					astutil.CallExpr(
+						&ast.ArrayType{Elt: t.tf.Type},
+						ast.NewIdent("nil"),
+					),
+					ast.NewIdent("false"),
+				),
+			))
+		}
+
+		stmts = append(stmts, astutil.CaseClause(
+			nil,
+			astutil.Return(
+				astutil.CallExpr(
+					t.scanner.Name,
+					astutil.CallExprEllipsis(
+						&ast.SelectorExpr{
+							X: astutil.SelExpr(
+								"t",
+								"q",
+							),
+							Sel: ast.NewIdent("QueryContext"),
+						},
+						ast.NewIdent("t.ctx"),
+						ast.NewIdent("query"),
+						&ast.SliceExpr{
+							X: ast.NewIdent("tmp"),
+						},
+					),
+				),
+				&ast.SliceExpr{
+					X:   t.tf.Names[0],
+					Low: astutil.IntegerLiteral(t.n),
+				},
+				ast.NewIdent("true"),
+			),
+		))
+		return astutil.Block(stmts...)
+	}
+
 	advancefn := functions.NewFn(
-		astutil.Return(
-			ast.NewIdent("false"),
+		astutil.Switch(
+			nil,
+			astutil.CallExpr(
+				ast.NewIdent("len"),
+				ast.NewIdent(t.tf.Names[0].String()),
+			),
+			genscanning(),
 		),
 	)
 

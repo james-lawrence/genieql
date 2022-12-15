@@ -75,7 +75,14 @@ func Return(expressions ...ast.Expr) ast.Stmt {
 
 // Block - creates a block statement from the provided statements.
 func Block(statements ...ast.Stmt) *ast.BlockStmt {
+	if len(statements) == 0 {
+		return &ast.BlockStmt{
+			List: statements,
+		}
+	}
+
 	return &ast.BlockStmt{
+		Lbrace: statements[0].Pos(),
 		List:   statements,
 		Rbrace: statements[len(statements)-1].End(),
 	}
@@ -147,13 +154,28 @@ func ValueSpec(typ ast.Expr, names ...*ast.Ident) *ast.ValueSpec {
 	}
 }
 
+func DeclStmt(d ast.Decl) *ast.DeclStmt {
+	return &ast.DeclStmt{Decl: d}
+}
+
 // VarList creates a variable list. i.e) var (a int, b bool, c string)
 func VarList(specs ...ast.Spec) *ast.GenDecl {
+	var (
+		lparen = token.NoPos
+		rparen = token.NoPos
+	)
+
+	if len(specs) > 0 {
+		lparen = specs[0].Pos()
+		rparen = specs[len(specs)-1].End()
+	}
+
 	return &ast.GenDecl{
 		Tok:    token.VAR,
-		Lparen: specs[0].Pos(),
+		TokPos: lparen - 1,
+		Lparen: lparen,
 		Specs:  specs,
-		Rparen: specs[len(specs)-1].End(),
+		Rparen: rparen,
 	}
 }
 
@@ -195,6 +217,16 @@ func CallExpr(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun:  fun,
 		Args: args,
+	}
+}
+
+// CallExpr - creates a function call expression with the provided argument
+// expressions.
+func CallExprEllipsis(fun ast.Expr, args ...ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun:      fun,
+		Args:     args,
+		Ellipsis: token.Pos(1),
 	}
 }
 

@@ -3,7 +3,6 @@ package genieql_test
 import (
 	"go/build"
 	"go/token"
-	"io"
 	"log"
 	"path/filepath"
 	"testing"
@@ -13,12 +12,13 @@ import (
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 func TestInterp(t *testing.T) {
-	log.SetOutput(io.Discard)
+	testx.Logging()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Interp Suite")
 }

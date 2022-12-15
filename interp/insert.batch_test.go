@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
+	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	. "bitbucket.org/jatone/genieql/interp"
 
@@ -32,12 +33,16 @@ var _ = Describe("Batch Insert", func() {
 		"examples",
 		func(in InsertBatch, out io.Reader) {
 			var (
-				b = bytes.NewBufferString("package example\n")
+				b         = bytes.NewBufferString("package example\n")
+				formatted = bytes.NewBufferString("")
 			)
 
 			Expect(in.Generate(b)).To(Succeed())
-			log.Printf("%s\nexpected\n%s\n", b.String(), testx.ReadString(out))
-			Expect(b.String()).To(Equal(testx.ReadString(out)))
+			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
+
+			log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
+
+			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
 		},
 		PEntry(
 			"example 1 - batch insert",
@@ -51,6 +56,19 @@ var _ = Describe("Batch Insert", func() {
 				rowsScanner,
 			).Into("foo"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.1.go"))),
+		),
+		PEntry(
+			"example 2 - batch insert",
+			NewBatchInsert(
+				ctx,
+				"BatchInsertExample1",
+				nil,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+				rowsScanner,
+			).Into("foo").Batch(2),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.2.go"))),
 		),
 	)
 })
