@@ -1,4 +1,5 @@
-//+build genieql,generate,structure,table
+//go:build genieql && generate && structure && table
+// +build genieql,generate,structure,table
 
 package alternate2
 

@@ -1,4 +1,5 @@
-//+build genieql,generate,structure,table
+//go:build genieql && generate && structure && table
+// +build genieql,generate,structure,table
 
 package definitions
 
@@ -9,8 +10,8 @@ package definitions
 // camelcase (default), snakecase, lowercase, uppercase.
 //
 // [rename.columns] section: allows use of a kv mapping to rename columns explicitly.
-//genieql.options: [general] alias=camelcase
-//genieql.options: [rename.columns] c1=f1
+// genieql.options: [general] alias=camelcase
+// genieql.options: [rename.columns] c1=f1
 const Example1 = "example1"
 
 // example2 uses the default configuration.

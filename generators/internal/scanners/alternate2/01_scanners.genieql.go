@@ -1,4 +1,5 @@
-//+build genieql,generate,scanners
+//go:build genieql && generate && scanners
+// +build genieql,generate,scanners
 
 package alternate2
 

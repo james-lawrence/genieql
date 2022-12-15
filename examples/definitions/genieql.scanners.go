@@ -1,6 +1,7 @@
-//+build genieql,generate,scanners
+//go:build genieql && generate && scanners
+// +build genieql,generate,scanners
 
-//genieql.options: config=default.config
+// genieql.options: config=default.config
 package definitions
 
 import "time"

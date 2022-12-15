@@ -1,4 +1,5 @@
-//+build genieql,generate,structure,query
+//go:build genieql && generate && structure && query
+// +build genieql,generate,structure,query
 
 package definitions
 
