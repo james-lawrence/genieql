@@ -3035,5 +3035,3 @@ func ConflictInsert(ctx context.Context, q sqlx.Queryer, e Timestamp) TimestampS
 	} // uuid
 	return NewTimestampScannerStaticRow(q.QueryRowContext(ctx, query, c0, c1, c2, c3))
 }
-
-
