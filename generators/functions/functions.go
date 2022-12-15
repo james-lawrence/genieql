@@ -135,7 +135,7 @@ func QueryLiteralColumnMapReplacer(ctx generators.Context, columns ...genieql.Co
 		// log.Println(c.Name, "->", dst, spew.Sdump(c.Dst), spew.Sdump(astutil.DereferencedIdent(c.Dst)))
 		replacements = append(
 			replacements,
-			fmt.Sprintf("{%s.query.input}", dst), cidx.Transform(c.ColumnInfo),
+			fmt.Sprintf("{%s}", dst), cidx.Transform(c.ColumnInfo),
 		)
 	}
 	// log.Println("REPLACEMENTS")
