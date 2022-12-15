@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
-	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -18,7 +17,6 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 	var (
 		pkg *build.Package = ctx.CurrentPackage
 	)
-
 	if ipath, err := importPath(ctx, astutil.UnwrapExpr(param.Type)); err != nil {
 		return m, infos, err
 	} else if ipath != ctx.CurrentPackage.ImportPath {
@@ -41,19 +39,19 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		infos   []*ast.Field
 		columns []genieql.ColumnInfo
 		m       genieql.MappingConfig
-		pkg     *build.Package
+		pkg     = ctx.CurrentPackage
 	)
 
-	pkg = ctx.CurrentPackage
 	if ipath, err := importPath(ctx, param.Type); err != nil {
 		return columns, infos, err
 	} else if ipath == ctx.CurrentPackage.ImportPath {
-		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageName(ctx.CurrentPackage.Name)); err != nil {
 			return columns, infos, err
 		}
 	}
 
 	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(astutil.UnwrapExpr(param.Type)))); err != nil {
+
 		return columns, infos, err
 	}
 

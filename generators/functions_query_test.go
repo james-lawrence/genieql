@@ -14,6 +14,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
+	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
@@ -54,9 +55,13 @@ func (t testSearcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
 }
 
 var _ = ginkgo.Describe("Query Functions", func() {
+	bctx := build.Default
+	bctx.Dir = "."
+
 	pkg := &build.Package{
-		Name: "example",
-		Dir:  ".fixtures",
+		Name:       "example",
+		Dir:        ".fixtures",
+		ImportPath: "./.fixtures",
 		GoFiles: []string{
 			"example.go",
 		},
@@ -104,6 +109,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			formatted := bytes.NewBuffer([]byte{})
 			ctx := Context{
+				Build:          buildx.Clone(bctx),
 				Configuration:  configuration,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),

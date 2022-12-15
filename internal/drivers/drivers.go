@@ -63,7 +63,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.String)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -78,7 +78,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -93,7 +93,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -108,7 +108,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -123,7 +123,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -138,7 +138,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -153,7 +153,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -184,7 +184,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int32
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -215,7 +215,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int64
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -246,7 +246,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr}}({{ .From | expr }}.Float64)
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -277,7 +277,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Float64
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -308,7 +308,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -339,7 +339,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {
@@ -370,7 +370,7 @@ var stdlib = NewDriver(
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.String
-				{{ .To | expr }} = tmp
+				{{ .To | autodereference | expr }} = tmp
 			}
 		}`,
 		Encode: `func() {

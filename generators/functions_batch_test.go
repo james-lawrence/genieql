@@ -24,9 +24,13 @@ import (
 )
 
 var _ = ginkgo.Describe("Batch Functions", func() {
+	bctx := build.Default
+	bctx.Dir = "."
+
 	pkg := &build.Package{
-		Name: "example",
-		Dir:  ".fixtures",
+		Name:       "example",
+		Dir:        ".fixtures",
+		ImportPath: "./.fixtures",
 		GoFiles: []string{
 			"example.go",
 		},
@@ -67,6 +71,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			ctx := Context{
 				Configuration:  configuration,
 				CurrentPackage: pkg,
+				Build:          bctx,
 				FileSet:        token.NewFileSet(),
 				Dialect:        dialects.Test{},
 				Driver:         driver,
@@ -132,6 +137,7 @@ var _ = ginkgo.Describe("Batch Functions", func() {
 			ctx := Context{
 				Configuration:  configuration,
 				CurrentPackage: pkg,
+				Build:          bctx,
 				FileSet:        token.NewFileSet(),
 				Dialect:        dialects.Test{},
 				Driver:         driver,

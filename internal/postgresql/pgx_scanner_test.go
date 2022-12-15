@@ -48,6 +48,7 @@ var _ = Describe("Scanner", func() {
 
 			soc := generators.ScannerOptionContext(generators.Context{
 				Configuration:  config,
+				FileSet:        token.NewFileSet(),
 				Dialect:        dialect,
 				Driver:         driver,
 				CurrentPackage: pkg,

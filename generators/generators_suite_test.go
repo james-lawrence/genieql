@@ -1,9 +1,7 @@
 package generators_test
 
 import (
-	"io"
-	"log"
-
+	"bitbucket.org/jatone/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -11,8 +9,7 @@ import (
 )
 
 func TestGenerators(t *testing.T) {
-	log.SetOutput(io.Discard)
-	log.SetFlags(log.Flags() | log.Lshortfile)
+	testx.Logging()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Generators Suite")
 }

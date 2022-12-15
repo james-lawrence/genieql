@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"go/build"
 	"os"
-	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/compiler"
@@ -21,12 +20,9 @@ var _ = Describe("Compiler generation test", func() {
 			err error
 			buf = bytes.NewBuffer(nil)
 		)
-		wdir, err := os.Getwd()
-		Expect(err).To(Succeed())
-		bctx := build.Default
-		bctx.Dir = filepath.Join(wdir, dir)
-		bctx = buildx.Clone(
-			bctx,
+
+		bctx := buildx.Clone(
+			build.Default,
 			buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate),
 		)
 

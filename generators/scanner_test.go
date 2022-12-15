@@ -10,6 +10,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/dialects"
+	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 
@@ -51,6 +52,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 					d,
 					ScannerOptionContext(Context{
 						Configuration:  config,
+						Build:          buildx.Clone(build.Default),
 						CurrentPackage: pkg,
 						FileSet:        token.NewFileSet(),
 						Dialect:        dialects.Test{},
@@ -66,6 +68,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			expected, err := ioutil.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			// log.Println(formatted.String())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		ginkgo.Entry("scanner int", `package example; type Int func(arg int)`, ".fixtures/scanners/int.go"),
@@ -85,6 +88,8 @@ var _ = ginkgo.Describe("Scanner", func() {
 			node, err := parser.ParseFile(fset, "example", definition, 0)
 			Expect(err).ToNot(HaveOccurred())
 			soc := ScannerOptionContext(Context{
+				FileSet:       token.NewFileSet(),
+				Build:         buildx.Clone(build.Default),
 				Configuration: config,
 				Dialect:       dialects.Test{},
 				Driver:        driver,
