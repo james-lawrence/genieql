@@ -19,7 +19,9 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		pkg *build.Package = ctx.CurrentPackage
 	)
 
-	if ipath := importPath(ctx, astutil.UnwrapExpr(param.Type)); ipath != ctx.CurrentPackage.ImportPath {
+	if ipath, err := importPath(ctx, astutil.UnwrapExpr(param.Type)); err != nil {
+		return m, infos, err
+	} else if ipath != ctx.CurrentPackage.ImportPath {
 		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageImport(ipath)); err != nil {
 			return m, infos, err
 		}
@@ -42,10 +44,13 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		pkg     *build.Package
 	)
 
-	if ipath := importPath(ctx, param.Type); ipath == ctx.CurrentPackage.ImportPath {
-		pkg = ctx.CurrentPackage
-	} else if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+	pkg = ctx.CurrentPackage
+	if ipath, err := importPath(ctx, param.Type); err != nil {
 		return columns, infos, err
+	} else if ipath == ctx.CurrentPackage.ImportPath {
+		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageName(filepath.Base(ipath))); err != nil {
+			return columns, infos, err
+		}
 	}
 
 	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(astutil.UnwrapExpr(param.Type)))); err != nil {

@@ -457,7 +457,7 @@ func determineType(x ast.Expr) ast.Expr {
 	}
 }
 
-func importPath(ctx Context, x ast.Expr) string {
+func importPath(ctx Context, x ast.Expr) (string, error) {
 	switch x := x.(type) {
 	case *ast.SelectorExpr:
 		importSelector := func(is *ast.ImportSpec) string {
@@ -468,17 +468,17 @@ func importPath(ctx Context, x ast.Expr) string {
 		}
 
 		if src, err := parser.ParseFile(ctx.FileSet, ctx.FileSet.File(x.Pos()).Name(), nil, parser.ImportsOnly); err != nil {
-			panic(errors.Wrap(err, "failed to read the source file while determining import"))
+			return "", errors.Wrap(err, "failed to read the source file while determining import")
 		} else {
 			for _, imp := range src.Imports {
 				if importSelector(imp) == types.ExprString(x.X) {
-					return strings.Trim(imp.Path.Value, "\"")
+					return strings.Trim(imp.Path.Value, "\""), nil
 				}
 			}
 
-			panic("failed to match selector with import")
+			return "", errors.Errorf("failed to match selector with import: %s", types.ExprString(x))
 		}
 	default:
-		return ctx.CurrentPackage.ImportPath
+		return ctx.CurrentPackage.ImportPath, nil
 	}
 }

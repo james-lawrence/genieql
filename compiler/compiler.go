@@ -215,7 +215,6 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
 
-		// log.Println("DERP", formatted)
 		t.Context.Debugln("added generated code to evaluation context")
 	}
 
