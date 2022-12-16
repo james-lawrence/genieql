@@ -36,23 +36,30 @@ func Example1Insert2(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, a 
 	gql.Into("example1").Ignore("uuid_field")
 }
 
-func Example1Update1(
-	gql genieql.Function,
-	pattern func(ctx context.Context, q sqlx.Queryer, i int, camelCaseID int, snake_case int, e1 Example1, e2 Example2) NewExample1ScannerStaticRow,
+func Example1InsertBatch1(
+	gql genieql.InsertBatch,
+	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStatic,
 ) {
-	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField} RETURNING ` + Example1ScannerStaticColumns)
+	gql.Into("example1")
 }
 
-func Example1Update2(
-	gql genieql.Function,
-	pattern func(ctx context.Context, q sqlx.Queryer, i int, camelCaseID int, snake_case int, e1 Example1, e2 Example2) NewExample1ScannerStatic,
-) {
-	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField} RETURNING ` + Example1ScannerStaticColumns)
-}
+// func Example1Update1(
+// 	gql genieql.Function,
+// 	pattern func(ctx context.Context, q sqlx.Queryer, i int, camelCaseID int, snake_case int, e1 Example1, e2 Example2) NewExample1ScannerStaticRow,
+// ) {
+// 	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField} RETURNING ` + Example1ScannerStaticColumns)
+// }
 
-func Example1Update3(
-	gql genieql.Function,
-	pattern func(ctx context.Context, q sqlx.Queryer, i int, ts pgtype.Timestamp) NewExample1ScannerStatic,
-) {
-	gql = gql.Query(`UPDATE example2 SET WHERE id = {i} AND timestamp = {ts} RETURNING ` + Example1ScannerStaticColumns)
-}
+// func Example1Update2(
+// 	gql genieql.Function,
+// 	pattern func(ctx context.Context, q sqlx.Queryer, i int, camelCaseID int, snake_case int, e1 Example1, e2 Example2) NewExample1ScannerStatic,
+// ) {
+// 	gql = gql.Query(`UPDATE example2 SET WHERE bigint_field = {e1.BigintField} RETURNING ` + Example1ScannerStaticColumns)
+// }
+
+// func Example1Update3(
+// 	gql genieql.Function,
+// 	pattern func(ctx context.Context, q sqlx.Queryer, i int, ts pgtype.Timestamp) NewExample1ScannerStatic,
+// ) {
+// 	gql = gql.Query(`UPDATE example2 SET WHERE id = {i} AND timestamp = {ts} RETURNING ` + Example1ScannerStaticColumns)
+// }
