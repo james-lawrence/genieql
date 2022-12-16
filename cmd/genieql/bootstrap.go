@@ -10,7 +10,7 @@ func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
 	bootstrap := app.Command("bootstrap", "commands for bootstrapping configurations")
 
 	(&bootstrapDatabase{}).configure(
-		bootstrap.Command("database", "build a instance of qlgenie from the provided database"),
+		bootstrap.Command("database", "build a instance of genieql from the provided database"),
 	).Default()
 
 	(&bootstrapPackage{

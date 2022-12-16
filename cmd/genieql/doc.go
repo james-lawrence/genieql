@@ -3,7 +3,7 @@
 // bootstrap command - defines how to talk to a database.
 //
 //	genieql bootstrap --help
-//	 usage: qlgenie bootstrap [<flags>] <uri>
+//	 usage: genieql bootstrap [<flags>] <uri>
 //
 //	 build a instance of qlgenie
 //
