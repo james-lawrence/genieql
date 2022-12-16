@@ -283,8 +283,10 @@ func ScannerErrorHandlingExpr(scanner *ast.FuncDecl, additional ...ast.Expr) fun
 	}
 }
 
-func QueryInputsFromColumnMap(ctx Context, scanner *ast.FuncDecl, cmaps ...genieql.ColumnMap) (locals []ast.Spec, encodings []ast.Stmt, qinputs []ast.Expr, err error) {
-	errHandler := ScannerErrorHandling(scanner)
+func QueryInputsFromColumnMap(ctx Context, scanner *ast.FuncDecl, errHandler func(string) ast.Node, cmaps ...genieql.ColumnMap) (locals []ast.Spec, encodings []ast.Stmt, qinputs []ast.Expr, err error) {
+	if errHandler == nil {
+		errHandler = ScannerErrorHandling(scanner)
+	}
 	encode := ColumnMapEncoder(ctx)
 
 	for idx, cmap := range cmaps {

@@ -67,6 +67,25 @@ func DetectContext(fnt *ast.FuncType) (r *ast.Field) {
 	return nil
 }
 
+// DetectQueryer - detects if a sql.Query method is being used.
+// by convention the scanner is the first or second (after the context.Context) field in the inputs type.
+func DetectQueryer(fnt *ast.FuncType) (r *ast.Field) {
+	if fnt.Params == nil || len(fnt.Params.List) <= 1 {
+		return nil
+	}
+
+	for _, field := range fnt.Params.List[:2] {
+		pattern := astutil.MapFieldsToTypeExpr(field)
+		if contextPattern(pattern...) {
+			continue
+		}
+
+		return field
+	}
+
+	return nil
+}
+
 // compiler consumes a definition and returns a function declaration node.
 type compiler interface {
 	Compile(Definition) (*ast.FuncDecl, error)
