@@ -407,12 +407,12 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 							},
 							inputs...,
 						),
-						&ast.SliceExpr{
-							X:   t.tf.Names[0],
-							Low: astutil.IntegerLiteral(nrecords),
-						},
-						ast.NewIdent("true"),
 					),
+					&ast.SliceExpr{
+						X:   t.tf.Names[0],
+						Low: astutil.IntegerLiteral(nrecords),
+					},
+					ast.NewIdent("true"),
 				)
 			}
 		)

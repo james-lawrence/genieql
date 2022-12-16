@@ -88,7 +88,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7), a[1:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7)), a[1:], true
 	case 2:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -116,7 +116,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, err = transform(a[1]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7), a[2:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7)), a[2:], true
 	case 3:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -155,7 +155,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, err = transform(a[2]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7), a[3:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7)), a[3:], true
 	case 4:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -205,7 +205,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, err = transform(a[3]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7), a[4:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7)), a[4:], true
 	case 5:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -266,7 +266,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, err = transform(a[4]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7), a[5:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7)), a[5:], true
 	case 6:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -338,7 +338,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, err = transform(a[5]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7), a[6:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7)), a[6:], true
 	case 7:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -421,7 +421,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7, err = transform(a[6]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7), a[7:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7)), a[7:], true
 	case 8:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -515,7 +515,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r7c0, r7c1, r7c2, r7c3, r7c4, r7c5, r7c6, r7c7, err = transform(a[7]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7, r7c0, r7c1, r7c2, r7c3, r7c4, r7c5, r7c6, r7c7), a[8:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7, r7c0, r7c1, r7c2, r7c3, r7c4, r7c5, r7c6, r7c7)), a[8:], true
 	case 9:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
@@ -620,7 +620,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		if r8c0, r8c1, r8c2, r8c3, r8c4, r8c5, r8c6, r8c7, err = transform(a[8]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7, r7c0, r7c1, r7c2, r7c3, r7c4, r7c5, r7c6, r7c7, r8c0, r8c1, r8c2, r8c3, r8c4, r8c5, r8c6, r8c7), a[9:], true)
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r2c0, r2c1, r2c2, r2c3, r2c4, r2c5, r2c6, r2c7, r3c0, r3c1, r3c2, r3c3, r3c4, r3c5, r3c6, r3c7, r4c0, r4c1, r4c2, r4c3, r4c4, r4c5, r4c6, r4c7, r5c0, r5c1, r5c2, r5c3, r5c4, r5c5, r5c6, r5c7, r6c0, r6c1, r6c2, r6c3, r6c4, r6c5, r6c6, r6c7, r7c0, r7c1, r7c2, r7c3, r7c4, r7c5, r7c6, r7c7, r8c0, r8c1, r8c2, r8c3, r8c4, r8c5, r8c6, r8c7)), a[9:], true
 	default:
 		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
