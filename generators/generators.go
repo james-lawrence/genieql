@@ -329,13 +329,8 @@ func QueryInputsFromColumnMap(ctx Context, scanner *ast.FuncDecl, errHandler fun
 }
 
 func QueryFieldsFromColumnMap(ctx Context, cmaps ...genieql.ColumnMap) (locals []*ast.Field) {
-	for idx, cmap := range cmaps {
-		field := cmap.Field
-		if field == nil {
-			local := cmap.Local(idx)
-			field = astutil.Field(astutil.MustParseExpr(ctx.FileSet, cmap.Definition.ColumnType), local)
-		}
-		locals = append(locals, field)
+	for _, cmap := range cmaps {
+		locals = append(locals, cmap.Field)
 	}
 
 	return locals

@@ -86,8 +86,6 @@ func (t *insert) Conflict(s string) Insert {
 
 func (t *insert) Generate(dst io.Writer) (err error) {
 	var (
-		mapping    genieql.MappingConfig
-		columns    []genieql.ColumnInfo
 		cmaps      []genieql.ColumnMap
 		qinputs    []ast.Expr
 		encodings  []ast.Stmt
@@ -95,54 +93,27 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		transforms []ast.Stmt
 	)
 
-	driver := t.ctx.Driver
 	dialect := t.ctx.Dialect
-	fset := t.ctx.FileSet
 
 	t.ctx.Println("generation of", t.name, "initiated")
 	defer t.ctx.Println("generation of", t.name, "completed")
 	t.ctx.Debugln("insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("insert table", t.table)
 
-	err = t.ctx.Configuration.ReadMap(
-		&mapping,
-		genieql.MCOPackage(t.ctx.CurrentPackage),
-		genieql.MCOType(types.ExprString(t.tf.Type)),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if columns, err = t.ctx.Dialect.ColumnInformationForTable(t.ctx.Driver, t.table); err != nil {
-		return err
-	}
-
-	mapping.Apply(
-		genieql.MCOColumns(columns...),
-	)
-
-	if columns, _, err = mapping.MappedColumnInfo(driver, dialect, fset, t.ctx.CurrentPackage); err != nil {
-		return err
+	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.tf); err != nil {
+		return errors.Wrap(err, "unable to generate mapping")
 	}
 
 	ignored := genieql.ColumnInfoFilterIgnore(t.ignore...)
 	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
 
-	cset := genieql.ColumnInfoSet(columns)
-	ignoredcset := cset.Filter(ignored)
-	projectioncset := ignoredcset.Filter(defaulted)
+	cset := genieql.ColumnMapSet(cmaps)
+	ignoredcset := cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
+	projectioncset := ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
-	if cmaps, _, err = mapping.MapColumns(fset, t.ctx.CurrentPackage, t.tf.Names[0], projectioncset...); err != nil {
-		return errors.Wrapf(
-			err,
-			"failed to map columns for: %s:%s",
-			t.ctx.CurrentPackage.Name, types.ExprString(t.tf.Type),
-		)
-	}
-	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...)
+	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, projectioncset...)
 
-	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, nil, cmaps...); err != nil {
+	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, nil, projectioncset...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
@@ -159,13 +130,13 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 			Defaults:           append(t.defaults, t.ignore...),
 			DialectTransformer: dialect.ColumnValueTransformer(),
 		},
-		cset,
+		cset.ColumnInfo(),
 	)
 
 	g2 := generators.NewExploderFunction(
 		t.ctx,
 		astutil.Field(ast.NewIdent(types.ExprString(t.tf.Type)), ast.NewIdent("arg1")),
-		generators.QueryFieldsFromColumnMap(t.ctx, cmaps...),
+		generators.QueryFieldsFromColumnMap(t.ctx, projectioncset...),
 		generators.QFOName(fmt.Sprintf("%sExplode", t.name)),
 	)
 

@@ -2534,30 +2534,30 @@ const Example1InsertStaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
 func Example1InsertExplode(arg1 *Example1) ([]interface{}, error) {
 	var (
 		c0  pgtype.Int8        // BigintField
-		c1  pgtype.Bytea       // BitField
-		c2  pgtype.Bytea       // BitVaryingField
+		c1  pgtype.Bit         // BitField
+		c2  pgtype.Varbit      // BitVaryingField
 		c3  pgtype.Bool        // BoolField
 		c4  pgtype.Bytea       // ByteArrayField
-		c5  pgtype.Text        // CharacterField
-		c6  pgtype.Text        // CharacterFixedField
+		c5  pgtype.Varchar     // CharacterField
+		c6  pgtype.BPChar      // CharacterFixedField
 		c7  pgtype.CIDR        // CidrField
-		c8  pgtype.Float8      // DecimalField
+		c8  pgtype.Numeric     // DecimalField
 		c9  pgtype.Float8      // DoublePrecisionField
 		c10 pgtype.Inet        // InetField
-		c11 pgtype.Int8Array   // Int2Array
-		c12 pgtype.Int8Array   // Int4Array
+		c11 pgtype.Int2Array   // Int2Array
+		c12 pgtype.Int4Array   // Int4Array
 		c13 pgtype.Int8Array   // Int8Array
-		c14 pgtype.Int8        // IntField
+		c14 pgtype.Int4        // IntField
 		c15 pgtype.Interval    // IntervalField
-		c16 pgtype.Bytea       // JSONField
-		c17 pgtype.Bytea       // JsonbField
+		c16 pgtype.JSON        // JSONField
+		c17 pgtype.JSONB       // JsonbField
 		c18 pgtype.Macaddr     // MacaddrField
-		c19 pgtype.Float8      // NumericField
+		c19 pgtype.Numeric     // NumericField
 		c20 pgtype.Float4      // RealField
-		c21 pgtype.Int8        // SmallintField
+		c21 pgtype.Int2        // SmallintField
 		c22 pgtype.Text        // TextField
 		c23 pgtype.Timestamptz // TimestampField
-		c24 pgtype.TextArray   // UUIDArray
+		c24 pgtype.UUIDArray   // UUIDArray
 	)
 
 	if err := c0.Set(arg1.BigintField); err != nil {
@@ -2803,7 +2803,7 @@ func TimestampInsertExplode(arg1 *Timestamp) ([]interface{}, error) {
 		c0 pgtype.Timestamptz // Timestamp
 		c1 pgtype.Timestamptz // Timestamptz
 		c2 pgtype.Timestamptz // TimestamptzNullable
-		c3 pgtype.Text        // UUID
+		c3 pgtype.UUID        // UUID
 	)
 
 	switch arg1.Timestamp {
@@ -2836,7 +2836,7 @@ func TimestampInsertExplode(arg1 *Timestamp) ([]interface{}, error) {
 		}
 	}
 
-	switch *arg1.TimestamptzNullable {
+	switch arg1.TimestamptzNullable {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
 		if err := c2.Set(pgtype.Infinity); err != nil {
 			return []interface{}(nil), err
@@ -2924,7 +2924,7 @@ func ConflictInsertExplode(arg1 *Timestamp) ([]interface{}, error) {
 		c0 pgtype.Timestamptz // Timestamp
 		c1 pgtype.Timestamptz // Timestamptz
 		c2 pgtype.Timestamptz // TimestamptzNullable
-		c3 pgtype.Text        // UUID
+		c3 pgtype.UUID        // UUID
 	)
 
 	switch arg1.Timestamp {
@@ -2957,7 +2957,7 @@ func ConflictInsertExplode(arg1 *Timestamp) ([]interface{}, error) {
 		}
 	}
 
-	switch *arg1.TimestamptzNullable {
+	switch arg1.TimestamptzNullable {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
 		if err := c2.Set(pgtype.Infinity); err != nil {
 			return []interface{}(nil), err

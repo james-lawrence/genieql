@@ -40,3 +40,20 @@ func (t ColumnMapSet) ColumnNames() (columns []string) {
 	}
 	return columns
 }
+
+func (t ColumnMapSet) ColumnInfo() (result ColumnInfoSet) {
+	result = make([]ColumnInfo, 0, len(t))
+	for _, cm := range t {
+		result = append(result, cm.ColumnInfo)
+	}
+
+	return result
+}
+
+func (t ColumnMapSet) Map(m func(int, ColumnMap) ColumnMap) (result ColumnMapSet) {
+	result = make(ColumnMapSet, 0, len(t))
+	for idx, cm := range t {
+		result = append(result, m(idx, cm))
+	}
+	return result
+}

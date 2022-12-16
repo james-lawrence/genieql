@@ -1260,30 +1260,30 @@ const Example1Insert1StaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
 func Example1Insert1Explode(arg1 *Example1) ([]interface{}, error) {
 	var (
 		c0  pgtype.Int8        // BigintField
-		c1  pgtype.Bytea       // BitField
-		c2  pgtype.Bytea       // BitVaryingField
+		c1  pgtype.Bit         // BitField
+		c2  pgtype.Varbit      // BitVaryingField
 		c3  pgtype.Bool        // BoolField
 		c4  pgtype.Bytea       // ByteArrayField
-		c5  pgtype.Text        // CharacterField
-		c6  pgtype.Text        // CharacterFixedField
+		c5  pgtype.Varchar     // CharacterField
+		c6  pgtype.BPChar      // CharacterFixedField
 		c7  pgtype.CIDR        // CidrField
-		c8  pgtype.Float8      // DecimalField
+		c8  pgtype.Numeric     // DecimalField
 		c9  pgtype.Float8      // DoublePrecisionField
 		c10 pgtype.Inet        // InetField
-		c11 pgtype.Int8Array   // Int2Array
-		c12 pgtype.Int8Array   // Int4Array
+		c11 pgtype.Int2Array   // Int2Array
+		c12 pgtype.Int4Array   // Int4Array
 		c13 pgtype.Int8Array   // Int8Array
-		c14 pgtype.Int8        // IntField
+		c14 pgtype.Int4        // IntField
 		c15 pgtype.Interval    // IntervalField
-		c16 pgtype.Bytea       // JSONField
-		c17 pgtype.Bytea       // JsonbField
+		c16 pgtype.JSON        // JSONField
+		c17 pgtype.JSONB       // JsonbField
 		c18 pgtype.Macaddr     // MacaddrField
-		c19 pgtype.Float8      // NumericField
+		c19 pgtype.Numeric     // NumericField
 		c20 pgtype.Float4      // RealField
-		c21 pgtype.Int8        // SmallintField
+		c21 pgtype.Int2        // SmallintField
 		c22 pgtype.Text        // TextField
 		c23 pgtype.Timestamptz // TimestampField
-		c24 pgtype.TextArray   // UUIDArray
+		c24 pgtype.UUIDArray   // UUIDArray
 	)
 
 	if err := c0.Set(arg1.BigintField); err != nil {
@@ -1526,30 +1526,30 @@ const Example1Insert2StaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
 func Example1Insert2Explode(arg1 *Example1) ([]interface{}, error) {
 	var (
 		c0  pgtype.Int8        // BigintField
-		c1  pgtype.Bytea       // BitField
-		c2  pgtype.Bytea       // BitVaryingField
+		c1  pgtype.Bit         // BitField
+		c2  pgtype.Varbit      // BitVaryingField
 		c3  pgtype.Bool        // BoolField
 		c4  pgtype.Bytea       // ByteArrayField
-		c5  pgtype.Text        // CharacterField
-		c6  pgtype.Text        // CharacterFixedField
+		c5  pgtype.Varchar     // CharacterField
+		c6  pgtype.BPChar      // CharacterFixedField
 		c7  pgtype.CIDR        // CidrField
-		c8  pgtype.Float8      // DecimalField
+		c8  pgtype.Numeric     // DecimalField
 		c9  pgtype.Float8      // DoublePrecisionField
 		c10 pgtype.Inet        // InetField
-		c11 pgtype.Int8Array   // Int2Array
-		c12 pgtype.Int8Array   // Int4Array
+		c11 pgtype.Int2Array   // Int2Array
+		c12 pgtype.Int4Array   // Int4Array
 		c13 pgtype.Int8Array   // Int8Array
-		c14 pgtype.Int8        // IntField
+		c14 pgtype.Int4        // IntField
 		c15 pgtype.Interval    // IntervalField
-		c16 pgtype.Bytea       // JSONField
-		c17 pgtype.Bytea       // JsonbField
+		c16 pgtype.JSON        // JSONField
+		c17 pgtype.JSONB       // JsonbField
 		c18 pgtype.Macaddr     // MacaddrField
-		c19 pgtype.Float8      // NumericField
+		c19 pgtype.Numeric     // NumericField
 		c20 pgtype.Float4      // RealField
-		c21 pgtype.Int8        // SmallintField
+		c21 pgtype.Int2        // SmallintField
 		c22 pgtype.Text        // TextField
 		c23 pgtype.Timestamptz // TimestampField
-		c24 pgtype.TextArray   // UUIDArray
+		c24 pgtype.UUIDArray   // UUIDArray
 	)
 
 	if err := c0.Set(arg1.BigintField); err != nil {
@@ -1923,7 +1923,7 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 	switch len(a) {
 	case 0:
 		return nil, []Example1(nil), false
-	default:
+	case 1:
 		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
 		var (
 			r0c0  pgtype.Int8
@@ -1957,7 +1957,71 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r0c15, r0c16, r0c17, r0c18, r0c19, r0c20, r0c21, r0c22, r0c23, r0c24, r0c25, err = transform(a[0]); err != nil {
 			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
 		}
-		return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r0c15, r0c16, r0c17, r0c18, r0c19, r0c20, r0c21, r0c22, r0c23, r0c24, r0c25)), []Example1(nil), false
+		return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r0c15, r0c16, r0c17, r0c18, r0c19, r0c20, r0c21, r0c22, r0c23, r0c24, r0c25)), a[1:], true
+	default:
+		const query = `INSERT INTO example1 ("bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26),($27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52) RETURNING "bigint_field","bit_field","bit_varying_field","bool_field","byte_array_field","character_field","character_fixed_field","cidr_field","decimal_field","double_precision_field","inet_field","int2_array","int4_array","int8_array","int_field","interval_field","json_field","jsonb_field","macaddr_field","numeric_field","real_field","smallint_field","text_field","timestamp_field","uuid_array","uuid_field"`
+		var (
+			r0c0  pgtype.Int8
+			r0c1  pgtype.Bit
+			r0c2  pgtype.Varbit
+			r0c3  pgtype.Bool
+			r0c4  pgtype.Bytea
+			r0c5  pgtype.Varchar
+			r0c6  pgtype.BPChar
+			r0c7  pgtype.CIDR
+			r0c8  pgtype.Numeric
+			r0c9  pgtype.Float8
+			r0c10 pgtype.Inet
+			r0c11 pgtype.Int2Array
+			r0c12 pgtype.Int4Array
+			r0c13 pgtype.Int8Array
+			r0c14 pgtype.Int4
+			r0c15 pgtype.Interval
+			r0c16 pgtype.JSON
+			r0c17 pgtype.JSONB
+			r0c18 pgtype.Macaddr
+			r0c19 pgtype.Numeric
+			r0c20 pgtype.Float4
+			r0c21 pgtype.Int2
+			r0c22 pgtype.Text
+			r0c23 pgtype.Timestamptz
+			r0c24 pgtype.UUIDArray
+			r0c25 pgtype.UUID
+			r1c0  pgtype.Int8
+			r1c1  pgtype.Bit
+			r1c2  pgtype.Varbit
+			r1c3  pgtype.Bool
+			r1c4  pgtype.Bytea
+			r1c5  pgtype.Varchar
+			r1c6  pgtype.BPChar
+			r1c7  pgtype.CIDR
+			r1c8  pgtype.Numeric
+			r1c9  pgtype.Float8
+			r1c10 pgtype.Inet
+			r1c11 pgtype.Int2Array
+			r1c12 pgtype.Int4Array
+			r1c13 pgtype.Int8Array
+			r1c14 pgtype.Int4
+			r1c15 pgtype.Interval
+			r1c16 pgtype.JSON
+			r1c17 pgtype.JSONB
+			r1c18 pgtype.Macaddr
+			r1c19 pgtype.Numeric
+			r1c20 pgtype.Float4
+			r1c21 pgtype.Int2
+			r1c22 pgtype.Text
+			r1c23 pgtype.Timestamptz
+			r1c24 pgtype.UUIDArray
+			r1c25 pgtype.UUID
+			err   error
+		)
+		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r0c15, r0c16, r0c17, r0c18, r0c19, r0c20, r0c21, r0c22, r0c23, r0c24, r0c25, err = transform(a[0]); err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+		if r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r1c8, r1c9, r1c10, r1c11, r1c12, r1c13, r1c14, r1c15, r1c16, r1c17, r1c18, r1c19, r1c20, r1c21, r1c22, r1c23, r1c24, r1c25, err = transform(a[1]); err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+		return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r0c15, r0c16, r0c17, r0c18, r0c19, r0c20, r0c21, r0c22, r0c23, r0c24, r0c25, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r1c8, r1c9, r1c10, r1c11, r1c12, r1c13, r1c14, r1c15, r1c16, r1c17, r1c18, r1c19, r1c20, r1c21, r1c22, r1c23, r1c24, r1c25)), []Example1(nil), false
 	}
 }
 

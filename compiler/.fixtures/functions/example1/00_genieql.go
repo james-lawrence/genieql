@@ -40,7 +40,7 @@ func Example1InsertBatch1(
 	gql genieql.InsertBatch,
 	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStatic,
 ) {
-	gql.Into("example1")
+	gql.Into("example1").Batch(2)
 }
 
 func Example1Update1(

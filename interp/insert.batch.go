@@ -110,7 +110,13 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 	cset := genieql.ColumnMapSet(cmaps)
 	defaultedcset := cset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
-	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, defaultedcset...)
+	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, defaultedcset.Map(func(idx int, cm genieql.ColumnMap) genieql.ColumnMap {
+		local := cm.Local(idx)
+		dup := cm
+		dup.Field = astutil.Field(astutil.MustParseExpr(t.ctx.FileSet, cm.Definition.ColumnType), local)
+		return dup
+	})...)
+
 	explodeerrHandler := func(errlocal string) ast.Node {
 		explodereturn := make([]ast.Expr, 0, len(queryfields)+1)
 		explodereturn = append(explodereturn, astutil.MapFieldsToNameExpr(queryfields...)...)
