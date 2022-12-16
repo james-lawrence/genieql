@@ -1,10 +1,12 @@
 package genieql
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -12,6 +14,7 @@ import (
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/generators/typespec"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/pkg/errors"
 )
 
 // InsertBatch configuration interface for generating batch inserts.
@@ -85,10 +88,28 @@ func (t *batch) Batch(size int) InsertBatch {
 }
 
 func (t *batch) Generate(dst io.Writer) (err error) {
+	var (
+		cmaps       []genieql.ColumnMap
+		queryfields []*ast.Field
+		encodings   []ast.Stmt
+		explodedecl *ast.FuncDecl
+	)
 	t.ctx.Println("generation of", t.name, "initiated")
 	defer t.ctx.Println("generation of", t.name, "completed")
 	t.ctx.Debugln("batch.insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("batch.insert table", t.table)
+
+	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.tf); err != nil {
+		return errors.Wrap(err, "unable to generate mapping")
+	}
+
+	if _, encodings, _, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, cmaps...); err != nil {
+		return errors.Wrap(err, "unable to transform query inputs")
+	}
+
+	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, cmaps...)
+	errhandling := generators.ScannerErrorHandlingExpr(t.scanner)
+	log.Printf("DERP %T\n", errhandling("test"))
 
 	initializesig := &ast.FuncType{
 		Params: &ast.FieldList{
@@ -320,6 +341,153 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		},
 	}
 
+	explodereturn := make([]ast.Expr, 0, len(queryfields)+1)
+	explodereturn = append(explodereturn, astutil.MapFieldsToNameExpr(queryfields...)...)
+	explodereturn = append(explodereturn, ast.NewIdent("nil"))
+	explodestmts := make([]ast.Stmt, 0, len(encodings)+1)
+	explodestmts = append(explodestmts, encodings...)
+	explodestmts = append(explodestmts, astutil.Return(explodereturn...))
+
+	explodefn := functions.NewFn(
+		explodestmts...,
+	)
+
+	exploderesults := make([]*ast.Field, len(queryfields), len(queryfields)+1)
+	copy(exploderesults, queryfields)
+	exploderesults = append(exploderesults, astutil.Field(ast.NewIdent("error"), ast.NewIdent("err")))
+
+	explodesig := &ast.FuncType{
+		Params: &ast.FieldList{
+			List: []*ast.Field{
+				t.tf,
+			},
+		},
+		Results: &ast.FieldList{
+			List: exploderesults,
+		},
+	}
+
+	if explodedecl, err = explodefn.Compile(functions.New("", explodesig)); err != nil {
+		return errors.Wrap(err, "failed to generate encoding function")
+	}
+
+	generatecasestatement := func(nrecords int, caseexpr ...ast.Expr) *ast.CaseClause {
+		var (
+			qinputs = astutil.ExprList(
+				ast.NewIdent("t.ctx"),
+				ast.NewIdent("query"),
+			)
+			genlocals   []ast.Spec
+			assignments []ast.Stmt
+			remaining   func(...ast.Expr) ast.Stmt = func(inputs ...ast.Expr) ast.Stmt {
+				return astutil.Return(
+					astutil.CallExpr(
+						t.scanner.Name,
+						astutil.CallExpr(
+							&ast.SelectorExpr{
+								X: astutil.SelExpr(
+									"t",
+									"q",
+								),
+								Sel: ast.NewIdent("QueryContext"),
+							},
+							inputs...,
+						),
+						&ast.SliceExpr{
+							X:   t.tf.Names[0],
+							Low: astutil.IntegerLiteral(nrecords),
+						},
+						ast.NewIdent("true"),
+					),
+				)
+			}
+		)
+
+		if nrecords == t.n {
+			remaining = func(inputs ...ast.Expr) ast.Stmt {
+				return astutil.Return(
+					astutil.CallExpr(
+						t.scanner.Name,
+						astutil.CallExpr(
+							&ast.SelectorExpr{
+								X: astutil.SelExpr(
+									"t",
+									"q",
+								),
+								Sel: ast.NewIdent("QueryContext"),
+							},
+							inputs...,
+						),
+					),
+					astutil.CallExpr(
+						&ast.ArrayType{Elt: t.tf.Type},
+						ast.NewIdent("nil"),
+					),
+					ast.NewIdent("false"),
+				)
+			}
+		}
+
+		for j := 0; j < nrecords; j++ {
+			localqf1 := astutil.TransformFields(func(f *ast.Field) *ast.Field {
+				return astutil.Field(f.Type, ast.NewIdent(fmt.Sprintf("r%d%s", j, f.Names[0])))
+			}, queryfields...)
+			inputs := astutil.MapFieldsToNameExpr(localqf1...)
+			localqf2 := astutil.MapFieldsToValueSpec(localqf1...)
+			localqf3 := astutil.MapValueSpecToSpec(localqf2...)
+			assignment := astutil.ExprList(
+				inputs...,
+			)
+			assignment = append(assignment, ast.NewIdent("err"))
+
+			genlocals = append(genlocals, localqf3...)
+			assignments = append(
+				assignments,
+				astutil.If(
+					astutil.Assign(
+						assignment,
+						token.ASSIGN,
+						astutil.ExprList(
+							astutil.CallExpr(
+								ast.NewIdent("transform"),
+								&ast.IndexListExpr{
+									X:       t.tf.Names[0],
+									Indices: astutil.ExprList(astutil.IntegerLiteral(j)),
+								},
+							),
+						),
+					),
+					astutil.BinaryExpr(
+						ast.NewIdent("err"), token.NEQ, ast.NewIdent("nil"),
+					),
+					astutil.Block(
+						astutil.Return(
+							errhandling("err"),
+							astutil.CallExpr(
+								&ast.ArrayType{Elt: t.tf.Type},
+								ast.NewIdent("nil"),
+							),
+							ast.NewIdent("false"),
+						),
+					),
+					nil,
+				),
+			)
+
+			qinputs = append(qinputs, inputs...)
+		}
+
+		casestmts := make([]ast.Stmt, 0, len(assignments)+2)
+		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(genlocals...)))
+		casestmts = append(casestmts, assignments...)
+		casestmts = append(casestmts, remaining(qinputs...))
+
+		return astutil.CaseClause(
+			caseexpr,
+			casestmts...,
+		)
+	}
+
 	genscanning := func() *ast.BlockStmt {
 		stmts := make([]ast.Stmt, 0, t.n)
 		stmts = append(stmts, astutil.CaseClause(
@@ -335,66 +503,19 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		))
 
 		for i := 1; len(stmts) < cap(stmts); i++ {
-			stmts = append(stmts, astutil.CaseClause(
-				astutil.ExprList(astutil.IntegerLiteral(i)),
-				astutil.Return(
-					astutil.CallExpr(
-						t.scanner.Name,
-						astutil.CallExprEllipsis(
-							&ast.SelectorExpr{
-								X: astutil.SelExpr(
-									"t",
-									"q",
-								),
-								Sel: ast.NewIdent("QueryContext"),
-							},
-							ast.NewIdent("t.ctx"),
-							ast.NewIdent("query"),
-							&ast.SliceExpr{
-								X: ast.NewIdent("tmp"),
-							},
-						),
-					),
-					astutil.CallExpr(
-						&ast.ArrayType{Elt: t.tf.Type},
-						ast.NewIdent("nil"),
-					),
-					ast.NewIdent("false"),
-				),
-			))
+			stmts = append(stmts, generatecasestatement(i, astutil.IntegerLiteral(i)))
 		}
 
-		stmts = append(stmts, astutil.CaseClause(
-			nil,
-			astutil.Return(
-				astutil.CallExpr(
-					t.scanner.Name,
-					astutil.CallExprEllipsis(
-						&ast.SelectorExpr{
-							X: astutil.SelExpr(
-								"t",
-								"q",
-							),
-							Sel: ast.NewIdent("QueryContext"),
-						},
-						ast.NewIdent("t.ctx"),
-						ast.NewIdent("query"),
-						&ast.SliceExpr{
-							X: ast.NewIdent("tmp"),
-						},
-					),
-				),
-				&ast.SliceExpr{
-					X:   t.tf.Names[0],
-					Low: astutil.IntegerLiteral(t.n),
-				},
-				ast.NewIdent("true"),
-			),
-		))
+		stmts = append(stmts, generatecasestatement(t.n))
 		return astutil.Block(stmts...)
 	}
 
 	advancefn := functions.NewFn(
+		astutil.Assign(
+			astutil.ExprList(ast.NewIdent("transform")),
+			token.DEFINE,
+			astutil.ExprList(astutil.FuncLiteral(explodedecl)),
+		),
 		astutil.Switch(
 			nil,
 			astutil.CallExpr(

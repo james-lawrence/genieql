@@ -2,6 +2,7 @@ package example
 
 import (
 	"context"
+	"database/sql"
 
 	"bitbucket.org/jatone/genieql/internal/sqlx"
 )
@@ -36,9 +37,7 @@ func (t *batchInsertExample1) Close() error {
 }
 
 func (t *batchInsertExample1) Next() bool {
-	var (
-		advanced bool
-	)
+	var advanced bool
 	if t.scanner != nil && t.scanner.Next() {
 		return true
 	}
@@ -50,12 +49,70 @@ func (t *batchInsertExample1) Next() bool {
 }
 
 func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, bool) {
+	transform := func(a StructA) (c0 sql.NullInt64, c1 sql.NullInt64, c2 sql.NullInt64, c3 sql.NullBool, c4 sql.NullBool, c5 sql.NullBool, c6 sql.NullInt64, c7 sql.NullBool, err error) {
+		c0.Valid = true
+		c0.Int64 = int64(a.A)
+		c1.Valid = true
+		c1.Int64 = int64(a.B)
+		c2.Valid = true
+		c2.Int64 = int64(a.C)
+		c3.Valid = true
+		c3.Bool = a.D
+		c4.Valid = true
+		c4.Bool = a.E
+		c5.Valid = true
+		c5.Bool = a.F
+		c6.Valid = true
+		c6.Int64 = int64(*a.G)
+		c7.Valid = true
+		c7.Bool = *a.H
+		return c0, c1, c2, c3, c4, c5, c6, c7, nil
+	}
 	switch len(a) {
 	case 0:
 		return nil, []StructA(nil), false
 	case 1:
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, tmp[:]...)), []StructA(nil), false
+		const query = "QUERY 1"
+		var (
+			r0c0 sql.NullInt64
+			r0c1 sql.NullInt64
+			r0c2 sql.NullInt64
+			r0c3 sql.NullBool
+			r0c4 sql.NullBool
+			r0c5 sql.NullBool
+			r0c6 sql.NullInt64
+			r0c7 sql.NullBool
+		)
+		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
+			return NewExampleScannerStatic(nil, err), []StructA(nil), false
+		}
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7), a[1:], true)
 	default:
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, tmp[:]...)), a[2:], true
+		const query = "QUERY 2"
+		var (
+			r0c0 sql.NullInt64
+			r0c1 sql.NullInt64
+			r0c2 sql.NullInt64
+			r0c3 sql.NullBool
+			r0c4 sql.NullBool
+			r0c5 sql.NullBool
+			r0c6 sql.NullInt64
+			r0c7 sql.NullBool
+			r1c0 sql.NullInt64
+			r1c1 sql.NullInt64
+			r1c2 sql.NullInt64
+			r1c3 sql.NullBool
+			r1c4 sql.NullBool
+			r1c5 sql.NullBool
+			r1c6 sql.NullInt64
+			r1c7 sql.NullBool
+		)
+		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
+			return NewExampleScannerStatic(nil, err), []StructA(nil), false
+		}
+		if r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, err = transform(a[1]); err != nil {
+			return NewExampleScannerStatic(nil, err), []StructA(nil), false
+		}
+		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7)), []StructA(nil), false
 	}
 }

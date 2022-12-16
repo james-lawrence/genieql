@@ -158,6 +158,10 @@ func DeclStmt(d ast.Decl) *ast.DeclStmt {
 	return &ast.DeclStmt{Decl: d}
 }
 
+func FuncLiteral(d *ast.FuncDecl) *ast.FuncLit {
+	return &ast.FuncLit{Type: d.Type, Body: d.Body}
+}
+
 // VarList creates a variable list. i.e) var (a int, b bool, c string)
 func VarList(specs ...ast.Spec) *ast.GenDecl {
 	var (
@@ -244,6 +248,24 @@ func MapFieldsToNameExpr(args ...*ast.Field) []ast.Expr {
 	result := make([]ast.Expr, 0, len(args))
 	for _, f := range args {
 		result = append(result, MapIdentToExpr(f.Names...)...)
+	}
+	return result
+}
+
+// MapFieldsToValueSpec transform a field to a valuespec
+func MapFieldsToValueSpec(args ...*ast.Field) []*ast.ValueSpec {
+	result := make([]*ast.ValueSpec, 0, len(args))
+	for _, f := range args {
+		result = append(result, ValueSpec(f.Type, f.Names...))
+	}
+	return result
+}
+
+// MapValueSpecToSpec transform a field to a valuespec due to weak golang type system
+func MapValueSpecToSpec(args ...*ast.ValueSpec) []ast.Spec {
+	result := make([]ast.Spec, 0, len(args))
+	for _, f := range args {
+		result = append(result, f)
 	}
 	return result
 }

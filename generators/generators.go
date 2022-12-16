@@ -258,3 +258,76 @@ func ColumnMapFromFields(ctx Context, inputs ...*ast.Field) (rcmaps []genieql.Co
 
 	return rcmaps, nil
 }
+
+func ScannerErrorHandling(scanner *ast.FuncDecl) func(local string) ast.Node {
+	return func(local string) ast.Node { return astutil.Return(ScannerErrorHandlingExpr(scanner)(local)) }
+}
+
+func ScannerErrorHandlingExpr(scanner *ast.FuncDecl, additional ...ast.Expr) func(local string) ast.Expr {
+	pattern := astutil.MapFieldsToTypeExpr(scanner.Type.Params.List...)
+
+	if queryPattern(pattern...) {
+		return func(local string) ast.Expr {
+			return astutil.CallExpr(scanner.Name, ast.NewIdent("nil"), ast.NewIdent(local))
+		}
+	}
+
+	return func(local string) ast.Expr {
+		return astutil.CallExpr(
+			&ast.SelectorExpr{
+				X:   astutil.CallExpr(scanner.Name, ast.NewIdent("nil")),
+				Sel: ast.NewIdent("Err"),
+			},
+			ast.NewIdent(local),
+		)
+	}
+}
+
+func QueryInputsFromColumnMap(ctx Context, scanner *ast.FuncDecl, cmaps ...genieql.ColumnMap) (locals []ast.Spec, encodings []ast.Stmt, qinputs []ast.Expr, err error) {
+	errHandler := ScannerErrorHandling(scanner)
+	encode := ColumnMapEncoder(ctx)
+
+	for idx, cmap := range cmaps {
+		var (
+			tmp []ast.Stmt
+		)
+
+		local := cmap.Local(idx)
+
+		if tmp, err = encode(idx, cmap, errHandler); err != nil {
+			return locals, encodings, qinputs, errors.Wrap(err, "failed to generate encode")
+		}
+
+		if tmp == nil {
+			qinputs = append(qinputs, ast.NewIdent(cmap.Name))
+			continue
+		}
+
+		qinputs = append(qinputs, local)
+		encodings = append(encodings, tmp...)
+
+		vspec := astutil.ValueSpec(astutil.MustParseExpr(ctx.FileSet, cmap.Definition.ColumnType), local)
+		vspec.Comment = &ast.CommentGroup{
+			List: []*ast.Comment{
+				{
+					Text: "// " + cmap.ColumnInfo.Name,
+				},
+			},
+		}
+
+		locals = append(locals, vspec)
+	}
+
+	return locals, encodings, qinputs, nil
+}
+
+func QueryFieldsFromColumnMap(ctx Context, cmaps ...genieql.ColumnMap) (locals []*ast.Field) {
+	for idx, cmap := range cmaps {
+		local := cmap.Local(idx)
+
+		field := astutil.Field(astutil.MustParseExpr(ctx.FileSet, cmap.Definition.ColumnType), local)
+		locals = append(locals, field)
+	}
+
+	return locals
+}

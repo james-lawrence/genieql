@@ -55,7 +55,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		cmaps      []genieql.ColumnMap
 		qinputs    []ast.Expr
 		encodings  []ast.Stmt
-		localspec  []ast.Spec
+		locals     []ast.Spec
 		transforms []ast.Stmt
 	)
 
@@ -77,47 +77,17 @@ func (t *function) Generate(dst io.Writer) (err error) {
 
 	scanner := functions.DetectScanner(t.ctx, t.signature)
 
-	errHandler := functions.ScannerErrorHandling(scanner)
-	encode := generators.ColumnMapEncoder(t.ctx)
-
 	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.signature.Params.List...); err != nil {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
-	for idx, cmap := range cmaps {
-		var (
-			tmp []ast.Stmt
-		)
-
-		local := cmap.Local(idx)
-
-		if tmp, err = encode(idx, cmap, errHandler); err != nil {
-			return errors.Wrap(err, "failed to generate encode")
-		}
-
-		if tmp == nil {
-			qinputs = append(qinputs, ast.NewIdent(cmap.Name))
-			continue
-		}
-
-		qinputs = append(qinputs, local)
-		encodings = append(encodings, tmp...)
-
-		vspec := astutil.ValueSpec(astutil.MustParseExpr(t.ctx.FileSet, cmap.Definition.ColumnType), local)
-		vspec.Comment = &ast.CommentGroup{
-			List: []*ast.Comment{
-				{
-					Text: "// " + cmap.ColumnInfo.Name,
-				},
-			},
-		}
-
-		localspec = append(localspec, vspec)
+	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, scanner, cmaps...); err != nil {
+		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
 	transforms = []ast.Stmt{
 		&ast.DeclStmt{
-			Decl: astutil.VarList(localspec...),
+			Decl: astutil.VarList(locals...),
 		},
 	}
 

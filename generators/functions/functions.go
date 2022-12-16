@@ -100,33 +100,6 @@ func QueryInputsFromFields(inputs ...*ast.Field) (output []ast.Expr) {
 	return output
 }
 
-var queryPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
-
-// var queryRowPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Row")...)
-
-func ScannerErrorHandling(scanner *ast.FuncDecl) func(local string) ast.Node {
-	pattern := astutil.MapFieldsToTypeExpr(scanner.Type.Params.List...)
-
-	if queryPattern(pattern...) {
-		return func(local string) ast.Node {
-			return astutil.Return(
-				astutil.CallExpr(scanner.Name, ast.NewIdent("nil"), ast.NewIdent(local)),
-			)
-		}
-	}
-
-	return func(local string) ast.Node {
-		return astutil.Return(
-			astutil.CallExpr(
-				&ast.SelectorExpr{
-					X:   astutil.CallExpr(scanner.Name, ast.NewIdent("nil")),
-					Sel: ast.NewIdent("Err"),
-				},
-				ast.NewIdent(local),
-			),
-		)
-	}
-}
 func QueryLiteralColumnMapReplacer(ctx generators.Context, columns ...genieql.ColumnMap) *strings.Replacer {
 	replacements := []string{}
 	cidx := ctx.Dialect.ColumnValueTransformer()
@@ -316,11 +289,17 @@ func OptionRecv(r *ast.FieldList) Option {
 }
 
 func combine(d Definition, b *ast.BlockStmt) (res *ast.FuncDecl) {
+	var (
+		name *ast.Ident = nil
+	)
+
+	if len(d.Name) > 0 {
+		name = ast.NewIdent(d.Name)
+	}
+
 	return &ast.FuncDecl{
 		Recv: d.Recv,
-		Name: &ast.Ident{
-			Name: d.Name,
-		},
+		Name: name,
 		Type: &ast.FuncType{
 			Params:  d.Signature.Params,
 			Results: d.Signature.Results,
