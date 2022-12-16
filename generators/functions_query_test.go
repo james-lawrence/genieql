@@ -2,7 +2,6 @@ package generators_test
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -24,35 +23,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-type testSearcher struct {
-	functions []*ast.FuncDecl
-	types     []*ast.TypeSpec
-}
-
-func (t testSearcher) FindFunction(f ast.Filter) (*ast.FuncDecl, error) {
-	for _, function := range t.functions {
-		if f(function.Name.Name) {
-			return function, nil
-		}
-	}
-
-	return nil, fmt.Errorf("function not found")
-}
-
-func (t testSearcher) FindUniqueType(f ast.Filter) (*ast.TypeSpec, error) {
-	for _, spec := range t.types {
-		if f(spec.Name.Name) {
-			return spec, nil
-		}
-	}
-
-	return nil, fmt.Errorf("type not found")
-}
-
-func (t testSearcher) FindFieldsForType(x ast.Expr) ([]*ast.Field, error) {
-	return []*ast.Field(nil), fmt.Errorf("not implemented")
-}
 
 var _ = ginkgo.Describe("Query Functions", func() {
 	bctx := build.Default

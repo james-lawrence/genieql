@@ -9,7 +9,6 @@ import (
 	"go/types"
 	"log"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -55,12 +54,6 @@ func genFunctionLiteral(ctx Context, example string, tctx interface{}, errorHand
 	}
 
 	return output, nil
-}
-
-func exprToArray(x ast.Expr) ast.Expr {
-	return &ast.ArrayType{
-		Elt: x,
-	}
 }
 
 type transforms func(x ast.Expr) ast.Expr
@@ -209,15 +202,6 @@ func argumentsTransform(t transforms) func(fields []*ast.Field) string {
 	}
 }
 
-// utility function that converts a set of ast.Field into
-// a string representation of a function's arguments.
-func arguments(fields []*ast.Field) string {
-	xtransformer := func(x ast.Expr) ast.Expr {
-		return x
-	}
-	return _arguments(xtransformer, fields)
-}
-
 func argumentsAsPointers(fields []*ast.Field) string {
 	xtransformer := func(x ast.Expr) ast.Expr {
 		return &ast.StarExpr{X: x}
@@ -319,42 +303,6 @@ func astPrint(n ast.Node) (string, error) {
 	return dst.String(), errors.Wrap(err, "failure to print ast")
 }
 
-func areArrayType(xs ...ast.Expr) bool {
-	for _, x := range xs {
-		if _, ok := x.(*ast.ArrayType); !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func extractArrayInfo(x *ast.ArrayType) (int, ast.Expr, error) {
-	var (
-		err error
-		max int
-		ok  bool
-		lit *ast.BasicLit
-	)
-	if lit, ok = x.Len.(*ast.BasicLit); !ok {
-		return max, x.Elt, errors.New("expected a basic literal for the array")
-	}
-
-	if lit.Kind != token.INT {
-		return max, x.Elt, errors.New("expected the basic literal of the array to be of type integer")
-	}
-
-	if max, err = strconv.Atoi(lit.Value); err != nil {
-		return max, x.Elt, errors.Wrap(err, "failed to convert the array size to an integer")
-	}
-
-	return max, x.Elt, nil
-}
-
-func selectType(x ast.Expr) bool {
-	_, ok := x.(*ast.SelectorExpr)
-	return ok
-}
-
 // AllBuiltinTypes returns true iff all the types are builtin to the go runtime.
 func AllBuiltinTypes(xs ...ast.Expr) bool {
 	return allBuiltinTypes(xs...)
@@ -422,18 +370,6 @@ func builtinParam(ctx Context, param *ast.Field) ([]genieql.ColumnMap, error) {
 	}
 
 	return columns, nil
-}
-
-func determineIdent(x ast.Expr) *ast.Ident {
-	switch real := x.(type) {
-	case *ast.Ident:
-		return real
-	case *ast.SelectorExpr:
-		return real.Sel
-	default:
-		debugx.Printf("determineIdent: %T - %s\n", x, types.ExprString(x))
-		return nil
-	}
 }
 
 func autoreference(x ast.Expr) ast.Expr {

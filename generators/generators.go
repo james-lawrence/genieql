@@ -111,6 +111,11 @@ func reserved(s string) bool {
 	}
 }
 
+var (
+	queryPattern    = astutil.TypePattern(astutil.ExprTemplateList("*sql.Rows", "error")...)
+	queryRowPattern = astutil.TypePattern(astutil.ExprTemplateList("*sql.Row")...)
+)
+
 // GenerateComment generates a comment.
 func GenerateComment(comments ...*ast.CommentGroup) genieql.Generator {
 	doc := mergeComments(comments...)

@@ -5,7 +5,7 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
@@ -65,7 +65,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 					buffer.WriteString("\n")
 				}
 			}
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			// log.Println(formatted.String())
@@ -102,7 +102,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 					buffer.WriteString("\n")
 				}
 			}
-			expected, err := ioutil.ReadFile(fixture)
+			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
