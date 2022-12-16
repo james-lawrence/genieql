@@ -36,6 +36,7 @@ var _ = Describe("Insert", func() {
 
 			Expect(in.Generate(b)).To(Succeed())
 			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
+			// log.Println(formatted.String())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
 			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
 		},
@@ -105,7 +106,7 @@ var _ = Describe("Insert", func() {
 				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
 				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
 				rowsScanner,
-			).Into("foo").Ignore("a").Default("b").Conflict("ON CONFLICT c = DEFAULT"),
+			).Into("foo").Ignore("a").Default("b").Conflict("ON CONFLICT c = {a.C}"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.5.go"))),
 		),
 	)

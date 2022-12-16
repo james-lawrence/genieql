@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -103,13 +102,18 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
-	if _, encodings, _, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, cmaps...); err != nil {
+	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...)
+	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
+
+	cset := genieql.ColumnMapSet(cmaps)
+	defaultedcset := cset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
+
+	if _, encodings, _, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, defaultedcset...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
-	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, cmaps...)
+	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, defaultedcset...)
 	errhandling := generators.ScannerErrorHandlingExpr(t.scanner)
-	log.Printf("DERP %T\n", errhandling("test"))
 
 	initializesig := &ast.FuncType{
 		Params: &ast.FieldList{
@@ -477,7 +481,11 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 			qinputs = append(qinputs, inputs...)
 		}
 
-		casestmts := make([]ast.Stmt, 0, len(assignments)+2)
+		casestmts := make([]ast.Stmt, 0, len(assignments)+3)
+		casestmts = append(casestmts, astutil.DeclStmt(genieql.QueryLiteral(
+			"query",
+			queryreplacement.Replace(t.ctx.Dialect.Insert(nrecords, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults)),
+		)))
 		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(genlocals...)))
 		casestmts = append(casestmts, assignments...)
 		casestmts = append(casestmts, remaining(qinputs...))

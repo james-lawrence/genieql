@@ -59,7 +59,7 @@ func DialectConfig1() genieql.Configuration {
 	err := dialects.Register(dialect, dialects.TestFactory(dialects.Test{
 		Quote:             "\"",
 		CValueTransformer: columninfo.NewNameTransformer(),
-		QueryInsert:       "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict:",
+		QueryInsert:       "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict: RETURNING :gql.insert.returning:",
 	}))
 	if err != nil {
 		log.Println("failed to register test dialect", dialect, err)

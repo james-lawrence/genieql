@@ -72,7 +72,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 	case 0:
 		return nil, []StructA(nil), false
 	case 1:
-		const query = "QUERY 1"
+		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING a,b,c,d,e,f,g,h`
 		var (
 			r0c0 sql.NullInt64
 			r0c1 sql.NullInt64
@@ -88,7 +88,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		}
 		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7), a[1:], true)
 	default:
-		const query = "QUERY 2"
+		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
 		var (
 			r0c0 sql.NullInt64
 			r0c1 sql.NullInt64

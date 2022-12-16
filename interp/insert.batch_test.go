@@ -10,7 +10,6 @@ import (
 
 	"bytes"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
@@ -40,11 +39,12 @@ var _ = Describe("Batch Insert", func() {
 			Expect(in.Generate(b)).To(Succeed())
 			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
 
-			log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
+			// log.Println(formatted.String())
+			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
 
 			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
 		},
-		PEntry(
+		Entry(
 			"example 1 - batch insert",
 			NewBatchInsert(
 				ctx,
@@ -57,8 +57,8 @@ var _ = Describe("Batch Insert", func() {
 			).Into("foo"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.1.go"))),
 		),
-		PEntry(
-			"example 2 - batch insert",
+		Entry(
+			"example 2 - batch insert n = 2",
 			NewBatchInsert(
 				ctx,
 				"BatchInsertExample1",
@@ -69,6 +69,32 @@ var _ = Describe("Batch Insert", func() {
 				rowsScanner,
 			).Into("foo").Batch(2),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.2.go"))),
+		),
+		Entry(
+			"example 3 - batch insert n = 10",
+			NewBatchInsert(
+				ctx,
+				"BatchInsertExample1",
+				nil,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+				rowsScanner,
+			).Into("foo").Batch(10),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.3.go"))),
+		),
+		Entry(
+			"example 4 - batch insert conflict",
+			NewBatchInsert(
+				ctx,
+				"BatchInsertExample1",
+				nil,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("s")),
+				rowsScanner,
+			).Into("foo").Conflict("ON CONFLICT id = {s.A}").Batch(1),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.4.go"))),
 		),
 	)
 })

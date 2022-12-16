@@ -89,7 +89,6 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		mapping    genieql.MappingConfig
 		columns    []genieql.ColumnInfo
 		cmaps      []genieql.ColumnMap
-		fields     []*ast.Field
 		qinputs    []ast.Expr
 		encodings  []ast.Stmt
 		locals     []ast.Spec
@@ -141,6 +140,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 			t.ctx.CurrentPackage.Name, types.ExprString(t.tf.Type),
 		)
 	}
+	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...)
 
 	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, cmaps...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
@@ -165,7 +165,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	g2 := generators.NewExploderFunction(
 		t.ctx,
 		astutil.Field(ast.NewIdent(types.ExprString(t.tf.Type)), ast.NewIdent("arg1")),
-		fields,
+		generators.QueryFieldsFromColumnMap(t.ctx, cmaps...),
 		generators.QFOName(fmt.Sprintf("%sExplode", t.name)),
 	)
 
@@ -177,7 +177,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		QueryInputs:  qinputs,
 		ContextField: t.cf,
 		Query: astutil.StringLiteral(
-			dialect.Insert(1, t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...)),
+			queryreplacement.Replace(dialect.Insert(1, t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...))),
 		),
 	}
 
