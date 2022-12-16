@@ -16,6 +16,7 @@ type batchInsertExample1 struct {
 	ctx       context.Context
 	q         sqlx.Queryer
 	remaining []StructA
+	scanner   ExampleScanner
 }
 
 func (t *batchInsertExample1) Scan(a *StructA) error {
@@ -82,6 +83,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r0c5 sql.NullBool
 			r0c6 sql.NullInt64
 			r0c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false

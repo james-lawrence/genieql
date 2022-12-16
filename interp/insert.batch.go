@@ -97,6 +97,8 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 	defer t.ctx.Println("generation of", t.name, "completed")
 	t.ctx.Debugln("batch.insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("batch.insert table", t.table)
+	t.ctx.Debugln("batch.insert type", t.tf.Names[0])
+	t.ctx.Debugln("batch.insert scanner", t.scanner)
 
 	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.tf); err != nil {
 		return errors.Wrap(err, "unable to generate mapping")
@@ -108,11 +110,18 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 	cset := genieql.ColumnMapSet(cmaps)
 	defaultedcset := cset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
-	if _, encodings, _, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, defaultedcset...); err != nil {
+	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, defaultedcset...)
+	explodeerrHandler := func(errlocal string) ast.Node {
+		explodereturn := make([]ast.Expr, 0, len(queryfields)+1)
+		explodereturn = append(explodereturn, astutil.MapFieldsToNameExpr(queryfields...)...)
+		explodereturn = append(explodereturn, ast.NewIdent(errlocal))
+		return astutil.Return(explodereturn...)
+	}
+
+	if _, encodings, _, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, explodeerrHandler, defaultedcset...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
-	queryfields = generators.QueryFieldsFromColumnMap(t.ctx, defaultedcset...)
 	errhandling := generators.ScannerErrorHandlingExpr(t.scanner)
 
 	initializesig := &ast.FuncType{
@@ -162,6 +171,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 				t.qf,
 				astutil.Field(
 					&ast.ArrayType{Elt: t.tf.Type}, ast.NewIdent("remaining")),
+				astutil.Field(t.scanner.Type.Results.List[0].Type, ast.NewIdent("scanner")),
 			},
 		},
 	})
@@ -443,7 +453,6 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 				inputs...,
 			)
 			assignment = append(assignment, ast.NewIdent("err"))
-
 			genlocals = append(genlocals, localqf3...)
 			assignments = append(
 				assignments,
@@ -486,7 +495,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 			"query",
 			queryreplacement.Replace(t.ctx.Dialect.Insert(nrecords, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults)),
 		)))
-		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(genlocals...)))
+		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(append(genlocals, astutil.ValueSpec(ast.NewIdent("error"), ast.NewIdent("err")))...)))
 		casestmts = append(casestmts, assignments...)
 		casestmts = append(casestmts, remaining(qinputs...))
 

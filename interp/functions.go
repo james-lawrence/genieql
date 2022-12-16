@@ -81,7 +81,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
-	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, scanner, cmaps...); err != nil {
+	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, scanner, nil, cmaps...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 

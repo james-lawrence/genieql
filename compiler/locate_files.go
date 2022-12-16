@@ -46,6 +46,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 		Scanner,
 		Function,
 		Inserts,
+		BatchInserts,
 		QueryAutogen,
 	)
 

@@ -148,6 +148,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
 			"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
 			"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
+			"InsertBatch":  reflect.ValueOf((*genieqlinterp.InsertBatch)(nil)),
 			"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
 			"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
 			"Table":        reflect.ValueOf(genieqlinterp.Table),
@@ -177,7 +178,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			buf       = bytes.NewBuffer([]byte(nil))
 		)
 
-		t.Context.Debugln("generating code")
+		t.Context.Debugln("generating code initiated")
 
 		if err = r.Generator.Generate(buf); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
@@ -209,7 +210,8 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			return errors.Wrapf(err, "%s: failed to read entire set", r.Location)
 		}
 
-		t.Context.Debugln("generated code")
+		t.Context.Debugln("generating code completed")
+		// t.Context.Debugln(formatted)
 
 		if _, err := i.Eval(formatted); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)

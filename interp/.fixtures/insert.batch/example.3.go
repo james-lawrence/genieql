@@ -16,6 +16,7 @@ type batchInsertExample1 struct {
 	ctx       context.Context
 	q         sqlx.Queryer
 	remaining []StructA
+	scanner   ExampleScanner
 }
 
 func (t *batchInsertExample1) Scan(a *StructA) error {
@@ -82,6 +83,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r0c5 sql.NullBool
 			r0c6 sql.NullInt64
 			r0c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -106,6 +108,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r1c5 sql.NullBool
 			r1c6 sql.NullInt64
 			r1c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -141,6 +144,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r2c5 sql.NullBool
 			r2c6 sql.NullInt64
 			r2c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -187,6 +191,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r3c5 sql.NullBool
 			r3c6 sql.NullInt64
 			r3c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -244,6 +249,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r4c5 sql.NullBool
 			r4c6 sql.NullInt64
 			r4c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -312,6 +318,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r5c5 sql.NullBool
 			r5c6 sql.NullInt64
 			r5c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -391,6 +398,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r6c5 sql.NullBool
 			r6c6 sql.NullInt64
 			r6c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -481,6 +489,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r7c5 sql.NullBool
 			r7c6 sql.NullInt64
 			r7c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -582,6 +591,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r8c5 sql.NullBool
 			r8c6 sql.NullInt64
 			r8c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
@@ -694,6 +704,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 			r9c5 sql.NullBool
 			r9c6 sql.NullInt64
 			r9c7 sql.NullBool
+			err  error
 		)
 		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false

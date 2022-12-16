@@ -142,7 +142,7 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	}
 	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...)
 
-	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, cmaps...); err != nil {
+	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, nil, cmaps...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
