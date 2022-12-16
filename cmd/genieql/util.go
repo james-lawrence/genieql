@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"go/ast"
 	"go/build"
-	"go/token"
 	"io"
 	"log"
 
@@ -12,34 +11,6 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 )
-
-func newHeaderGenerator(bi buildInfo, fset *token.FileSet, pkgtype string, args ...string) genieql.Generator {
-	var (
-		err error
-		pkg *build.Package
-	)
-	name, _ := bi.extractPackageType(pkgtype)
-
-	if pkg, err = genieql.LocatePackage(name, ".", build.Default, genieql.StrictPackageImport(name)); err != nil {
-		return genieql.NewErrGenerator(errors.Wrapf(err, "failed to locate package: %s", name))
-	}
-
-	return headerGenerator{
-		fset: fset,
-		pkg:  pkg,
-		args: args,
-	}
-}
-
-type headerGenerator struct {
-	fset *token.FileSet
-	pkg  *build.Package
-	args []string
-}
-
-func (t headerGenerator) Generate(dst io.Writer) error {
-	return genieql.PrintPackage(genieql.ASTPrinter{}, dst, t.fset, t.pkg, t.args)
-}
 
 type printGenerator struct {
 	delegate genieql.Generator
@@ -90,21 +61,4 @@ func currentPackage(dir string) *build.Package {
 	}
 
 	return pkg
-}
-
-func mapDeclsToGenerator(b func(*ast.GenDecl) []genieql.Generator, decls ...*ast.GenDecl) []genieql.Generator {
-	r := make([]genieql.Generator, 0, len(decls))
-	for _, c := range decls {
-		r = append(r, b(c)...)
-	}
-	return r
-}
-
-func mapFuncDeclsToGenerator(b func(*ast.FuncDecl) genieql.Generator, decls ...*ast.FuncDecl) []genieql.Generator {
-	r := make([]genieql.Generator, 0, len(decls))
-	for _, c := range decls {
-		r = append(r, b(c))
-	}
-
-	return r
 }

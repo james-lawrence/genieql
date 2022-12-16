@@ -51,12 +51,6 @@ func main() {
 		buildInfo: &bi,
 	}
 
-	generator := &generate{
-		buildInfo: bi,
-	}
-	scanner := &scanners{
-		buildInfo: bi,
-	}
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	app.Command("version", "print version").Action(func(*kingpin.ParseContext) error {
 		if bi, ok := debug.ReadBuildInfo(); ok {
@@ -70,9 +64,7 @@ func main() {
 	astcli.configure(app)
 	bootstrap.configure(app)
 	mapper.configure(app)
-	generator.configure(app)
 	gg.configure(app)
-	scanner.configure(app)
 
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {
 		fmts := "%s\n"
