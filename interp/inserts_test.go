@@ -36,7 +36,7 @@ var _ = Describe("Insert", func() {
 
 			Expect(in.Generate(b)).To(Succeed())
 			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
-			// log.Println(formatted.String())
+			// Expect(os.WriteFile("derp.txt", formatted.Bytes(), 0600)).To(Succeed())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
 			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
 		},

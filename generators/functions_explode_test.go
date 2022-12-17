@@ -19,7 +19,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func explodetest(config genieql.Configuration, driver genieql.Driver, pkg *build.Package, fixture string, param *ast.Field, fields []*ast.Field, options ...QueryFunctionOption) {
+func explodetest(config genieql.Configuration, driver genieql.Driver, pkg *build.Package, fixture string, param *ast.Field, fields []genieql.ColumnMap, options ...QueryFunctionOption) {
 	buffer := bytes.NewBuffer([]byte{})
 	formatted := bytes.NewBuffer([]byte{})
 
@@ -42,6 +42,25 @@ func explodetest(config genieql.Configuration, driver genieql.Driver, pkg *build
 	// log.Println(formatted.String())
 	// log.Println(string(expected))
 	Expect(formatted.String()).To(Equal(string(expected)))
+}
+
+func mustlookupcolumn(c genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
+	if err != nil {
+		panic(err)
+	}
+
+	return c
+}
+
+func quickcolummap(typ string, local string, field string, d genieql.Driver) genieql.ColumnMap {
+	return genieql.ColumnMap{
+		ColumnInfo: genieql.ColumnInfo{
+			Definition: mustlookupcolumn(d.LookupType(typ)),
+			Name:       field,
+		},
+		Dst:   astutil.SelExpr(local, field),
+		Field: astutil.Field(ast.NewIdent(typ), ast.NewIdent(field)),
+	}
 }
 
 var _ = ginkgo.Describe("FunctionsExplode", func() {
@@ -74,10 +93,10 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			pkg,
 			".fixtures/functions-explode/output.1.go",
 			astutil.Field(ast.NewIdent("Foo"), ast.NewIdent("arg1")),
-			[]*ast.Field{
-				astutil.Field(ast.NewIdent("int"), ast.NewIdent("field1")),
-				astutil.Field(ast.NewIdent("int"), ast.NewIdent("field2")),
-				astutil.Field(ast.NewIdent("bool"), ast.NewIdent("field3")),
+			[]genieql.ColumnMap{
+				quickcolummap("int", "arg1", "field1", stdlib),
+				quickcolummap("int", "arg1", "field2", stdlib),
+				quickcolummap("bool", "arg1", "field3", stdlib),
 			},
 			QFOName("explodeFunction1"),
 		),
@@ -88,12 +107,12 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			pkg,
 			".fixtures/functions-explode/output.2.go",
 			astutil.Field(ast.NewIdent("Foo"), ast.NewIdent("arg1")),
-			[]*ast.Field{
-				astutil.Field(ast.NewIdent("int"), ast.NewIdent("field1")),
-				astutil.Field(ast.NewIdent("int"), ast.NewIdent("field2")),
-				astutil.Field(ast.NewIdent("bool"), ast.NewIdent("field3")),
-				astutil.Field(ast.NewIdent("time.Time"), ast.NewIdent("field4")),
-				astutil.Field(&ast.StarExpr{X: ast.NewIdent("time.Time")}, ast.NewIdent("field5")),
+			[]genieql.ColumnMap{
+				quickcolummap("int", "arg1", "field1", psql),
+				quickcolummap("int", "arg1", "field2", psql),
+				quickcolummap("bool", "arg1", "field3", psql),
+				quickcolummap("time.Time", "arg1", "field4", psql),
+				quickcolummap("*time.Time", "arg1", "field5", psql),
 			},
 			QFOName("explodeFunction1"),
 		),

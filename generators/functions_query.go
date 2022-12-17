@@ -382,7 +382,7 @@ func (t queryFunction) Generate(dst io.Writer) (err error) {
 		}
 	}
 
-	// log.Println("mapping fields", strings.Join(astutil.MapExprToString(astutil.MapFieldsToTypExpr(t.Parameters...)...), ","))
+	// log.Println("mapping fields", strings.Join(astutil.MapExprToString(astutil.MapFieldsToTypeExpr(t.Parameters...)...), ","))
 	if columns, err = MapFields(t.Context, t.Parameters, t.Ignore...); err != nil {
 		return errors.Wrap(err, "failed to map fields")
 	}
