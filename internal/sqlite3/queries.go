@@ -8,12 +8,12 @@ import (
 )
 
 // Insert generate an insert query.
-func Insert(n int, table, conflict string, columns, defaulted []string) string {
+func Insert(n int, offset int, table, conflict string, columns, defaulted []string) string {
 	const (
 		insertTmpl = "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES (:gql.insert.values:):gql.insert.conflict:"
 	)
-
-	p, _ := placeholders(1, selectPlaceholder(columns, defaulted))
+	offset = offset + 1
+	p, _ := placeholders(offset, selectPlaceholder(columns, defaulted))
 	values := strings.Join(p, ",")
 	columnOrder := strings.Join(columns, ",")
 

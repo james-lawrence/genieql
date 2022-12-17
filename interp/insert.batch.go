@@ -499,7 +499,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		casestmts := make([]ast.Stmt, 0, len(assignments)+3)
 		casestmts = append(casestmts, astutil.DeclStmt(genieql.QueryLiteral(
 			"query",
-			queryreplacement.Replace(t.ctx.Dialect.Insert(nrecords, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults)),
+			queryreplacement.Replace(t.ctx.Dialect.Insert(nrecords, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults)),
 		)))
 		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(append(genlocals, astutil.ValueSpec(ast.NewIdent("error"), ast.NewIdent("err")))...)))
 		casestmts = append(casestmts, assignments...)

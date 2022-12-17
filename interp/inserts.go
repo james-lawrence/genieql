@@ -28,10 +28,11 @@ func NewInsert(
 	ctx generators.Context,
 	name string,
 	comment *ast.CommentGroup,
+	scanner *ast.FuncDecl,
 	cf *ast.Field,
 	qf *ast.Field,
 	tf *ast.Field,
-	scanner *ast.FuncDecl,
+	params ...*ast.Field,
 ) Insert {
 	return &insert{
 		ctx:     ctx,
@@ -40,6 +41,7 @@ func NewInsert(
 		qf:      qf,
 		cf:      cf,
 		tf:      tf,
+		params:  params,
 		scanner: scanner,
 	}
 }
@@ -51,6 +53,7 @@ type insert struct {
 	conflict string
 	defaults []string
 	ignore   []string
+	params   []*ast.Field
 	tf       *ast.Field    // type field.
 	cf       *ast.Field    // context field, can be nil.
 	qf       *ast.Field    // db Query field.
@@ -86,11 +89,12 @@ func (t *insert) Conflict(s string) Insert {
 
 func (t *insert) Generate(dst io.Writer) (err error) {
 	var (
-		cmaps      []genieql.ColumnMap
-		qinputs    []ast.Expr
-		encodings  []ast.Stmt
-		locals     []ast.Spec
-		transforms []ast.Stmt
+		insertcmaps []genieql.ColumnMap
+		paramscmaps []genieql.ColumnMap
+		qinputs     []ast.Expr
+		encodings   []ast.Stmt
+		locals      []ast.Spec
+		transforms  []ast.Stmt
 	)
 
 	dialect := t.ctx.Dialect
@@ -100,14 +104,18 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	t.ctx.Debugln("insert type", t.ctx.CurrentPackage.Name, t.ctx.CurrentPackage.ImportPath, types.ExprString(t.tf.Type))
 	t.ctx.Debugln("insert table", t.table)
 
-	if cmaps, err = generators.ColumnMapFromFields(t.ctx, t.tf); err != nil {
+	if paramscmaps, err = generators.ColumnMapFromFields(t.ctx, t.params...); err != nil {
+		return errors.Wrap(err, "unable to generate mapping")
+	}
+
+	if insertcmaps, err = generators.ColumnMapFromFields(t.ctx, t.tf); err != nil {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
 	ignored := genieql.ColumnInfoFilterIgnore(t.ignore...)
 	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
 
-	cset := genieql.ColumnMapSet(cmaps)
+	cset := genieql.ColumnMapSet(paramscmaps)
 	ignoredcset := cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
 	projectioncset := ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
@@ -123,6 +131,10 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		},
 	}
 	transforms = append(transforms, encodings...)
+
+	cset = genieql.ColumnMapSet(insertcmaps)
+	ignoredcset = cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
+	projectioncset = ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
 	g1 := generators.NewColumnConstants(
 		fmt.Sprintf("%sStaticColumns", t.name),
@@ -148,13 +160,13 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		QueryInputs:  qinputs,
 		ContextField: t.cf,
 		Query: astutil.StringLiteral(
-			queryreplacement.Replace(dialect.Insert(1, t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...))),
+			queryreplacement.Replace(dialect.Insert(1, len(paramscmaps)-len(insertcmaps), t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...))),
 		),
 	}
 
 	sig := &ast.FuncType{
 		Params: &ast.FieldList{
-			List: astutil.FlattenFields(t.tf),
+			List: astutil.FlattenFields(t.params...),
 		},
 	}
 

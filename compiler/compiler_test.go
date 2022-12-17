@@ -42,6 +42,7 @@ var _ = Describe("Compiler generation test", func() {
 		formatted, err := genieql.Format(buf.String())
 		Expect(err).To(Succeed())
 
+		// Expect(os.WriteFile("derp.txt", []byte(formatted), 0)).To(Succeed())
 		// log.Println("generated\n", formatted)
 
 		expected, err := os.ReadFile(resultpath)

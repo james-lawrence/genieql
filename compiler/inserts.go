@@ -19,12 +19,11 @@ import (
 // Inserts matcher - identifies insert generators.
 func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
-		gen       genieql.Generator
-		formatted string
-		pattern   = astutil.TypePattern(astutil.Expr("genieql.Insert"))
-		cf        *ast.Field // context field
-		qf        *ast.Field // query field
-		typ       *ast.Field // type we're scanning into the table.
+		ok          bool
+		gen         genieql.Generator
+		formatted   string
+		pattern     = astutil.TypePattern(astutil.Expr("genieql.Insert"))
+		declPattern *ast.FuncType
 	)
 
 	if len(fn.Type.Params.List) < 1 {
@@ -37,38 +36,48 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 		return r, ErrNoMatch
 	}
 
-	if len(fn.Type.Params.List) < 3 {
-		return r, errorsx.String("genieql.Insert requires 3 parameters, genieql.Insert, a queryer, and the type being inserted")
+	if len(fn.Type.Params.List) < 2 {
+		return r, errorsx.String("genieql.Insert requires 2 parameters, genieql.Insert, and the function definition")
 	}
 
-	// save the original parameters
-	params := fn.Type.Params.List
-	results := fn.Type.Results.List
-
-	// rewrite the function.
-	fn.Type.Params.List = params[:1]
-	fn.Type.Results.List = []*ast.Field(nil)
+	// rewrite scanner declaration function.
+	if declPattern, ok = fn.Type.Params.List[1].Type.(*ast.FuncType); !ok {
+		return r, errorsx.String("genieql.Insert second parameter must be a function type")
+	}
+	fn.Type.Params.List = fn.Type.Params.List[:1]
 
 	if formatted, err = formatSource(ctx, src); err != nil {
 		return r, errors.Wrapf(err, "genieql.Insert %s", nodeInfo(ctx, fn))
 	}
 
-	// restore the signature
-	fn.Type.Params.List = params[1:]
-	fn.Type.Results.List = results
+	// // save the original parameters
+	// params := fn.Type.Params.List
+	// results := fn.Type.Results.List
 
-	if cf = functions.DetectContext(fn.Type); cf != nil {
-		// pop the context off the params.
-		fn.Type.Params.List = fn.Type.Params.List[1:]
-	}
+	// // rewrite the function.
+	// fn.Type.Params.List = params[:1]
+	// fn.Type.Results.List = []*ast.Field(nil)
 
-	qf = fn.Type.Params.List[0]
+	// if formatted, err = formatSource(ctx, src); err != nil {
+	// 	return r, errors.Wrapf(err, "genieql.Insert %s", nodeInfo(ctx, fn))
+	// }
 
-	// pop off the queryer.
-	fn.Type.Params.List = fn.Type.Params.List[1:]
+	// // restore the signature
+	// fn.Type.Params.List = params[1:]
+	// fn.Type.Results.List = results
 
-	// extract the type argument from the function.
-	typ = fn.Type.Params.List[0]
+	// if cf = functions.DetectContext(fn.Type); cf != nil {
+	// 	// pop the context off the params.
+	// 	fn.Type.Params.List = fn.Type.Params.List[1:]
+	// }
+
+	// qf = fn.Type.Params.List[0]
+
+	// // pop off the queryer.
+	// fn.Type.Params.List = fn.Type.Params.List[1:]
+
+	// // extract the type argument from the function.
+	// typ = fn.Type.Params.List[0]
 
 	log.Printf("genieql.Insert identified %s\n", nodeInfo(ctx, fn))
 	ctx.Debugln(formatted)
@@ -78,6 +87,10 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 			v       reflect.Value
 			f       func(interp.Insert)
 			scanner *ast.FuncDecl // scanner to use for the results.
+			cf      *ast.Field
+			qf      *ast.Field
+			tf      *ast.Field
+			params  []*ast.Field
 			ok      bool
 		)
 
@@ -94,18 +107,38 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 			return errors.Errorf("genieql.Insert - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
 		}
 
-		if scanner = functions.DetectScanner(ctx.Context, fn.Type); scanner == nil {
+		if scanner = functions.DetectScanner(ctx.Context, declPattern); scanner == nil {
 			return errors.Errorf("genieql.Insert %s - missing scanner", nodeInfo(ctx, fn))
+		}
+
+		if cf = functions.DetectContext(declPattern); cf != nil {
+			declPattern.Params.List = declPattern.Params.List[1:]
+		}
+
+		if qf = functions.DetectQueryer(declPattern); qf != nil {
+			declPattern.Params.List = declPattern.Params.List[1:]
+		}
+
+		switch plen := len(declPattern.Params.List); plen {
+		case 0:
+			return errors.Errorf("genieql.Insert %s - missing type to insert; should be the last parameter of function declaration argument", nodeInfo(ctx, fn))
+		case 1:
+			tf = declPattern.Params.List[0]
+			params = declPattern.Params.List
+		default:
+			tf = declPattern.Params.List[plen-1]
+			params = declPattern.Params.List
 		}
 
 		fgen := interp.NewInsert(
 			ctx.Context,
 			fn.Name.String(),
 			fn.Doc,
+			scanner,
 			cf,
 			qf,
-			typ,
-			scanner,
+			tf,
+			params...,
 		)
 
 		f(fgen)

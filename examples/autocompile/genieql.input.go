@@ -70,14 +70,23 @@ func Example1LookupBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Quer
 }
 
 // Example1Insert insert a single example1 record.
-func Example1Insert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {
+func Example1Insert(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow,
+) {
 	gql.Into("example1").Default("uuid_field")
 }
 
-func TimestampInsert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow {
+func TimestampInsert(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow,
+) {
 	gql.Into("timestamp_examples").Default("id")
 }
 
-func ConflictInsert(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow {
+func ConflictInsert(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow,
+) {
 	gql.Into("timestamp_examples").Default("id").Conflict("ON CONFLICT (id) DO NOTHING")
 }

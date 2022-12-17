@@ -28,12 +28,25 @@ func ExampleComboScanner(
 ) {
 }
 
-func Example1Insert1(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow {
+func Example1Insert1(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow,
+) {
 	gql.Into("example1").Default("uuid_field")
 }
 
-func Example1Insert2(gql genieql.Insert, ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow {
+func Example1Insert2(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow,
+) {
 	gql.Into("example1").Ignore("uuid_field")
+}
+
+func Example1Insert3(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, id int, a Example1) NewExample1ScannerStaticRow,
+) {
+	gql.Into("example1").Ignore("uuid_field").Conflict("ON CONFLICT id = {id} AND b = {a.B} WHERE id = {id}")
 }
 
 func Example1InsertBatch1(

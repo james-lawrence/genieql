@@ -103,11 +103,11 @@ type Test struct {
 	QueryDelete       string
 }
 
-func (t Test) Insert(n int, table, conflict string, columns, projection, defaults []string) string {
+func (t Test) Insert(n int, offset int, table, conflict string, columns, projection, defaults []string) string {
 	var (
 		insertTmpl = stringsx.DefaultIfBlank(t.QueryInsert, "INSERT QUERY")
 	)
-	offset := 1
+	offset = offset + 1
 	values := make([]string, 0, n)
 	for i := 0; i < n; i++ {
 		var (
