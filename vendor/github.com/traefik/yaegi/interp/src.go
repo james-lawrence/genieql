@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/build"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,14 +50,12 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 		// if the package failed to be imported.
 		return "", fmt.Errorf("import cycle not allowed\n\timports %s", importPath)
 	}
-	log.Println("importing", rPath, importPath)
 
 	defer func() {
 		if err := recover(); err != nil {
 			panic(err)
 		}
 
-		log.Println("imported", importPath, err == nil, err)
 		if err == nil {
 			interp.rdir[importPath] = true
 		}

@@ -12,14 +12,14 @@ import (
 	"sort"
 
 	"bitbucket.org/jatone/genieql"
-	"github.com/traefik/yaegi/stdlib"
 
 	"bitbucket.org/jatone/genieql/astcodec"
+	"bitbucket.org/jatone/genieql/compiler/runtime"
+	"bitbucket.org/jatone/genieql/compiler/stdlib"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
-	genieqlinterp "bitbucket.org/jatone/genieql/interp"
-	"github.com/davecgh/go-spew/spew"
+	genieqlinterp "bitbucket.org/jatone/genieql/interp/genieql"
 	"github.com/pkg/errors"
 	"github.com/traefik/yaegi/interp"
 )
@@ -35,7 +35,17 @@ const (
 type Result struct {
 	Location  string // source location that generated this result.
 	Priority  int
-	Generator genieql.Generator
+	Generator compilegen
+}
+
+type compilegen interface {
+	Generate(*interp.Interpreter, io.Writer) error
+}
+
+type CompileGenFn func(*interp.Interpreter, io.Writer) error
+
+func (t CompileGenFn) Generate(i *interp.Interpreter, dst io.Writer) error {
+	return t(i, dst)
 }
 
 // Matcher match against a function declaration.
@@ -55,7 +65,7 @@ type Context struct {
 	Matchers []Matcher
 }
 
-func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Result) {
+func (t Context) generators(in *ast.File) (results []Result) {
 	var (
 		imports = genieql.GenDeclToDecl(genieql.FindImports(in)...)
 	)
@@ -75,6 +85,7 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 				Decls:   append(imports, fn),
 			}
 
+			i := t.localinterp()
 			pos := t.Context.FileSet.PositionFor(fn.Pos(), true).String()
 
 			if r, err = m(t, i, focused, fn); err != nil {
@@ -83,10 +94,10 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 				}
 
 				r = Result{
-					Priority: math.MinInt64,
-					Generator: genieql.NewErrGenerator(
-						errors.Wrapf(err, "failed to build code generator: %s", fn.Name),
-					),
+					Priority: math.MaxInt64,
+					Generator: CompileGenFn(func(i *interp.Interpreter, dst io.Writer) error {
+						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
+					}),
 				}
 			}
 
@@ -140,57 +151,27 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	t.Context.Println("build.GOPATH", t.Build.GOPATH)
 	t.Context.Println("build.BuildTags", t.Build.BuildTags)
 
-	i := interp.New(interp.Options{
-		GoPath: t.Build.GOPATH,
-	})
-
-	i.Use(stdlib.Symbols)
-	i.Use(interp.Exports{
-		"bitbucket.org/jatone/genieql/interp": map[string]reflect.Value{
-			"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
-			"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
-			"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
-			"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
-			"InsertBatch":  reflect.ValueOf((*genieqlinterp.InsertBatch)(nil)),
-			"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
-			"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
-			"Table":        reflect.ValueOf(genieqlinterp.Table),
-			"Query":        reflect.ValueOf(genieqlinterp.Query),
-		},
-	})
-
-	if path, exports := t.Context.Driver.Exported(); path != "" {
-		// yaegi has touble importing some packages (like pgtype)
-		// so allow drivers to export values.
-		i.Use(interp.Exports{
-			path: exports,
-		})
-	}
-
 	for _, file := range sources {
-		results = t.generators(i, file)
+		results = t.generators(file)
 	}
 
-	log.Println("CHECKPOINT 1")
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Priority < results[j].Priority
 	})
 
-	log.Println("CHECKPOINT 2", spew.Sdump(results))
+	i := t.localinterp()
 	for _, r := range results {
 		var (
 			formatted string
 			buf       = bytes.NewBuffer([]byte(nil))
 		)
 
-		log.Println("CHECKPOINT 3")
 		t.Context.Debugln("generating code initiated")
 
-		if err = r.Generator.Generate(buf); err != nil {
+		if err = r.Generator.Generate(i, buf); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
 		}
 
-		log.Println("CHECKPOINT 4")
 		t.Context.Debugln("writing generated code into buffer")
 
 		if _, err = working.WriteString("\n"); err != nil {
@@ -205,21 +186,20 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
 		}
 
-		t.Context.Debugln("reformatting buffer")
+		t.Context.Debugln("reformatting working file")
 
 		if err = astcodec.ReformatFile(working); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to reformat to working file", buf.String(), r.Location)
 		}
 
-		t.Context.Debugln("evaluating buffer")
-
 		if formatted, err = iox.ReadString(working); err != nil {
-			return errors.Wrapf(err, "%s: failed to read entire set", r.Location)
+			return errors.Wrapf(err, "%s: failed to re-read working file", r.Location)
 		}
 
 		t.Context.Debugln("generating code completed")
-		log.Println(formatted)
+		t.Context.Debugln(formatted)
 
+		i = t.localinterp()
 		if _, err := i.Eval(formatted); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
 		}
@@ -231,4 +211,38 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		iox.Rewind(working),
 		iox.Error(io.Copy(dst, working)),
 	), "failed to write generated code")
+}
+
+func (t Context) localinterp() *interp.Interpreter {
+	i := interp.New(interp.Options{
+		GoPath: t.Build.GOPATH,
+	})
+
+	genieqlsyms := map[string]reflect.Value{
+		"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
+		"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
+		"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
+		"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
+		"InsertBatch":  reflect.ValueOf((*genieqlinterp.InsertBatch)(nil)),
+		"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
+		"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
+		"Table":        reflect.ValueOf(genieqlinterp.Table),
+		"Query":        reflect.ValueOf(genieqlinterp.Query),
+	}
+	i.Use(stdlib.Symbols)
+	i.Use(runtime.Symbols)
+	i.Use(interp.Exports{
+		"bitbucket.org/jatone/genieql/interp":         genieqlsyms,
+		"bitbucket.org/jatone/genieql/interp/genieql": genieqlsyms,
+	})
+
+	if path, exports := t.Context.Driver.Exported(); path != "" {
+		// yaegi has touble importing some packages (like pgtype)
+		// so allow drivers to export values.
+		i.Use(interp.Exports{
+			path: exports,
+		})
+	}
+
+	return i
 }

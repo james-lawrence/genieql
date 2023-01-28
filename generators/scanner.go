@@ -242,7 +242,7 @@ func (t scanner) Generate(dst io.Writer) error {
 	}
 
 	if ctx.Columns, err = ColumnMapFromFields(t.Context, t.Fields.List...); err != nil {
-		return errors.Wrap(err, "failed to map fields")
+		return errors.Wrap(err, "failed to map fields 3")
 	}
 
 	funcMap := template.FuncMap{

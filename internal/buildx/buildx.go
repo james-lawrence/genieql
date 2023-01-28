@@ -1,6 +1,8 @@
 package buildx
 
-import "go/build"
+import (
+	"go/build"
+)
 
 type Option func(*build.Context)
 

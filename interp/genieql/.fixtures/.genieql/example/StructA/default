@@ -1,0 +1,49 @@
+package:
+  Dir: .fixtures
+type: StructA
+transformations:
+- uppercase
+renamemap: {}
+columns:
+- name: a
+  definition:
+    type: int
+    native: int
+    columntype: sql.NullInt64
+- name: b
+  definition:
+    type: int
+    native: int
+    columntype: sql.NullInt64
+- name: c
+  definition:
+    type: int
+    native: int
+    columntype: sql.NullInt64
+- name: d
+  definition:
+    type: sql.NullBool
+    native: bool
+    columntype: sql.NullBool
+- name: e
+  definition:
+    type: sql.NullBool
+    native: bool
+    columntype: sql.NullBool
+- name: f
+  definition:
+    type: sql.NullBool
+    native: bool
+    columntype: sql.NullBool
+- name: g
+  definition:
+    type: "*int"
+    native: "*int"
+    columntype: sql.NullInt64
+    nullable: true
+- name: h
+  definition:
+    type: "*bool"
+    native: "*bool"
+    columntype: sql.NullBool
+    nullable: true

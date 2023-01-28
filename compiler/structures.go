@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"go/ast"
+	"io"
 	"log"
 	"reflect"
 
@@ -10,7 +11,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp"
+	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Structure matcher - identifies structure generators.
@@ -52,7 +53,9 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 	f(gen)
 
 	return Result{
-		Generator: gen,
-		Priority:  PriorityStructure,
+		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+			return gen.Generate(dst)
+		}),
+		Priority: PriorityStructure,
 	}, nil
 }

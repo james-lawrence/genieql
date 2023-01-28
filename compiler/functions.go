@@ -9,10 +9,9 @@ import (
 	"github.com/pkg/errors"
 	yaegi "github.com/traefik/yaegi/interp"
 
-	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp"
+	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Function matcher - identifies function generators.
@@ -21,7 +20,7 @@ func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl
 		v           reflect.Value
 		f           func(interp.Function)
 		ok          bool
-		gen         genieql.Generator
+		gen         compilegen
 		declPattern *ast.FuncType
 		formatted   string
 		pattern     = astutil.TypePattern(astutil.Expr("genieql.Function"))
@@ -55,7 +54,7 @@ func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl
 	log.Printf("genieql.Function identified %s\n", nodeInfo(ctx, fn))
 	ctx.Debugln(formatted)
 
-	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
+	gen = CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
 		if _, err = i.Eval(formatted); err != nil {
 			ctx.Println(formatted)
 			return errors.Wrap(err, "failed to compile source")

@@ -605,6 +605,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		if err = functions.CompileInto(dst, functions.New("advance", advancesig, functions.OptionRecv(fnrecv)), advancefn); err != nil {
 			return err
 		}
+
 		return nil
 	}).Generate(dst)
 }

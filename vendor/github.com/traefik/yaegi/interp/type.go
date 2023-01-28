@@ -3,6 +3,7 @@ package interp
 import (
 	"fmt"
 	"go/constant"
+	"log"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -1085,6 +1086,7 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 
 	switch {
 	case t == nil:
+		log.Println("DEEERP", n.name(), n.ident, n.types, n.anc.anc.anc.name())
 	case t.name != "" && t.path != "":
 		t.str = t.path + "." + t.name
 	case t.cat == nilT:

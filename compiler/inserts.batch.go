@@ -9,18 +9,20 @@ import (
 	"github.com/pkg/errors"
 	yaegi "github.com/traefik/yaegi/interp"
 
-	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp"
+	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // BatchInserts matcher - identifies batch insert generators.
 func BatchInserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		ok          bool
-		gen         genieql.Generator
+		v           reflect.Value
+		f           func(interp.InsertBatch)
+		scanner     *ast.FuncDecl // scanner to use for the results.
+		gen         compilegen
 		declPattern *ast.FuncType
 		formatted   string
 		pattern     = astutil.TypePattern(astutil.Expr("genieql.InsertBatch"))
@@ -53,27 +55,20 @@ func BatchInserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	log.Printf("genieql.InsertBatch identified %s\n", nodeInfo(ctx, fn))
 	ctx.Debugln(formatted)
 
-	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
-		var (
-			v       reflect.Value
-			f       func(interp.InsertBatch)
-			scanner *ast.FuncDecl // scanner to use for the results.
-			ok      bool
-		)
+	if _, err = i.Eval(formatted); err != nil {
+		ctx.Println(formatted)
+		return r, errors.Wrap(err, "failed to compile source")
+	}
 
-		if _, err = i.Eval(formatted); err != nil {
-			ctx.Println(formatted)
-			return errors.Wrap(err, "failed to compile source")
-		}
+	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
+		return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
+	}
 
-		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
-		}
+	if f, ok = v.Interface().(func(interp.InsertBatch)); !ok {
+		return r, errors.Errorf("genieql.InsertBatch - %s - unable to convert function to be invoked wanted(%T) got(%T)", nodeInfo(ctx, fn), f, v.Interface())
+	}
 
-		if f, ok = v.Interface().(func(interp.InsertBatch)); !ok {
-			return errors.Errorf("genieql.InsertBatch - %s - unable to convert function to be invoked wanted(%T) got(%T)", nodeInfo(ctx, fn), f, v.Interface())
-		}
-
+	gen = CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
 		if scanner = functions.DetectScanner(ctx.Context, declPattern); scanner == nil {
 			return errors.Errorf("genieql.InsertBatch %s - missing scanner", nodeInfo(ctx, fn))
 		}

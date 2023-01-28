@@ -38,5 +38,6 @@ var _ = Describe("pgx", func() {
 		Entry("example 18 - *time.Time", "*time.Time", "pgtype.Timestamptz", nil),
 		Entry("example 19 - *[]string", "*[]string", "pgtype.TextArray", nil),
 		Entry("example 20 - pgtype.TextArray", "pgtype.TextArray", "pgtype.TextArray", nil),
+		Entry("example 21 - pgtype.Timestamp", "pgtype.Timestamp", "pgtype.Timestamp", nil),
 	)
 })

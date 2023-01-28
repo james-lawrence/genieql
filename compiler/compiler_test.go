@@ -35,7 +35,7 @@ var _ = Describe("Compiler generation test", func() {
 			"default.config",
 			pkg,
 			generators.OptionOSArgs(),
-			generators.OptionDebug,
+			// generators.OptionDebug,
 		)
 		Expect(err).To(Succeed())
 

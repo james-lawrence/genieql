@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"go/ast"
+	"io"
 	"log"
 	"reflect"
 
@@ -10,7 +11,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp"
+	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Scanner matcher - identifies scanner generators.
@@ -74,7 +75,9 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	f(gen)
 
 	return Result{
-		Generator: gen,
-		Priority:  PriorityScanners,
+		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+			return gen.Generate(dst)
+		}),
+		Priority: PriorityScanners,
 	}, nil
 }

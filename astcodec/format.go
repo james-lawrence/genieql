@@ -77,3 +77,16 @@ func Format(s string) (_ string, err error) {
 
 	return string(raw), nil
 }
+
+// Format arbitrary source fragment.
+func FormatNoImports(s string) (_ string, err error) {
+	var (
+		raw []byte
+	)
+
+	if raw, err = imports.Process("generated.go", []byte(s), &imports.Options{Fragment: true, Comments: true, TabIndent: true, TabWidth: 8, FormatOnly: true}); err != nil {
+		return "", errors.Wrap(err, "failed to format")
+	}
+
+	return string(raw), nil
+}

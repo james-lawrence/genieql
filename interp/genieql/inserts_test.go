@@ -11,7 +11,7 @@ import (
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
 	"bitbucket.org/jatone/genieql/internal/testx"
-	. "bitbucket.org/jatone/genieql/interp"
+	. "bitbucket.org/jatone/genieql/interp/genieql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

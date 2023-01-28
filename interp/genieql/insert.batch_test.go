@@ -6,7 +6,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
-	. "bitbucket.org/jatone/genieql/interp"
+	. "bitbucket.org/jatone/genieql/interp/genieql"
 
 	"bytes"
 	"io"

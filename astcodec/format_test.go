@@ -1,27 +1,27 @@
-package genieql_test
+package astcodec_test
 
 import (
 	"bytes"
 
 	"github.com/pkg/errors"
 
-	. "bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Genieql", func() {
+var _ = Describe("Formatting", func() {
 	Describe("FormatOutput", func() {
 		It("should format the code", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			Expect(FormatOutput(buffer, []byte(unformattedCode))).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(buffer, []byte(unformattedCode))).ToNot(HaveOccurred())
 			Expect(buffer.String()).To(Equal(formattedCode))
 		})
 
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			err := errors.Cause(FormatOutput(buffer, []byte(invalidCode)))
+			err := errors.Cause(astcodec.FormatOutput(buffer, []byte(invalidCode)))
 			Expect(err).To(MatchError("generated.go:2:1: expected 'package', found 'func'"))
 		})
 	})

@@ -13,7 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp"
+	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // QueryAutogen matcher - generate crud functions
@@ -114,7 +114,9 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	})
 
 	return Result{
-		Generator: gen,
-		Priority:  PriorityFunctions,
+		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+			return gen.Generate(dst)
+		}),
+		Priority: PriorityFunctions,
 	}, nil
 }
