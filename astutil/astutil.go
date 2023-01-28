@@ -60,10 +60,7 @@ func ExprTemplateList(examples ...string) []ast.Expr {
 // ast.Expr.
 func ExprList(in ...ast.Expr) []ast.Expr {
 	result := make([]ast.Expr, 0, len(in))
-	for _, x := range in {
-		result = append(result, x)
-	}
-	return result
+	return append(result, in...)
 }
 
 // Return - creates a return statement from the provided expressions.

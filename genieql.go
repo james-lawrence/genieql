@@ -43,37 +43,6 @@ func FormatOutput(dst io.Writer, raw []byte) (err error) {
 	return errors.Wrap(err, "failed to write to completed code to destination")
 }
 
-// Reformat a file
-func Reformat(in io.ReadWriteSeeker) (err error) {
-	var (
-		raw []byte
-	)
-
-	// ensure we're at the start of the file.
-	if err = iox.Rewind(in); err != nil {
-		return err
-	}
-
-	if raw, err = io.ReadAll(in); err != nil {
-		return err
-	}
-
-	if raw, err = imports.Process("generated.go", []byte(string(raw)), nil); err != nil {
-		return errors.Wrap(err, "failed to add required imports")
-	}
-
-	// ensure we're at the start of the file.
-	if err = iox.Rewind(in); err != nil {
-		return err
-	}
-
-	if _, err = in.Write(raw); err != nil {
-		return errors.Wrap(err, "failed to write formatted content")
-	}
-
-	return nil
-}
-
 // ReformatFile a file
 func ReformatFile(in *os.File) (err error) {
 	var (
