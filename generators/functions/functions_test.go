@@ -5,8 +5,7 @@ import (
 	"go/ast"
 	"os"
 
-	"bitbucket.org/jatone/genieql"
-
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
@@ -58,7 +57,7 @@ var _ = Describe("Query Functions", func() {
 			Expect(err).To(Succeed())
 			generated, err := astutil.Print(n)
 			Expect(err).To(Succeed())
-			generated, err = genieql.Format(
+			generated, err = astcodec.Format(
 				fmt.Sprintln("package example\n\n", generated),
 			)
 			Expect(err).To(Succeed())

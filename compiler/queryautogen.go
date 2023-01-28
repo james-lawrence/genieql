@@ -6,8 +6,8 @@ import (
 	"log"
 	"reflect"
 
-	yaegi "github.com/containous/yaegi/interp"
 	"github.com/pkg/errors"
+	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"

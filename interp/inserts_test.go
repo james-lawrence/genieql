@@ -6,7 +6,7 @@ import (
 	"go/token"
 	"io"
 
-	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
@@ -35,7 +35,7 @@ var _ = Describe("Insert", func() {
 			)
 
 			Expect(in.Generate(b)).To(Succeed())
-			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
+			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 			// Expect(os.WriteFile("derp.txt", formatted.Bytes(), 0600)).To(Succeed())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
 			Expect(formatted.String()).To(Equal(testx.ReadString(out)))

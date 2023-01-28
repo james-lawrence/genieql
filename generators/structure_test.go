@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/dialects"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
@@ -48,7 +49,7 @@ var _ = ginkgo.Describe("Structure", func() {
 			buffer.WriteString("\n")
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			// fmt.Println("output\n", formatted.String())
 			// fmt.Println("expected\n", string(expected))
 			Expect(formatted.String()).To(Equal(string(expected)))

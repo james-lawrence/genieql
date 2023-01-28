@@ -70,8 +70,8 @@ func newAmbiguousValueSpec(fset *token.FileSet, found ...*ast.ValueSpec) (err Er
 // ErrAmbiguousDeclaration returned when the requested declaration was located in multiple
 // locations.
 type ErrAmbiguousDeclaration struct {
-	*token.FileSet
-	Nodes []ast.Node
+	FileSet *token.FileSet
+	Nodes   []ast.Node
 }
 
 func (t ErrAmbiguousDeclaration) Error() string {

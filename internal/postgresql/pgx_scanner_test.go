@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
@@ -63,7 +64,7 @@ var _ = Describe("Scanner", func() {
 			}
 			expected, err := os.ReadFile(fixture)
 			Expect(err).To(Succeed())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).To(Succeed())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).To(Succeed())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		Entry("int",

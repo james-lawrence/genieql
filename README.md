@@ -32,3 +32,15 @@ everything else will be found in godoc.
 
 ## examples
 see the examples directory.
+
+failed to build code generator: Example1: failed to compile source: 4:2:
+import "bitbucket.org/jatone/genieql/interp"
+error: /home/james.lawrence/development/genieql/interp/functions.go:4:2:import "go/ast"
+error: /usr/lib/go/src/go/ast/ast.go:10:2: import "go/token"
+error: /usr/lib/go/src/go/token/position.go:8:2: import "fmt"
+error: /usr/lib/go/src/fmt/errors.go:7:8: import "errors"
+error: /usr/lib/go/src/errors/wrap.go:8:2: import "internal/reflectlite"
+error: /usr/lib/go/src/internal/reflectlite/swapper.go:8:2: import "internal/goarch"
+error: /usr/lib/go/src/internal/goarch/gengoarch.go:10:2: import "bytes"
+error: /usr/lib/go/src/bytes/buffer.go:10:2: import "errors"
+error: import cycle not allowed imports errors)

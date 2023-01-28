@@ -11,6 +11,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/buildx"
@@ -97,7 +98,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -177,7 +178,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			}
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
@@ -225,7 +226,7 @@ type queryFunction10 func(q sqlx.Queryer, query int) StaticExampleScanner`,
 			Expect(NewQueryFunction(ctx, options...).Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
 
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())

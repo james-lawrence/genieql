@@ -12,13 +12,16 @@ import (
 	"sort"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/compiler/stdlib"
+	"github.com/traefik/yaegi/stdlib"
+
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	genieqlinterp "bitbucket.org/jatone/genieql/interp"
-	"github.com/containous/yaegi/interp"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
+	"github.com/traefik/yaegi/interp"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)
@@ -80,7 +83,7 @@ func (t Context) generators(i *interp.Interpreter, in *ast.File) (results []Resu
 				}
 
 				r = Result{
-					Priority: math.MaxInt64,
+					Priority: math.MinInt64,
 					Generator: genieql.NewErrGenerator(
 						errors.Wrapf(err, "failed to build code generator: %s", fn.Name),
 					),
@@ -168,22 +171,26 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		results = t.generators(i, file)
 	}
 
+	log.Println("CHECKPOINT 1")
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Priority < results[j].Priority
 	})
 
+	log.Println("CHECKPOINT 2", spew.Sdump(results))
 	for _, r := range results {
 		var (
 			formatted string
 			buf       = bytes.NewBuffer([]byte(nil))
 		)
 
+		log.Println("CHECKPOINT 3")
 		t.Context.Debugln("generating code initiated")
 
 		if err = r.Generator.Generate(buf); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
 		}
 
+		log.Println("CHECKPOINT 4")
 		t.Context.Debugln("writing generated code into buffer")
 
 		if _, err = working.WriteString("\n"); err != nil {
@@ -200,7 +207,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("reformatting buffer")
 
-		if err = genieql.ReformatFile(working); err != nil {
+		if err = astcodec.ReformatFile(working); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to reformat to working file", buf.String(), r.Location)
 		}
 
@@ -211,7 +218,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		}
 
 		t.Context.Debugln("generating code completed")
-		// t.Context.Debugln(formatted)
+		log.Println(formatted)
 
 		if _, err := i.Eval(formatted); err != nil {
 			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)

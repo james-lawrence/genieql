@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/buildx"
@@ -34,12 +35,12 @@ var _ = Describe("Compiler generation test", func() {
 			"default.config",
 			pkg,
 			generators.OptionOSArgs(),
-			// generators.OptionDebug,
+			generators.OptionDebug,
 		)
 		Expect(err).To(Succeed())
 
 		Expect(compiler.Autocompile(ctx, buf)).To(Succeed())
-		formatted, err := genieql.Format(buf.String())
+		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 
 		// Expect(os.WriteFile("derp.txt", []byte(formatted), 0600)).To(Succeed())

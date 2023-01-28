@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	. "bitbucket.org/jatone/genieql/interp"
 
@@ -37,7 +37,7 @@ var _ = Describe("Batch Insert", func() {
 			)
 
 			Expect(in.Generate(b)).To(Succeed())
-			Expect(genieql.FormatOutput(formatted, b.Bytes())).To(Succeed())
+			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 
 			// log.Println(formatted.String())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))

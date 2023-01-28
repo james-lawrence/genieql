@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
@@ -67,7 +68,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			}
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			// log.Println(formatted.String())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
@@ -104,7 +105,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 			}
 			expected, err := os.ReadFile(fixture)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(genieql.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		ginkgo.Entry("scanner int without interface",

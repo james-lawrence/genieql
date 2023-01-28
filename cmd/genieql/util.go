@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 )
 
 type printGenerator struct {
@@ -26,7 +27,7 @@ func (t printGenerator) Generate(dst io.Writer) error {
 		return err
 	}
 
-	if err = genieql.FormatOutput(&formatted, buffer.Bytes()); err != nil {
+	if err = astcodec.FormatOutput(&formatted, buffer.Bytes()); err != nil {
 		return errors.Wrap(err, buffer.String())
 	}
 
