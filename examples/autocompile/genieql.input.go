@@ -53,12 +53,12 @@ func CombinedScanner(genieql.Scanner, func(e1 Example1, e2 Example2)) {}
 // TimestampScanner generates a scanner that consumes the given parameters.
 func TimestampScanner(genieql.Scanner, func(Timestamp)) {}
 
-// Example1FindByX1 generates function
+// Example1FindByX1 generates a function function based on the provided functional pattern and the query.
 func Example1FindByX1(
 	gql genieql.Function,
 	pattern func(ctx context.Context, q sqlx.Queryer, i1, i2 int) NewExample1ScannerStaticRow,
 ) {
-	gql = gql.Query("SELECT " + Example1ScannerStaticColumns + " FROM example1 WHERE id = $1 AND foo = $2")
+	gql = gql.Query("SELECT " + Example1ScannerStaticColumns + " FROM example1 WHERE id = {i1} AND foo = {i2}")
 }
 
 func Example1FindBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow {

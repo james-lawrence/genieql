@@ -87,10 +87,12 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
-	transforms = []ast.Stmt{
-		&ast.DeclStmt{
-			Decl: astutil.VarList(locals...),
-		},
+	if len(locals) > 0 {
+		transforms = []ast.Stmt{
+			&ast.DeclStmt{
+				Decl: astutil.VarList(locals...),
+			},
+		}
 	}
 
 	transforms = append(transforms, encodings...)
@@ -111,7 +113,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return err
 	}
 
-	if err = generators.GenerateComment(t.comment, generators.DefaultFunctionComment(t.name)).Generate(dst); err != nil {
+	if err = generators.GenerateComment(generators.DefaultFunctionComment(t.name), t.comment).Generate(dst); err != nil {
 		return err
 	}
 
