@@ -4,7 +4,6 @@ import (
 	"go/build"
 	"log"
 	"os"
-	"strings"
 )
 
 func newBuildInfo() (bi buildInfo, err error) {
@@ -39,14 +38,6 @@ type buildInfo struct {
 	Verbosity  int
 	WorkingDir string
 	CurrentPKG *build.Package
-}
-
-func (t buildInfo) extractPackageType(s string) (string, string) {
-	if i := strings.LastIndex(s, "."); i > -1 {
-		return s[:i], s[i+1:]
-	}
-
-	return t.CurrentPKG.ImportPath, s
 }
 
 // CurrentPackageDir returns the directory of the current package if any.
