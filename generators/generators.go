@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
 	"github.com/pkg/errors"
@@ -342,4 +344,32 @@ func QueryFieldsFromColumnMap(ctx Context, cmaps ...genieql.ColumnMap) (locals [
 	}
 
 	return locals
+}
+
+// NewFormattedPrinter ensures the generated content is formatted.
+func NewFormattedPrinter(d genieql.Generator) Formatting {
+	return Formatting{d: d}
+}
+
+type Formatting struct {
+	d genieql.Generator
+}
+
+func (t Formatting) Generate(dst io.Writer) error {
+	var (
+		err               error
+		buffer, formatted bytes.Buffer
+	)
+
+	if err = t.d.Generate(&buffer); err != nil {
+		return err
+	}
+
+	if err = astcodec.FormatOutput(&formatted, buffer.Bytes()); err != nil {
+		return errors.Wrap(err, buffer.String())
+	}
+
+	_, err = io.Copy(dst, &formatted)
+
+	return errors.Wrap(err, formatted.String())
 }

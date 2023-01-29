@@ -4,7 +4,18 @@ import (
 	"go/build"
 	"log"
 	"os"
+
+	"github.com/pkg/errors"
 )
+
+func currentPackage(dir string) *build.Package {
+	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
+	if err != nil {
+		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
+	}
+
+	return pkg
+}
 
 func newBuildInfo() (bi buildInfo, err error) {
 	var (

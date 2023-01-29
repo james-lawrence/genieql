@@ -15,6 +15,7 @@ import (
 	bstrap "bitbucket.org/jatone/genieql/bootstrap"
 	"bitbucket.org/jatone/genieql/bootstrap/autocompile"
 	"bitbucket.org/jatone/genieql/cmd"
+	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 
 	"github.com/alecthomas/kingpin"
@@ -61,7 +62,7 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 
 		for info, tmp := range templates {
 			err = errorsx.Compact(err, cmd.WriteStdoutOrFile(
-				printGenerator{delegate: bstrap.File{Tokens: tokens, Package: pkg, Node: tmp}},
+				generators.NewFormattedPrinter(bstrap.File{Tokens: tokens, Package: pkg, Node: tmp}),
 				filepath.Join(pkg.Dir, rename(info.Name())),
 				cmd.DefaultWriteFlags,
 			))
