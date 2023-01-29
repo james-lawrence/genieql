@@ -1,18 +1,20 @@
-# genieql
-sql query and code generation program.
-its purpose is to generate as much of the
+# genieql - sql query and code generation.
+its purpose is to generate a decent amount of the
 boilerplate code for interacting with database/sql
-as possible. without putting any runtime dependencies into
-your codebase.
+as possible without putting any runtime dependencies
+into your codebase. primary areas of focus are:
+1. data scanners (hydrating structures from queries)
+2. make support and maintaince for simple queries a breeze.
+3. integrate well with the broader ecosystem. aka: scanners should play well
+with query builders.
 
 # is it production ready?
-its very much in alpha code, but it is in use on few production applications already.
+its nearing production ready, essentially beta code, but it is in use on few production applications already.
 
--it only supports postgresql currently.
-
--adding additional support is very straight forward, just implement the Dialect interface. see the postgresql implementation as the example.
-
--test coverage is getting added.
+- it only supports postgresql currently.
+- sqlite support is otw.
+- adding additional support is very straight forward, just implement the Dialect interface. see the postgresql implementation as the example.
+- test coverage is getting added. (a good chunk already exists but working on a better test harness for integration tests)
 
 mainly getting it out early to solicite feedback on the api
 of the code that gets generated and feature requests.
@@ -25,22 +27,8 @@ can be found in the documentation directory.
 everything else will be found in godoc.
 
 ## genieql commands
-- bootstrap - saves database information to a file for other commands.
-- map - writes a configuration file describing how to map a structure to a database column.
-- generate - used to generate queries. main use case is to bootstrap a project quickly.
-- scanner - used to create scanners.
+- genieql bootstrap - saves database information for generation.
+- genieql auto - runs the gql scripts to generate database code.
 
 ## examples
 see the examples directory.
-
-failed to build code generator: Example1: failed to compile source: 4:2:
-import "bitbucket.org/jatone/genieql/interp"
-error: /home/james.lawrence/development/genieql/interp/functions.go:4:2:import "go/ast"
-error: /usr/lib/go/src/go/ast/ast.go:10:2: import "go/token"
-error: /usr/lib/go/src/go/token/position.go:8:2: import "fmt"
-error: /usr/lib/go/src/fmt/errors.go:7:8: import "errors"
-error: /usr/lib/go/src/errors/wrap.go:8:2: import "internal/reflectlite"
-error: /usr/lib/go/src/internal/reflectlite/swapper.go:8:2: import "internal/goarch"
-error: /usr/lib/go/src/internal/goarch/gengoarch.go:10:2: import "bytes"
-error: /usr/lib/go/src/bytes/buffer.go:10:2: import "errors"
-error: import cycle not allowed imports errors)

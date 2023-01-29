@@ -41,10 +41,6 @@ func main() {
 	bootstrap := &bootstrap{
 		buildInfo: bi,
 	}
-	mapper := &mapper{
-		buildInfo: bi,
-	}
-
 	astcli := astcli{}
 
 	gg := generator{
@@ -63,7 +59,6 @@ func main() {
 
 	astcli.configure(app)
 	bootstrap.configure(app)
-	mapper.configure(app)
 	gg.configure(app)
 
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {
