@@ -49,14 +49,15 @@ func (t *function) Query(q string) Function {
 
 func (t *function) Generate(dst io.Writer) (err error) {
 	var (
-		n          *ast.FuncDecl
-		cf         *ast.Field
-		qf         *ast.Field
-		cmaps      []genieql.ColumnMap
-		qinputs    []ast.Expr
-		encodings  []ast.Stmt
-		locals     []ast.Spec
-		transforms []ast.Stmt
+		n            *ast.FuncDecl
+		cf           *ast.Field
+		qf           *ast.Field
+		cmaps        []genieql.ColumnMap
+		qinputs      []ast.Expr
+		encodings    []ast.Stmt
+		locals       []ast.Spec
+		transforms   []ast.Stmt
+		encodedquery string
 	)
 
 	t.ctx.Println("generation of", t.name, "initiated")
@@ -81,6 +82,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
+	encodedquery, cmaps = functions.ColumnUsageFilter(t.ctx, t.query, cmaps...)
 	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, scanner, nil, cmaps...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
@@ -96,7 +98,7 @@ func (t *function) Generate(dst io.Writer) (err error) {
 	qfn := functions.Query{
 		Context: t.ctx,
 		Query: astutil.StringLiteral(
-			functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...).Replace(t.query),
+			encodedquery,
 		),
 		Scanner:      scanner,
 		Queryer:      qf.Type,

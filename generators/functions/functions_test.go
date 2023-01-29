@@ -5,9 +5,12 @@ import (
 	"go/ast"
 	"os"
 
+	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/genieqltest"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 
 	. "bitbucket.org/jatone/genieql/generators/functions"
@@ -177,6 +180,45 @@ var _ = Describe("Query Functions", func() {
 				Queryer:      astutil.Expr("sqlx.Queryer"),
 				Scanner:      rowsScanner,
 			},
+		),
+	)
+})
+
+var _ = Describe("ColumnUsageFilter", func() {
+	config := genieqltest.DialectPSQL()
+	ctx, err := genieqltest.GeneratorContext(config)
+	errorsx.PanicOnError(err)
+
+	DescribeTable("Postgresql - return a transformed query and the columns that were used",
+		func(query, expected string, usage int, cmap ...genieql.ColumnMap) {
+			transformedq, usedcolumns := ColumnUsageFilter(
+				ctx,
+				query,
+				cmap...,
+			)
+			Expect(transformedq).To(Equal(expected))
+			Expect(usedcolumns).To(HaveLen(usage))
+		},
+		Entry(
+			"Example 1 - single field used from middle of cmap",
+			"SELECT * FROM foo WHERE id = {a.field2}",
+			"SELECT * FROM foo WHERE id = $1",
+			1,
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field1"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field2"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field3"),
+		),
+		Entry(
+			"Example 1 - multie fields referenced",
+			"SELECT * FROM foo WHERE id = {a.field2} AND id = {a.field5}",
+			"SELECT * FROM foo WHERE id = $1 AND id = $2",
+			2,
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field1"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field2"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field3"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field4"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field5"),
+			genieqltest.NewColumnMap(ctx.Driver, "int", "a", "field6"),
 		),
 	)
 })

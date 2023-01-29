@@ -29,10 +29,12 @@ var _ = Describe("Scanner", func() {
 		},
 	}
 	config := genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join("..", "..", ".genieql", "default.config"),
+		genieql.NewConfiguration(
+			genieql.ConfigurationOptionLocation(
+				filepath.Join("..", "..", ".genieql", "default.config"),
+			),
+			genieql.ConfigurationOptionDialect(Dialect),
 		),
-		genieql.ConfigurationOptionDialect(Dialect),
 	)
 
 	driver := genieql.MustLookupDriver(drivers.PGX)

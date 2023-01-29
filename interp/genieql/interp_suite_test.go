@@ -1,16 +1,12 @@
 package genieql_test
 
 import (
-	"go/build"
-	"go/token"
 	"log"
-	"path/filepath"
 	"testing"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/columninfo"
 	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
@@ -21,37 +17,6 @@ func TestInterp(t *testing.T) {
 	testx.Logging()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Interp Suite")
-}
-
-func GeneratorContext(c genieql.Configuration) (ctx generators.Context, err error) {
-	var (
-		driver  genieql.Driver
-		dialect genieql.Dialect
-	)
-
-	if driver, err = genieql.LookupDriver(c.Driver); err != nil {
-		return ctx, err
-	}
-
-	if dialect, err = dialects.LookupDialect(c); err != nil {
-		return ctx, err
-	}
-
-	pkg := &build.Package{
-		Name: "example",
-		Dir:  filepath.Dir(c.Location),
-		GoFiles: []string{
-			"example.go",
-		},
-	}
-
-	return generators.Context{
-		Configuration:  c,
-		CurrentPackage: pkg,
-		FileSet:        token.NewFileSet(),
-		Dialect:        dialect,
-		Driver:         driver,
-	}, nil
 }
 
 func DialectConfig1() genieql.Configuration {

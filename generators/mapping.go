@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/types"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
@@ -19,17 +18,14 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		pkg *build.Package = ctx.CurrentPackage
 	)
 	if ipath, err := importPath(ctx, astutil.UnwrapExpr(param.Type)); err != nil {
-		log.Println("DERP 1")
 		return m, infos, err
 	} else if ipath != ctx.CurrentPackage.ImportPath {
 		if pkg, err = genieql.LocatePackage(ipath, ".", ctx.Build, genieql.StrictPackageImport(ipath)); err != nil {
-			log.Println("DERP 2")
 			return m, infos, err
 		}
 	}
 
 	if err = ctx.Configuration.ReadMap(&m, genieql.MCOPackage(pkg), genieql.MCOType(types.ExprString(determineType(param.Type)))); err != nil {
-		log.Println("DERP 3")
 		return m, infos, err
 	}
 
@@ -114,7 +110,6 @@ func mapParam(ctx Context, param *ast.Field, ignoreSet ...string) ([]genieql.Col
 	)
 
 	if m, columns, err = mappedParam(ctx, param); err != nil {
-		log.Println("DERP wt 1")
 		return cMap, err
 	}
 

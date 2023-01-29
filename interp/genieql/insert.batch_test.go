@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/genieqltest"
 	. "bitbucket.org/jatone/genieql/interp/genieql"
 
 	"bytes"
@@ -25,7 +26,7 @@ var _ = Describe("Batch Insert", func() {
 	}
 
 	config := DialectConfig1()
-	ctx, err := GeneratorContext(config)
+	ctx, err := genieqltest.GeneratorContext(config)
 	errorsx.PanicOnError(err)
 
 	DescribeTable(

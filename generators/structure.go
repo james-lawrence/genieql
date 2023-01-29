@@ -139,7 +139,7 @@ func (t structure) Generate(dst io.Writer) error {
 		return err
 	}
 
-	if err = GenerateComment(t.Comment, DefaultFunctionComment(t.Name)).Generate(dst); err != nil {
+	if err = GenerateComment(DefaultFunctionComment(t.Name), t.Comment).Generate(dst); err != nil {
 		return err
 	}
 

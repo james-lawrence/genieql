@@ -93,13 +93,8 @@ func ReadConfiguration(config *Configuration) error {
 }
 
 // MustConfiguration builds a configuration from the provided options.
-func MustConfiguration(options ...ConfigurationOption) Configuration {
-	var (
-		err error
-		c   Configuration
-	)
-
-	if c, err = NewConfiguration(options...); err != nil {
+func MustConfiguration(c Configuration, err error) Configuration {
+	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 
@@ -109,7 +104,7 @@ func MustConfiguration(options ...ConfigurationOption) Configuration {
 // MustReadConfiguration builds a new configuration from the provided options,
 // and read's it from disk.
 func MustReadConfiguration(options ...ConfigurationOption) Configuration {
-	c := MustConfiguration(options...)
+	c := MustConfiguration(NewConfiguration(options...))
 	if e := ReadConfiguration(&c); e != nil {
 		log.Fatalf("%+v\n", e)
 	}
@@ -125,13 +120,17 @@ func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 		}
 	)
 
+	return config.Clone(options...)
+}
+
+func (t Configuration) Clone(options ...ConfigurationOption) (Configuration, error) {
 	for _, opt := range options {
-		if err := opt(&config); err != nil {
-			return config, err
+		if err := opt(&t); err != nil {
+			return t, err
 		}
 	}
 
-	return config, nil
+	return t, nil
 }
 
 // ConfigurationOption options for creating a Configuration

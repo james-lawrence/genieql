@@ -39,8 +39,10 @@ var _ = ginkgo.Describe("Query Functions", func() {
 	}
 
 	configuration := genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
+		genieql.NewConfiguration(
+			genieql.ConfigurationOptionLocation(
+				filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
+			),
 		),
 	)
 

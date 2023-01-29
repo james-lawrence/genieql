@@ -115,13 +115,11 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	ignored := genieql.ColumnInfoFilterIgnore(t.ignore...)
 	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
 
-	cset := genieql.ColumnMapSet(paramscmaps)
-	ignoredcset := cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
-	projectioncset := ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
+	cset0 := genieql.ColumnMapSet(paramscmaps)
+	ignoredcset0 := cset0.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
+	projectioncset0 := ignoredcset0.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
-	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, projectioncset...)
-
-	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, nil, projectioncset...); err != nil {
+	if locals, encodings, qinputs, err = generators.QueryInputsFromColumnMap(t.ctx, t.scanner, nil, projectioncset0...); err != nil {
 		return errors.Wrap(err, "unable to transform query inputs")
 	}
 
@@ -132,9 +130,9 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 	}
 	transforms = append(transforms, encodings...)
 
-	cset = genieql.ColumnMapSet(insertcmaps)
-	ignoredcset = cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
-	projectioncset = ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
+	cset := genieql.ColumnMapSet(insertcmaps)
+	ignoredcset := cset.Filter(func(cm genieql.ColumnMap) bool { return ignored(cm.ColumnInfo) })
+	projectioncset := ignoredcset.Filter(func(cm genieql.ColumnMap) bool { return defaulted(cm.ColumnInfo) })
 
 	g1 := generators.NewColumnConstants(
 		fmt.Sprintf("%sStaticColumns", t.name),
@@ -160,7 +158,19 @@ func (t *insert) Generate(dst io.Writer) (err error) {
 		QueryInputs:  qinputs,
 		ContextField: t.cf,
 		Query: astutil.StringLiteral(
-			queryreplacement.Replace(dialect.Insert(1, len(paramscmaps)-len(insertcmaps), t.table, t.conflict, cset.ColumnNames(), ignoredcset.ColumnNames(), append(t.defaults, t.ignore...))),
+			functions.QueryLiteralColumnMapReplacer(
+				t.ctx,
+				dialect.Insert(
+					1,
+					len(paramscmaps)-len(insertcmaps),
+					t.table,
+					t.conflict,
+					cset.ColumnNames(),
+					ignoredcset.ColumnNames(),
+					append(t.defaults, t.ignore...),
+				),
+				projectioncset0...,
+			),
 		),
 	}
 

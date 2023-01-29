@@ -3,6 +3,7 @@ package compiler_test
 import (
 	"bytes"
 	"go/build"
+	"log"
 	"os"
 
 	"bitbucket.org/jatone/genieql"
@@ -43,11 +44,14 @@ var _ = Describe("Compiler generation test", func() {
 		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 
-		// Expect(os.WriteFile("derp.txt", []byte(formatted), 0600)).To(Succeed())
-		// log.Println("generated\n", formatted)
+		log.Println("generated\n", formatted)
 
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
+
+		// Expect(os.WriteFile("derp.go", []byte(formatted), 0600)).To(Succeed())
+		// Expect(os.WriteFile("derp.expected.go", []byte(expected), 0600)).To(Succeed())
+
 		Expect(formatted).To(Equal(string(expected)))
 	},
 		Entry("Example 1", "./.fixtures/functions/example1", ".fixtures/functions/example1/genieql.gen.go"),

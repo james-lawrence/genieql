@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/genieqltest"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
 	"bitbucket.org/jatone/genieql/internal/testx"
@@ -23,7 +24,7 @@ var _ = Describe("Insert", func() {
 		Type: astutil.MustParseExpr(token.NewFileSet(), "func(rows *sql.Rows, err error) ExampleScanner").(*ast.FuncType),
 	}
 	config := DialectConfig1()
-	ctx, err := GeneratorContext(config)
+	ctx, err := genieqltest.GeneratorContext(config)
 	errorsx.PanicOnError(err)
 
 	DescribeTable(

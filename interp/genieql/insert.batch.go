@@ -104,7 +104,6 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		return errors.Wrap(err, "unable to generate mapping")
 	}
 
-	queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, cmaps...)
 	defaulted := genieql.ColumnInfoFilterIgnore(t.defaults...)
 
 	cset := genieql.ColumnMapSet(cmaps)
@@ -496,10 +495,11 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 			qinputs = append(qinputs, inputs...)
 		}
 
+		queryreplacement := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(nrecords, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
 		casestmts := make([]ast.Stmt, 0, len(assignments)+3)
 		casestmts = append(casestmts, astutil.DeclStmt(genieql.QueryLiteral(
 			"query",
-			queryreplacement.Replace(t.ctx.Dialect.Insert(nrecords, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults)),
+			queryreplacement,
 		)))
 		casestmts = append(casestmts, astutil.DeclStmt(astutil.VarList(append(genlocals, astutil.ValueSpec(ast.NewIdent("error"), ast.NewIdent("err")))...)))
 		casestmts = append(casestmts, assignments...)

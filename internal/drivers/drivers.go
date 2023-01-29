@@ -2,7 +2,6 @@ package drivers
 
 import (
 	"io"
-	"io/ioutil"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -28,7 +27,7 @@ func ReadDriver(in io.Reader) (name string, driver genieql.Driver, err error) {
 		config config
 	)
 
-	if raw, err = ioutil.ReadAll(in); err != nil {
+	if raw, err = io.ReadAll(in); err != nil {
 		return "",
 			nil, errors.Wrap(err, "failed to read driver")
 	}

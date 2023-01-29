@@ -287,13 +287,6 @@ var pgx = []genieql.ColumnDefinition{
 		Decode:     pgxTimeDecode,
 		Encode:     pgxTimeEncode,
 	},
-	// {
-	// 	Type:       "pgtype.Timestamp",
-	// 	Native:     "pgtype.Timestamp",
-	// 	ColumnType: "pgtype.Timestamp",
-	// 	Decode:     pgxTimeEncode,
-	// 	Encode:     pgxTimeEncode,
-	// },
 	{
 		Type:       "pgtype.Timestamptz",
 		Native:     timeExprString,

@@ -14,7 +14,8 @@ import (
 	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
-// Function matcher - identifies function generators.
+// Function matcher - identifies and generates simple sql functions.
+// - only passes arguments to the query that are referenced by the query.
 func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		v           reflect.Value

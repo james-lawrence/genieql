@@ -159,6 +159,13 @@ func FuncLiteral(d *ast.FuncDecl) *ast.FuncLit {
 	return &ast.FuncLit{Type: d.Type, Body: d.Body}
 }
 
+func FuncType(params, results *ast.FieldList) *ast.FuncType {
+	return &ast.FuncType{
+		Params:  params,
+		Results: results,
+	}
+}
+
 // VarList creates a variable list. i.e) var (a int, b bool, c string)
 func VarList(specs ...ast.Spec) *ast.GenDecl {
 	var (

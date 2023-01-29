@@ -153,19 +153,27 @@ func DefaultFunctionComment(name string) *ast.CommentGroup {
 }
 
 func mergeComments(comments ...*ast.CommentGroup) (m *ast.CommentGroup) {
-	for _, c := range comments {
-		if c == nil {
-			continue
+	switch len(comments) {
+	case 0:
+		return nil
+	case 1:
+		return comments[0]
+	default:
+		for _, c := range comments {
+			if c == nil {
+				continue
+			}
+
+			if m == nil {
+				m = c
+				continue
+			}
+
+			m.List = append(m.List, c.List...)
 		}
 
-		if m == nil {
-			m = c
-			continue
-		}
-		m.List = append(m.List, c.List...)
+		return m
 	}
-
-	return m
 }
 
 type Option func(*Context)

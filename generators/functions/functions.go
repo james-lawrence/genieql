@@ -119,22 +119,42 @@ func QueryInputsFromFields(inputs ...*ast.Field) (output []ast.Expr) {
 	return output
 }
 
-func QueryLiteralColumnMapReplacer(ctx generators.Context, columns ...genieql.ColumnMap) *strings.Replacer {
+func QueryLiteralColumnMapReplacer(ctx generators.Context, q string, columns ...genieql.ColumnMap) string {
 	replacements := []string{}
 	cidx := ctx.Dialect.ColumnValueTransformer()
 	for _, c := range columns {
 		dst := types.ExprString(astutil.DereferencedIdent(c.Dst))
-		// log.Println(c.Name, "->", dst, spew.Sdump(c.Dst), spew.Sdump(astutil.DereferencedIdent(c.Dst)))
 		replacements = append(
 			replacements,
 			fmt.Sprintf("{%s}", dst), cidx.Transform(c.ColumnInfo),
 		)
 	}
-	// log.Println("REPLACEMENTS")
-	// for i := 0; i < len(replacements); i = i + 2 {
-	// 	log.Println(replacements[i], "->", replacements[i+1])
-	// }
-	return strings.NewReplacer(replacements...)
+
+	return strings.NewReplacer(replacements...).Replace(q)
+}
+
+func ColumnUsageFilter(ctx generators.Context, q string, columns ...genieql.ColumnMap) (_ string, used []genieql.ColumnMap) {
+	tmp := q
+	used = make([]genieql.ColumnMap, 0, len(columns))
+	cidx := ctx.Dialect.ColumnValueTransformer()
+	for _, c := range columns {
+		dst := types.ExprString(astutil.DereferencedIdent(c.Dst))
+		replaced := fmt.Sprintf("{%s}", dst)
+
+		// since cidx.Transform is stateful we'll use a temporary replacement to check for usage
+		// prior to determine the true value name.
+		tmpreplacement := "{genieqlreplaced}"
+		upd := strings.NewReplacer(replaced, tmpreplacement).Replace(tmp)
+		if upd == tmp {
+			continue
+		}
+
+		upd = strings.NewReplacer(replaced, cidx.Transform(c.ColumnInfo)).Replace(tmp)
+		used = append(used, c)
+		tmp = upd
+	}
+
+	return tmp, used
 }
 
 // Compile using the provided definition.

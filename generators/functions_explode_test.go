@@ -6,13 +6,13 @@ import (
 	"go/build"
 	"go/token"
 	"os"
-	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
 	. "bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/genieqltest"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 
@@ -45,25 +45,6 @@ func explodetest(config genieql.Configuration, driver genieql.Driver, pkg *build
 	Expect(formatted.String()).To(Equal(string(expected)))
 }
 
-func mustlookupcolumn(c genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
-	if err != nil {
-		panic(err)
-	}
-
-	return c
-}
-
-func quickcolummap(typ string, local string, field string, d genieql.Driver) genieql.ColumnMap {
-	return genieql.ColumnMap{
-		ColumnInfo: genieql.ColumnInfo{
-			Definition: mustlookupcolumn(d.LookupType(typ)),
-			Name:       field,
-		},
-		Dst:   astutil.SelExpr(local, field),
-		Field: astutil.Field(ast.NewIdent(typ), ast.NewIdent(field)),
-	}
-}
-
 var _ = ginkgo.Describe("FunctionsExplode", func() {
 	pkg := &build.Package{
 		Name: "example",
@@ -74,9 +55,7 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 	}
 
 	config := genieql.MustConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
-		),
+		genieql.NewConfiguration(),
 	)
 
 	stdlib, err := genieql.LookupDriver(drivers.StandardLib)
@@ -95,9 +74,9 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			".fixtures/functions-explode/output.1.go",
 			astutil.Field(ast.NewIdent("Foo"), ast.NewIdent("arg1")),
 			[]genieql.ColumnMap{
-				quickcolummap("int", "arg1", "field1", stdlib),
-				quickcolummap("int", "arg1", "field2", stdlib),
-				quickcolummap("bool", "arg1", "field3", stdlib),
+				genieqltest.NewColumnMap(stdlib, "int", "arg1", "field1"),
+				genieqltest.NewColumnMap(stdlib, "int", "arg1", "field2"),
+				genieqltest.NewColumnMap(stdlib, "bool", "arg1", "field3"),
 			},
 			QFOName("explodeFunction1"),
 		),
@@ -109,11 +88,11 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 			".fixtures/functions-explode/output.2.go",
 			astutil.Field(ast.NewIdent("Foo"), ast.NewIdent("arg1")),
 			[]genieql.ColumnMap{
-				quickcolummap("int", "arg1", "field1", psql),
-				quickcolummap("int", "arg1", "field2", psql),
-				quickcolummap("bool", "arg1", "field3", psql),
-				quickcolummap("time.Time", "arg1", "field4", psql),
-				quickcolummap("*time.Time", "arg1", "field5", psql),
+				genieqltest.NewColumnMap(psql, "int", "arg1", "field1"),
+				genieqltest.NewColumnMap(psql, "int", "arg1", "field2"),
+				genieqltest.NewColumnMap(psql, "bool", "arg1", "field3"),
+				genieqltest.NewColumnMap(psql, "time.Time", "arg1", "field4"),
+				genieqltest.NewColumnMap(psql, "*time.Time", "arg1", "field5"),
 			},
 			QFOName("explodeFunction1"),
 		),

@@ -2,12 +2,12 @@ package debugx
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 )
 
 var (
-	defaults = log.New(ioutil.Discard, "DEBUG", log.LstdFlags|log.Lshortfile)
+	defaults = log.New(io.Discard, "DEBUG", log.LstdFlags|log.Lshortfile)
 )
 
 // Output debug output
