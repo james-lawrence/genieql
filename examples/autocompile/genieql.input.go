@@ -38,22 +38,22 @@ func Timestamp(gql genieql.Structure) {
 	)
 }
 
-// CustomScanner generates a scanner that consumes the given parameters.
+// generates a scanner that consumes the given parameters.
 func CustomScanner(gql genieql.Scanner, pattern func(i1, i2 int, b1 bool, t1 time.Time)) {}
 
-// Example1Scanner generates a scanner that consumes the given parameters.
+// generates a scanner that consumes the given parameters.
 func Example1Scanner(genieql.Scanner, func(Example1)) {}
 
-// Example2Scanner generates a scanner that consumes the given parameters.
+// generates a scanner that consumes the given parameters.
 func Example2Scanner(genieql.Scanner, func(Example2)) {}
 
-// CombinedScanner generates a scanner that consumes the given parameters.
+// generates a scanner that consumes the given parameters.
 func CombinedScanner(genieql.Scanner, func(e1 Example1, e2 Example2)) {}
 
-// TimestampScanner generates a scanner that consumes the given parameters.
+// generates a scanner that consumes the given parameters.
 func TimestampScanner(genieql.Scanner, func(Timestamp)) {}
 
-// Example1FindByX1 generates a function function based on the provided functional pattern and the query.
+// generates a function function based on the provided functional pattern and the query.
 func Example1FindByX1(
 	gql genieql.Function,
 	pattern func(ctx context.Context, q sqlx.Queryer, i1, i2 int) NewExample1ScannerStaticRow,
@@ -69,7 +69,7 @@ func Example1LookupBy(gql genieql.QueryAutogen, ctx context.Context, q sqlx.Quer
 	gql.From("example1")
 }
 
-// Example1Insert insert a single example1 record.
+// insert a single example1 record.
 func Example1Insert(
 	gql genieql.Insert,
 	pattern func(ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow,
@@ -84,6 +84,7 @@ func TimestampInsert(
 	gql.Into("timestamp_examples").Default("id")
 }
 
+// create a merge insert
 func ConflictInsert(
 	gql genieql.Insert,
 	pattern func(ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow,
