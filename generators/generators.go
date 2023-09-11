@@ -223,6 +223,10 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 		return ctx, err
 	}
 
+	if driver, err = genieql.LoadCustomColumnTypes(config, driver); err != nil {
+		return ctx, err
+	}
+
 	ctx = Context{
 		Build:          bctx,
 		CurrentPackage: pkg,

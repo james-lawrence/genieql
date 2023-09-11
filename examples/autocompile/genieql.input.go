@@ -33,6 +33,20 @@ func Example3(gql genieql.Structure) {
 	)
 }
 
+// Example4 ...
+func Example4(gql genieql.Structure) {
+	gql.From(
+		gql.Query("SELECT uuid_field, text_field, bool_field FROM example2"),
+	)
+}
+
+// Example5 ...
+func Example5(gql genieql.Structure) {
+	gql.From(
+		gql.Query("SELECT 0::int as field1, 0::int as field2"),
+	)
+}
+
 func Timestamp(gql genieql.Structure) {
 	gql.From(
 		gql.Table("timestamp_examples"),

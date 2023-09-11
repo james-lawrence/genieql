@@ -6,6 +6,7 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 )
 
@@ -56,6 +57,11 @@ func PrintRegisteredDrivers() {
 type Driver interface {
 	LookupType(s string) (ColumnDefinition, error)
 	Exported() (string, map[string]reflect.Value)
+}
+
+func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
+	log.Println("loading customizations", spew.Sdump(c))
+	return d, nil
 }
 
 // ColumnDefinition defines a type supported by the driver.
