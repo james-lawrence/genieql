@@ -42,7 +42,7 @@ func genFunctionLiteral(ctx Context, example string, tctx interface{}, errorHand
 	)
 
 	if err = template.Must(template.New("genFunctionLiteral").Funcs(m).Parse(example)).Execute(&buf, tctx); err != nil {
-		return nil, errors.Wrap(err, "failed to generate from template")
+		return nil, errors.Wrapf(err, "failed to generate from template: \n%s\n", example)
 	}
 
 	if parsed, err = parser.ParseExprFrom(ctx.FileSet, "", buf.Bytes(), 0); err != nil {
