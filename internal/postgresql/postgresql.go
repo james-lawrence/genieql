@@ -14,6 +14,7 @@ import (
 	"golang.org/x/text/transform"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/columninfo"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/debugx"
@@ -86,12 +87,12 @@ func (t dialectImplementation) ColumnNameTransformer(transforms ...transform.Tra
 }
 
 func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
-	const columnInformationQuery = `SELECT a.attname, a.atttypid, NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
+	const columnInformationQuery = `SELECT a.attname, a.atttypid, format_type(a.atttypid, NULL), NOT a.attnotnull AS nullable, COALESCE(a.attnum = ANY(i.indkey), 'f') AND COALESCE(i.indisprimary, 'f') AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) AND i.indisprimary = 't' WHERE a.attrelid = ($1)::regclass AND a.attnum > 0 AND a.attisdropped = 'f'`
 	return columnInformation(d, t.db, columnInformationQuery, table)
 }
 
 func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
-	const columnInformationQuery = `SELECT a.attname, a.atttypid, 'f' AS nullable, 'f' AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
+	const columnInformationQuery = `SELECT a.attname, a.atttypid, format_type(a.atttypid, NULL), 'f' AS nullable, 'f' AS isprimary FROM pg_index i RIGHT OUTER JOIN pg_attribute a ON a.attrelid = i.indrelid WHERE a.attrelid = ($1)::regclass AND a.attnum > 0`
 	const table = "genieql_query_columns_table"
 
 	tx, err := t.db.Begin()
@@ -128,19 +129,21 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 		var (
 			columndef genieql.ColumnDefinition
 			oid       int
+			tname     string
 			expr      ast.Expr
 			primary   bool
 			nullable  bool
 			name      string
 		)
 
-		if err = rows.Scan(&name, &oid, &nullable, &primary); err != nil {
+		if err = rows.Scan(&name, &oid, &tname, &nullable, &primary); err != nil {
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
-		if expr = internal.OIDToType(oid); expr == nil {
-			log.Println("skipping column", name, "unknown type identifier", oid, "please open an issue")
-			continue
+		expr = internal.OIDToType(oid)
+		if expr == nil {
+			log.Println("nonstandard column type", name, "unknown type identifier", oid, "falling back to type name", tname)
+			expr = astutil.Expr(tname)
 		}
 
 		if columndef, err = d.LookupType(types.ExprString(expr)); err != nil {

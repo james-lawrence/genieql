@@ -270,7 +270,9 @@ func (t scanner) Generate(dst io.Writer) error {
 			return errors.Wrap(err, "failed to generate interface scanner")
 		}
 
-		dst.Write([]byte("\n"))
+		if _, err = dst.Write([]byte("\n")); err != nil {
+			return errors.Wrap(err, "failed to write newline")
+		}
 	}
 
 	if t.Mode.Enabled(ModeStatic) {
@@ -291,17 +293,21 @@ func (t scanner) Generate(dst io.Writer) error {
 
 		tmpl = template.Must(template.New("static").Funcs(funcMap).Parse(staticScanner))
 		if err = tmpl.Execute(dst, ctx); err != nil {
-			return errors.Wrap(err, "failed to generate static scanner")
+			return errors.Wrapf(err, "failed to generate static scanner: '''\n%s\n'''", staticScanner)
 		}
 
-		dst.Write([]byte("\n"))
+		if _, err = dst.Write([]byte("\n")); err != nil {
+			return errors.Wrap(err, "failed to write newline")
+		}
 
 		tmpl = template.Must(template.New("static-row").Funcs(funcMap).Parse(staticRowScanner))
 		if err = tmpl.Execute(dst, ctx); err != nil {
 			return errors.Wrap(err, "failed to generate static row scanner")
 		}
 
-		dst.Write([]byte("\n"))
+		if _, err = dst.Write([]byte("\n")); err != nil {
+			return errors.Wrap(err, "failed to write newline")
+		}
 	}
 
 	if t.Mode.Enabled(ModeDynamic) {

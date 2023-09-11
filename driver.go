@@ -71,8 +71,6 @@ func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
 		dpath = filepath.Join(c.Location, "driver.yml")
 	)
 
-	log.Println("loading customizations", spew.Sdump(c))
-
 	if raw, err = os.ReadFile(dpath); os.IsNotExist(err) {
 		return d, nil
 	} else if err != nil {
@@ -83,9 +81,10 @@ func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
 		return nil, err
 	}
 
-	log.Println("customizations detected", spew.Sdump(cfg))
-
-	d.AddColumnDefinitions(cfg...)
+	if len(cfg) > 0 {
+		log.Println("customizations detected", spew.Sdump(cfg))
+		d.AddColumnDefinitions(cfg...)
+	}
 
 	return d, nil
 }
@@ -94,7 +93,7 @@ func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
 type ColumnDefinition struct {
 	Type       string // dialect type
 	Native     string // golang type
-	ColumnType string // sql type
+	ColumnType string `yaml:"column_type"` // sql type
 	Nullable   bool   // does this type represent a pointer type.
 	PrimaryKey bool   // is the column part of the primary key
 	Decode     string // template function that decodes from the Driver type to Native type

@@ -51,3 +51,7 @@ func (t testDriver) LookupType(s string) (td ColumnDefinition, b error) { return
 func (t testDriver) Exported() (string, map[string]reflect.Value) {
 	return "", map[string]reflect.Value{}
 }
+
+func (t testDriver) AddColumnDefinitions(supported ...ColumnDefinition) {
+
+}
