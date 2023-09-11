@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"bitbucket.org/jatone/genieql/internal/debugx"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -82,7 +83,7 @@ func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
 	}
 
 	if len(cfg) > 0 {
-		log.Println("customizations detected", spew.Sdump(cfg))
+		debugx.Println("customizations detected", spew.Sdump(cfg))
 		d.AddColumnDefinitions(cfg...)
 	}
 
