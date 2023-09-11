@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
+	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 // ErrMissingDriver - returned when a driver has not been registered.
@@ -60,7 +63,26 @@ type Driver interface {
 }
 
 func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
+	var (
+		err   error
+		raw   []byte
+		cfg   []ColumnDefinition
+		dpath = filepath.Join(c.Location, "driver.yml")
+	)
+
 	log.Println("loading customizations", spew.Sdump(c))
+
+	if raw, err = os.ReadFile(dpath); os.IsNotExist(err) {
+		return d, nil
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "failed to read driver file: %s", dpath)
+	}
+
+	if err = errors.Wrapf(yaml.Unmarshal(raw, &cfg), "failed to parse driver file: %s", dpath); err != nil {
+		return nil, err
+	}
+
+	log.Println("customizations detected", spew.Sdump(cfg))
 	return d, nil
 }
 
