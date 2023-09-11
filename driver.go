@@ -60,6 +60,7 @@ func PrintRegisteredDrivers() {
 type Driver interface {
 	LookupType(s string) (ColumnDefinition, error)
 	Exported() (string, map[string]reflect.Value)
+	AddColumnDefinitions(supported ...ColumnDefinition)
 }
 
 func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
@@ -83,6 +84,9 @@ func LoadCustomColumnTypes(c Configuration, d Driver) (Driver, error) {
 	}
 
 	log.Println("customizations detected", spew.Sdump(cfg))
+
+	d.AddColumnDefinitions(cfg...)
+
 	return d, nil
 }
 
@@ -125,7 +129,7 @@ func NewDriver(path string, exports map[string]reflect.Value, supported ...Colum
 		mapped[typedef.Type] = typedef
 	}
 
-	return driver{importPath: path, exports: exports, supported: mapped}
+	return &driver{importPath: path, exports: exports, supported: mapped}
 }
 
 type driver struct {
@@ -144,4 +148,17 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 
 func (t driver) Exported() (path string, res map[string]reflect.Value) {
 	return t.importPath, t.exports
+}
+
+func (t *driver) AddColumnDefinitions(supported ...ColumnDefinition) {
+	mapped := make(map[string]ColumnDefinition, len(supported)+len(t.supported))
+	for _, typedef := range supported {
+		mapped[typedef.Type] = typedef
+	}
+
+	for k, v := range t.supported {
+		mapped[k] = v
+	}
+
+	t.supported = mapped
 }
