@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/build"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,12 +51,14 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 		// if the package failed to be imported.
 		return "", fmt.Errorf("import cycle not allowed\n\timports %s", importPath)
 	}
+	log.Println("importing", rPath, importPath)
 
 	defer func() {
 		if err := recover(); err != nil {
 			panic(err)
 		}
 
+		log.Println("imported", importPath, err == nil, err)
 		if err == nil {
 			interp.rdir[importPath] = true
 		}
@@ -264,6 +267,10 @@ func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
 			if !os.IsNotExist(err) {
 				return "", err
 			}
+			// stop when we reach GOPATH/src
+			if parent == prefix {
+				break
+			}
 
 			// stop when we reach GOPATH/src/blah
 			parent = filepath.Dir(parent)
@@ -275,7 +282,8 @@ func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
 			// we are dealing with relative paths).
 			// TODO(mpl): It should probably be a critical error actually,
 			// as we shouldn't have gone that high up in the tree.
-			if parent == string(filepath.Separator) || parent == "." {
+			// TODO(dennwc): This partially fails on Windows, since it cannot recognize drive letters as "root".
+			if parent == string(filepath.Separator) || parent == "." || parent == "" {
 				break
 			}
 		}

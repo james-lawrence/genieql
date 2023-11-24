@@ -41,4 +41,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/traefik/yaegi => github.com/james-lawrence/yaegi v0.14.3-modules-enh-tag
+replace github.com/traefik/yaegi => github.com/james-lawrence/yaegi v0.15.1-modules-enh-tag

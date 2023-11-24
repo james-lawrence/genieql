@@ -3,7 +3,6 @@ package interp
 import (
 	"fmt"
 	"go/constant"
-	"log"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -127,6 +126,7 @@ type itype struct {
 	method       []*node       // Associated methods or nil
 	constraint   []*itype      // For interfaceT: list of types part of interface set
 	ulconstraint []*itype      // For interfaceT: list of underlying types part of interface set
+	instance     []*itype      // For genericT: list of instantiated types
 	name         string        // name of type within its package for a defined type
 	path         string        // for a defined type, the package import path
 	length       int           // length of array if ArrayT
@@ -787,6 +787,11 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 		} else {
 			t = sym.typ
 		}
+		if t == nil {
+			if t, err = nodeType2(interp, sc, sym.node, seen); err != nil {
+				return nil, err
+			}
+		}
 		if t.incomplete && t.cat == linkedT && t.val != nil && t.val.cat != nilT {
 			t.incomplete = false
 		}
@@ -808,7 +813,11 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 			return nil, err
 		}
 		if lt.incomplete {
-			t.incomplete = true
+			if t == nil {
+				t = lt
+			} else {
+				t.incomplete = true
+			}
 			break
 		}
 		switch lt.cat {
@@ -829,7 +838,7 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 				break
 			}
 			// A generic type is being instantiated. Generate it.
-			t, err = genType(interp, sc, name, lt, []*node{t1.node}, seen)
+			t, err = genType(interp, sc, name, lt, []*itype{t1}, seen)
 			if err != nil {
 				return nil, err
 			}
@@ -841,6 +850,15 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 		if lt, err = nodeType2(interp, sc, n.child[0], seen); err != nil {
 			return nil, err
 		}
+		if lt.incomplete {
+			if t == nil {
+				t = lt
+			} else {
+				t.incomplete = true
+			}
+			break
+		}
+
 		// Index list expressions can be used only in context of generic types.
 		if lt.cat != genericT {
 			err = n.cfgErrorf("not a generic type: %s", lt.id())
@@ -848,7 +866,7 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 		}
 		name := lt.id() + "["
 		out := false
-		tnodes := []*node{}
+		types := []*itype{}
 		for _, c := range n.child[1:] {
 			t1, err := nodeType2(interp, sc, c, seen)
 			if err != nil {
@@ -859,19 +877,19 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 				out = true
 				break
 			}
-			tnodes = append(tnodes, t1.node)
+			types = append(types, t1)
 			name += t1.id() + ","
 		}
 		if out {
 			break
 		}
-		name += "]"
+		name = strings.TrimSuffix(name, ",") + "]"
 		if sym, _, found := sc.lookup(name); found {
 			t = sym.typ
 			break
 		}
 		// A generic type is being instantiated. Generate it.
-		t, err = genType(interp, sc, name, lt, tnodes, seen)
+		t, err = genType(interp, sc, name, lt, types, seen)
 
 	case interfaceType:
 		if sname := typeName(n); sname != "" {
@@ -1017,7 +1035,7 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 		sname := structName(n)
 		if sname != "" {
 			sym, _, found = sc.lookup(sname)
-			if found && sym.kind == typeSym {
+			if found && sym.kind == typeSym && sym.typ != nil {
 				t = structOf(sym.typ, sym.typ.field, withNode(n), withScope(sc))
 			} else {
 				t = structOf(nil, nil, withNode(n), withScope(sc))
@@ -1063,6 +1081,9 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 		t = structOf(t, fields, withNode(n), withScope(sc))
 		t.incomplete = incomplete
 		if sname != "" {
+			if sc.sym[sname] == nil {
+				sc.sym[sname] = &symbol{index: -1, kind: typeSym, node: n}
+			}
 			sc.sym[sname].typ = t
 		}
 
@@ -1086,7 +1107,6 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 
 	switch {
 	case t == nil:
-		log.Println("DEEERP", n.name(), n.ident, n.types, n.anc.anc.anc.name())
 	case t.name != "" && t.path != "":
 		t.str = t.path + "." + t.name
 	case t.cat == nilT:
@@ -1096,9 +1116,9 @@ func nodeType2(interp *Interpreter, sc *scope, n *node, seen []*node) (t *itype,
 	return t, err
 }
 
-func genType(interp *Interpreter, sc *scope, name string, lt *itype, tnodes, seen []*node) (t *itype, err error) {
+func genType(interp *Interpreter, sc *scope, name string, lt *itype, types []*itype, seen []*node) (t *itype, err error) {
 	// A generic type is being instantiated. Generate it.
-	g, err := genAST(sc, lt.node.anc, tnodes)
+	g, _, err := genAST(sc, lt.node.anc, types)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,37 +1126,46 @@ func genType(interp *Interpreter, sc *scope, name string, lt *itype, tnodes, see
 	if err != nil {
 		return nil, err
 	}
+	lt.instance = append(lt.instance, t)
+	// Add generated symbol in the scope of generic source and user.
 	sc.sym[name] = &symbol{index: -1, kind: typeSym, typ: t, node: g}
-
-	// Instantiate type methods (if any).
-	var pt *itype
-	if len(lt.method) > 0 {
-		pt = ptrOf(t, withNode(g), withScope(sc))
+	if lt.scope.sym[name] == nil {
+		lt.scope.sym[name] = sc.sym[name]
 	}
+
 	for _, nod := range lt.method {
-		gm, err := genAST(sc, nod, tnodes)
-		if err != nil {
-			return nil, err
-		}
-		if gm.typ, err = nodeType(interp, sc, gm.child[2]); err != nil {
-			return nil, err
-		}
-		t.addMethod(gm)
-		if rtn := gm.child[0].child[0].lastChild(); rtn.kind == starExpr {
-			// The receiver is a pointer on a generic type.
-			pt.addMethod(gm)
-			rtn.typ = pt
-		}
-		// Compile method CFG.
-		if _, err = interp.cfg(gm, sc, sc.pkgID, sc.pkgName); err != nil {
-			return nil, err
-		}
-		// Generate closures for function body.
-		if err = genRun(gm); err != nil {
+		if err := genMethod(interp, sc, t, nod, types); err != nil {
 			return nil, err
 		}
 	}
 	return t, err
+}
+
+func genMethod(interp *Interpreter, sc *scope, t *itype, nod *node, types []*itype) error {
+	gm, _, err := genAST(sc, nod, types)
+	if err != nil {
+		return err
+	}
+	if gm.typ, err = nodeType(interp, sc, gm.child[2]); err != nil {
+		return err
+	}
+	t.addMethod(gm)
+
+	// If the receiver is a pointer to a generic type, generate also the pointer type.
+	if rtn := gm.child[0].child[0].lastChild(); rtn != nil && rtn.kind == starExpr {
+		pt := ptrOf(t, withNode(t.node), withScope(sc))
+		pt.addMethod(gm)
+		rtn.typ = pt
+	}
+
+	// Compile the method AST in the scope of the generic type.
+	scop := nod.typ.scope
+	if _, err = interp.cfg(gm, scop, scop.pkgID, scop.pkgName); err != nil {
+		return err
+	}
+
+	// Generate closures for function body.
+	return genRun(gm)
 }
 
 // findPackageType searches the top level scope for a package type.
@@ -1676,6 +1705,7 @@ func (t *itype) fieldSeq(seq []int) *itype {
 func (t *itype) lookupField(name string) []int {
 	seen := map[*itype]bool{}
 	var lookup func(*itype) []int
+	tias := isStruct(t)
 
 	lookup = func(typ *itype) []int {
 		if seen[typ] {
@@ -1694,6 +1724,11 @@ func (t *itype) lookupField(name string) []int {
 		for i, f := range typ.field {
 			switch f.typ.cat {
 			case ptrT, structT, interfaceT, linkedT:
+				if tias != isStruct(f.typ) {
+					// Interface fields are not valid embedded struct fields.
+					// Struct fields are not valid interface fields.
+					break
+				}
 				if index2 := lookup(f.typ); len(index2) > 0 {
 					return append([]int{i}, index2...)
 				}
@@ -1803,6 +1838,39 @@ func (t *itype) lookupMethod2(name string, seen map[*itype]bool) (*node, []int) 
 	return m, index
 }
 
+// interfaceMethod returns type of method matching an interface method name (not as a concrete method).
+func (t *itype) interfaceMethod(name string) *itype {
+	return t.interfaceMethod2(name, nil)
+}
+
+func (t *itype) interfaceMethod2(name string, seen map[*itype]bool) *itype {
+	if seen == nil {
+		seen = map[*itype]bool{}
+	}
+	if seen[t] {
+		return nil
+	}
+	seen[t] = true
+	if t.cat == ptrT {
+		return t.val.interfaceMethod2(name, seen)
+	}
+	for _, f := range t.field {
+		if f.name == name && isInterface(t) {
+			return f.typ
+		}
+		if !f.embed {
+			continue
+		}
+		if typ := f.typ.interfaceMethod2(name, seen); typ != nil {
+			return typ
+		}
+	}
+	if t.cat == linkedT || isInterfaceSrc(t) && t.val != nil {
+		return t.val.interfaceMethod2(name, seen)
+	}
+	return nil
+}
+
 // methodDepth returns a depth greater or equal to 0, or -1 if no match.
 func (t *itype) methodDepth(name string) int {
 	if m, lint := t.lookupMethod(name); m != nil {
@@ -1890,11 +1958,6 @@ var (
 	constVal           = reflect.TypeOf((*constant.Value)(nil)).Elem()
 )
 
-type fieldRebuild struct {
-	typ *itype
-	idx int
-}
-
 type refTypeContext struct {
 	defined map[string]*itype
 
@@ -1902,7 +1965,7 @@ type refTypeContext struct {
 	// type name (as key) is used as a field of another (or possibly the same) struct
 	// type. Each of these fields will then live as an unsafe2.dummy type until the
 	// whole recursion is fully resolved, and the type is fixed.
-	refs map[string][]fieldRebuild
+	refs map[string][]*itype
 
 	// When we detect for the first time that we are in a recursive type (thanks to
 	// defined), we keep track of the first occurrence of the type where the recursion
@@ -1975,7 +2038,7 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 	if ctx == nil {
 		ctx = &refTypeContext{
 			defined: map[string]*itype{},
-			refs:    map[string][]fieldRebuild{},
+			refs:    map[string][]*itype{},
 		}
 	}
 	if t.incomplete || t.cat == nilT {
@@ -2000,14 +2063,14 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 
 		// The recursion has not been fully resolved yet.
 		// To indicate that a rebuild is needed on the englobing struct,
-		// return a dummy field type and create an entry with an empty fieldRebuild.
+		// return a dummy field type and create an empty entry.
 		flds := ctx.refs[name]
 		ctx.rect = dt
 
 		// We know we are used as a field by someone, but we don't know by who
-		// at this point in the code, so we just mark it as an empty fieldRebuild for now.
-		// We'll complete the fieldRebuild in the caller.
-		ctx.refs[name] = append(flds, fieldRebuild{})
+		// at this point in the code, so we just mark it as an empty *itype for now.
+		// We'll complete the *itype in the caller.
+		ctx.refs[name] = append(flds, (*itype)(nil))
 		return unsafe2.DummyType
 	}
 	if isGeneric(t) {
@@ -2064,7 +2127,7 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 		}
 		ctx.slevel++
 		var fields []reflect.StructField
-		for i, f := range t.field {
+		for _, f := range t.field {
 			field := reflect.StructField{
 				Name: exportName(f.name), Type: f.typ.refType(ctx),
 				Tag: reflect.StructTag(f.tag), Anonymous: f.embed,
@@ -2073,14 +2136,18 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 			// Find any nil type refs that indicates a rebuild is needed on this field.
 			for _, flds := range ctx.refs {
 				for j, fld := range flds {
-					if fld.typ == nil {
-						flds[j] = fieldRebuild{typ: t, idx: i}
+					if fld == nil {
+						flds[j] = t
 					}
 				}
 			}
 		}
 		ctx.slevel--
-		fieldFix := []int{} // Slice of field indices to fix for recursivity.
+		type fixStructField struct {
+			name  string
+			index int
+		}
+		fieldFix := []fixStructField{} // Slice of field indices to fix for recursivity.
 		t.rtype = reflect.StructOf(fields)
 		if ctx.isComplete() {
 			for _, s := range ctx.defined {
@@ -2089,8 +2156,12 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 					if strings.HasSuffix(f.Type.String(), "unsafe2.dummy") {
 						unsafe2.SetFieldType(s.rtype, i, ctx.rect.fixDummy(s.rtype.Field(i).Type))
 						if name == s.path+"/"+s.name {
-							fieldFix = append(fieldFix, i)
+							fieldFix = append(fieldFix, fixStructField{s.name, i})
 						}
+						continue
+					}
+					if f.Type.Kind() == reflect.Func && strings.Contains(f.Type.String(), "unsafe2.dummy") {
+						fieldFix = append(fieldFix, fixStructField{s.name, i})
 					}
 				}
 			}
@@ -2105,9 +2176,11 @@ func (t *itype) refType(ctx *refTypeContext) reflect.Type {
 		// and we need both the loop above, around all the struct fields, and the loop
 		// below, around the ctx.refs.
 		for _, f := range ctx.refs[name] {
-			for _, index := range fieldFix {
-				ftyp := f.typ.field[index].typ.refType(&refTypeContext{defined: ctx.defined, rebuilding: true})
-				unsafe2.SetFieldType(f.typ.rtype, index, ftyp)
+			for _, ff := range fieldFix {
+				if ff.name == f.name {
+					ftyp := f.field[ff.index].typ.refType(&refTypeContext{defined: ctx.defined, rebuilding: true})
+					unsafe2.SetFieldType(f.rtype, ff.index, ftyp)
+				}
 			}
 		}
 	default:

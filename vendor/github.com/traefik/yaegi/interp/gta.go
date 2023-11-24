@@ -21,6 +21,9 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 		if err != nil {
 			return false
 		}
+		if n.scope == nil {
+			n.scope = sc
+		}
 		switch n.kind {
 		case constDecl:
 			// Early parse of constDecl subtree, to compute all constant
@@ -123,21 +126,21 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 			}
 			for _, c := range n.child[:l] {
 				asImportName := filepath.Join(c.ident, baseName)
-				_, exists := sc.sym[asImportName]
+				sym, exists := sc.sym[asImportName]
 				if !exists {
 					sc.sym[c.ident] = &symbol{index: sc.add(n.typ), kind: varSym, global: true, typ: n.typ, node: n}
 					continue
 				}
-				// c.level = globalFrame
+				c.level = globalFrame
 
-				// // redeclaration error
-				// if sym.typ.node != nil && sym.typ.node.anc != nil {
-				// 	prevDecl := n.interp.fset.Position(sym.typ.node.anc.pos)
-				// 	err = n.cfgErrorf("%s redeclared in this block\n\tprevious declaration at %v", c.ident, prevDecl)
-				// 	return false
-				// }
-				// err = n.cfgErrorf("%s redeclared in this block", c.ident)
-				// return false
+				// redeclaration error
+				if sym.typ.node != nil && sym.typ.node.anc != nil {
+					prevDecl := n.interp.fset.Position(sym.typ.node.anc.pos)
+					err = n.cfgErrorf("%s redeclared in this block\n\tprevious declaration at %v", c.ident, prevDecl)
+					return false
+				}
+				err = n.cfgErrorf("%s redeclared in this block", c.ident)
+				return false
 			}
 
 		case funcDecl:
@@ -166,7 +169,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 							typName = c.child[0].ident
 							genericMethod = true
 						}
-					case indexExpr:
+					case indexExpr, indexListExpr:
 						genericMethod = true
 					}
 				}
@@ -189,15 +192,22 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 				}
 				rcvrtype.addMethod(n)
 				rtn.typ = rcvrtype
+				if rcvrtype.cat == genericT {
+					// generate methods for already instantiated receivers
+					for _, it := range rcvrtype.instance {
+						if err = genMethod(interp, sc, it, n, it.node.anc.param); err != nil {
+							return false
+						}
+					}
+				}
 			case ident == "init":
 				// init functions do not get declared as per the Go spec.
 			default:
 				asImportName := filepath.Join(ident, baseName)
 				if _, exists := sc.sym[asImportName]; exists {
-					return false
 					// redeclaration error
-					// err = n.cfgErrorf("%s redeclared in this block", ident)
-					// return false
+					err = n.cfgErrorf("%s redeclared in this block", ident)
+					return false
 				}
 				// Add a function symbol in the package name space except for init
 				sc.sym[ident] = &symbol{kind: funcSym, typ: n.typ, node: n, index: -1}
@@ -257,7 +267,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 					}
 
 					// redeclaration error. Not caught by the parser.
-					// err = n.cfgErrorf("%s redeclared in this block", name)
+					err = n.cfgErrorf("%s redeclared in this block", name)
 					return false
 				}
 			} else if pkgName, err = interp.importSrc(rpath, ipath, NoTest); err == nil {
@@ -338,7 +348,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 			asImportName := filepath.Join(typeName, baseName)
 			if _, exists := sc.sym[asImportName]; exists {
 				// redeclaration error
-				// err = n.cfgErrorf("%s redeclared in this block", typeName)
+				err = n.cfgErrorf("%s redeclared in this block", typeName)
 				return false
 			}
 			sym, exists := sc.sym[typeName]
