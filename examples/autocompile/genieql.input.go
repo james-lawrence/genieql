@@ -9,7 +9,7 @@ import (
 
 	"bitbucket.org/jatone/genieql/examples/autocompile/pkga"
 	"bitbucket.org/jatone/genieql/internal/sqlx"
-	genieql "bitbucket.org/jatone/genieql/interp"
+	"bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Example1 ...

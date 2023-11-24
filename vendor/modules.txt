@@ -84,11 +84,10 @@ github.com/satori/go.uuid
 # github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 ## explicit
 github.com/serenize/snaker
-# github.com/traefik/yaegi v0.14.3 => github.com/james-lawrence/yaegi v0.14.3-modules-enh-tag
+# github.com/traefik/yaegi v0.14.3 => github.com/james-lawrence/yaegi v0.15.1-modules-enh-tag
 ## explicit; go 1.18
 github.com/traefik/yaegi/internal/unsafe2
 github.com/traefik/yaegi/interp
-github.com/traefik/yaegi/stdlib
 # github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 ## explicit
 github.com/zieckey/goini
@@ -157,4 +156,4 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# github.com/traefik/yaegi => github.com/james-lawrence/yaegi v0.14.3-modules-enh-tag
+# github.com/traefik/yaegi => github.com/james-lawrence/yaegi v0.15.1-modules-enh-tag
