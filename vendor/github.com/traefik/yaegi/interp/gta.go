@@ -21,9 +21,6 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 		if err != nil {
 			return false
 		}
-		if n.scope == nil {
-			n.scope = sc
-		}
 		switch n.kind {
 		case constDecl:
 			// Early parse of constDecl subtree, to compute all constant
@@ -169,7 +166,7 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 							typName = c.child[0].ident
 							genericMethod = true
 						}
-					case indexExpr, indexListExpr:
+					case indexExpr:
 						genericMethod = true
 					}
 				}
@@ -192,14 +189,6 @@ func (interp *Interpreter) gta(root *node, rpath, importPath, pkgName string) ([
 				}
 				rcvrtype.addMethod(n)
 				rtn.typ = rcvrtype
-				if rcvrtype.cat == genericT {
-					// generate methods for already instantiated receivers
-					for _, it := range rcvrtype.instance {
-						if err = genMethod(interp, sc, it, n, it.node.anc.param); err != nil {
-							return false
-						}
-					}
-				}
 			case ident == "init":
 				// init functions do not get declared as per the Go spec.
 			default:

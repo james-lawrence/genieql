@@ -267,10 +267,6 @@ func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
 			if !os.IsNotExist(err) {
 				return "", err
 			}
-			// stop when we reach GOPATH/src
-			if parent == prefix {
-				break
-			}
 
 			// stop when we reach GOPATH/src/blah
 			parent = filepath.Dir(parent)
@@ -282,8 +278,7 @@ func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
 			// we are dealing with relative paths).
 			// TODO(mpl): It should probably be a critical error actually,
 			// as we shouldn't have gone that high up in the tree.
-			// TODO(dennwc): This partially fails on Windows, since it cannot recognize drive letters as "root".
-			if parent == string(filepath.Separator) || parent == "." || parent == "" {
+			if parent == string(filepath.Separator) || parent == "." {
 				break
 			}
 		}
