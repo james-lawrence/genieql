@@ -6,6 +6,8 @@ import (
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	// register the postgresql dialect
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	// register the wasi dialect
+	_ "bitbucket.org/jatone/genieql/internal/wasidialect"
 )
 
 type definition interface {

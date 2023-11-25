@@ -45,20 +45,6 @@ func Register(dialect string, imp DialectFactory) error {
 }
 
 // LookupDialect lookup a registered dialect.
-func LookupDialect(config genieql.Configuration) (genieql.Dialect, error) {
-	var (
-		err     error
-		factory DialectFactory
-	)
-
-	if factory, err = dialects.LookupDialect(config.Dialect); err != nil {
-		return nil, err
-	}
-
-	return factory.Connect(config)
-}
-
-// LookupDialect lookup a registered dialect.
 func LookupDialectByName(config genieql.Configuration) (genieql.Dialect, error) {
 	var (
 		err     error

@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/tetratelabs/wazero"
 
@@ -43,7 +42,7 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 	printjen(content)
 
 	return Result{
-		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 			var (
 				c   wazero.CompiledModule
 				buf bytes.Buffer
@@ -58,7 +57,6 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 			log.Println("derp 2", cctx.ModuleRoot)
 			log.Println("derp 3", cctx.Build.GOROOT)
 
-			log.Println("DERP", spew.Sdump(cctx.Build))
 			mcfg := wazero.NewModuleConfig().
 				WithStderr(os.Stderr).
 				WithStdout(&buf).
@@ -74,7 +72,7 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 				WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
 			mcfg = wasienv(cctx, mcfg)
 
-			if err = run(ctx, mcfg, runtime, c); err != nil {
+			if err = run(ctx, mcfg, runtime, c, modules...); err != nil {
 				return errorsx.Wrap(err, "unable to run module")
 			}
 

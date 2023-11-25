@@ -21,6 +21,7 @@ import (
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
+	"bitbucket.org/jatone/genieql/internal/wasix/ffihost"
 	"github.com/dave/jennifer/jen"
 	"github.com/pkg/errors"
 
@@ -45,13 +46,13 @@ type Result struct {
 }
 
 type compilegen interface {
-	Generate(context.Context, io.Writer, wazero.Runtime) error
+	Generate(context.Context, io.Writer, wazero.Runtime, ...module) error
 }
 
-type CompileGenFn func(context.Context, io.Writer, wazero.Runtime) error
+type CompileGenFn func(context.Context, io.Writer, wazero.Runtime, ...module) error
 
-func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
-	return t(ctx, dst, runtime)
+func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
+	return t(ctx, dst, runtime, modules...)
 }
 
 // Matcher match against a function declaration.
@@ -100,7 +101,7 @@ func (t Context) generators(in *ast.File) (results []Result) {
 
 				r = Result{
 					Priority: math.MaxInt64,
-					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
 					}),
 				}
@@ -169,7 +170,134 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096),
 	)
 	defer runtime.Close(ctx)
-	// hostenvmb := runtime.NewHostModuleBuilder("env")
+	hostenvmb := runtime.NewHostModuleBuilder("env")
+	hostenvmb.NewFunctionBuilder().WithFunc(func(ctx context.Context, m api.Module, sptr uint32, slen uint32, rlen uint32, rptr uint32) (errcode uint32) {
+		s, err := ffihost.ReadString(m.Memory(), sptr, slen)
+		if err != nil {
+			return 1
+		}
+
+		qs := t.Dialect.QuotedString(s)
+
+		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
+			return 1
+		}
+
+		if !m.Memory().WriteString(rptr, qs) {
+			return 1
+		}
+
+		return 0
+	}).Export("genieql/dialect.QuotedString")
+
+	hostenvmb.NewFunctionBuilder().WithFunc(func(ctx context.Context, m api.Module, sptr uint32, slen uint32, rlen uint32, rptr uint32) (errcode uint32) {
+		s, err := ffihost.ReadString(m.Memory(), sptr, slen)
+		if err != nil {
+			return 1
+		}
+
+		qs := t.Dialect.QuotedString(s)
+
+		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
+			return 1
+		}
+
+		if !m.Memory().WriteString(rptr, qs) {
+			return 1
+		}
+
+		return 0
+	}).Export("genieql/dialect.QuotedString")
+
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		qptr uint32, qlen uint32, rlen uint32, rptr uint32) (errcode uint32) {
+		s, err := ffihost.ReadString(m.Memory(), qptr, qlen)
+		if err != nil {
+			return 1
+		}
+
+		cinfo, err := t.Dialect.ColumnInformationForQuery(t.Driver, s)
+		if err != nil {
+			log.Println(err)
+			return 1
+		}
+
+		log.Println("query column info", cinfo)
+
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.ColumnInformationForQuery")
+
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		qptr uint32, qlen uint32, rlen uint32, rptr uint32) (errcode uint32) {
+		s, err := ffihost.ReadString(m.Memory(), qptr, qlen)
+		if err != nil {
+			return 1
+		}
+
+		cinfo, err := t.Dialect.ColumnInformationForTable(t.Driver, s)
+		if err != nil {
+			log.Println(err)
+			return 1
+		}
+
+		log.Println("table column info", cinfo)
+
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.ColumnInformationForTable")
+
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		n int64,
+		offset int64,
+		tableptr uint32, tablelen uint32,
+		conflictptr uint32, conflictlen uint32,
+		columnsptr uint32, columnslen uint32, columnssize uint32,
+		projectionptr uint32, projectionlen uint32, projectionsize uint32,
+		defaultsptr uint32, defaultslen uint32, defaultssize uint32,
+		rlen uint32,
+		rptr uint32,
+	) (errcode uint32) {
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.Insert")
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		tableptr uint32, tablelen uint32,
+		columnsptr uint32, columnslen uint32, columnssize uint32,
+		predicatesptr uint32, predicateslen uint32, predicatessize uint32,
+		rlen uint32,
+		rptr uint32,
+	) (errcode uint32) {
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.Select")
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		tableptr uint32, tablelen uint32,
+		columnsptr uint32, columnslen uint32, columnssize uint32,
+		predicatesptr uint32, predicateslen uint32, predicatessize uint32,
+		returningptr uint32, returninglen uint32, returningsize uint32,
+		rlen uint32,
+		rptr uint32,
+	) (errcode uint32) {
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.Update")
+	hostenvmb.NewFunctionBuilder().WithFunc(func(
+		ctx context.Context,
+		m api.Module,
+		tableptr uint32, tablelen uint32,
+		columnsptr uint32, columnslen uint32, columnssize uint32,
+		predicatesptr uint32, predicateslen uint32, predicatessize uint32,
+		rlen uint32,
+		rptr uint32,
+	) (errcode uint32) {
+		return ffierrors.ErrNotImplemented
+	}).Export("genieql/dialect.Delete")
 
 	for _, r := range results {
 		var (
@@ -179,7 +307,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 
 		t.Context.Debugln("generating code initiated")
 
-		if err = r.Generator.Generate(ctx, buf, runtime); err != nil {
+		if err = r.Generator.Generate(ctx, buf, runtime, hostenvmb); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
 		}
 

@@ -224,15 +224,15 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	)
 
 	if dialect, err = dialects.LookupDialect(config); err != nil {
-		return ctx, err
+		return ctx, errors.Wrap(err, "unable to lookup dialect")
 	}
 
 	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
-		return ctx, err
+		return ctx, errorsx.Wrap(err, "unable to lookup driver")
 	}
 
 	if driver, err = genieql.LoadCustomColumnTypes(config, driver); err != nil {
-		return ctx, err
+		return ctx, errorsx.Wrap(err, "unable to load custom types")
 	}
 
 	ctx = Context{

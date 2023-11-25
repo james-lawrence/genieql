@@ -42,6 +42,9 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 			jen.Id("err").Error(),
 			jen.Id("gctx").Id("generators.Context"),
 		),
+		// jen.Qual("bitbucket.org/jatone/genieql/ginterp", "QuotedString").Call(
+		// 	jen.Lit("DERPED STRING"),
+		// ),
 		// jen.Qual("bitbucket.org/jatone/genieql/fsx", "PrintFS").Call(
 		// 	jen.Qual("os", "DirFS").Call(jen.Lit(".")),
 		// ),
