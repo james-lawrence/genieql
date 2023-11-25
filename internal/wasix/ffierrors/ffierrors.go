@@ -23,3 +23,17 @@ func Exit(cause error) {
 
 	os.Exit(1)
 }
+
+func Error(code uint32, msg error) error {
+	if code == 0 {
+		return nil
+	}
+
+	cause := errorsx.Wrapf(msg, "wasi host error: %d", code)
+	switch code {
+	case ErrUnrecoverable:
+		return errorsx.NewUnrecoverable(cause)
+	default:
+		return cause
+	}
+}

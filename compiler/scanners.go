@@ -74,7 +74,7 @@ func Scanner(ctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error
 	f(gen)
 
 	return Result{
-		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 			return gen.Generate(dst)
 		}),
 		Priority: PriorityScanners,

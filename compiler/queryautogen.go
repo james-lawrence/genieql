@@ -112,7 +112,7 @@ func QueryAutogen(ctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err e
 	})
 
 	return Result{
-		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 			return gen.Generate(dst)
 		}),
 		Priority: PriorityFunctions,

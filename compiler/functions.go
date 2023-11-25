@@ -53,7 +53,7 @@ func Function(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err erro
 	log.Printf("genieql.Function identified %s\n", nodeInfo(cctx, fn))
 	cctx.Debugln(formatted)
 
-	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 		var (
 			f func(interp.Function)
 		)

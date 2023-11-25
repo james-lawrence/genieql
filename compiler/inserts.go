@@ -52,7 +52,7 @@ func Inserts(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err error
 	log.Printf("genieql.Insert identified %s\n", nodeInfo(cctx, fn))
 	cctx.Debugln(formatted)
 
-	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 		var (
 			f       func(ginterp.Insert)
 			scanner *ast.FuncDecl // scanner to use for the results.

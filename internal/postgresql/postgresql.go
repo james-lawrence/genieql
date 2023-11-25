@@ -18,6 +18,7 @@ import (
 	"bitbucket.org/jatone/genieql/columninfo"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/debugx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/postgresql/internal"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 )
@@ -31,13 +32,7 @@ func NewDialect(q *sql.DB) genieql.Dialect {
 }
 
 func init() {
-	maybePanic := func(err error) {
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	maybePanic(dialects.Register(Dialect, dialectFactory{}))
+	errorsx.PanicOnError(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type queryer interface {
@@ -53,6 +48,17 @@ func (t dialectFactory) Connect(config genieql.Configuration) (_ genieql.Dialect
 	}
 
 	return dialectImplementation{db: stdlib.OpenDB(*pcfg)}, nil
+}
+
+func NewColumnValueTransformer() genieql.ColumnTransformer {
+	return &ColumnValueTransformer{}
+}
+
+func NewColumnNameTransformer(transforms ...transform.Transformer) genieql.ColumnTransformer {
+	return columninfo.NewNameTransformer(
+		transformx.Wrap("\""),
+		transform.Chain(transforms...),
+	)
 }
 
 type dialectImplementation struct {
@@ -76,14 +82,11 @@ func (t dialectImplementation) Delete(table string, columns, predicates []string
 }
 
 func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransformer {
-	return &columnValueTransformer{}
+	return NewColumnValueTransformer()
 }
 
 func (t dialectImplementation) ColumnNameTransformer(transforms ...transform.Transformer) genieql.ColumnTransformer {
-	return columninfo.NewNameTransformer(
-		transformx.Wrap("\""),
-		transform.Chain(transforms...),
-	)
+	return NewColumnNameTransformer(transforms...)
 }
 
 func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
