@@ -1,4 +1,4 @@
-package genieql_test
+package ginterp_test
 
 import (
 	"log"

@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/buildx"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 )

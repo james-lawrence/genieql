@@ -1,4 +1,4 @@
-package genieql_test
+package ginterp_test
 
 import (
 	"go/ast"
@@ -7,7 +7,7 @@ import (
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/genieqltest"
-	. "bitbucket.org/jatone/genieql/interp/genieql"
+	. "bitbucket.org/jatone/genieql/ginterp"
 
 	"bytes"
 	"io"

@@ -1,26 +1,24 @@
 package compiler
 
 import (
+	"context"
 	"go/ast"
 	"io"
 	"log"
-	"reflect"
 
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Scanner matcher - identifies scanner generators.
-func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
+func Scanner(ctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		v           reflect.Value
-		f           func(interp.Scanner)
+		f           func(ginterp.Scanner)
 		ok          bool
-		gen         interp.Scanner
+		gen         ginterp.Scanner
 		declPattern *ast.FuncType
 		formatted   string
 		pattern     = astutil.TypePattern(astutil.Expr("genieql.Scanner"))
@@ -54,19 +52,19 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	log.Printf("genieql.Scanner identified %s\n", nodeInfo(ctx, pos))
 	ctx.Debugln(formatted)
 
-	if _, err = i.Eval(formatted); err != nil {
-		return r, errors.Wrap(err, "failed to compile source")
-	}
+	// if _, err = i.Eval(formatted); err != nil {
+	// 	return r, errors.Wrap(err, "failed to compile source")
+	// }
 
-	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
-		return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, pos))
-	}
+	// if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
+	// 	return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, pos))
+	// }
 
-	if f, ok = v.Interface().(func(interp.Scanner)); !ok {
-		return r, errors.Errorf("genieql.Scanner - %s - unable to convert function to be invoked", nodeInfo(ctx, pos))
-	}
+	// if f, ok = v.Interface().(func(interp.Scanner)); !ok {
+	// 	return r, errors.Errorf("genieql.Scanner - %s - unable to convert function to be invoked", nodeInfo(ctx, pos))
+	// }
 
-	gen = interp.NewScanner(
+	gen = ginterp.NewScanner(
 		ctx.Context,
 		pos.Name.String(),
 		declPattern.Params,
@@ -75,7 +73,7 @@ func Scanner(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl
 	f(gen)
 
 	return Result{
-		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
 			return gen.Generate(dst)
 		}),
 		Priority: PriorityScanners,

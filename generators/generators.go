@@ -36,6 +36,7 @@ const (
 
 // Context - context for generators
 type Context struct {
+	Name           string
 	Build          build.Context
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
@@ -228,6 +229,7 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	}
 
 	ctx = Context{
+		Name:           name,
 		Build:          bctx,
 		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),

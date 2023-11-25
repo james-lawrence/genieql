@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"go/build"
 	"io"
@@ -12,12 +13,12 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 )
 
-func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
+func Autocompile(ctx context.Context, cctx generators.Context, dst io.Writer) (err error) {
 	var (
 		taggedFiles TaggedFiles
 	)
 
-	if taggedFiles, err = FindTaggedFiles(ctx.Build, ctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
+	if taggedFiles, err = FindTaggedFiles(cctx.Build, cctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
 
@@ -28,11 +29,11 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	}
 
 	filtered := []*ast.File{}
-	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(cctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if taggedFiles.IsTagged(filepath.Base(path)) {
 			filtered = append(filtered, file)
 		}
-	}, ctx.CurrentPackage)
+	}, cctx.CurrentPackage)
 
 	if err != nil {
 		return err
@@ -41,7 +42,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	log.Println("compiling", len(filtered), "files")
 
 	c := New(
-		ctx,
+		cctx,
 		Structure,
 		Scanner,
 		Function,
@@ -51,7 +52,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	)
 
 	buf := bytes.NewBuffer(nil)
-	if err = c.Compile(buf, filtered...); err != nil {
+	if err = c.Compile(ctx, buf, filtered...); err != nil {
 		return err
 	}
 

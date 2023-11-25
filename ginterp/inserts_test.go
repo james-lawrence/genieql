@@ -1,4 +1,4 @@
-package genieql_test
+package ginterp_test
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/genieqltest"
+	. "bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/membufx"
 	"bitbucket.org/jatone/genieql/internal/testx"
-	. "bitbucket.org/jatone/genieql/interp/genieql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

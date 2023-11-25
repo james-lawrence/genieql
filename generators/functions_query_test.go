@@ -13,8 +13,8 @@ import (
 
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"

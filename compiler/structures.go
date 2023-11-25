@@ -1,26 +1,24 @@
 package compiler
 
 import (
+	"bytes"
+	"context"
 	"go/ast"
+	"go/build"
 	"io"
 	"log"
-	"reflect"
 
+	"github.com/dave/jennifer/jen"
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Structure matcher - identifies structure generators.
-func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
+func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		v             reflect.Value
-		f             func(interp.Structure)
-		ok            bool
-		gen           interp.Structure
+		content       *jen.File
 		formatted     string
 		structPattern = astutil.TypePattern(astutil.Expr("genieql.Structure"))
 	)
@@ -29,33 +27,57 @@ func Structure(ctx Context, i *yaegi.Interpreter, src *ast.File, pos *ast.FuncDe
 		return r, ErrNoMatch
 	}
 
-	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Structure %s", nodeInfo(ctx, pos))
+	if formatted, err = formatSource(cctx, src); err != nil {
+		return r, errors.Wrapf(err, "genieql.Structure %s", nodeInfo(cctx, pos))
 	}
 
-	log.Printf("genieql.Structure identified %s\n", nodeInfo(ctx, pos))
-	ctx.Debugln(formatted)
+	log.Printf("genieql.Structure identified %s\n", nodeInfo(cctx, pos))
+	cctx.Debugln(formatted)
 
-	if _, err = i.Eval(formatted); err != nil {
-		return r, errors.Wrap(err, "failed to compile source")
-	}
-
-	if v, err = i.Eval(ctx.CurrentPackage.Name + "." + pos.Name.String()); err != nil {
-		return r, errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, pos))
-	}
-
-	if f, ok = v.Interface().(func(interp.Structure)); !ok {
-		return r, errorsx.String("failed to type cast value")
-	}
-
-	gen = interp.NewStructure(ctx.Context, pos.Name.String(), pos.Doc)
-
-	f(gen)
+	content = genstructuremain(cctx.Name, cctx.CurrentPackage, pos.Name.String())
 
 	return Result{
-		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
-			return gen.Generate(dst)
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+			if err = genmodule(ctx, content); err != nil {
+				return errorsx.Wrap(err, "unable to compile module")
+			}
+			log.Println("ME NEXT ME NEXT")
+			// return gen.Generate(dst)
+			return nil
 		}),
 		Priority: PriorityStructure,
 	}, nil
+}
+
+func genstructuremain(cfgname string, pkg *build.Package, name string) *jen.File {
+	content := jen.NewFile("main")
+	content.PackageComment("//go:build genieql.generate")
+
+	content.Func().Id("main").Params().Block(
+		append(
+			genpreamble(cfgname, pkg),
+			jen.Id("gen").Op(":=").Id("ginterp").Dot("NewStructure").Call(
+				jen.Id("gctx"),
+				jen.Lit(name),
+				jen.Nil(),
+			),
+			jen.Qual(pkg.ImportPath, name).Call(jen.Id("gen")),
+			jen.If(
+				jen.List(jen.Id("err").Op(":=").Id("gen").Dot("Generate").Call(jen.Id("os").Dot("Stdout"))),
+				jen.Id("err").Op("!=").Id("nil"),
+			).Block(
+				jen.Id("log").Dot("Fatalln").Call(
+					jen.Id("err"),
+				),
+			),
+		)...,
+	)
+
+	return content
+}
+
+func printjen(f *jen.File) {
+	var buf bytes.Buffer
+	errorsx.PanicOnError(f.Render(&buf))
+	log.Println(buf.String())
 }

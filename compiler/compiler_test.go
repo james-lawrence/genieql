@@ -2,15 +2,16 @@ package compiler_test
 
 import (
 	"bytes"
+	"context"
 	"go/build"
 	"log"
 	"os"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/buildx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,17 +31,18 @@ var _ = Describe("Compiler generation test", func() {
 
 		pkg, err := bctx.ImportDir(dir, build.IgnoreVendor)
 		Expect(err).To(Succeed())
+		pkg.ImportPath = "bitbucket.org/jatone/genieql/compiler/.fixtures/functions/example1"
 
 		ctx, err := generators.NewContext(
 			bctx,
 			"default.config",
 			pkg,
 			generators.OptionOSArgs(),
-			// generators.OptionDebug,
+			generators.OptionDebug,
 		)
 		Expect(err).To(Succeed())
 
-		Expect(compiler.Autocompile(ctx, buf)).To(Succeed())
+		Expect(compiler.Autocompile(context.Background(), ctx, buf)).To(Succeed())
 		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 

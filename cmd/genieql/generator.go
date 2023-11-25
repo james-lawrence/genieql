@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"go/build"
 	"io"
 	"log"
@@ -10,10 +11,10 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/buildx"
 )
 
 // general generator for genieql, will locate files to consider and process them.
@@ -41,6 +42,7 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		buf   = bytes.NewBuffer(nil)
 	)
 
+	log.Println("DERP DERP", t.buildInfo.WorkingDir)
 	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate)), t.configName, pname); err != nil {
 		return err
 	}
@@ -51,7 +53,7 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	log.Println("current package", ctx.CurrentPackage.Dir, ctx.CurrentPackage.ImportPath)
-	if err = compiler.Autocompile(ctx, buf); err != nil {
+	if err = compiler.Autocompile(context.Background(), ctx, buf); err != nil {
 		return err
 	}
 
