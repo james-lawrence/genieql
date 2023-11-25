@@ -1,4 +1,4 @@
-package genieql
+package ginterp
 
 import (
 	"bitbucket.org/jatone/genieql"

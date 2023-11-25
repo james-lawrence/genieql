@@ -1,23 +1,22 @@
 package compiler
 
 import (
+	"context"
 	"go/ast"
 	"io"
 	"log"
-	"reflect"
 
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
+	"bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // QueryAutogen matcher - generate crud functions
-func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
+func QueryAutogen(ctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		gen       genieql.Generator
 		formatted string
@@ -75,30 +74,28 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 
 	gen = genieql.NewFuncGenerator(func(dst io.Writer) error {
 		var (
-			v       reflect.Value
-			f       func(interp.QueryAutogen)
+			f       func(ginterp.QueryAutogen)
 			scanner *ast.FuncDecl // scanner to use for the results.
-			ok      bool
 		)
 
-		if _, err = i.Eval(formatted); err != nil {
-			ctx.Println(formatted)
-			return errors.Wrap(err, "failed to compile source")
-		}
+		// if _, err = i.Eval(formatted); err != nil {
+		// 	ctx.Println(formatted)
+		// 	return errors.Wrap(err, "failed to compile source")
+		// }
 
-		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
-		}
+		// if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
+		// 	return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
+		// }
 
-		if f, ok = v.Interface().(func(interp.QueryAutogen)); !ok {
-			return errors.Errorf("genieql.QueryAutogen - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
-		}
+		// if f, ok = v.Interface().(func(interp.QueryAutogen)); !ok {
+		// 	return errors.Errorf("genieql.QueryAutogen - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
+		// }
 
 		if scanner = functions.DetectScanner(ctx.Context, fn.Type); scanner == nil {
 			return errors.Errorf("genieql.QueryAutogen %s - missing scanner", nodeInfo(ctx, fn))
 		}
 
-		fgen := interp.NewQueryAutogen(
+		fgen := ginterp.NewQueryAutogen(
 			ctx.Context,
 			fn.Name.String(),
 			fn.Doc,
@@ -114,7 +111,7 @@ func QueryAutogen(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.Func
 	})
 
 	return Result{
-		Generator: CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
 			return gen.Generate(dst)
 		}),
 		Priority: PriorityFunctions,

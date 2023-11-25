@@ -1,22 +1,21 @@
 package compiler
 
 import (
+	"context"
 	"go/ast"
 	"io"
 	"log"
-	"reflect"
 
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
+	"bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Inserts matcher - identifies insert generators.
-func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
+func Inserts(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
 	var (
 		ok          bool
 		gen         compilegen
@@ -26,12 +25,12 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 	)
 
 	if len(fn.Type.Params.List) < 1 {
-		ctx.Debugln("no match not enough params", nodeInfo(ctx, fn))
+		cctx.Debugln("no match not enough params", nodeInfo(cctx, fn))
 		return r, ErrNoMatch
 	}
 
 	if !pattern(astutil.MapFieldsToTypeExpr(fn.Type.Params.List[:1]...)...) {
-		ctx.Traceln("no match pattern", nodeInfo(ctx, fn))
+		cctx.Traceln("no match pattern", nodeInfo(cctx, fn))
 		return r, ErrNoMatch
 	}
 
@@ -45,40 +44,38 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 	}
 	fn.Type.Params.List = fn.Type.Params.List[:1]
 
-	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Insert %s", nodeInfo(ctx, fn))
+	if formatted, err = formatSource(cctx, src); err != nil {
+		return r, errors.Wrapf(err, "genieql.Insert %s", nodeInfo(cctx, fn))
 	}
 
-	log.Printf("genieql.Insert identified %s\n", nodeInfo(ctx, fn))
-	ctx.Debugln(formatted)
+	log.Printf("genieql.Insert identified %s\n", nodeInfo(cctx, fn))
+	cctx.Debugln(formatted)
 
-	gen = CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer) error {
 		var (
-			v       reflect.Value
-			f       func(interp.Insert)
+			f       func(ginterp.Insert)
 			scanner *ast.FuncDecl // scanner to use for the results.
 			cf      *ast.Field
 			qf      *ast.Field
 			tf      *ast.Field
 			params  []*ast.Field
-			ok      bool
 		)
 
-		if _, err = i.Eval(formatted); err != nil {
-			ctx.Println(formatted)
-			return errors.Wrap(err, "failed to compile source")
-		}
+		// if _, err = i.Eval(formatted); err != nil {
+		// 	ctx.Println(formatted)
+		// 	return errors.Wrap(err, "failed to compile source")
+		// }
 
-		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
-		}
+		// if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
+		// 	return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
+		// }
 
-		if f, ok = v.Interface().(func(interp.Insert)); !ok {
-			return errors.Errorf("genieql.Insert - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
-		}
+		// if f, ok = v.Interface().(func(interp.Insert)); !ok {
+		// 	return errors.Errorf("genieql.Insert - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
+		// }
 
-		if scanner = functions.DetectScanner(ctx.Context, declPattern); scanner == nil {
-			return errors.Errorf("genieql.Insert %s - missing scanner", nodeInfo(ctx, fn))
+		if scanner = functions.DetectScanner(cctx.Context, declPattern); scanner == nil {
+			return errors.Errorf("genieql.Insert %s - missing scanner", nodeInfo(cctx, fn))
 		}
 
 		if cf = functions.DetectContext(declPattern); cf != nil {
@@ -91,7 +88,7 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 
 		switch plen := len(declPattern.Params.List); plen {
 		case 0:
-			return errors.Errorf("genieql.Insert %s - missing type to insert; should be the last parameter of function declaration argument", nodeInfo(ctx, fn))
+			return errors.Errorf("genieql.Insert %s - missing type to insert; should be the last parameter of function declaration argument", nodeInfo(cctx, fn))
 		case 1:
 			tf = declPattern.Params.List[0]
 			params = declPattern.Params.List
@@ -100,8 +97,8 @@ func Inserts(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl)
 			params = declPattern.Params.List
 		}
 
-		fgen := interp.NewInsert(
-			ctx.Context,
+		fgen := ginterp.NewInsert(
+			cctx.Context,
 			fn.Name.String(),
 			fn.Doc,
 			scanner,

@@ -2,26 +2,31 @@ package compiler
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"io"
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"reflect"
 	"sort"
 
 	"bitbucket.org/jatone/genieql"
 
 	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/compiler/runtime"
-	"bitbucket.org/jatone/genieql/compiler/stdlib"
+	"bitbucket.org/jatone/genieql/compiler/transforms"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
-	genieqlinterp "bitbucket.org/jatone/genieql/interp/genieql"
+	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
+	"github.com/dave/jennifer/jen"
 	"github.com/pkg/errors"
-	"github.com/traefik/yaegi/interp"
+
+	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"github.com/tetratelabs/wazero/sys"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)
@@ -39,17 +44,17 @@ type Result struct {
 }
 
 type compilegen interface {
-	Generate(*interp.Interpreter, io.Writer) error
+	Generate(context.Context, io.Writer) error
 }
 
-type CompileGenFn func(*interp.Interpreter, io.Writer) error
+type CompileGenFn func(context.Context, io.Writer) error
 
-func (t CompileGenFn) Generate(i *interp.Interpreter, dst io.Writer) error {
-	return t(i, dst)
+func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer) error {
+	return t(ctx, dst)
 }
 
 // Matcher match against a function declaration.
-type Matcher func(Context, *interp.Interpreter, *ast.File, *ast.FuncDecl) (Result, error)
+type Matcher func(Context, *ast.File, *ast.FuncDecl) (Result, error)
 
 // New compiler
 func New(ctx generators.Context, matchers ...Matcher) Context {
@@ -85,17 +90,16 @@ func (t Context) generators(in *ast.File) (results []Result) {
 				Decls:   append(imports, fn),
 			}
 
-			i := t.localinterp()
 			pos := t.Context.FileSet.PositionFor(fn.Pos(), true).String()
 
-			if r, err = m(t, i, focused, fn); err != nil {
+			if r, err = m(t, focused, fn); err != nil {
 				if err == ErrNoMatch {
 					continue
 				}
 
 				r = Result{
 					Priority: math.MaxInt64,
-					Generator: CompileGenFn(func(i *interp.Interpreter, dst io.Writer) error {
+					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
 						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
 					}),
 				}
@@ -112,7 +116,7 @@ func (t Context) generators(in *ast.File) (results []Result) {
 
 // Compile consumes a filepath and processes writing any resulting
 // output into the dst.
-func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
+func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.File) (err error) {
 	var (
 		working *os.File
 		results = []Result{}
@@ -159,7 +163,6 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		return results[i].Priority < results[j].Priority
 	})
 
-	i := t.localinterp()
 	for _, r := range results {
 		var (
 			formatted string
@@ -168,7 +171,7 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 
 		t.Context.Debugln("generating code initiated")
 
-		if err = r.Generator.Generate(i, buf); err != nil {
+		if err = r.Generator.Generate(ctx, buf); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
 		}
 
@@ -199,10 +202,10 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 		t.Context.Debugln("generating code completed")
 		t.Context.Debugln(formatted)
 
-		i = t.localinterp()
-		if _, err := i.Eval(formatted); err != nil {
-			return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
-		}
+		// i = t.localinterp()
+		// if _, err := i.Eval(formatted); err != nil {
+		// 	return errors.Wrapf(err, "%s\n%s: failed to update compilation context", formatted, r.Location)
+		// }
 
 		t.Context.Debugln("added generated code to evaluation context")
 	}
@@ -213,36 +216,134 @@ func (t Context) Compile(dst io.Writer, sources ...*ast.File) (err error) {
 	), "failed to write generated code")
 }
 
-func (t Context) localinterp() *interp.Interpreter {
-	i := interp.New(interp.Options{
-		GoPath: t.Build.GOPATH,
-	})
+func (t Context) localinterp() interface{} {
+	// i := interp.New(interp.Options{
+	// 	GoPath: t.Build.GOPATH,
+	// })
 
-	genieqlsyms := map[string]reflect.Value{
-		"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
-		"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
-		"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
-		"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
-		"InsertBatch":  reflect.ValueOf((*genieqlinterp.InsertBatch)(nil)),
-		"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
-		"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
-		"Table":        reflect.ValueOf(genieqlinterp.Table),
-		"Query":        reflect.ValueOf(genieqlinterp.Query),
+	// genieqlsyms := map[string]reflect.Value{
+	// 	"Structure":    reflect.ValueOf((*genieqlinterp.Structure)(nil)),
+	// 	"Scanner":      reflect.ValueOf((*genieqlinterp.Scanner)(nil)),
+	// 	"Function":     reflect.ValueOf((*genieqlinterp.Function)(nil)),
+	// 	"Insert":       reflect.ValueOf((*genieqlinterp.Insert)(nil)),
+	// 	"InsertBatch":  reflect.ValueOf((*genieqlinterp.InsertBatch)(nil)),
+	// 	"QueryAutogen": reflect.ValueOf((*genieqlinterp.QueryAutogen)(nil)),
+	// 	"Camelcase":    reflect.ValueOf(genieqlinterp.Camelcase),
+	// 	"Table":        reflect.ValueOf(genieqlinterp.Table),
+	// 	"Query":        reflect.ValueOf(genieqlinterp.Query),
+	// }
+	// i.Use(stdlib.Symbols)
+	// i.Use(runtime.Symbols)
+	// i.Use(interp.Exports{
+	// 	"bitbucket.org/jatone/genieql/interp":         genieqlsyms,
+	// 	"bitbucket.org/jatone/genieql/interp/ginterp": genieqlsyms,
+	// })
+
+	// if path, exports := t.Context.Driver.Exported(); path != "" {
+	// 	// yaegi has touble importing some packages (like pgtype)
+	// 	// so allow drivers to export values.
+	// 	i.Use(interp.Exports{
+	// 		path: exports,
+	// 	})
+	// }
+
+	return nil
+}
+
+type module interface {
+	Instantiate(context.Context) (api.Module, error)
+}
+
+func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, name string, compiled wazero.CompiledModule, modules ...module) (err error) {
+	var (
+		instantiated []api.Module
+	)
+	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to build wasi snapshot preview1")
 	}
-	i.Use(stdlib.Symbols)
-	i.Use(runtime.Symbols)
-	i.Use(interp.Exports{
-		"bitbucket.org/jatone/genieql/interp":         genieqlsyms,
-		"bitbucket.org/jatone/genieql/interp/genieql": genieqlsyms,
-	})
+	defer wasienv.Close(ctx)
 
-	if path, exports := t.Context.Driver.Exported(); path != "" {
-		// yaegi has touble importing some packages (like pgtype)
-		// so allow drivers to export values.
-		i.Use(interp.Exports{
-			path: exports,
-		})
+	for _, mfn := range modules {
+		var (
+			m api.Module
+		)
+
+		if m, err = mfn.Instantiate(ctx); err != nil {
+			break
+		}
+
+		instantiated = append(instantiated, m)
+	}
+	defer func() {
+		for _, i := range instantiated {
+			errorsx.MaybeLog(i.Close(ctx))
+		}
+	}()
+
+	if err != nil {
+		return err
 	}
 
-	return i
+	log.Println("instantiation initiated")
+	m, err := runtime.InstantiateModule(ctx, compiled, cfg.WithName(name))
+	if cause, ok := err.(*sys.ExitError); ok && cause.ExitCode() == ffierrors.ErrUnrecoverable {
+		return errorsx.NewUnrecoverable(cause)
+	}
+
+	if err != nil {
+		return err
+	}
+	defer m.Close(ctx)
+	log.Println("instantiation completed")
+
+	return nil
+}
+
+func genmodule(ctx context.Context, main *jen.File) (err error) {
+	var (
+		tmpdir  string
+		maindst *os.File
+	)
+	if tmpdir, err = os.MkdirTemp(".", "genieql.*"); err != nil {
+		return errorsx.Wrap(err, "create temp directory")
+	}
+	defer os.RemoveAll(tmpdir)
+
+	if err = transforms.PrepareSourceModule(tmpdir); err != nil {
+		return errorsx.Wrap(err, "unable to prepare module")
+	}
+
+	var (
+		srcdir = filepath.Join(tmpdir, "src")
+		dstdir = filepath.Join(tmpdir, "bin")
+	)
+
+	if err = os.MkdirAll(srcdir, 0700); err != nil {
+		return err
+	}
+
+	if maindst, err = os.Create(filepath.Join(srcdir, "main.go")); err != nil {
+		return err
+	}
+	defer maindst.Close()
+
+	if err = main.Render(maindst); err != nil {
+		return err
+	}
+
+	if err = astcodec.ReformatFile(maindst); err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, "go", "build", "-tags", "genieql.generate,genieql.ignore", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	if err = cmd.Run(); err != nil {
+		return errors.Wrap(err, "unable to compile kernel")
+	}
+
+	return nil
 }

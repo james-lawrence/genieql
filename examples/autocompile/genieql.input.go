@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"bitbucket.org/jatone/genieql/examples/autocompile/pkga"
+	genieql "bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/sqlx"
-	"bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Example1 ...

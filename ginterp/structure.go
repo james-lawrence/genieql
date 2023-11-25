@@ -1,4 +1,4 @@
-package genieql
+package ginterp
 
 import (
 	"go/ast"
@@ -65,17 +65,3 @@ func (t sconfig) Table(s string) definition {
 func (t sconfig) Query(s string) definition {
 	return Query(t.ctx.Driver, t.ctx.Dialect, s)
 }
-
-// func (t sconfig) OptionTransformColumns(x ...func(genieql.ColumnInfo) genieql.ColumnInfo) Structure {
-// 	return t
-// 	// return func(s sconfig) sconfig {
-// 	// 	return s
-// 	// }
-// }
-//
-// func (t sconfig) OptionRenameColumn(from, to string) Structure {
-// 	return t
-// 	// return func(s sconfig) sconfig {
-// 	// 	return s
-// 	// }
-// }
