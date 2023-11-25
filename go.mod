@@ -1,24 +1,31 @@
 module bitbucket.org/jatone/genieql
 
-go 1.18
+go 1.21
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
+	github.com/dave/jennifer v1.7.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/jackc/pgtype v1.11.0
-	github.com/jackc/pgx/v4 v4.16.1
-	github.com/mattn/go-isatty v0.0.16
-	github.com/mattn/go-sqlite3 v1.14.16
-	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.19.0
+	github.com/jackc/pgtype v1.14.0
+	github.com/jackc/pgx/v4 v4.18.1
+	github.com/mattn/go-isatty v0.0.20
+	github.com/mattn/go-sqlite3 v1.14.18
+	github.com/onsi/ginkgo/v2 v2.13.1
+	github.com/onsi/gomega v1.30.0
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
-	github.com/traefik/yaegi v0.14.3
 	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
-	golang.org/x/text v0.3.7
-	golang.org/x/tools v0.1.11
+	golang.org/x/text v0.14.0
+	golang.org/x/tools v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/go-logr/logr v1.3.0 // indirect
+	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/pprof v0.0.0-20231101202521-4ca4178f5c7a // indirect
 )
 
 require (
@@ -27,18 +34,16 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.12.1 // indirect
+	github.com/jackc/pgconn v1.14.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	github.com/tetratelabs/wazero v1.5.0
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/traefik/yaegi => github.com/james-lawrence/yaegi v0.14.3-modules-enh-tag
