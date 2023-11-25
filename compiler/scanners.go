@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/tetratelabs/wazero"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/ginterp"
@@ -73,7 +74,7 @@ func Scanner(ctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error
 	f(gen)
 
 	return Result{
-		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
 			return gen.Generate(dst)
 		}),
 		Priority: PriorityScanners,

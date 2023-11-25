@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/tetratelabs/wazero"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
@@ -51,7 +52,7 @@ func Inserts(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err error
 	log.Printf("genieql.Insert identified %s\n", nodeInfo(cctx, fn))
 	cctx.Debugln(formatted)
 
-	gen = CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
 		var (
 			f       func(ginterp.Insert)
 			scanner *ast.FuncDecl // scanner to use for the results.

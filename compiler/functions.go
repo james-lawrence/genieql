@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/tetratelabs/wazero"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	interp "bitbucket.org/jatone/genieql/ginterp"
@@ -52,7 +53,7 @@ func Function(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err erro
 	log.Printf("genieql.Function identified %s\n", nodeInfo(cctx, fn))
 	cctx.Debugln(formatted)
 
-	gen = CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
 		var (
 			f func(interp.Function)
 		)

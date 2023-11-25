@@ -3,13 +3,18 @@ package compiler
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"fmt"
 	"go/ast"
 	"go/build"
 	"io"
 	"log"
+	"os"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
+	"github.com/tetratelabs/wazero"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
@@ -35,14 +40,45 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 	cctx.Debugln(formatted)
 
 	content = genstructuremain(cctx.Name, cctx.CurrentPackage, pos.Name.String())
+	printjen(content)
 
 	return Result{
-		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
-			if err = genmodule(ctx, content); err != nil {
+		Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+			var (
+				c   wazero.CompiledModule
+				buf bytes.Buffer
+			)
+
+			if c, err = genmodule(ctx, runtime, content); err != nil {
 				return errorsx.Wrap(err, "unable to compile module")
 			}
-			log.Println("ME NEXT ME NEXT")
-			// return gen.Generate(dst)
+			defer c.Close(ctx)
+			log.Println("derp 0", cctx.Configuration.Location)
+			log.Println("derp 1", cctx.Configuration.Name)
+			log.Println("derp 2", cctx.ModuleRoot)
+			log.Println("derp 3", cctx.Build.GOROOT)
+
+			log.Println("DERP", spew.Sdump(cctx.Build))
+			mcfg := wazero.NewModuleConfig().
+				WithStderr(os.Stderr).
+				WithStdout(&buf).
+				WithSysNanotime().
+				WithSysWalltime().
+				WithRandSource(rand.Reader).
+				WithFSConfig(
+					wazero.NewFSConfig().
+						WithDirMount(cctx.ModuleRoot, "").
+						WithDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
+				).
+				WithArgs(os.Args...).
+				WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
+			mcfg = wasienv(cctx, mcfg)
+
+			if err = run(ctx, mcfg, runtime, c); err != nil {
+				return errorsx.Wrap(err, "unable to run module")
+			}
+
+			log.Println("DONE", buf.String())
 			return nil
 		}),
 		Priority: PriorityStructure,

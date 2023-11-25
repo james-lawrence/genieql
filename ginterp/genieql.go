@@ -2,6 +2,10 @@ package ginterp
 
 import (
 	"bitbucket.org/jatone/genieql"
+	// register the drivers
+	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	// register the postgresql dialect
+	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 )
 
 type definition interface {
