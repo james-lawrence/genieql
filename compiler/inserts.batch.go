@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/tetratelabs/wazero"
 
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators/functions"
@@ -65,7 +66,7 @@ func BatchInserts(cctx Context, src *ast.File, fn *ast.FuncDecl) (r Result, err 
 	// 	return r, errors.Errorf("genieql.InsertBatch - %s - unable to convert function to be invoked wanted(%T) got(%T)", nodeInfo(ctx, fn), f, v.Interface())
 	// }
 
-	gen = CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+	gen = CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
 		var (
 			f func(ginterp.InsertBatch)
 		)

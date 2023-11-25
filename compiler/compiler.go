@@ -5,6 +5,7 @@ import (
 	"context"
 	"go/ast"
 	"io"
+	"io/fs"
 	"log"
 	"math"
 	"os"
@@ -44,13 +45,13 @@ type Result struct {
 }
 
 type compilegen interface {
-	Generate(context.Context, io.Writer) error
+	Generate(context.Context, io.Writer, wazero.Runtime) error
 }
 
-type CompileGenFn func(context.Context, io.Writer) error
+type CompileGenFn func(context.Context, io.Writer, wazero.Runtime) error
 
-func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer) error {
-	return t(ctx, dst)
+func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
+	return t(ctx, dst, runtime)
 }
 
 // Matcher match against a function declaration.
@@ -99,7 +100,7 @@ func (t Context) generators(in *ast.File) (results []Result) {
 
 				r = Result{
 					Priority: math.MaxInt64,
-					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer) error {
+					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime) error {
 						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
 					}),
 				}
@@ -163,6 +164,13 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		return results[i].Priority < results[j].Priority
 	})
 
+	runtime := wazero.NewRuntimeWithConfig(
+		ctx,
+		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096),
+	)
+	defer runtime.Close(ctx)
+	// hostenvmb := runtime.NewHostModuleBuilder("env")
+
 	for _, r := range results {
 		var (
 			formatted string
@@ -171,7 +179,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 
 		t.Context.Debugln("generating code initiated")
 
-		if err = r.Generator.Generate(ctx, buf); err != nil {
+		if err = r.Generator.Generate(ctx, buf, runtime); err != nil {
 			return errors.Wrapf(err, "%s: failed to generate", r.Location)
 		}
 
@@ -254,10 +262,11 @@ type module interface {
 	Instantiate(context.Context) (api.Module, error)
 }
 
-func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, name string, compiled wazero.CompiledModule, modules ...module) (err error) {
+func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule, modules ...module) (err error) {
 	var (
 		instantiated []api.Module
 	)
+
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to build wasi snapshot preview1")
@@ -286,7 +295,7 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, n
 	}
 
 	log.Println("instantiation initiated")
-	m, err := runtime.InstantiateModule(ctx, compiled, cfg.WithName(name))
+	m, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if cause, ok := err.(*sys.ExitError); ok && cause.ExitCode() == ffierrors.ErrUnrecoverable {
 		return errorsx.NewUnrecoverable(cause)
 	}
@@ -300,18 +309,19 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, n
 	return nil
 }
 
-func genmodule(ctx context.Context, main *jen.File) (err error) {
+func genmodule(ctx context.Context, runtime wazero.Runtime, main *jen.File) (m wazero.CompiledModule, err error) {
 	var (
 		tmpdir  string
 		maindst *os.File
+		wasi    []byte
 	)
 	if tmpdir, err = os.MkdirTemp(".", "genieql.*"); err != nil {
-		return errorsx.Wrap(err, "create temp directory")
+		return nil, errorsx.Wrap(err, "create temp directory")
 	}
 	defer os.RemoveAll(tmpdir)
 
 	if err = transforms.PrepareSourceModule(tmpdir); err != nil {
-		return errorsx.Wrap(err, "unable to prepare module")
+		return nil, errorsx.Wrap(err, "unable to prepare module")
 	}
 
 	var (
@@ -320,20 +330,20 @@ func genmodule(ctx context.Context, main *jen.File) (err error) {
 	)
 
 	if err = os.MkdirAll(srcdir, 0700); err != nil {
-		return err
+		return nil, err
 	}
 
 	if maindst, err = os.Create(filepath.Join(srcdir, "main.go")); err != nil {
-		return err
+		return nil, err
 	}
 	defer maindst.Close()
 
 	if err = main.Render(maindst); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = astcodec.ReformatFile(maindst); err != nil {
-		return err
+		return nil, err
 	}
 
 	cmd := exec.CommandContext(ctx, "go", "build", "-tags", "genieql.generate,genieql.ignore", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
@@ -342,8 +352,17 @@ func genmodule(ctx context.Context, main *jen.File) (err error) {
 	cmd.Stdout = os.Stdout
 
 	if err = cmd.Run(); err != nil {
-		return errors.Wrap(err, "unable to compile kernel")
+		return nil, errors.Wrap(err, "unable to compile module")
 	}
 
-	return nil
+	if wasi, err = fs.ReadFile(os.DirFS(tmpdir), "bin"); err != nil {
+		return nil, errors.Wrap(err, "unable to read module")
+	}
+
+	c, err := runtime.CompileModule(ctx, wasi)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }

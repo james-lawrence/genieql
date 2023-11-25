@@ -16,6 +16,7 @@ import (
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -37,6 +38,7 @@ const (
 // Context - context for generators
 type Context struct {
 	Name           string
+	ModuleRoot     string
 	Build          build.Context
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
@@ -197,7 +199,7 @@ func NewContextDeprecated(bctx build.Context, name string, pkg string, options .
 	)
 
 	if bpkg, err = genieql.LocatePackage(pkg, ".", bctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return ctx, err
+		return ctx, errorsx.Wrap(err, "unable to locate package")
 	}
 
 	return NewContext(bctx, name, bpkg, options...)
@@ -208,7 +210,12 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 		config  genieql.Configuration
 		dialect genieql.Dialect
 		driver  genieql.Driver
+		mroot   string
 	)
+
+	if mroot, err = genieql.FindModuleRoot("."); err != nil {
+		return ctx, err
+	}
 
 	config = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
@@ -229,6 +236,7 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	}
 
 	ctx = Context{
+		ModuleRoot:     mroot,
 		Name:           name,
 		Build:          bctx,
 		CurrentPackage: pkg,
