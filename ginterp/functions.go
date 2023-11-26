@@ -1,14 +1,17 @@
 package ginterp
 
 import (
+	"fmt"
 	"go/ast"
 	"go/printer"
 	"io"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -32,6 +35,35 @@ func NewFunction(
 		signature: signature,
 		comment:   comment,
 	}
+}
+
+func FunctionFromFile(cctx generators.Context, name string, tree *ast.File) (Function, error) {
+	var (
+		ok          bool
+		pos         *ast.FuncDecl
+		scanner     *ast.FuncDecl // scanner to use for the results.
+		declPattern *ast.FuncType
+	)
+
+	if pos = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); pos == nil {
+		return nil, fmt.Errorf("unable to locate function declaration for insert: %s", name)
+	}
+
+	// rewrite scanner declaration function.
+	if declPattern, ok = pos.Type.Params.List[1].Type.(*ast.FuncType); !ok {
+		return nil, errorsx.String("InsertBatch second parameter must be a function type")
+	}
+
+	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
+		return nil, errors.Errorf("InsertBatch %s - missing scanner", nodeInfo(cctx, pos))
+	}
+
+	return NewFunction(
+		cctx,
+		name,
+		declPattern,
+		pos.Doc,
+	), nil
 }
 
 type function struct {

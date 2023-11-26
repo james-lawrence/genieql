@@ -4,15 +4,19 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"strings"
 
+	"bitbucket.org/jatone/genieql"
 	"github.com/pkg/errors"
 )
 
-func currentPackage(dir string) *build.Package {
-	pkg, err := build.Default.ImportDir(dir, build.IgnoreVendor)
+func currentPackage(bctx build.Context, path string, dir string) *build.Package {
+	pkg, err := bctx.Import(".", dir, build.IgnoreVendor)
 	if err != nil {
 		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
+		panic(err)
 	}
+	pkg.ImportPath = path
 
 	return pkg
 }
@@ -20,15 +24,26 @@ func currentPackage(dir string) *build.Package {
 func newBuildInfo() (bi buildInfo, err error) {
 	var (
 		workingDir string
+		modname    string
+		modroot    string
 	)
 
 	if workingDir, err = os.Getwd(); err != nil {
 		return bi, err
 	}
 
+	if modroot, err = genieql.FindModuleRoot(workingDir); err != nil {
+		return bi, err
+	}
+
+	if modname, err = genieql.FindModulePath(workingDir); err != nil {
+		return bi, err
+	}
+
 	return buildInfo{
+		Build:      build.Default,
 		WorkingDir: workingDir,
-		CurrentPKG: currentPackage(workingDir),
+		CurrentPKG: currentPackage(build.Default, strings.Replace(workingDir, modroot, modname, -1), workingDir),
 	}, nil
 }
 
@@ -46,6 +61,7 @@ func mustBuildInfo() buildInfo {
 }
 
 type buildInfo struct {
+	Build      build.Context
 	Verbosity  int
 	WorkingDir string
 	CurrentPKG *build.Package

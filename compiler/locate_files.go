@@ -90,38 +90,7 @@ func (t TaggedFiles) IsTagged(name string) bool {
 }
 
 // Locate files with the specified build tags
-func FindTaggedFiles(bctx build.Context, path string, tags ...string) (TaggedFiles, error) {
-	var (
-		err         error
-		taggedFiles TaggedFiles
-	)
-
-	nctx := bctx
-	nctx.BuildTags = []string{}
-	normal, err := nctx.Import(".", path, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	ctx := bctx
-	ctx.BuildTags = tags
-	tagged, err := ctx.Import(".", path, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	for _, t := range tagged.GoFiles {
-		missing := true
-		for _, n := range normal.GoFiles {
-			if t == n {
-				missing = false
-			}
-		}
-
-		if missing {
-			taggedFiles.Files = append(taggedFiles.Files, t)
-		}
-	}
-
-	return taggedFiles, nil
+func FindTaggedFiles(bctx build.Context, path string, tags ...string) (taggedFiles TaggedFiles, err error) {
+	taggedFiles.Files, err = genieql.FindTaggedFiles(bctx, path, tags...)
+	return taggedFiles, err
 }

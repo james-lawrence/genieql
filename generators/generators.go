@@ -193,18 +193,6 @@ func OptionDebug(ctx *Context) {
 	ctx.Verbosity = VerbosityDebug
 }
 
-func NewContextDeprecated(bctx build.Context, name string, pkg string, options ...Option) (ctx Context, err error) {
-	var (
-		bpkg *build.Package
-	)
-
-	if bpkg, err = genieql.LocatePackage(pkg, ".", bctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return ctx, errorsx.Wrap(err, "unable to locate package")
-	}
-
-	return NewContext(bctx, name, bpkg, options...)
-}
-
 func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
 	var (
 		config  genieql.Configuration
@@ -236,7 +224,7 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	}
 
 	ctx = Context{
-		ModuleRoot:     mroot,
+		ModuleRoot:     mroot + "/",
 		Name:           name,
 		Build:          bctx,
 		CurrentPackage: pkg,

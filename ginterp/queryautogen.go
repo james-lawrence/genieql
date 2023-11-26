@@ -1,6 +1,7 @@
 package ginterp
 
 import (
+	"fmt"
 	"go/ast"
 	"go/printer"
 	"go/token"
@@ -12,6 +13,7 @@ import (
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
@@ -22,6 +24,44 @@ type QueryAutogen interface {
 	genieql.Generator              // must satisfy the generator interface
 	From(string) QueryAutogen      // what table to insert into
 	Ignore(...string) QueryAutogen // ignore the specified columns.
+}
+
+func QueryAutogenFromFile(cctx generators.Context, name string, tree *ast.File) (QueryAutogen, error) {
+	var (
+		pos     *ast.FuncDecl
+		cf      *ast.Field    // context field
+		qf      *ast.Field    // query field
+		typ     *ast.Field    // type we're scanning into the table.
+		scanner *ast.FuncDecl // scanner to use for the results.
+	)
+
+	if pos = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); pos == nil {
+		return nil, fmt.Errorf("genieql.QueryAutogen unable to locate function declaration: %s", name)
+	}
+
+	// pop off the genieql.QueryAutogen
+	pos.Type.Params.List = pos.Type.Params.List[1:]
+
+	if cf = functions.DetectContext(pos.Type); cf != nil {
+		// pop the context off the params.
+		pos.Type.Params.List = pos.Type.Params.List[1:]
+	}
+
+	qf, typ = pos.Type.Params.List[0], pos.Type.Params.List[1]
+
+	if scanner = functions.DetectScanner(cctx, pos.Type); scanner == nil {
+		return nil, errors.Errorf("genieql.QueryAutogen %s - missing scanner", nodeInfo(cctx, pos))
+	}
+
+	return NewQueryAutogen(
+		cctx,
+		pos.Name.String(),
+		pos.Doc,
+		cf,
+		qf,
+		typ,
+		scanner,
+	), nil
 }
 
 // NewQueryAutogen instantiate a query autogen. which generates basic queries

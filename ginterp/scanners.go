@@ -1,13 +1,16 @@
 package ginterp
 
 import (
+	"fmt"
 	"go/ast"
 	"io"
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 )
 
@@ -15,6 +18,29 @@ import (
 type Scanner interface {
 	genieql.Generator // must satisfy the generator interface
 	ColumnNamePrefix(string) Scanner
+}
+
+func ScannerFromFile(cctx generators.Context, name string, tree *ast.File) (Scanner, error) {
+	var (
+		ok          bool
+		declPattern *ast.FuncType
+		fn          *ast.FuncDecl
+	)
+
+	if fn = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); fn == nil {
+		return nil, fmt.Errorf("unable to locate function declaration for scanner: %s", name)
+	}
+
+	// extract the scanner declaration function.
+	if declPattern, ok = fn.Type.Params.List[1].Type.(*ast.FuncType); !ok {
+		return nil, errorsx.String("Scanners second parameter must be a function type")
+	}
+
+	return NewScanner(
+		cctx,
+		name,
+		declPattern.Params,
+	), nil
 }
 
 // NewScanner instantiate a new scanner generator. it uses the name of function

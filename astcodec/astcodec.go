@@ -1,6 +1,7 @@
 package astcodec
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -8,9 +9,14 @@ import (
 	"log"
 
 	"bitbucket.org/jatone/genieql/astbuild"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/packages"
 )
+
+// ErrPackageNotFound returned when the requested package cannot be located
+// within the given context.
+const ErrPackageNotFound = errorsx.String("package not found")
 
 type LoadOpt func(*packages.Config)
 
@@ -26,7 +32,8 @@ func AutoFileSet(c *packages.Config) {
 
 func DefaultPkgLoad(options ...LoadOpt) *packages.Config {
 	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedImports | packages.NeedTypes | packages.NeedSyntax | packages.NeedFiles | packages.NeedDeps,
+		Fset: token.NewFileSet(),
+		Mode: packages.NeedName | packages.NeedSyntax,
 	}
 
 	for _, opt := range options {
@@ -44,6 +51,20 @@ func Load(cfg *packages.Config, name string) (pkg *packages.Package, err error) 
 	}
 
 	return set[0], nil
+}
+
+func LoadFirst(cfg *packages.Config) (pkg *packages.Package, err error) {
+	var set []*packages.Package
+
+	if set, err = packages.Load(cfg); err != nil {
+		return nil, err
+	}
+
+	for _, pkg = range set {
+		return pkg, nil
+	}
+
+	return nil, errors.New("no package found")
 }
 
 func FindFunctions(d ast.Decl) bool {
@@ -136,6 +157,14 @@ func FindImportsByPath(path string) func(*ast.ImportSpec) bool {
 	}
 }
 
+func FilterImports(n ast.Decl) bool {
+	if d, ok := n.(*ast.GenDecl); ok {
+		return d.Tok == token.IMPORT
+	}
+
+	return false
+}
+
 func SearchDecls(pkg *packages.Package, filters ...func(ast.Decl) bool) (fn []ast.Decl) {
 	for _, gf := range pkg.Syntax {
 		for _, d := range gf.Decls {
@@ -153,14 +182,41 @@ func SearchDecls(pkg *packages.Package, filters ...func(ast.Decl) bool) (fn []as
 }
 
 func SearchFileDecls(gf *ast.File, filters ...func(ast.Decl) bool) (fn []ast.Decl) {
-	for _, d := range gf.Decls {
+	match := func(d ast.Decl) bool {
 		for _, f := range filters {
-			if !f(d) {
-				continue
+			if f(d) {
+				return true
 			}
 		}
 
-		fn = append(fn, d)
+		return false
+	}
+
+	for _, d := range gf.Decls {
+		if match(d) {
+			fn = append(fn, d)
+			continue
+		}
+	}
+
+	return fn
+}
+
+func FileFindDecl[T ast.Node](gf *ast.File, filters ...func(ast.Decl) bool) (fn T) {
+	match := func(d ast.Decl) bool {
+		for _, f := range filters {
+			if f(d) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	for _, d := range gf.Decls {
+		if match(d) {
+			return d.(T)
+		}
 	}
 
 	return fn
@@ -350,6 +406,36 @@ func NewFunctionReplacement(mut func(*ast.FuncDecl) *ast.FuncDecl, pattern func(
 	}
 }
 
+func NewIdentReplacement(mut func(*ast.Ident) *ast.Ident, pattern func(*ast.Ident) bool) ast.Visitor {
+	return replaceidentexpr{
+		mut:     mut,
+		pattern: pattern,
+	}
+}
+
+type replaceidentexpr struct {
+	pattern func(*ast.Ident) bool
+	mut     func(*ast.Ident) *ast.Ident
+}
+
+func (t replaceidentexpr) Visit(node ast.Node) (w ast.Visitor) {
+	if node == nil {
+		return t
+	}
+
+	switch x := node.(type) {
+	case *ast.Ident:
+		if t.pattern(x) {
+			replacement := t.mut(x)
+			x.Name = replacement.Name
+		}
+	default:
+		// log.Printf("%T\n", x)
+	}
+
+	return t
+}
+
 func NewEnsureImport(i string) ast.Visitor {
 	return ensureimport{
 		importname: i,
@@ -499,7 +585,6 @@ func EnsureImport(root ast.Node, n string) ast.Node {
 			return false
 		}
 	}, func(c *astutil.Cursor) bool {
-
 		node, ok := c.Node().(*ast.GenDecl)
 		if !ok {
 			return true
@@ -508,6 +593,12 @@ func EnsureImport(root ast.Node, n string) ast.Node {
 		node.Specs = append(node.Specs, astbuild.ImportSpecLiteral(nil, n))
 		return true
 	})
+}
+
+func PrintImports(tree *ast.File) {
+	for _, i := range tree.Imports {
+		log.Println("import", i.Path.Value)
+	}
 }
 
 func Ident(expr ast.Expr) string {

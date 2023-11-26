@@ -13,7 +13,9 @@ import (
 	"os"
 	"strings"
 
+	"bitbucket.org/jatone/genieql/astbuild"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/slicesx"
 	"github.com/pkg/errors"
 )
 
@@ -22,10 +24,6 @@ type errorString string
 func (t errorString) Error() string {
 	return string(t)
 }
-
-// ErrPackageNotFound returned when the requested package cannot be located
-// within the given context.
-const ErrPackageNotFound = errorString("package not found")
 
 // ErrAmbiguousPackage returned when the requested package is located multiple
 // times within the given context.
@@ -96,19 +94,36 @@ func StrictPackageImport(name string) func(*build.Package) bool {
 	}
 }
 
-// LocatePackage finds a package by its name.
-func LocatePackage(importPath, srcDir string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
-	pkg, err = context.Import(importPath, srcDir, build.IgnoreVendor&build.ImportComment)
-	_, noGoError := err.(*build.NoGoError)
-	if err != nil && !noGoError {
-		return nil, errors.Wrapf(err, "failed to import the package: %s", importPath)
+// Locate files with the specified build tags
+func FindTaggedFiles(bctx build.Context, path string, tags ...string) (taggedFiles []string, err error) {
+	nctx := bctx
+	nctx.BuildTags = []string{}
+	normal, err := nctx.Import(".", path, build.IgnoreVendor)
+	if err != nil {
+		return taggedFiles, err
 	}
 
-	if pkg != nil && (matches == nil || matches(pkg)) {
-		return pkg, nil
+	ctx := bctx
+	ctx.BuildTags = tags
+	tagged, err := ctx.Import(".", path, build.IgnoreVendor)
+	if err != nil {
+		return taggedFiles, err
 	}
 
-	return nil, ErrPackageNotFound
+	for _, t := range tagged.GoFiles {
+		missing := true
+		for _, n := range normal.GoFiles {
+			if t == n {
+				missing = false
+			}
+		}
+
+		if missing {
+			taggedFiles = append(taggedFiles, t)
+		}
+	}
+
+	return taggedFiles, nil
 }
 
 // ExtractFields walks the AST until it finds the first FieldList node.
@@ -170,14 +185,6 @@ func FindImports(node ast.Node) []*ast.GenDecl {
 	}}
 	ast.Walk(&v, node)
 	return v.nodes
-}
-
-// GenDeclToDecl upcases GenDecl to Decl.
-func GenDeclToDecl(decls ...*ast.GenDecl) (results []ast.Decl) {
-	for _, d := range decls {
-		results = append(results, d)
-	}
-	return results
 }
 
 type declFilter struct {
@@ -380,6 +387,7 @@ func (t utils) ParsePackages(pkgset ...*build.Package) (result []*ast.Package, e
 			result = append(result, pkg)
 		}
 	}
+
 	return result, nil
 }
 
@@ -529,9 +537,19 @@ func (t *ASTPrinter) Err() error {
 
 // PrintPackage inserts the package and a preface at into the ast.
 func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *build.Package, args []string) error {
+	imports := slicesx.MapTransform[string, *ast.ImportSpec](func(s string) *ast.ImportSpec {
+		return astbuild.ImportSpecLiteral(nil, s)
+	}, pkg.Imports...)
+
 	past := &ast.File{
 		Name: &ast.Ident{
 			Name: pkg.Name,
+		},
+		Decls: []ast.Decl{
+			&ast.GenDecl{
+				Tok:   token.IMPORT,
+				Specs: slicesx.MapTransform[*ast.ImportSpec, ast.Spec](func(is *ast.ImportSpec) ast.Spec { return is }, imports...),
+			},
 		},
 	}
 
