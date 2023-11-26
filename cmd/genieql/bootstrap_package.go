@@ -11,7 +11,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	bstrap "bitbucket.org/jatone/genieql/bootstrap"
 	"bitbucket.org/jatone/genieql/bootstrap/autocompile"
 	"bitbucket.org/jatone/genieql/cmd"
@@ -45,7 +45,7 @@ func (t *bootstrapPackage) Bootstrap(*kingpin.ParseContext) error {
 			tokens    = token.NewFileSet()
 		)
 
-		if pkg, err = genieql.LocatePackage(importPath, ".", build.Default, nil); err != nil {
+		if pkg, err = astcodec.LocatePackage(importPath, ".", build.Default, nil); err != nil {
 			log.Println("failed to bootstrap package", importPath, err)
 			continue
 		}

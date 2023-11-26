@@ -8,10 +8,12 @@ import (
 	"io"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/generators/typespec"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"github.com/pkg/errors"
 )
@@ -46,6 +48,38 @@ func NewBatchInsert(
 		scanner: scanner,
 		n:       1,
 	}
+}
+
+func InsertBatchFromFile(cctx generators.Context, name string, tree *ast.File) (InsertBatch, error) {
+	var (
+		ok          bool
+		pos         *ast.FuncDecl
+		scanner     *ast.FuncDecl // scanner to use for the results.
+		declPattern *ast.FuncType
+	)
+
+	if pos = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); pos == nil {
+		return nil, fmt.Errorf("unable to locate function declaration for insert: %s", name)
+	}
+
+	// rewrite scanner declaration function.
+	if declPattern, ok = pos.Type.Params.List[1].Type.(*ast.FuncType); !ok {
+		return nil, errorsx.String("InsertBatch second parameter must be a function type")
+	}
+
+	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
+		return nil, errors.Errorf("InsertBatch %s - missing scanner", nodeInfo(cctx, pos))
+	}
+
+	return NewBatchInsert(
+		cctx,
+		pos.Name.String(),
+		pos.Doc,
+		functions.DetectContext(declPattern),
+		functions.DetectQueryer(declPattern),
+		declPattern.Params.List[len(declPattern.Params.List)-1],
+		scanner,
+	), nil
 }
 
 type batch struct {

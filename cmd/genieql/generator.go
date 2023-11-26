@@ -5,16 +5,17 @@ import (
 	"context"
 	"go/build"
 	"io"
-	"log"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/cmd"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 )
 
 // general generator for genieql, will locate files to consider and process them.
@@ -40,10 +41,15 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		pname = t.buildInfo.CurrentPackageImport()
 		dst   io.WriteCloser
 		buf   = bytes.NewBuffer(nil)
+		bpkg  *build.Package
+		bctx  = buildx.Clone(t.buildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
 	)
 
-	log.Println("DERP DERP", t.buildInfo.WorkingDir)
-	if ctx, err = generators.NewContextDeprecated(buildx.Clone(build.Default, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate)), t.configName, pname); err != nil {
+	if bpkg, err = astcodec.LocatePackage(pname, ".", bctx, genieql.StrictPackageImport(pname)); err != nil {
+		return errorsx.Wrap(err, "unable to locate package")
+	}
+
+	if ctx, err = generators.NewContext(bctx, t.configName, bpkg); err != nil {
 		return err
 	}
 	ctx.Verbosity = t.buildInfo.Verbosity
@@ -52,7 +58,6 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, ctx.CurrentPackage.ImportPath)
 	}
 
-	log.Println("current package", ctx.CurrentPackage.Dir, ctx.CurrentPackage.ImportPath)
 	if err = compiler.Autocompile(context.Background(), ctx, buf); err != nil {
 		return err
 	}

@@ -1,10 +1,12 @@
 package ginterp
 
 import (
+	"fmt"
 	"go/ast"
 	"io"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 )
@@ -17,6 +19,22 @@ type Structure interface {
 	Table(string) definition
 	Query(string) definition
 	// OptionTransformColumns(x ...func(genieql.ColumnInfo) genieql.ColumnInfo) Structure
+}
+
+func StructureFromFile(cctx generators.Context, name string, tree *ast.File) (Structure, error) {
+	var (
+		fn *ast.FuncDecl
+	)
+
+	if fn = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); fn == nil {
+		return nil, fmt.Errorf("unable to locate function declaration for scanner: %s", name)
+	}
+
+	return NewStructure(
+		cctx,
+		name,
+		fn.Doc,
+	), nil
 }
 
 // NewStructure instantiate a new structure generator. it uses the name of function

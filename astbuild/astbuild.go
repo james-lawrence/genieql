@@ -89,3 +89,11 @@ func FnBody(a *ast.FuncDecl) *ast.BlockStmt {
 
 	return a.Body
 }
+
+// GenDeclToDecl upcases GenDecl to Decl.
+func GenDeclToDecl(decls ...*ast.GenDecl) (results []ast.Decl) {
+	for _, d := range decls {
+		results = append(results, d)
+	}
+	return results
+}

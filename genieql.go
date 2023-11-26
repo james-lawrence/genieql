@@ -2,11 +2,13 @@
 package genieql
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"golang.org/x/mod/modfile"
 )
 
 // Build Tag constants
@@ -52,6 +54,27 @@ func PrintColumnInfo(columns ...ColumnInfo) {
 	for _, column := range columns {
 		log.Println(column)
 	}
+}
+
+func FindModulePath(dir string) (ipath string, err error) {
+	var (
+		mroot string
+		gmod  []byte
+	)
+
+	if mroot, err = FindModuleRoot(dir); err != nil {
+		return "", err
+	}
+
+	if gmod, err = os.ReadFile(filepath.Join(mroot, "go.mod")); err != nil {
+		return "", err
+	}
+
+	if ipath = modfile.ModulePath(gmod); ipath == "" {
+		return "", fmt.Errorf("unable to determine module path")
+	}
+
+	return ipath, nil
 }
 
 // FindModuleRoot pulled from: https://github.com/golang/go/blob/src/cmd/dist/build.go#L1595

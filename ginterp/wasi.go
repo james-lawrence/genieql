@@ -1,7 +1,10 @@
 package ginterp
 
 import (
+	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 
 	"bitbucket.org/jatone/genieql/internal/envx"
 )
@@ -23,5 +26,13 @@ func WasiPackage() *build.Package {
 		AllTags:       envx.Strings(nil, "GENIEQL_WASI_PACKAGE_ALL_TAGS"),
 		ConflictDir:   envx.String("", "GENIEQL_WASI_PACKAGE_CONFLICT_DIR"),
 		BinaryOnly:    envx.Boolean(false, "GENIEQL_WASI_PACKAGE_BINARY_ONLY"),
+		GoFiles:       envx.Strings(nil, "GENIEQL_WASI_PACKAGE_GO_FILES"),
 	}
+}
+
+func LoadFile() (*ast.File, error) {
+	fset := token.NewFileSet()
+	filepath := envx.String("", "GENIEQL_WASI_FILEPATH")
+
+	return parser.ParseFile(fset, filepath, nil, parser.ParseComments)
 }

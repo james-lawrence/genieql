@@ -148,7 +148,7 @@ func Print(w io.Writer, fset *token.FileSet, c ast.Node) (err error) {
 	return nil
 }
 
-func PrepareSourceModule(dstdir string) (err error) {
+func PrepareSourceModule(mroot string, dstdir string) (err error) {
 	if err = os.MkdirAll(dstdir, 0700); err != nil {
 		return errors.Wrap(err, "failed to ensure destination directory exists")
 	}
@@ -157,10 +157,9 @@ func PrepareSourceModule(dstdir string) (err error) {
 		return errors.Wrap(err, "unable to generate go.mod")
 	}
 
-	if err = CloneIO(filepath.Join(dstdir, "go.work"), strings.NewReader(Gowork())); err != nil {
-		return errors.Wrap(err, "unable to generate gowork")
+	if err = CloneIO(filepath.Join(dstdir, "go.work"), strings.NewReader(Gowork(mroot))); err != nil {
+		return errors.Wrap(err, "unable to generate go.work")
 	}
-
 	return nil
 }
 
@@ -196,15 +195,16 @@ func ConstFnString(dst *jen.File, name string, n string) {
 	unsafeLiteralFunction(dst, name, "string", n)
 }
 
-func Gowork() string {
-	return `go 1.21
+func Gowork(mroot string) string {
+	return strings.ReplaceAll(`go 1.21
 
 toolchain go1.21.0
 
 use (
+	{mroot}
 	.
 )
-`
+`, "{mroot}", mroot)
 }
 
 func Gomod() string {
@@ -221,9 +221,30 @@ func CloneIO(dst string, src io.Reader) (err error) {
 	}
 	defer df.Close()
 
-	log.Println("cloning ->", dst, os.FileMode(0600))
+	// log.Println("cloning ->", dst, os.FileMode(0600))
 
 	if _, err := io.Copy(df, src); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CloneFile(dst string, src string) (err error) {
+	df, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer df.Close()
+
+	srcf, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcf.Close()
+	// log.Println("cloning ->", dst, os.FileMode(0600))
+
+	if _, err := io.Copy(df, srcf); err != nil {
 		return err
 	}
 

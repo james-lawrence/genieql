@@ -7,9 +7,11 @@ import (
 	"io"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -20,6 +22,62 @@ type Insert interface {
 	Ignore(...string) Insert  // do not attempt to insert the specified column.
 	Default(...string) Insert // use the database default for the specified columns.
 	Conflict(string) Insert   // specify how conflicts should be handled.
+}
+
+func InsertFromFile(cctx generators.Context, name string, tree *ast.File) (Insert, error) {
+	var (
+		ok          bool
+		declPattern *ast.FuncType
+		pos         *ast.FuncDecl
+		scanner     *ast.FuncDecl // scanner to use for the results.
+		cf          *ast.Field
+		qf          *ast.Field
+		tf          *ast.Field
+		params      []*ast.Field
+	)
+
+	if pos = astcodec.FileFindDecl[*ast.FuncDecl](tree, astcodec.FindFunctionsByName(name)); pos == nil {
+		return nil, fmt.Errorf("unable to locate function declaration for insert: %s", name)
+	}
+
+	// rewrite scanner declaration function.
+	if declPattern, ok = pos.Type.Params.List[1].Type.(*ast.FuncType); !ok {
+		return nil, errorsx.String("genieql.Insert second parameter must be a function type")
+	}
+
+	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
+		return nil, errors.Errorf("genieql.Insert %s - missing scanner", nodeInfo(cctx, pos))
+	}
+
+	if cf = functions.DetectContext(declPattern); cf != nil {
+		declPattern.Params.List = declPattern.Params.List[1:]
+	}
+
+	if qf = functions.DetectQueryer(declPattern); qf != nil {
+		declPattern.Params.List = declPattern.Params.List[1:]
+	}
+
+	switch plen := len(declPattern.Params.List); plen {
+	case 0:
+		return nil, errors.Errorf("genieql.Insert %s - missing type to insert; should be the last parameter of function declaration argument", nodeInfo(cctx, pos))
+	case 1:
+		tf = declPattern.Params.List[0]
+		params = declPattern.Params.List
+	default:
+		tf = declPattern.Params.List[plen-1]
+		params = declPattern.Params.List
+	}
+
+	return NewInsert(
+		cctx,
+		pos.Name.String(),
+		pos.Doc,
+		scanner,
+		cf,
+		qf,
+		tf,
+		params...,
+	), nil
 }
 
 // NewInsert instantiate a new insert generator. it uses the name of function

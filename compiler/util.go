@@ -2,29 +2,24 @@ package compiler
 
 import (
 	"bytes"
+	"context"
+	"crypto/rand"
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/format"
+	"go/parser"
+	"go/token"
+	"io"
+	"log"
+	"os"
 	"strconv"
 	"strings"
 
+	"bitbucket.org/jatone/genieql/astcodec"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/dave/jennifer/jen"
-	"github.com/pkg/errors"
 	"github.com/tetratelabs/wazero"
 )
-
-func formatSource(ctx Context, src *ast.File) (_ string, err error) {
-	var (
-		buf bytes.Buffer
-	)
-
-	if err = format.Node(&buf, ctx.FileSet, src); err != nil {
-		return "", errors.Wrap(err, "failed to format")
-	}
-
-	return buf.String(), nil
-}
 
 func nodeInfo(ctx Context, n ast.Node) string {
 	pos := ctx.FileSet.PositionFor(n.Pos(), true).String()
@@ -36,25 +31,64 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
+func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
+	return func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
+		var (
+			c   wazero.CompiledModule
+			buf bytes.Buffer
+		)
+
+		if c, err = genmodule(ctx, cctx, runtime, cfg, content, imports...); err != nil {
+			return errorsx.Wrap(err, "unable to compile wasi module")
+		}
+		defer c.Close(ctx)
+
+		mcfg := wazero.NewModuleConfig().
+			WithStderr(os.Stderr).
+			WithStdout(&buf).
+			WithSysNanotime().
+			WithSysWalltime().
+			WithRandSource(rand.Reader).
+			WithFSConfig(
+				wazero.NewFSConfig().
+					WithDirMount(cctx.ModuleRoot, "").
+					WithDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
+			).
+			WithArgs(os.Args...).
+			WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
+		mcfg = wasienv(cctx, mcfg)
+		mcfg = fndeclenv(cctx, mcfg, pos)
+
+		if err = run(ctx, mcfg, runtime, c, modules...); err != nil {
+			return errorsx.Wrap(err, "unable to run module")
+		}
+
+		if _, err = io.Copy(dst, &buf); err != nil {
+			return errorsx.Wrap(err, "failed to copy results")
+		}
+
+		return nil
+	}
+}
+
 func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 	return jen.Statement{
 		jen.Var().Defs(
+			jen.Id("tree").Id("*ast.File"),
 			jen.Id("err").Error(),
 			jen.Id("gctx").Id("generators.Context"),
 		),
-		// jen.Qual("bitbucket.org/jatone/genieql/ginterp", "QuotedString").Call(
-		// 	jen.Lit("DERPED STRING"),
-		// ),
-		// jen.Qual("bitbucket.org/jatone/genieql/fsx", "PrintFS").Call(
-		// 	jen.Qual("os", "DirFS").Call(jen.Lit(".")),
-		// ),
-		// jen.Qual("log", "Println").Call(jen.Lit("Hello world")),
-		// jen.Qual("log", "Println").Call(jen.Qual("os", "Environ").Call()),
-		// jen.Qual("log", "Println").Call(
-		// 	jen.Qual("github.com/davecgh/go-spew/spew", "Sdump").Call(
-		// 		jen.Qual("bitbucket.org/jatone/genieql/ginterp", "WasiPackage").Call(),
-		// 	),
-		// ),
+		jen.Qual("log", "SetFlags").Call(jen.Qual("log", "LstdFlags").Op("|").Qual("log", "Lshortfile")),
+		jen.If(
+			jen.List(
+				jen.Id("tree"), jen.Id("err"),
+			).Op("=").Qual("bitbucket.org/jatone/genieql/ginterp", "LoadFile").Call(),
+			jen.Id("err").Op("!=").Id("nil"),
+		).Block(
+			jen.Id("log").Dot("Fatalln").Call(
+				jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to load file ast")),
+			),
+		),
 		jen.If(
 			jen.List(jen.Id("gctx"), jen.Id("err")).Op("=").Id("generators").Dot("NewContext").Call(
 				jen.Id("buildx").Dot("Clone").Call(
@@ -70,15 +104,31 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 			jen.Id("err").Op("!=").Id("nil"),
 		).Block(
 			jen.Id("log").Dot("Fatalln").Call(
-				jen.Id("err"),
+				jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to create generation context")),
 			),
 		),
 	}
 }
 
+func normalizeFnDecl(src *ast.File) *ast.File {
+	ast.Walk(
+		astcodec.Multivisit(
+			// astcodec.Printer(),
+			astcodec.NewRemoveImport("bitbucket.org/jatone/genieql/ginterp"),
+			astcodec.NewEnsureImport("bitbucket.org/jatone/genieql/ginterp"),
+			astcodec.NewEnsureImport("bitbucket.org/jatone/genieql"),
+			astcodec.NewIdentReplacement(func(i *ast.Ident) *ast.Ident {
+				return ast.NewIdent("ginterp")
+			}, func(i *ast.Ident) bool { return i.Name == "genieql" }),
+		),
+		src,
+	)
+	return src
+}
+
 func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 	return cfg.WithEnv(
-		"GENIEQL_WASI_PACKAGE_DIR", cctx.CurrentPackage.Dir,
+		"GENIEQL_WASI_PACKAGE_DIR", strings.TrimPrefix(cctx.CurrentPackage.Dir, cctx.ModuleRoot),
 	).WithEnv(
 		"GENIEQL_WASI_PACKAGE_NAME", cctx.CurrentPackage.Name,
 	).WithEnv(
@@ -107,5 +157,77 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 		"GENIEQL_WASI_PACKAGE_CONFLICT_DIR", cctx.CurrentPackage.ConflictDir,
 	).WithEnv(
 		"GENIEQL_WASI_PACKAGE_BINARY_ONLY", strconv.FormatBool(cctx.CurrentPackage.BinaryOnly),
+	).WithEnv(
+		"GENIEQL_WASI_PACKAGE_GO_FILES", strings.Join(cctx.CurrentPackage.GoFiles, ","),
+	).WithEnv(
+		"GOROOT", cctx.Build.GOROOT,
+	).WithEnv(
+		"GOPATH", cctx.Build.GOPATH,
+	).WithEnv(
+		"GOOS", cctx.Build.GOOS,
+	).WithEnv(
+		"GOARCH", cctx.Build.GOARCH,
 	)
+}
+
+func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl) wazero.ModuleConfig {
+	tokenpos := cctx.FileSet.PositionFor(fn.Pos(), true)
+	return cfg.WithEnv(
+		"GENIEQL_WASI_FILEPATH", strings.TrimPrefix(tokenpos.Filename, cctx.ModuleRoot),
+	).WithEnv(
+		"GENIEQL_WASI_FUNCTION_NAME", fn.Name.Name,
+	)
+}
+
+func printjen(f *jen.File) {
+	var buf bytes.Buffer
+	errorsx.PanicOnError(f.Render(&buf))
+	log.Println(buf.String())
+}
+
+func mergescratch(tree *ast.File, p string) (formatted string, err error) {
+	fset := token.NewFileSet()
+	otree, err := parser.ParseFile(fset, p, nil, parser.SkipObjectResolution)
+	if err != nil {
+		return "", err
+	}
+
+	tree.Imports = append(tree.Imports, otree.Imports...)
+	tree.Decls = append(tree.Decls, astcodec.SearchFileDecls(otree, func(d ast.Decl) bool { return !astcodec.FilterImports(d) })...)
+
+	return astcodec.FormatAST(fset, tree)
+}
+
+func genmain(cfgname string, pkg *build.Package, name, gintpkg, gintfn string) *jen.File {
+	content := jen.NewFile("main")
+	content.PackageComment("//go:build genieql.generate")
+
+	content.Func().Id("main").Params().Block(
+		append(
+			genpreamble(cfgname, pkg),
+			jen.List(jen.Id("gen"), jen.Id("err").Op(":=").Id(gintpkg).Dot(gintfn).Call(
+				jen.Id("gctx"),
+				jen.Lit(name),
+				jen.Id("tree"),
+			)),
+			jen.If(
+				jen.Id("err").Op("!=").Id("nil"),
+			).Block(
+				jen.Id("log").Dot("Fatalln").Call(
+					jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("failed to create generator")),
+				),
+			),
+			jen.Id(name).Call(jen.Id("gen")),
+			jen.If(
+				jen.List(jen.Id("err").Op(":=").Id("gen").Dot("Generate").Call(jen.Id("os").Dot("Stdout"))),
+				jen.Id("err").Op("!=").Id("nil"),
+			).Block(
+				jen.Id("log").Dot("Fatalln").Call(
+					jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to generate output")),
+				),
+			),
+		)...,
+	)
+
+	return content
 }

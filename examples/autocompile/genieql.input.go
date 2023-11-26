@@ -65,7 +65,7 @@ func Example2Scanner(genieql.Scanner, func(Example2)) {}
 // generates a scanner that consumes the given parameters.
 func CombinedScanner(genieql.Scanner, func(e1 Example1, e2 Example2)) {}
 
-// generates a scanner that for types from different packages
+// generates a scanner for types from different packages
 func CombinedScanner2(genieql.Scanner, func(e1 Example1, e2 pkga.Example1)) {}
 
 // generates a scanner that consumes the given parameters.

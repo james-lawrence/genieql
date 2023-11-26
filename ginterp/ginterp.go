@@ -1,8 +1,13 @@
 package ginterp
 
 import (
+	"fmt"
+	"go/ast"
+
 	"bitbucket.org/jatone/genieql"
 	// register the drivers
+
+	"bitbucket.org/jatone/genieql/generators"
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
 	// register the postgresql dialect
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
@@ -76,4 +81,14 @@ func Lowercase(c genieql.ColumnInfo) genieql.ColumnInfo {
 // Uppercase the column name.
 func Uppercase(c genieql.ColumnInfo) genieql.ColumnInfo {
 	return c
+}
+
+func nodeInfo(ctx generators.Context, n ast.Node) string {
+	pos := ctx.FileSet.PositionFor(n.Pos(), true).String()
+	switch n := n.(type) {
+	case *ast.FuncDecl:
+		return fmt.Sprintf("(%s.%s - %s)", ctx.CurrentPackage.Name, n.Name, pos)
+	default:
+		return fmt.Sprintf("(%s.%T - %s)", ctx.CurrentPackage.Name, n, pos)
+	}
 }

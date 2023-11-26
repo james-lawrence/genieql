@@ -1,7 +1,9 @@
 package astcodec
 
 import (
+	"bytes"
 	"go/format"
+	"go/token"
 	"io"
 	"os"
 
@@ -89,4 +91,16 @@ func FormatNoImports(s string) (_ string, err error) {
 	}
 
 	return string(raw), nil
+}
+
+func FormatAST(fset *token.FileSet, src any) (_ string, err error) {
+	var (
+		buf bytes.Buffer
+	)
+
+	if err = format.Node(&buf, fset, src); err != nil {
+		return "", errors.Wrap(err, "failed to format")
+	}
+
+	return buf.String(), nil
 }

@@ -135,7 +135,7 @@ var _ = Describe("Configuration", func() {
 
 			raw, err := os.ReadFile(path)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(string(raw)).To(Equal(fmt.Sprintf(exampleBootstrapConfiguration, tmpdir)))
+			Expect(string(raw)).To(Equal(exampleBootstrapConfiguration))
 		})
 
 		It("should error if we can't write to the directory", func() {
@@ -164,8 +164,7 @@ var _ = Describe("Configuration", func() {
 	})
 })
 
-const exampleBootstrapConfiguration = `location: %s
-name: dummy.config
+const exampleBootstrapConfiguration = `name: dummy.config
 dialect: postgres
 driver: github.com/lib/pq
 queryer: '*sql.DB'
