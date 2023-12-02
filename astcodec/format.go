@@ -43,7 +43,7 @@ func ReformatFile(in *os.File) (err error) {
 		return err
 	}
 
-	if raw, err = imports.Process("generated.go", []byte(string(raw)), nil); err != nil {
+	if raw, err = imports.Process("generated.go", []byte(string(raw)), &imports.Options{Fragment: true, Comments: true, TabIndent: true, TabWidth: 8}); err != nil {
 		return errors.Wrap(err, "failed to add required imports")
 	}
 
