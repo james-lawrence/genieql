@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/jatone/genieql/astbuild"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/slicesx"
 	"github.com/pkg/errors"
@@ -536,10 +535,7 @@ func (t *ASTPrinter) Err() error {
 }
 
 // PrintPackage inserts the package and a preface at into the ast.
-func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *build.Package, args []string) error {
-	imports := slicesx.MapTransform[string, *ast.ImportSpec](func(s string) *ast.ImportSpec {
-		return astbuild.ImportSpecLiteral(nil, s)
-	}, pkg.Imports...)
+func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *build.Package, args []string, imports []*ast.ImportSpec) error {
 	var imported []ast.Decl
 	if len(imports) > 0 {
 		imported = []ast.Decl{

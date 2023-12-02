@@ -299,6 +299,8 @@ func (t *findimports) Visit(node ast.Node) (w ast.Visitor) {
 	}
 
 	switch x := node.(type) {
+	case *ast.File:
+		return t
 	case *ast.GenDecl:
 		return t
 	case *ast.ImportSpec:

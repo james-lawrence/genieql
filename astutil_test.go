@@ -117,7 +117,7 @@ var _ = Describe("Astutil", func() {
 			Expect(err).ToNot(HaveOccurred())
 			p := ASTPrinter{}
 			w := errWriter{err: fmt.Errorf("boom")}
-			Expect(PrintPackage(p, w, fset, pkg, []string{})).To(MatchError("failed to print the package header: boom"))
+			Expect(PrintPackage(p, w, fset, pkg, []string{}, nil)).To(MatchError("failed to print the package header: boom"))
 		})
 
 		It("should write out the package name and the preface", func() {
@@ -128,7 +128,7 @@ var _ = Describe("Astutil", func() {
 
 			p := ASTPrinter{}
 			w := bytes.NewBuffer([]byte{})
-			Expect(PrintPackage(p, w, fset, pkg, []string{})).ToNot(HaveOccurred())
+			Expect(PrintPackage(p, w, fset, pkg, []string{}, nil)).ToNot(HaveOccurred())
 			Expect(w.String()).To(Equal(fmt.Sprintf("package ast\n%s\n\n", fmt.Sprintf(Preface, ""))))
 		})
 	})

@@ -128,6 +128,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		working *os.File
 		results = []Result{}
 		printer = genieql.ASTPrinter{}
+		imports []*ast.ImportSpec
 	)
 
 	if t.tmpdir, err = os.MkdirTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp"); err != nil {
@@ -159,9 +160,13 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		}
 	}()
 
+	for _, file := range sources {
+		imports = astcodec.SearchImports(file, func(is *ast.ImportSpec) bool { return true })
+	}
+
 	t.CurrentPackage.GoFiles = append(t.CurrentPackage.GoFiles, filepath.Base(working.Name()))
 
-	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs); err != nil {
+	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs, imports); err != nil {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
 
