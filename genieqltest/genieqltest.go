@@ -9,6 +9,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/columninfo"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
@@ -86,7 +87,13 @@ func GeneratorContext(c genieql.Configuration) (ctx generators.Context, err erro
 		},
 	}
 
+	bctx := buildx.Clone(
+		build.Default,
+		buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate),
+	)
+
 	return generators.Context{
+		Build:          bctx,
 		Configuration:  c,
 		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),
