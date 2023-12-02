@@ -631,16 +631,20 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 	if digest, err = iox.ReadString(maindst); err != nil {
 		return nil, errors.Wrap(err, "unable to calculate md5")
 	}
-	digest = md5x.String(digest)
+	cachemod := filepath.Join("compiled", md5x.String(digest))
 
-	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), filepath.Join("compiled", digest)); err == nil {
+	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err == nil {
+		if m, err = runtime.CompileModule(ctx, wasi); err == nil {
+			return m, err
+		}
 
-		return runtime.CompileModule(ctx, wasi)
+		log.Println("failed to compile wasi module from cache clearing and rebuilding", cachemod, err)
+		if err = os.Remove(filepath.Join(cctx.Cache, cachemod)); err != nil {
+			return nil, err
+		}
 	} else {
 		log.Println("module not found in cache, compiling")
 	}
-
-	cachemod := filepath.Join("compiled", digest)
 
 	cmd := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
