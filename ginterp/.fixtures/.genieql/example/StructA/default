@@ -9,41 +9,41 @@ columns:
   definition:
     type: int
     native: int
-    columntype: sql.NullInt64
+    column_type: sql.NullInt64
 - name: b
   definition:
     type: int
     native: int
-    columntype: sql.NullInt64
+    column_type: sql.NullInt64
 - name: c
   definition:
     type: int
     native: int
-    columntype: sql.NullInt64
+    column_type: sql.NullInt64
 - name: d
   definition:
     type: sql.NullBool
     native: bool
-    columntype: sql.NullBool
+    column_type: sql.NullBool
 - name: e
   definition:
     type: sql.NullBool
     native: bool
-    columntype: sql.NullBool
+    column_type: sql.NullBool
 - name: f
   definition:
     type: sql.NullBool
     native: bool
-    columntype: sql.NullBool
+    column_type: sql.NullBool
 - name: g
   definition:
     type: "*int"
     native: "*int"
-    columntype: sql.NullInt64
+    column_type: sql.NullInt64
     nullable: true
 - name: h
   definition:
     type: "*bool"
     native: "*bool"
-    columntype: sql.NullBool
+    column_type: sql.NullBool
     nullable: true

@@ -540,17 +540,21 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 	imports := slicesx.MapTransform[string, *ast.ImportSpec](func(s string) *ast.ImportSpec {
 		return astbuild.ImportSpecLiteral(nil, s)
 	}, pkg.Imports...)
+	var imported []ast.Decl
+	if len(imports) > 0 {
+		imported = []ast.Decl{
+			&ast.GenDecl{
+				Tok:   token.IMPORT,
+				Specs: slicesx.MapTransform[*ast.ImportSpec, ast.Spec](func(is *ast.ImportSpec) ast.Spec { return is }, imports...),
+			},
+		}
+	}
 
 	past := &ast.File{
 		Name: &ast.Ident{
 			Name: pkg.Name,
 		},
-		Decls: []ast.Decl{
-			&ast.GenDecl{
-				Tok:   token.IMPORT,
-				Specs: slicesx.MapTransform[*ast.ImportSpec, ast.Spec](func(is *ast.ImportSpec) ast.Spec { return is }, imports...),
-			},
-		},
+		Decls: imported,
 	}
 
 	printer.FprintAST(dst, fset, past)

@@ -124,6 +124,8 @@ var _ = Describe("Astutil", func() {
 			fset := token.NewFileSet()
 			pkg, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
+			pkg.Imports = nil
+
 			p := ASTPrinter{}
 			w := bytes.NewBuffer([]byte{})
 			Expect(PrintPackage(p, w, fset, pkg, []string{})).ToNot(HaveOccurred())
