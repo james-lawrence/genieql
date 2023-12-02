@@ -39,6 +39,7 @@ const (
 type Context struct {
 	Name           string
 	ModuleRoot     string
+	Cache          string
 	Build          build.Context
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
@@ -223,9 +224,19 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 		return ctx, errorsx.Wrap(err, "unable to load custom types")
 	}
 
+	cachedir := filepath.Join(config.Location, ".cache")
+	if err = os.MkdirAll(cachedir, 0700); err != nil {
+		return ctx, errorsx.Wrap(err, "unable to ensure cache directory")
+	}
+
+	if err = os.MkdirAll(filepath.Join(cachedir, "compiled"), 0700); err != nil {
+		return ctx, errorsx.Wrap(err, "unable to ensure compiled directory")
+	}
+
 	ctx = Context{
 		ModuleRoot:     mroot + "/",
 		Name:           name,
+		Cache:          cachedir,
 		Build:          bctx,
 		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),

@@ -26,6 +26,7 @@ import (
 	"bitbucket.org/jatone/genieql/internal/bytesx"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
+	"bitbucket.org/jatone/genieql/internal/md5x"
 	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
 	"bitbucket.org/jatone/genieql/internal/wasix/ffihost"
 	"github.com/dave/jennifer/jen"
@@ -175,9 +176,15 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		return results[i].Priority < results[j].Priority
 	})
 
+	cache, err := wazero.NewCompilationCacheWithDir(filepath.Join(t.Cache, "wasi"))
+	if err != nil {
+		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
+	}
+	defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
-		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096),
+		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 
@@ -530,6 +537,7 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 		)
 
 		if m, err = mfn.Instantiate(ctx); err != nil {
+			log.Println("failed to instantiate module", err)
 			break
 		}
 
@@ -573,6 +581,8 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 
 	var (
 		formatted string
+		digest    string
+		cached    fs.File
 		srcdir    = filepath.Join(cctx.tmpdir, "src")
 		dstdir    = filepath.Join(cctx.tmpdir, "bin")
 	)
@@ -612,7 +622,21 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 	if err = astcodec.ReformatFile(maindst); err != nil {
 		return nil, errors.Wrap(err, "genmodule format failed")
 	}
-	// , "-tags", "genieql.ignore"
+
+	if digest, err = iox.ReadString(maindst); err != nil {
+		return nil, errors.Wrap(err, "unable to calculate md5")
+	}
+	digest = md5x.String(digest)
+
+	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), filepath.Join("compiled", digest)); err == nil {
+
+		return runtime.CompileModule(ctx, wasi)
+	} else {
+		log.Println("module not found in cache, compiling")
+	}
+
+	cachemod := filepath.Join("compiled", digest)
+
 	cmd := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
@@ -624,7 +648,16 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 		return nil, errors.Wrap(err, "unable to compile module")
 	}
 
-	if wasi, err = fs.ReadFile(os.DirFS(cctx.tmpdir), "bin"); err != nil {
+	if cached, err = os.Create(filepath.Join(cctx.Cache, cachemod)); err != nil {
+		return nil, errorsx.Wrap(err, "unable to create cached")
+	}
+	defer cached.Close()
+
+	if err = os.Rename(dstdir, filepath.Join(cctx.Cache, cachemod)); err != nil {
+		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
+	}
+
+	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err != nil {
 		return nil, errors.Wrap(err, "unable to read module")
 	}
 
@@ -632,6 +665,5 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 	if err != nil {
 		return nil, err
 	}
-
 	return c, nil
 }
