@@ -43,7 +43,7 @@ type dialect struct {
 
 func (t dialect) Insert(n int, offset int, table string, conflict string, columns, projection, defaults []string) string {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 	tableptr, tablelen := ffiguest.String(table)
 	conflictptr, conflictlen := ffiguest.String(conflict)
@@ -74,7 +74,7 @@ func (t dialect) Insert(n int, offset int, table string, conflict string, column
 
 func (t dialect) Select(table string, columns, predicates []string) string {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 	tableptr, tablelen := ffiguest.String(table)
 	columnsptr, columnslen, columnssize := ffiguest.StringArray(columns...)
@@ -99,7 +99,7 @@ func (t dialect) Select(table string, columns, predicates []string) string {
 
 func (t dialect) Update(table string, columns, predicates, returning []string) string {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 	tableptr, tablelen := ffiguest.String(table)
 	columnsptr, columnslen, columnssize := ffiguest.StringArray(columns...)
@@ -126,7 +126,7 @@ func (t dialect) Update(table string, columns, predicates, returning []string) s
 
 func (t dialect) Delete(table string, columns, predicates []string) string {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 	tableptr, tablelen := ffiguest.String(table)
 	columnsptr, columnslen, columnssize := ffiguest.StringArray(columns...)
@@ -159,7 +159,7 @@ func (t dialect) ColumnNameTransformer(opts ...transform.Transformer) genieql.Co
 
 func (t dialect) ColumnInformationForTable(d genieql.Driver, table string) (res []genieql.ColumnInfo, err error) {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 
 	sptr, slen := ffiguest.String(table)
@@ -182,7 +182,7 @@ func (t dialect) ColumnInformationForTable(d genieql.Driver, table string) (res 
 
 func (t dialect) ColumnInformationForQuery(d genieql.Driver, query string) (res []genieql.ColumnInfo, err error) {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 
 	sptr, slen := ffiguest.String(query)

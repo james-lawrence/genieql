@@ -15,7 +15,7 @@ import (
 // LocatePackage finds a package by its name.
 func LocatePackage(importPath, srcDir string, context build.Context, matches func(*build.Package) bool) (pkg *build.Package, err error) {
 	var (
-		rs = make([]byte, 0, 16*bytesx.KiB)
+		rs = make([]byte, 0, 2*bytesx.MiB)
 	)
 
 	ipathptr, ipathlen := ffiguest.String(importPath)

@@ -225,7 +225,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		pkg.ImportPos = nil
 		pkg.Imports = nil
 
-		if err = ffihost.WriteJSON(m.Memory(), 16*bytesx.KiB, rptr, rlen, pkg); err != nil {
+		if err = ffihost.WriteJSON(m.Memory(), 2*bytesx.MiB, rptr, rlen, pkg); err != nil {
 			log.Println(errorsx.Wrap(err, "unable to write package information"))
 			return 1
 		}
@@ -265,7 +265,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		if err = ffihost.WriteJSON(m.Memory(), 16*bytesx.KiB, rptr, rlen, cinfo); err != nil {
+		if err = ffihost.WriteJSON(m.Memory(), 2*bytesx.MiB, rptr, rlen, cinfo); err != nil {
 			log.Println(errorsx.Wrap(err, "unable to write colum information"))
 			return 1
 		}
@@ -287,7 +287,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		if err = ffihost.WriteJSON(m.Memory(), 16*bytesx.KiB, rptr, rlen, cinfo); err != nil {
+		if err = ffihost.WriteJSON(m.Memory(), 2*bytesx.MiB, rptr, rlen, cinfo); err != nil {
 			log.Println(errorsx.Wrap(err, "unable to write column information"))
 			return 1
 		}
