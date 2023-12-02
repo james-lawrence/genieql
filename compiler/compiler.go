@@ -656,6 +656,9 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 	if err = os.Rename(dstdir, filepath.Join(cctx.Cache, cachemod)); err != nil {
 		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
 	}
+	if err = os.Rename(maindst.Name(), filepath.Join(cctx.Cache, cachemod+".go")); err != nil {
+		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
+	}
 
 	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err != nil {
 		return nil, errors.Wrap(err, "unable to read module")
