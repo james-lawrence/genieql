@@ -160,6 +160,7 @@ func PrepareSourceModule(mroot string, dstdir string) (err error) {
 	if err = CloneIO(filepath.Join(dstdir, "go.work"), strings.NewReader(Gowork(mroot))); err != nil {
 		return errors.Wrap(err, "unable to generate go.work")
 	}
+
 	return nil
 }
 

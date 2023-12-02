@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -31,14 +32,22 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
-	return func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
+func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
+	return func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
 		var (
-			c   wazero.CompiledModule
-			buf bytes.Buffer
+			c      wazero.CompiledModule
+			buf    bytes.Buffer
+			tmpdir string
 		)
 
-		if c, err = genmodule(ctx, cctx, runtime, cfg, content, imports...); err != nil {
+		if tmpdir, err = os.MkdirTemp(cctx.CurrentPackage.Dir, "genmod.*.tmp"); err != nil {
+			return errorsx.Wrap(err, "unable to create mod directory")
+		}
+		defer func() {
+			errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
+		}()
+
+		if c, err = genmodule(ctx, cctx, pos, scratchpath, tmpdir, runtime, cfg, content, imports...); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
 		}
 		defer c.Close(ctx)
@@ -52,22 +61,23 @@ func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 			WithFSConfig(
 				wazero.NewFSConfig().
 					WithDirMount(cctx.ModuleRoot, "").
+					WithFSMount(os.DirFS(tmpdir), tmpdir).
 					WithDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).
 			WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
 		mcfg = wasienv(cctx, mcfg)
-		mcfg = fndeclenv(cctx, mcfg, pos)
+		mcfg = fndeclenv(cctx, mcfg, pos, tmpdir)
 
-		if err = run(ctx, mcfg, runtime, c, modules...); err != nil {
-			return errorsx.Wrap(err, "unable to run module")
+		if err = run(ctx, mcfg, runtime, c); err != nil {
+			return errorsx.Compact(errorsx.Wrap(err, "unable to run module"), os.RemoveAll(tmpdir))
 		}
 
 		if _, err = io.Copy(dst, &buf); err != nil {
 			return errorsx.Wrap(err, "failed to copy results")
 		}
 
-		return nil
+		return os.RemoveAll(tmpdir)
 	}
 }
 
@@ -170,10 +180,9 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 	)
 }
 
-func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl) wazero.ModuleConfig {
-	tokenpos := cctx.FileSet.PositionFor(fn.Pos(), true)
+func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl, tmpdir string) wazero.ModuleConfig {
 	return cfg.WithEnv(
-		"GENIEQL_WASI_FILEPATH", strings.TrimPrefix(tokenpos.Filename, cctx.ModuleRoot),
+		"GENIEQL_WASI_FILEPATH", strings.TrimPrefix(filepath.Join(tmpdir, "input.go"), cctx.ModuleRoot),
 	).WithEnv(
 		"GENIEQL_WASI_FUNCTION_NAME", fn.Name.Name,
 	)
@@ -187,7 +196,7 @@ func printjen(f *jen.File) {
 
 func mergescratch(tree *ast.File, p string) (formatted string, err error) {
 	fset := token.NewFileSet()
-	otree, err := parser.ParseFile(fset, p, nil, parser.SkipObjectResolution)
+	otree, err := parser.ParseFile(fset, "scratch.go", p, parser.SkipObjectResolution)
 	if err != nil {
 		return "", err
 	}

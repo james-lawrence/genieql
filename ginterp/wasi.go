@@ -32,7 +32,10 @@ func WasiPackage() *build.Package {
 
 func LoadFile() (*ast.File, error) {
 	fset := token.NewFileSet()
-	filepath := envx.String("", "GENIEQL_WASI_FILEPATH")
-
-	return parser.ParseFile(fset, filepath, nil, parser.ParseComments)
+	fp := envx.String("", "GENIEQL_WASI_FILEPATH")
+	// log.Println("LOADING FILE", fp)
+	// fsx.PrintDir(os.DirFS("."))
+	// fsx.PrintDir(os.DirFS(filepath.Dir(fp)))
+	// fsx.PrintString(fp)
+	return parser.ParseFile(fset, fp, nil, parser.ParseComments)
 }

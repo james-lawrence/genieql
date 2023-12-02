@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"bitbucket.org/jatone/genieql"
 
@@ -54,13 +55,13 @@ type Result struct {
 }
 
 type compilegen interface {
-	Generate(context.Context, io.Writer, wazero.Runtime, ...module) error
+	Generate(context.Context, string, io.Writer, wazero.Runtime, ...module) error
 }
 
-type CompileGenFn func(context.Context, io.Writer, wazero.Runtime, ...module) error
+type CompileGenFn func(context.Context, string, io.Writer, wazero.Runtime, ...module) error
 
-func (t CompileGenFn) Generate(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
-	return t(ctx, dst, runtime, modules...)
+func (t CompileGenFn) Generate(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
+	return t(ctx, scratchpath, dst, runtime, modules...)
 }
 
 // Matcher match against a function declaration.
@@ -76,7 +77,6 @@ func New(ctx generators.Context, matchers ...Matcher) Context {
 
 // Context context for the compiler
 type Context struct {
-	tmpdir string
 	generators.Context
 	Matchers []Matcher
 }
@@ -107,7 +107,7 @@ func (t Context) generators(in *ast.File) (results []Result) {
 				}
 				r = Result{
 					Priority: math.MaxInt64,
-					Generator: CompileGenFn(func(ctx context.Context, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
+					Generator: CompileGenFn(func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
 						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
 					}),
 				}
@@ -131,14 +131,10 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports []*ast.ImportSpec
 	)
 
-	if t.tmpdir, err = os.MkdirTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp"); err != nil {
-		return errorsx.Wrap(err, "unable to create scratch directory")
-	}
-	defer os.RemoveAll(t.tmpdir)
-
-	if working, err = os.Create(filepath.Join(t.Context.CurrentPackage.Dir, filepath.Base(t.tmpdir)+".go")); err != nil {
+	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
 	}
+	defer os.RemoveAll(working.Name())
 
 	defer func() {
 		if err != nil {
@@ -152,7 +148,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		failed := errorsx.Compact(
 			working.Sync(),
 			working.Close(),
-			os.RemoveAll(t.tmpdir),
 			os.Remove(working.Name()),
 		)
 		if failed != nil {
@@ -181,7 +176,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		return results[i].Priority < results[j].Priority
 	})
 
-	cache, err := wazero.NewCompilationCacheWithDir(filepath.Join(t.Cache, "wasi"))
+	cache, err := wazero.NewCompilationCacheWithDir(t.Cache)
 	if err != nil {
 		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
 	}
@@ -192,6 +187,11 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
+	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to build wasi snapshot preview1")
+	}
+	defer wasienv.Close(ctx)
 
 	hostenvmb := runtime.NewHostModuleBuilder("env")
 	// this function is because wasi doesn't implement pipe.
@@ -485,33 +485,84 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 
 		return 0
 	}).Export("genieql/dialect.Delete")
+	if menv, err := hostenvmb.Instantiate(ctx); err != nil {
+		return errorsx.Wrap(err, "failed to instantiate module")
+	} else {
+		defer menv.Close(ctx)
+	}
 
+	previous := math.MinInt
+	var groups [][]Result
 	for _, r := range results {
-		var (
-			buf = bytes.NewBuffer([]byte(nil))
-		)
-
-		t.Context.Debugln("generating code initiated", r.Location)
-
-		if err = r.Generator.Generate(ctx, buf, runtime, hostenvmb); err != nil {
-			return errors.Wrapf(err, "%s: failed to generate", r.Location)
+		if r.Priority != previous {
+			previous = r.Priority
+			groups = append(groups, []Result{r})
+			continue
 		}
 
-		t.Context.Debugln("writing generated code into buffer")
+		offset := len(groups) - 1
+		groups[offset] = append(groups[offset], r)
+	}
 
-		if _, err = working.WriteString("\n"); err != nil {
-			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+	for _, g := range groups {
+		scratchpad, err := iox.ReadString(working)
+		if err != nil {
+			return err
+		}
+		output := make(chan generated)
+		for _, r := range g {
+			go func(ir Result) {
+				var (
+					buf = bytes.NewBuffer([]byte(nil))
+				)
+
+				cause := generate(ctx, t, scratchpad, runtime, buf, ir)
+				select {
+				case output <- generated{Result: ir, buf: buf, err: cause}:
+				case <-ctx.Done():
+					output <- generated{Result: ir, err: ctx.Err()}
+				}
+			}(r)
 		}
 
-		if _, err = working.Write(buf.Bytes()); err != nil {
-			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+		gset := make([]generated, 0, len(g))
+		for i := 0; i < len(g); i++ {
+			r := <-output
+			if r.err != nil {
+				log.Println("failed to generate", r.err)
+				err = errorsx.Compact(err, r.err)
+				continue
+			}
+			gset = append(gset, r)
 		}
 
-		if _, err = working.WriteString("\n"); err != nil {
-			return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+		if err != nil {
+			return err
 		}
 
-		t.Context.Debugln("generating code completed", r.Location)
+		sort.SliceStable(gset, func(i, j int) bool {
+			return gset[i].Location.Line < gset[j].Location.Line
+		})
+
+		for _, r := range gset {
+			t.Context.Debugln("emitting code initiated", r.Location)
+			if _, err = working.WriteString("\n"); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+
+			if _, err = working.Write(r.buf.Bytes()); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+
+			if _, err = working.WriteString("\n"); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+			t.Context.Debugln("emitting code completed", r.Location)
+
+			if err = working.Sync(); err != nil {
+				return errorsx.Wrap(err, "unable to sync working file")
+			}
+		}
 	}
 
 	return errors.Wrap(errorsx.Compact(
@@ -525,41 +576,33 @@ type module interface {
 	Instantiate(context.Context) (api.Module, error)
 }
 
-func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule, modules ...module) (err error) {
-	var (
-		instantiated []api.Module
-	)
+type generated struct {
+	Result
+	buf *bytes.Buffer
+	err error
+}
 
-	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
-	if err != nil {
-		return errors.Wrap(err, "unable to build wasi snapshot preview1")
-	}
-	defer wasienv.Close(ctx)
+func generate(ctx context.Context, cctx Context, scratchpad string, runtime wazero.Runtime, buf *bytes.Buffer, ir Result) (err error) {
+	cctx.Context.Debugln("generating code initiated", ir.Location)
+	defer cctx.Context.Debugln("generating code completed", ir.Location)
+	return errors.Wrapf(ir.Generator.Generate(ctx, scratchpad, buf, runtime), "%s: failed to generate", ir.Location)
+}
 
-	for _, mfn := range modules {
-		var (
-			m api.Module
-		)
+var ml sync.Mutex
 
-		if m, err = mfn.Instantiate(ctx); err != nil {
-			log.Println("failed to instantiate module", err)
-			break
-		}
-
-		instantiated = append(instantiated, m)
-	}
+func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule) (err error) {
+	// wazero doesn't handle concurrent file access well...
+	// we lock here to prevent issues; hopefully in the future we can remove this.
+	// but this gives us the ability to concurrently compile modules (slow) while
+	// synchronizing the execution (fast)
+	ml.Lock()
+	defer ml.Unlock()
 	defer func() {
-		for _, i := range instantiated {
-			errorsx.MaybeLog(i.Close(ctx))
+		r := recover()
+		if cause, ok := r.(error); ok {
+			err = errorsx.Compact(err, errorsx.Wrap(cause, "recovered from panic"))
 		}
 	}()
-
-	if err != nil {
-		return err
-	}
-
-	log.Println("instantiation initiated")
-	defer log.Println("instantiation completed")
 
 	m, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if cause, ok := err.(*sys.ExitError); ok && cause.ExitCode() == ffierrors.ErrUnrecoverable {
@@ -574,22 +617,26 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 	return nil
 }
 
-func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m wazero.CompiledModule, err error) {
+func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, runtime wazero.Runtime, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m wazero.CompiledModule, err error) {
 	var (
 		maindst *os.File
 		wasi    []byte
 	)
 
-	if err = transforms.PrepareSourceModule(cctx.ModuleRoot, cctx.tmpdir); err != nil {
+	if err = transforms.PrepareSourceModule(cctx.ModuleRoot, tmpdir); err != nil {
 		return nil, errorsx.Wrap(err, "unable to prepare module")
+	}
+	tokenpos := cctx.FileSet.PositionFor(pos.Pos(), true)
+	if err = transforms.CloneFile(filepath.Join(tmpdir, "input.go"), tokenpos.Filename); err != nil {
+		return nil, errorsx.Wrap(err, "unable to copy input")
 	}
 
 	var (
 		formatted string
 		digest    string
 		cached    fs.File
-		srcdir    = filepath.Join(cctx.tmpdir, "src")
-		dstdir    = filepath.Join(cctx.tmpdir, "bin")
+		srcdir    = filepath.Join(tmpdir, "src")
+		dstdir    = filepath.Join(tmpdir, "bin")
 	)
 
 	if err = os.MkdirAll(srcdir, 0700); err != nil {
@@ -601,14 +648,14 @@ func genmodule(ctx context.Context, cctx Context, runtime wazero.Runtime, cfg st
 	}
 	defer maindst.Close()
 
-	// clone in scratch pad
 	tree, err := transforms.JenAsAST(main)
 	if err != nil {
 		return nil, err
 	}
 	tree.Imports = append(tree.Imports, imports...)
 
-	if formatted, err = mergescratch(tree, filepath.Join(cctx.tmpdir, "..", filepath.Base(cctx.tmpdir)+".go")); err != nil {
+	// clone in scratch pad
+	if formatted, err = mergescratch(tree, scratchpad); err != nil {
 		return nil, err
 	}
 
