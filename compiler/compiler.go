@@ -153,7 +153,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	}
 	defer os.RemoveAll(t.tmpdir)
 
-	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp.go"); err != nil {
+	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.tmp.*.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
 	}
 	defer os.RemoveAll(working.Name())
@@ -187,6 +187,13 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs, imports); err != nil {
 		return errors.Wrap(err, "unable to write header to scratch file")
 	}
+
+	cache, err := wazero.NewCompilationCacheWithDir(t.Cache)
+	if err != nil {
+		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
+	}
+	// cache := wazero.NewCompilationCache()
+	defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
 
 	t.Context.Println("build.GOPATH", t.Build.GOPATH)
 	t.Context.Println("build.BuildTags", t.Build.BuildTags)
@@ -222,12 +229,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 
 		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
 		for _, r := range g {
-			cache, err := wazero.NewCompilationCacheWithDir(t.Cache)
-			if err != nil {
-				return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
-			}
-			defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
-
 			if err := sem.Acquire(ctx, 1); err != nil {
 				return errorsx.Wrap(err, "unable to acquire semaphore")
 			}
@@ -249,7 +250,8 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 				}
 				m.Result = ir
 
-				if err = generate(ctx, t, m.root, m.buf, m.compiledpath, true, m.Result); err != nil {
+				log.Println("compiling", m.Result.Ident, m.Result.Location)
+				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
 					m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
 					donefn(m)
 					return
@@ -279,7 +281,8 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		})
 
 		for _, r := range gset {
-			if err = generate(ctx, t, r.root, r.buf, r.compiledpath, false, r.Result); err != nil {
+			log.Println("generating code initiated", r.Ident, r.Location)
+			if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
 				return errors.Wrapf(err, "%s: unable to generate", r.Location)
 			}
 
@@ -314,19 +317,20 @@ type module interface {
 	Instantiate(context.Context) (api.Module, error)
 }
 
-func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, mpath string, compileonly bool, ir Result) (err error) {
+func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, cache wazero.CompilationCache, mpath string, compileonly bool, ir Result) (err error) {
 	cctx.Context.Debugln("generating code initiated", ir.Location)
 	defer cctx.Context.Debugln("generating code completed", ir.Location)
 
-	cache, err := wazero.NewCompilationCacheWithDir(cctx.Cache)
-	if err != nil {
-		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
-	}
-	defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+	// cache, err := wazero.NewCompilationCacheWithDir(cctx.Cache)
+	// if err != nil {
+	// 	return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
+	// }
+	// defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
-		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(1024).WithCompilationCache(cache),
+		// wazero.NewRuntimeConfigInterpreter().WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
