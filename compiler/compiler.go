@@ -224,7 +224,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		if err != nil {
 			return err
 		}
-		// output := make(chan generated, len(g))
 		output := make(chan *generedmodule, len(g))
 
 		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
@@ -257,6 +256,13 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 					return
 				}
 
+				log.Println("generating code initiated", m.Ident, m.Location)
+				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, false, m.Result); err != nil {
+					m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
+					donefn(m)
+					return
+				}
+
 				donefn(m)
 			}(r)
 		}
@@ -281,10 +287,10 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		})
 
 		for _, r := range gset {
-			log.Println("generating code initiated", r.Ident, r.Location)
-			if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
-				return errors.Wrapf(err, "%s: unable to generate", r.Location)
-			}
+			// log.Println("generating code initiated", r.Ident, r.Location)
+			// if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
+			// 	return errors.Wrapf(err, "%s: unable to generate", r.Location)
+			// }
 
 			t.Context.Debugln("emitting code initiated", r.Location)
 			if _, err = working.WriteString("\n"); err != nil {
@@ -320,12 +326,6 @@ type module interface {
 func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, cache wazero.CompilationCache, mpath string, compileonly bool, ir Result) (err error) {
 	cctx.Context.Debugln("generating code initiated", ir.Location)
 	defer cctx.Context.Debugln("generating code completed", ir.Location)
-
-	// cache, err := wazero.NewCompilationCacheWithDir(cctx.Cache)
-	// if err != nil {
-	// 	return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
-	// }
-	// defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
@@ -650,7 +650,7 @@ func modgenerate(ctx context.Context, cctx Context, scratchpad string, ir Result
 var ml sync.Mutex
 
 func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule) (err error) {
-	// wazero and our mapper isn't concurrency friendly.
+	// wazero filesystem and our mapper isn't concurrency friendly.
 	// we lock here to prevent issues; hopefully in the future we can remove this.
 	// but this gives us the ability to concurrently compile modules (slow) while
 	// synchronizing the execution (fast)
