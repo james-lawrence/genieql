@@ -657,7 +657,7 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 	return nil
 }
 
-func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, runtime wazero.Runtime, cachemod string) (m wazero.CompiledModule, err error) {
+func compilewasi(ctx context.Context, cctx Context, pos *ast.FuncDecl, runtime wazero.Runtime, cachemod string) (m wazero.CompiledModule, err error) {
 	var (
 		wasi []byte
 	)
@@ -681,7 +681,7 @@ type generedmodule struct {
 	cause        error
 }
 
-func genmodule2(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
+func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
 	var (
 		maindst *os.File
 	)

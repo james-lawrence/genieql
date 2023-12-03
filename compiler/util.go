@@ -45,7 +45,7 @@ func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 		// 	errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
 		// }()
 
-		if m, err = genmodule2(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
+		if m, err = compilemodule(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
 			return nil, errorsx.Wrap(err, "unable to generate module directory")
 		}
 
@@ -60,7 +60,7 @@ func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir st
 			buf bytes.Buffer
 		)
 
-		if c, err = compilemodule(ctx, cctx, pos, runtime, mpath); err != nil {
+		if c, err = compilewasi(ctx, cctx, pos, runtime, mpath); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
 		}
 		defer c.Close(ctx)
