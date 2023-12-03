@@ -48,7 +48,8 @@ func QueryAutogen(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err
 
 	return Result{
 		Ident:     pos.Name.Name,
-		Generator: CompileGenFn(runmod(cctx, pos, formatted, content, src.Imports...)),
+		Generator: CompileGenFn(runmod(cctx, pos)),
+		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
 		Priority:  PriorityFunctions,
 	}, nil
 }

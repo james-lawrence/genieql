@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/types"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
@@ -13,7 +12,6 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/langx"
 	"github.com/pkg/errors"
 )
 
@@ -47,7 +45,6 @@ func InsertFromFile(cctx generators.Context, name string, tree *ast.File) (Inser
 		return nil, errorsx.String("genieql.Insert second parameter must be a function type")
 	}
 
-	log.Println("DERP genieql.Insert decl", langx.Must(astutil.Print(declPattern)))
 	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
 		return nil, errors.Errorf("genieql.Insert %s - missing scanner", nodeInfo(cctx, pos))
 	}

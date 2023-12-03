@@ -5,7 +5,6 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"log"
 
 	"bitbucket.org/jatone/genieql/internal/envx"
 )
@@ -34,7 +33,7 @@ func WasiPackage() *build.Package {
 func LoadFile() (*ast.File, error) {
 	fset := token.NewFileSet()
 	fp := envx.String("", "GENIEQL_WASI_FILEPATH")
-	log.Println("LOADING FILE", fp)
+	// log.Println("LOADING FILE", fp)
 	// fsx.PrintDir(os.DirFS("."))
 	// fsx.PrintDir(os.DirFS(filepath.Dir(fp)))
 	// fsx.PrintString(fp)

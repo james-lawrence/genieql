@@ -32,25 +32,42 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
-	return func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) (err error) {
+func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
+	return func(ctx context.Context, scratchpad string) (m *generedmodule, err error) {
 		var (
-			c      wazero.CompiledModule
-			buf    bytes.Buffer
 			tmpdir string
 		)
 
 		if tmpdir, err = os.MkdirTemp(cctx.tmpdir, "genmod.*"); err != nil {
-			return errorsx.Wrap(err, "unable to create mod directory")
+			return nil, errorsx.Wrap(err, "unable to create mod directory")
 		}
 		// defer func() {
 		// 	errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
 		// }()
 
-		if c, err = genmodule(ctx, cctx, pos, scratchpath, tmpdir, runtime, cfg, content, imports...); err != nil {
+		if m, err = genmodule2(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
+			return nil, errorsx.Wrap(err, "unable to generate module directory")
+		}
+
+		return m, nil
+	}
+}
+
+func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
+	return func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
+		var (
+			c   wazero.CompiledModule
+			buf bytes.Buffer
+		)
+
+		if c, err = compilemodule(ctx, cctx, pos, runtime, mpath); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
 		}
 		defer c.Close(ctx)
+
+		if compileonly {
+			return nil
+		}
 
 		mcfg := wazero.NewModuleConfig().
 			WithStderr(os.Stderr).
@@ -67,6 +84,7 @@ func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 			).
 			WithArgs(os.Args...).
 			WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
+
 		mcfg = wasienv(cctx, mcfg)
 		mcfg = fndeclenv(cctx, mcfg, pos, tmpdir)
 

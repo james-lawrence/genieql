@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
@@ -15,7 +14,6 @@ import (
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/generators/typespec"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/langx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"github.com/pkg/errors"
 )
@@ -69,7 +67,6 @@ func InsertBatchFromFile(cctx generators.Context, name string, tree *ast.File) (
 		return nil, errorsx.String("InsertBatch second parameter must be a function type")
 	}
 
-	log.Println("DERP batch decl", langx.Must(astutil.Print(declPattern)))
 	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
 		return nil, errors.Errorf("InsertBatch %s - missing scanner", nodeInfo(cctx, pos))
 	}

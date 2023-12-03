@@ -54,16 +54,27 @@ type Result struct {
 	Location  token.Position // source location that generated this result.
 	Priority  int
 	Generator compilegen
+	Mod       modgen
+}
+
+type modgen interface {
+	Generate(context.Context, string) (*generedmodule, error)
+}
+
+type modgenfn func(context.Context, string) (*generedmodule, error)
+
+func (t modgenfn) Generate(ctx context.Context, scratchpath string) (*generedmodule, error) {
+	return t(ctx, scratchpath)
 }
 
 type compilegen interface {
-	Generate(context.Context, string, io.Writer, wazero.Runtime, ...module) error
+	Generate(context.Context, string, io.Writer, wazero.Runtime, string, bool, ...module) error
 }
 
-type CompileGenFn func(context.Context, string, io.Writer, wazero.Runtime, ...module) error
+type CompileGenFn func(context.Context, string, io.Writer, wazero.Runtime, string, bool, ...module) error
 
-func (t CompileGenFn) Generate(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
-	return t(ctx, scratchpath, dst, runtime, modules...)
+func (t CompileGenFn) Generate(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) error {
+	return t(ctx, tmpdir, dst, runtime, mpath, compileonly, modules...)
 }
 
 // Matcher match against a function declaration.
@@ -110,7 +121,10 @@ func (t Context) generators(in *ast.File) (results []Result) {
 				}
 				r = Result{
 					Priority: math.MaxInt64,
-					Generator: CompileGenFn(func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, modules ...module) error {
+					Mod: modgenfn(func(ctx context.Context, s string) (*generedmodule, error) {
+						return nil, errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
+					}),
+					Generator: CompileGenFn(func(ctx context.Context, scratchpath string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) error {
 						return errors.Wrapf(err, "failed to build code generator: %s", fn.Name)
 					}),
 				}
@@ -137,7 +151,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	if t.tmpdir, err = os.MkdirTemp(t.CurrentPackage.Dir, "genieql.tmp.*"); err != nil {
 		return errorsx.Wrap(err, "unable to create tmp directory")
 	}
-	// defer os.RemoveAll(t.tmpdir)
+	defer os.RemoveAll(t.tmpdir)
 
 	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
@@ -157,7 +171,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			working.Sync(),
 			working.Close(),
 			os.Remove(working.Name()),
-			// os.RemoveAll(t.tmpdir),
+			os.RemoveAll(t.tmpdir),
 		)
 		if failed != nil {
 			t.Println(errors.Wrap(failed, "failure cleaning up"))
@@ -185,7 +199,126 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		return results[i].Priority < results[j].Priority
 	})
 
-	cache, err := wazero.NewCompilationCacheWithDir(t.Cache)
+	previous := math.MinInt
+	var groups [][]Result
+	for _, r := range results {
+		if r.Priority != previous {
+			previous = r.Priority
+			groups = append(groups, []Result{r})
+			continue
+		}
+
+		offset := len(groups) - 1
+		groups[offset] = append(groups[offset], r)
+	}
+
+	for _, g := range groups {
+		scratchpad, err := iox.ReadString(working)
+		if err != nil {
+			return err
+		}
+		// output := make(chan generated, len(g))
+		output := make(chan *generedmodule, len(g))
+
+		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
+		for _, r := range g {
+			cache, err := wazero.NewCompilationCacheWithDir(t.Cache)
+			if err != nil {
+				return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
+			}
+			defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+
+			if err := sem.Acquire(ctx, 1); err != nil {
+				return errorsx.Wrap(err, "unable to acquire semaphore")
+			}
+
+			go func(ir Result) {
+				donefn := func(m *generedmodule) {
+					select {
+					case output <- m:
+					case <-ctx.Done():
+						output <- &generedmodule{Result: ir, cause: ctx.Err()}
+					}
+				}
+				defer sem.Release(1)
+
+				m, cause := modgenerate(ctx, t, scratchpad, ir)
+				if cause != nil {
+					donefn(&generedmodule{cause: cause})
+					return
+				}
+				m.Result = ir
+
+				if err = generate(ctx, t, m.root, m.buf, m.compiledpath, true, m.Result); err != nil {
+					m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
+					donefn(m)
+					return
+				}
+
+				donefn(m)
+			}(r)
+		}
+
+		gset := make([]*generedmodule, 0, len(g))
+		for i := 0; i < len(g); i++ {
+			r := <-output
+			if r.cause != nil {
+				log.Println("failed to generate", r.cause)
+				err = errorsx.Compact(err, r.cause)
+				continue
+			}
+			gset = append(gset, r)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		sort.SliceStable(gset, func(i, j int) bool {
+			return gset[i].Location.Line < gset[j].Location.Line
+		})
+
+		for _, r := range gset {
+			if err = generate(ctx, t, r.root, r.buf, r.compiledpath, false, r.Result); err != nil {
+				return errors.Wrapf(err, "%s: unable to generate", r.Location)
+			}
+
+			t.Context.Debugln("emitting code initiated", r.Location)
+			if _, err = working.WriteString("\n"); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+
+			if _, err = working.Write(r.buf.Bytes()); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+
+			if _, err = working.WriteString("\n"); err != nil {
+				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
+			}
+			t.Context.Debugln("emitting code completed", r.Location)
+
+			if err = working.Sync(); err != nil {
+				return errorsx.Wrap(err, "unable to sync working file")
+			}
+		}
+	}
+
+	return errors.Wrap(errorsx.Compact(
+		astcodec.ReformatFile(working),
+		iox.Rewind(working),
+		iox.Error(io.Copy(dst, working)),
+	), "failed to write generated code")
+}
+
+type module interface {
+	Instantiate(context.Context) (api.Module, error)
+}
+
+func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, mpath string, compileonly bool, ir Result) (err error) {
+	cctx.Context.Debugln("generating code initiated", ir.Location)
+	defer cctx.Context.Debugln("generating code completed", ir.Location)
+
+	cache, err := wazero.NewCompilationCacheWithDir(cctx.Cache)
 	if err != nil {
 		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
 	}
@@ -193,7 +326,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
-		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(4096).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(1024).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
@@ -234,14 +367,14 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		bctx := buildx.Clone(t.Build, buildx.Tags(tags...))
+		bctx := buildx.Clone(cctx.Build, buildx.Tags(tags...))
 		if pkg, err = astcodec.LocatePackage(ipath, srcdir, bctx, genieql.StrictPackageImport(ipath)); err != nil {
 			log.Println("unable to locate package", err)
 			return 1
 		}
 
 		// correct paths for the runtime context
-		pkg.Dir = filepath.Join(string(filepath.Separator), strings.TrimPrefix(pkg.Dir, t.ModuleRoot))
+		pkg.Dir = filepath.Join(string(filepath.Separator), strings.TrimPrefix(pkg.Dir, cctx.ModuleRoot))
 		pkg.Root = string(filepath.Separator)
 		pkg.ImportPos = nil
 		pkg.Imports = nil
@@ -259,7 +392,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		qs := t.Dialect.QuotedString(s)
+		qs := cctx.Dialect.QuotedString(s)
 
 		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
 			return 1
@@ -280,7 +413,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		cinfo, err := t.Dialect.ColumnInformationForQuery(t.Driver, s)
+		cinfo, err := cctx.Dialect.ColumnInformationForQuery(cctx.Driver, s)
 		if err != nil {
 			log.Println(err)
 			return 1
@@ -302,7 +435,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		cinfo, err := t.Dialect.ColumnInformationForTable(t.Driver, s)
+		cinfo, err := cctx.Dialect.ColumnInformationForTable(cctx.Driver, s)
 		if err != nil {
 			log.Println(err)
 			return 1
@@ -358,7 +491,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		qs := t.Dialect.Insert(int(n), int(offset), table, conflict, columns, projections, defaults)
+		qs := cctx.Dialect.Insert(int(n), int(offset), table, conflict, columns, projections, defaults)
 
 		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
 			return 1
@@ -397,7 +530,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		qs := t.Dialect.Select(table, columns, predicates)
+		qs := cctx.Dialect.Select(table, columns, predicates)
 
 		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
 			return 1
@@ -443,7 +576,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		qs := t.Dialect.Update(table, columns, predicates, returns)
+		qs := cctx.Dialect.Update(table, columns, predicates, returns)
 
 		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
 			return 1
@@ -482,7 +615,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return 1
 		}
 
-		qs := t.Dialect.Delete(table, columns, predicates)
+		qs := cctx.Dialect.Delete(table, columns, predicates)
 
 		if !m.Memory().WriteUint32Le(rlen, uint32(len(qs))) {
 			return 1
@@ -500,107 +633,14 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		defer menv.Close(ctx)
 	}
 
-	previous := math.MinInt
-	var groups [][]Result
-	for _, r := range results {
-		if r.Priority != previous {
-			previous = r.Priority
-			groups = append(groups, []Result{r})
-			continue
-		}
-
-		offset := len(groups) - 1
-		groups[offset] = append(groups[offset], r)
-	}
-
-	for _, g := range groups {
-		scratchpad, err := iox.ReadString(working)
-		if err != nil {
-			return err
-		}
-		output := make(chan generated, len(g))
-
-		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
-		for _, r := range g {
-			if err := sem.Acquire(ctx, 1); err != nil {
-				return errorsx.Wrap(err, "unable to acquire semaphore")
-			}
-
-			go func(ir Result) {
-				defer sem.Release(1)
-				var (
-					buf = bytes.NewBuffer([]byte(nil))
-				)
-				cause := generate(ctx, t, scratchpad, runtime, buf, ir)
-				select {
-				case output <- generated{Result: ir, buf: buf, err: cause}:
-				case <-ctx.Done():
-					output <- generated{Result: ir, err: ctx.Err()}
-				}
-			}(r)
-		}
-
-		gset := make([]generated, 0, len(g))
-		for i := 0; i < len(g); i++ {
-			r := <-output
-			if r.err != nil {
-				log.Println("failed to generate", r.err)
-				err = errorsx.Compact(err, r.err)
-				continue
-			}
-			gset = append(gset, r)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		sort.SliceStable(gset, func(i, j int) bool {
-			return gset[i].Location.Line < gset[j].Location.Line
-		})
-
-		for _, r := range gset {
-			t.Context.Debugln("emitting code initiated", r.Location)
-			if _, err = working.WriteString("\n"); err != nil {
-				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
-			}
-
-			if _, err = working.Write(r.buf.Bytes()); err != nil {
-				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
-			}
-
-			if _, err = working.WriteString("\n"); err != nil {
-				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
-			}
-			t.Context.Debugln("emitting code completed", r.Location)
-
-			if err = working.Sync(); err != nil {
-				return errorsx.Wrap(err, "unable to sync working file")
-			}
-		}
-	}
-
-	return errors.Wrap(errorsx.Compact(
-		astcodec.ReformatFile(working),
-		iox.Rewind(working),
-		iox.Error(io.Copy(dst, working)),
-	), "failed to write generated code")
+	return errors.Wrapf(ir.Generator.Generate(ctx, tmpdir, buf, runtime, mpath, compileonly), "%s: failed to generate", ir.Location)
 }
 
-type module interface {
-	Instantiate(context.Context) (api.Module, error)
-}
-
-type generated struct {
-	Result
-	buf *bytes.Buffer
-	err error
-}
-
-func generate(ctx context.Context, cctx Context, scratchpad string, runtime wazero.Runtime, buf *bytes.Buffer, ir Result) (err error) {
+func modgenerate(ctx context.Context, cctx Context, scratchpad string, ir Result) (m *generedmodule, err error) {
 	cctx.Context.Debugln("generating code initiated", ir.Location)
 	defer cctx.Context.Debugln("generating code completed", ir.Location)
-	return errors.Wrapf(ir.Generator.Generate(ctx, scratchpad, buf, runtime), "%s: failed to generate", ir.Location)
+	m, err = ir.Mod.Generate(ctx, scratchpad)
+	return m, errors.Wrapf(err, "%s: failed to generate", ir.Location)
 }
 
 var ml sync.Mutex
@@ -612,12 +652,6 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 	// synchronizing the execution (fast)
 	ml.Lock()
 	defer ml.Unlock()
-	defer func() {
-		r := recover()
-		if cause, ok := r.(error); ok {
-			err = errorsx.Compact(err, errorsx.Wrap(cause, "recovered from panic"))
-		}
-	}()
 
 	m, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if cause, ok := err.(*sys.ExitError); ok && cause.ExitCode() == ffierrors.ErrUnrecoverable {
@@ -632,10 +666,33 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 	return nil
 }
 
-func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, runtime wazero.Runtime, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m wazero.CompiledModule, err error) {
+func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, runtime wazero.Runtime, cachemod string) (m wazero.CompiledModule, err error) {
+	var (
+		wasi []byte
+	)
+
+	if wasi, err = os.ReadFile(cachemod); err != nil {
+		return nil, errors.Wrap(err, "unable to read module")
+	}
+
+	c, err := runtime.CompileModule(ctx, wasi)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+type generedmodule struct {
+	Result
+	buf          *bytes.Buffer
+	root         string
+	compiledpath string
+	cause        error
+}
+
+func genmodule2(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
 	var (
 		maindst *os.File
-		wasi    []byte
 	)
 
 	if err = transforms.PrepareSourceModule(cctx.ModuleRoot, tmpdir); err != nil {
@@ -655,7 +712,7 @@ func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad 
 	)
 
 	if err = os.MkdirAll(srcdir, 0700); err != nil {
-		return nil, err
+		return m, err
 	}
 
 	if maindst, err = os.Create(filepath.Join(srcdir, "main.go")); err != nil {
@@ -690,24 +747,18 @@ func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad 
 		return nil, errors.Wrap(err, "genmodule format failed")
 	}
 
-	if err = maindst.Sync(); err != nil {
-		return nil, errors.Wrap(err, "unable to sync main.go")
-	}
 	if digest, err = iox.ReadString(maindst); err != nil {
 		return nil, errors.Wrap(err, "unable to calculate md5")
 	}
 
 	cachemod := filepath.Join("compiled", md5x.String(digest))
 
-	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err == nil {
-		if m, err = runtime.CompileModule(ctx, wasi); err == nil {
-			return m, err
-		}
-
-		log.Println("failed to compile wasi module from cache clearing and rebuilding", cachemod, err)
-		if err = os.Remove(filepath.Join(cctx.Cache, cachemod)); err != nil {
-			return nil, err
-		}
+	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
+		return &generedmodule{
+			buf:          bytes.NewBuffer(nil),
+			root:         tmpdir,
+			compiledpath: filepath.Join(cctx.Cache, cachemod),
+		}, nil
 	} else {
 		log.Println("module not found in cache, compiling")
 	}
@@ -735,17 +786,10 @@ func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad 
 	if err = transforms.CloneFile(filepath.Join(cctx.Cache, cachemod+".go"), maindst.Name()); err != nil {
 		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
 	}
-	// if err = os.Rename(maindst.Name(), filepath.Join(cctx.Cache, cachemod+".go")); err != nil {
-	// 	return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
-	// }
 
-	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err != nil {
-		return nil, errors.Wrap(err, "unable to read module")
-	}
-
-	c, err := runtime.CompileModule(ctx, wasi)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	return &generedmodule{
+		buf:          bytes.NewBuffer(nil),
+		root:         tmpdir,
+		compiledpath: filepath.Join(cctx.Cache, cachemod),
+	}, nil
 }

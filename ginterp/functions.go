@@ -13,7 +13,6 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/langx"
 	"github.com/pkg/errors"
 )
 
@@ -57,7 +56,6 @@ func FunctionFromFile(cctx generators.Context, name string, tree *ast.File) (Fun
 		return nil, errorsx.String("genieql.Function second parameter must be a function type")
 	}
 
-	log.Println("DERP genieql.Function decl", langx.Must(astutil.Print(declPattern)))
 	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
 		return nil, errors.Errorf("genieql.Function %s - missing scanner", nodeInfo(cctx, pos))
 	}
