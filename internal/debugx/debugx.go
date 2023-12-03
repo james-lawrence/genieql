@@ -132,7 +132,7 @@ func run(ctx context.Context, dir string, strategy func(*profile.Profile)) (err 
 		return errors.Wrap(err, "unable to create profiling directory")
 	}
 
-	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.profile", "{}", uuid.Must(uuid.NewV7(uuid.MillisecondPrecision)).String()))
+	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.profile", "{}", uuid.Must(uuid.NewV7()).String()))
 	if err != nil {
 		return errors.Wrap(err, "unable to create profiling directory")
 	}
