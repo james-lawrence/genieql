@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
+	uuid "github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
-	uuid "github.com/satori/go.uuid"
 )
 
 // TemplateDatabaseName template database name
@@ -23,7 +23,7 @@ func destroyPostgresql(name string) string {
 }
 
 func NewPostgresql(template string) (string, *sql.DB) {
-	name := uuid.NewV4().String()
+	name := uuid.Must(uuid.NewV4()).String()
 	psql := mustOpen(fmt.Sprintf(dbtemplate, "postgres"))
 	defer psql.Close()
 	mustExec(psql.Exec(generatePostgresql(name, template)))

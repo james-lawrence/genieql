@@ -14,10 +14,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.30.0
 	github.com/pkg/errors v0.9.1
-	github.com/satori/go.uuid v1.2.0
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
-	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
 	golang.org/x/tools v0.16.0
 	gopkg.in/yaml.v3 v3.0.1

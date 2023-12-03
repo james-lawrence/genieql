@@ -117,9 +117,6 @@ github.com/pkg/errors
 # github.com/pkg/profile v1.7.0
 ## explicit; go 1.13
 github.com/pkg/profile
-# github.com/satori/go.uuid v1.2.0
-## explicit
-github.com/satori/go.uuid
 # github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 ## explicit
 github.com/serenize/snaker
@@ -176,9 +173,6 @@ golang.org/x/net/context
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sync v0.5.0
-## explicit; go 1.18
-golang.org/x/sync/semaphore
 # golang.org/x/sys v0.15.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
