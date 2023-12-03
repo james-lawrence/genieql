@@ -25,6 +25,7 @@ import (
 	"bitbucket.org/jatone/genieql/compiler/transforms"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/bytesx"
+	"bitbucket.org/jatone/genieql/internal/envx"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/md5x"
@@ -78,6 +79,7 @@ func New(ctx generators.Context, matchers ...Matcher) Context {
 
 // Context context for the compiler
 type Context struct {
+	tmpdir string
 	generators.Context
 	Matchers []Matcher
 }
@@ -132,6 +134,11 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports []*ast.ImportSpec
 	)
 
+	if t.tmpdir, err = os.MkdirTemp(t.CurrentPackage.Dir, "genieql.tmp.*"); err != nil {
+		return errorsx.Wrap(err, "unable to create tmp directory")
+	}
+	// defer os.RemoveAll(t.tmpdir)
+
 	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.*.tmp.go"); err != nil {
 		return errors.Wrap(err, "unable to open scratch file")
 	}
@@ -150,6 +157,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			working.Sync(),
 			working.Close(),
 			os.Remove(working.Name()),
+			// os.RemoveAll(t.tmpdir),
 		)
 		if failed != nil {
 			t.Println(errors.Wrap(failed, "failure cleaning up"))
@@ -512,7 +520,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		}
 		output := make(chan generated, len(g))
 
-		sem := semaphore.NewWeighted(int64(10))
+		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
 		for _, r := range g {
 			if err := sem.Acquire(ctx, 1); err != nil {
 				return errorsx.Wrap(err, "unable to acquire semaphore")
@@ -598,7 +606,7 @@ func generate(ctx context.Context, cctx Context, scratchpad string, runtime waze
 var ml sync.Mutex
 
 func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule) (err error) {
-	// our mapper isn't concurrency friendly.
+	// wazero and our mapper isn't concurrency friendly.
 	// we lock here to prevent issues; hopefully in the future we can remove this.
 	// but this gives us the ability to concurrently compile modules (slow) while
 	// synchronizing the execution (fast)
@@ -682,9 +690,13 @@ func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad 
 		return nil, errors.Wrap(err, "genmodule format failed")
 	}
 
+	if err = maindst.Sync(); err != nil {
+		return nil, errors.Wrap(err, "unable to sync main.go")
+	}
 	if digest, err = iox.ReadString(maindst); err != nil {
 		return nil, errors.Wrap(err, "unable to calculate md5")
 	}
+
 	cachemod := filepath.Join("compiled", md5x.String(digest))
 
 	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err == nil {
@@ -719,9 +731,13 @@ func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad 
 	if err = os.Rename(dstdir, filepath.Join(cctx.Cache, cachemod)); err != nil {
 		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
 	}
-	if err = os.Rename(maindst.Name(), filepath.Join(cctx.Cache, cachemod+".go")); err != nil {
+
+	if err = transforms.CloneFile(filepath.Join(cctx.Cache, cachemod+".go"), maindst.Name()); err != nil {
 		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
 	}
+	// if err = os.Rename(maindst.Name(), filepath.Join(cctx.Cache, cachemod+".go")); err != nil {
+	// 	return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
+	// }
 
 	if wasi, err = fs.ReadFile(os.DirFS(cctx.Cache), cachemod); err != nil {
 		return nil, errors.Wrap(err, "unable to read module")

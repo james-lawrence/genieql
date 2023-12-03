@@ -78,6 +78,9 @@ func PrintDir(d fs.FS) {
 }
 
 func PrintString(path string) {
+	log.Println("--------- FS PRINT FILE INITIATED ---------")
+	log.Println(path)
+	defer log.Println("--------- FS PRINT FILE COMPLETED ---------")
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		log.Println("unable to read file", path, err)

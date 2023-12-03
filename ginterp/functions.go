@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/printer"
 	"io"
+	"log"
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/astcodec"
@@ -12,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/generators/functions"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"bitbucket.org/jatone/genieql/internal/langx"
 	"github.com/pkg/errors"
 )
 
@@ -49,13 +51,15 @@ func FunctionFromFile(cctx generators.Context, name string, tree *ast.File) (Fun
 		return nil, fmt.Errorf("unable to locate function declaration for insert: %s", name)
 	}
 
+	log.Printf("FunctionFromFile: %s\n", nodeInfo(cctx, pos))
 	// rewrite scanner declaration function.
 	if declPattern, ok = pos.Type.Params.List[1].Type.(*ast.FuncType); !ok {
-		return nil, errorsx.String("InsertBatch second parameter must be a function type")
+		return nil, errorsx.String("genieql.Function second parameter must be a function type")
 	}
 
+	log.Println("DERP genieql.Function decl", langx.Must(astutil.Print(declPattern)))
 	if scanner = functions.DetectScanner(cctx, declPattern); scanner == nil {
-		return nil, errors.Errorf("InsertBatch %s - missing scanner", nodeInfo(cctx, pos))
+		return nil, errors.Errorf("genieql.Function %s - missing scanner", nodeInfo(cctx, pos))
 	}
 
 	return NewFunction(

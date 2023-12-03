@@ -8,6 +8,7 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -161,6 +162,9 @@ func PrepareSourceModule(mroot string, dstdir string) (err error) {
 		return errors.Wrap(err, "unable to generate go.work")
 	}
 
+	if err = CloneFS(filepath.Join(dstdir, ".genieql"), ".", os.DirFS(filepath.Join(mroot, ".genieql"))); err != nil {
+		return errors.Wrap(err, "unable to clone genieql")
+	}
 	return nil
 }
 
@@ -243,11 +247,55 @@ func CloneFile(dst string, src string) (err error) {
 		return err
 	}
 	defer srcf.Close()
-	// log.Println("cloning ->", dst, os.FileMode(0600))
 
 	if _, err := io.Copy(df, srcf); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func CloneFS(dstdir string, rootdir string, archive fs.FS) (err error) {
+	return fs.WalkDir(archive, rootdir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() && rootdir == path {
+			return os.MkdirAll(dstdir, 0755)
+		}
+
+		if d.IsDir() && path == ".cache" {
+			return filepath.SkipDir
+		}
+
+		dst := filepath.Join(dstdir, strings.TrimPrefix(path, rootdir))
+		if rootdir == path {
+			dst = path
+		}
+
+		// log.Println("cloning", rootdir, path, "->", dst, os.FileMode(0755), os.FileMode(0600))
+
+		if d.IsDir() {
+			return os.MkdirAll(dst, 0755)
+		}
+
+		c, err := archive.Open(path)
+		if err != nil {
+			return err
+		}
+		defer c.Close()
+
+		df, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+		defer df.Close()
+
+		if _, err := io.Copy(df, c); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

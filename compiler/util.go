@@ -40,12 +40,12 @@ func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 			tmpdir string
 		)
 
-		if tmpdir, err = os.MkdirTemp(cctx.CurrentPackage.Dir, "genmod.*.tmp"); err != nil {
+		if tmpdir, err = os.MkdirTemp(cctx.tmpdir, "genmod.*"); err != nil {
 			return errorsx.Wrap(err, "unable to create mod directory")
 		}
-		defer func() {
-			errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
-		}()
+		// defer func() {
+		// 	errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
+		// }()
 
 		if c, err = genmodule(ctx, cctx, pos, scratchpath, tmpdir, runtime, cfg, content, imports...); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
@@ -60,9 +60,10 @@ func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 			WithRandSource(rand.Reader).
 			WithFSConfig(
 				wazero.NewFSConfig().
-					WithDirMount(cctx.ModuleRoot, "").
-					WithFSMount(os.DirFS(tmpdir), tmpdir).
-					WithDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
+					WithReadOnlyDirMount(cctx.ModuleRoot, "").
+					WithDirMount(tmpdir, tmpdir).
+					WithDirMount(filepath.Join(cctx.ModuleRoot, ".genieql"), "/.genieql").
+					WithReadOnlyDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).
 			WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
@@ -70,14 +71,14 @@ func runmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 		mcfg = fndeclenv(cctx, mcfg, pos, tmpdir)
 
 		if err = run(ctx, mcfg, runtime, c); err != nil {
-			return errorsx.Compact(errorsx.Wrap(err, "unable to run module"), os.RemoveAll(tmpdir))
+			return errorsx.Wrapf(err, "unable to run module: %s", tmpdir)
 		}
 
 		if _, err = io.Copy(dst, &buf); err != nil {
 			return errorsx.Wrap(err, "failed to copy results")
 		}
 
-		return os.RemoveAll(tmpdir)
+		return nil
 	}
 }
 
