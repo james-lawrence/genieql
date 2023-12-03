@@ -37,6 +37,7 @@ import (
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"github.com/tetratelabs/wazero/sys"
+	"golang.org/x/sync/semaphore"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)
@@ -509,13 +510,19 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		if err != nil {
 			return err
 		}
-		output := make(chan generated)
+		output := make(chan generated, len(g))
+
+		sem := semaphore.NewWeighted(int64(10))
 		for _, r := range g {
+			if err := sem.Acquire(ctx, 1); err != nil {
+				return errorsx.Wrap(err, "unable to acquire semaphore")
+			}
+
 			go func(ir Result) {
+				defer sem.Release(1)
 				var (
 					buf = bytes.NewBuffer([]byte(nil))
 				)
-
 				cause := generate(ctx, t, scratchpad, runtime, buf, ir)
 				select {
 				case output <- generated{Result: ir, buf: buf, err: cause}:
@@ -591,7 +598,7 @@ func generate(ctx context.Context, cctx Context, scratchpad string, runtime waze
 var ml sync.Mutex
 
 func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule) (err error) {
-	// wazero doesn't handle concurrent file access well...
+	// our mapper isn't concurrency friendly.
 	// we lock here to prevent issues; hopefully in the future we can remove this.
 	// but this gives us the ability to concurrently compile modules (slow) while
 	// synchronizing the execution (fast)

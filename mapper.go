@@ -227,7 +227,22 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(path, d, 0666)
+
+	tmp, err := os.MkdirTemp(filepath.Dir(path), "mkcache")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+
+	if err = os.WriteFile(filepath.Join(tmp, name), d, 0666); err != nil {
+		return err
+	}
+
+	if err = os.Rename(filepath.Join(tmp, name), path); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ReadMapper loads the structure -> result row mapping from disk.
