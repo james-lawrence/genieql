@@ -25,7 +25,6 @@ import (
 	"bitbucket.org/jatone/genieql/compiler/transforms"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/bytesx"
-	"bitbucket.org/jatone/genieql/internal/envx"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/md5x"
@@ -38,7 +37,6 @@ import (
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"github.com/tetratelabs/wazero/sys"
-	"golang.org/x/sync/semaphore"
 )
 
 // Priority Levels for generators. lower is higher (therefor fewer dependencies)
@@ -226,12 +224,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		}
 		output := make(chan *generedmodule, len(g))
 
-		sem := semaphore.NewWeighted(int64(envx.Int(1, "GENIEQL_ENABLE_CONCURRENT_COMPILER")))
 		for _, r := range g {
-			if err := sem.Acquire(ctx, 1); err != nil {
-				return errorsx.Wrap(err, "unable to acquire semaphore")
-			}
-
 			go func(ir Result) {
 				donefn := func(m *generedmodule) {
 					select {
@@ -240,7 +233,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 						output <- &generedmodule{Result: ir, cause: ctx.Err()}
 					}
 				}
-				defer sem.Release(1)
 
 				m, cause := modgenerate(ctx, t, scratchpad, ir)
 				if cause != nil {
@@ -287,11 +279,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		})
 
 		for _, r := range gset {
-			// log.Println("generating code initiated", r.Ident, r.Location)
-			// if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
-			// 	return errors.Wrapf(err, "%s: unable to generate", r.Location)
-			// }
-
 			t.Context.Debugln("emitting code initiated", r.Location)
 			if _, err = working.WriteString("\n"); err != nil {
 				return errors.Wrapf(err, "%s: failed to append to working file", r.Location)
