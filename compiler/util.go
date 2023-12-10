@@ -41,9 +41,8 @@ func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 		if tmpdir, err = os.MkdirTemp(cctx.tmpdir, "genmod.*"); err != nil {
 			return nil, errorsx.Wrap(err, "unable to create mod directory")
 		}
-		// defer func() {
-		// 	errorsx.MaybeLog(errorsx.Wrap(os.RemoveAll(tmpdir), "unable to remove tmpdir"))
-		// }()
+		// we don't cleanup the tmpdir here because its underneath another tmpdir that will be removed
+		// when needed.
 
 		if m, err = compilemodule(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
 			return nil, errorsx.Wrap(err, "unable to generate module directory")

@@ -16,9 +16,6 @@ github.com/dave/jennifer/jen
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/felixge/fgprof v0.9.3
-## explicit; go 1.14
-github.com/felixge/fgprof
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 # github.com/go-logr/logr v1.3.0
@@ -114,9 +111,6 @@ github.com/onsi/gomega/types
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/pkg/profile v1.7.0
-## explicit; go 1.13
-github.com/pkg/profile
 # github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 ## explicit
 github.com/serenize/snaker

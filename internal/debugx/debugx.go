@@ -7,20 +7,16 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime/pprof"
 	"strconv"
-	"strings"
 	"time"
 
 	"bitbucket.org/jatone/genieql/internal/contextx"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/iox"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
-	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
-	"github.com/pkg/profile"
 )
 
 var (
@@ -109,48 +105,48 @@ func OnSignal(ctx context.Context, do func(ctx context.Context) error, sigs ...o
 	}
 }
 
-func CPU(dir string) func(context.Context) (err error) {
-	return func(ctx context.Context) (err error) {
-		return run(ctx, dir, profile.CPUProfile)
-	}
-}
+// func CPU(dir string) func(context.Context) (err error) {
+// 	return func(ctx context.Context) (err error) {
+// 		return run(ctx, dir, profile.CPUProfile)
+// 	}
+// }
 
-func Memory(dir string) func(context.Context) (err error) {
-	return func(ctx context.Context) (err error) {
-		return run(ctx, dir, profile.MemProfile)
-	}
-}
+// func Memory(dir string) func(context.Context) (err error) {
+// 	return func(ctx context.Context) (err error) {
+// 		return run(ctx, dir, profile.MemProfile)
+// 	}
+// }
 
-func Heap(dir string) func(context.Context) (err error) {
-	return func(ctx context.Context) (err error) {
-		return run(ctx, dir, profile.MemProfileHeap)
-	}
-}
+// func Heap(dir string) func(context.Context) (err error) {
+// 	return func(ctx context.Context) (err error) {
+// 		return run(ctx, dir, profile.MemProfileHeap)
+// 	}
+// }
 
-func run(ctx context.Context, dir string, strategy func(*profile.Profile)) (err error) {
-	if err = os.MkdirAll(dir, 0700); err != nil {
-		return errors.Wrap(err, "unable to create profiling directory")
-	}
+// func run(ctx context.Context, dir string, strategy func(*profile.Profile)) (err error) {
+// 	if err = os.MkdirAll(dir, 0700); err != nil {
+// 		return errors.Wrap(err, "unable to create profiling directory")
+// 	}
 
-	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.profile", "{}", uuid.Must(uuid.NewV7()).String()))
-	if err != nil {
-		return errors.Wrap(err, "unable to create profiling directory")
-	}
-	defer os.RemoveAll(tmpdir)
+// 	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.profile", "{}", uuid.Must(uuid.NewV7()).String()))
+// 	if err != nil {
+// 		return errors.Wrap(err, "unable to create profiling directory")
+// 	}
+// 	defer os.RemoveAll(tmpdir)
 
-	p := profile.Start(
-		strategy,
-		profile.NoShutdownHook,
-		profile.ProfilePath(tmpdir),
-	)
+// 	p := profile.Start(
+// 		strategy,
+// 		profile.NoShutdownHook,
+// 		profile.ProfilePath(tmpdir),
+// 	)
 
-	stoppable := StopFunc(func() {
-		p.Stop()
-		errorsx.MaybeLog(errors.Wrap(clone(path.Join(dir, "profile.pprof"), tmpdir), "unable to finalize profile"))
-	})
+// 	stoppable := StopFunc(func() {
+// 		p.Stop()
+// 		errorsx.MaybeLog(errors.Wrap(clone(path.Join(dir, "profile.pprof"), tmpdir), "unable to finalize profile"))
+// 	})
 
-	return errors.WithStack(Run(ctx, stoppable))
-}
+// 	return errors.WithStack(Run(ctx, stoppable))
+// }
 
 type Stoppable interface {
 	Stop()

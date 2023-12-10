@@ -22,7 +22,6 @@ require (
 )
 
 require (
-	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -41,7 +40,6 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/pkg/profile v1.7.0
 	github.com/tetratelabs/wazero v1.5.0
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/mod v0.14.0

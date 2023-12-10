@@ -316,8 +316,9 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
-		// wazero.NewRuntimeConfigInterpreter().WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
-		wazero.NewRuntimeConfig().WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		// 8s w/ tinygo, 28s with golang
+		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
@@ -754,8 +755,8 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 		log.Println("module not found in cache, compiling")
 	}
 
-	// cmd := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
-	cmd := exec.CommandContext(ctx, "tinygo", "build", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	// cmd := exec.CommandContext(ctx, "tinygo", "build", "-o", dstdir, filepath.Join(srcdir, "main.go"))
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
