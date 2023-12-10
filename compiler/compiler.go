@@ -754,7 +754,8 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 		log.Println("module not found in cache, compiling")
 	}
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	// cmd := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	cmd := exec.CommandContext(ctx, "tinygo", "build", "-o", dstdir, filepath.Join(srcdir, "main.go"))
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
