@@ -525,7 +525,7 @@ func (t {{.Name | private}}Dynamic) Scan({{ .Parameters | arguments }}) error {
 		case cn{{$index}}:
 			{{ range $_, $stmt := decode $index $column error -}}
 			{{ $stmt | ast }}
-			{{- end -}}
+			{{ end -}}
 		{{- end }}
 		}
 	}
