@@ -1,49 +1,52 @@
 module bitbucket.org/jatone/genieql
 
-go 1.21
+go 1.22.4
+
+toolchain go1.22.5
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/dave/jennifer v1.7.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/jackc/pgtype v1.14.0
-	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jackc/pgtype v1.14.3
+	github.com/jackc/pgx/v4 v4.18.3
 	github.com/mattn/go-isatty v0.0.20
-	github.com/mattn/go-sqlite3 v1.14.18
-	github.com/onsi/ginkgo/v2 v2.13.2
-	github.com/onsi/gomega v1.30.0
+	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/onsi/ginkgo/v2 v2.19.0
+	github.com/onsi/gomega v1.33.1
 	github.com/pkg/errors v0.9.1
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
-	github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
-	golang.org/x/text v0.14.0
-	golang.org/x/tools v0.16.0
+	github.com/zieckey/goini v0.0.0-20240615065340-08ee21c836fb
+	golang.org/x/text v0.16.0
+	golang.org/x/tools v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/go-logr/logr v1.3.0 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20231127191134-f3a68a39ae15 // indirect
+	github.com/google/pprof v0.0.0-20240721033354-7089f98c1d14 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 )
 
 require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
-	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
+	github.com/alecthomas/units v0.0.0-20240626203959-61d1e3462e30 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.14.1 // indirect
+	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/tetratelabs/wazero v1.5.0
-	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/mod v0.14.0
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	github.com/tetratelabs/wazero v1.7.3
+	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/mod v0.19.0
+	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
