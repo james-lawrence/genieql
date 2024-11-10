@@ -58,7 +58,7 @@ func Select(table string, columns, predicates []string) string {
 func Update(table string, columns, predicates, returning []string) string {
 	updates, offset := predicate(1, columns...)
 	clauses, _ := predicate(offset, predicates...)
-	columnOrder := strings.Join(quotedColumns(columns...), ",")
+	columnOrder := strings.Join(quotedColumns(returning...), ",")
 	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "), columnOrder)
 }
 

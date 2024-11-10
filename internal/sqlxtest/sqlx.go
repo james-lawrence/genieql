@@ -3,6 +3,9 @@ package sqlxtest
 import (
 	"database/sql"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
@@ -40,4 +43,34 @@ func DestroyPostgresql(template, name string) {
 func mustOpen(cstring string) *sql.DB {
 	pcfg := errorsx.Must(pgx.ParseConfig(cstring))
 	return stdlib.OpenDB(*pcfg)
+}
+
+func generateDuckDB(name, template string) error {
+	src, err := os.Open(template)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(name)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
+}
+
+func NewDuckDB(template string) (string, *sql.DB) {
+	var err error
+	name := filepath.Join(os.TempDir(), uuid.Must(uuid.NewV4()).String()+".db")
+	errorsx.Must(generateDuckDB(name, template), err)
+	db := errorsx.Must(sql.Open("duckdb", name))
+	return name, db
+}
+
+func DestroyDuckDB(template, name string) {
+	var err error
+	errorsx.Must(os.Remove(name), err)
 }
