@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/dialects"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/dialects"
 	"github.com/pkg/errors"
 )
 

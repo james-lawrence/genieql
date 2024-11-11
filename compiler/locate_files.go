@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/generators"
+	"github.com/james-lawrence/genieql/generators"
 )
 
 func Autocompile(ctx generators.Context, dst io.Writer) (err error) {

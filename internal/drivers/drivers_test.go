@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"bitbucket.org/jatone/genieql"
-	. "bitbucket.org/jatone/genieql/internal/drivers"
+	. "github.com/james-lawrence/genieql/internal/drivers"
 
 	. "github.com/onsi/ginkgo/v2"
 )

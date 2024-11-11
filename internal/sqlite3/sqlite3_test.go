@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/drivers"
-	. "bitbucket.org/jatone/genieql/internal/sqlite3"
+	"github.com/james-lawrence/genieql/internal/drivers"
+	. "github.com/james-lawrence/genieql/internal/sqlite3"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

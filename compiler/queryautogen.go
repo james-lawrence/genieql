@@ -10,10 +10,10 @@ import (
 	yaegi "github.com/traefik/yaegi/interp"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/generators/functions"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/generators/functions"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	interp "github.com/james-lawrence/genieql/interp/genieql"
 )
 
 // QueryAutogen matcher - generate crud functions

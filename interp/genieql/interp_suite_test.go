@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/internal/testx"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

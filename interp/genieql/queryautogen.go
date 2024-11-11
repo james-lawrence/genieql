@@ -12,9 +12,9 @@ import (
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/generators/functions"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/generators/functions"
 )
 
 // QueryAutogen configuration interface for generating basic queries automatically.

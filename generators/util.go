@@ -17,9 +17,9 @@ import (
 	"github.com/serenize/snaker"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/debugx"
-	"bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/debugx"
+	"github.com/james-lawrence/genieql/internal/drivers"
 )
 
 func genFunctionLiteral(ctx Context, example string, tctx interface{}, errorHandler func(string) ast.Node) (output *ast.FuncLit, err error) {

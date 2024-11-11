@@ -2,7 +2,7 @@ package columninfo
 
 import (
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/internal/transformx"
 	"golang.org/x/text/transform"
 )
 

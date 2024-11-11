@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astutil"
 	"github.com/pkg/errors"
 )
 

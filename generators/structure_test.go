@@ -8,13 +8,13 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/dialects"
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	_ "github.com/jackc/pgx/v4"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/dialects"
+	_ "github.com/james-lawrence/genieql/internal/drivers"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 
-	. "bitbucket.org/jatone/genieql/generators"
+	. "github.com/james-lawrence/genieql/generators"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

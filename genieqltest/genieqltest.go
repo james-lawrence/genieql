@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/drivers"
 
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 )
 
 func mustlookupcolumn(c genieql.ColumnDefinition, err error) genieql.ColumnDefinition {

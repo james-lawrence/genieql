@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"bitbucket.org/jatone/genieql/internal/sqlx"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
 )
 

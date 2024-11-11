@@ -10,9 +10,9 @@ import (
 	"golang.org/x/text/transform"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/debugx"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/debugx"
 )
 
 // Dialect constant representing the dialect name.

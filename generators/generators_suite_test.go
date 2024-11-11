@@ -1,7 +1,7 @@
 package generators_test
 
 import (
-	"bitbucket.org/jatone/genieql/internal/testx"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 

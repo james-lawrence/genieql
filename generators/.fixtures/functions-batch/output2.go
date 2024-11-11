@@ -1,6 +1,6 @@
 package example
 
-import "bitbucket.org/jatone/genieql/internal/sqlx"
+import "github.com/james-lawrence/genieql/internal/sqlx"
 
 // NewBatchFunction2 creates a scanner that inserts a batch of
 // records into the database.

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/internal/testx"
-	. "bitbucket.org/jatone/genieql/interp/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/internal/testx"
+	. "github.com/james-lawrence/genieql/interp/genieql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

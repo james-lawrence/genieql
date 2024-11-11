@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"bitbucket.org/jatone/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astcodec"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

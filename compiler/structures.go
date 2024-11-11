@@ -9,9 +9,9 @@ import (
 	"github.com/pkg/errors"
 	yaegi "github.com/traefik/yaegi/interp"
 
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	interp "github.com/james-lawrence/genieql/interp/genieql"
 )
 
 // Structure matcher - identifies structure generators.

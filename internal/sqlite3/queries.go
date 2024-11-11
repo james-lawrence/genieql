@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 )
 
 // Insert generate an insert query.

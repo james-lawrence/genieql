@@ -3,9 +3,7 @@
 
 package pkga
 
-import (
-	genieql "bitbucket.org/jatone/genieql/interp"
-)
+import "github.com/james-lawrence/genieql/interp/genieql"
 
 // Example1 ...
 func Example1(gql genieql.Structure) {

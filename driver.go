@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"bitbucket.org/jatone/genieql/internal/debugx"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/james-lawrence/genieql/internal/debugx"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )

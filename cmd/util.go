@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/iox"
+	"github.com/james-lawrence/genieql/internal/iox"
 )
 
 type errWriter struct {

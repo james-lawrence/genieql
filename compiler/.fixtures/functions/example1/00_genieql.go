@@ -4,8 +4,12 @@
 package example1
 
 import (
-	genieql "bitbucket.org/jatone/genieql/interp"
+	"context"
+	"time"
+
 	"github.com/jackc/pgtype"
+	"github.com/james-lawrence/genieql/internal/sqlx"
+	genieql "github.com/james-lawrence/genieql/interp"
 )
 
 func Example1(gql genieql.Structure) {

@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/drivers"
 
-	. "bitbucket.org/jatone/genieql/internal/postgresql"
+	. "github.com/james-lawrence/genieql/internal/postgresql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

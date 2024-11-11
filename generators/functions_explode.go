@@ -8,8 +8,8 @@ import (
 	"text/template"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/drivers"
 )
 
 type exploderFunction struct {

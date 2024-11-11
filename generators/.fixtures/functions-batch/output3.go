@@ -3,7 +3,7 @@ package example
 import (
 	"database/sql"
 
-	"bitbucket.org/jatone/genieql/internal/sqlx"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
 // NewBatchFunction3 creates a scanner that inserts a batch of

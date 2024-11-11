@@ -13,13 +13,13 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/compiler/runtime"
-	"bitbucket.org/jatone/genieql/compiler/stdlib"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/iox"
-	genieqlinterp "bitbucket.org/jatone/genieql/interp/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/compiler/runtime"
+	"github.com/james-lawrence/genieql/compiler/stdlib"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/iox"
+	genieqlinterp "github.com/james-lawrence/genieql/interp/genieql"
 	"github.com/pkg/errors"
 	"github.com/traefik/yaegi/interp"
 )
@@ -232,8 +232,8 @@ func (t Context) localinterp() *interp.Interpreter {
 	i.Use(stdlib.Symbols)
 	i.Use(runtime.Symbols)
 	i.Use(interp.Exports{
-		"bitbucket.org/jatone/genieql/interp":         genieqlsyms,
-		"bitbucket.org/jatone/genieql/interp/genieql": genieqlsyms,
+		"github.com/james-lawrence/genieql/interp":         genieqlsyms,
+		"github.com/james-lawrence/genieql/interp/genieql": genieqlsyms,
 	})
 
 	if path, exports := t.Context.Driver.Exported(); path != "" {

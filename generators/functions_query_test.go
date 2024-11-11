@@ -11,15 +11,15 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/buildx"
-	"bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/buildx"
+	"github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 
-	. "bitbucket.org/jatone/genieql/generators"
+	. "github.com/james-lawrence/genieql/generators"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

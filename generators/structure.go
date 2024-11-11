@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/transformx"
 )
 
 // StructOption option to provide the structure function.

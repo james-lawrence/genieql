@@ -6,10 +6,10 @@ import (
 	"go/types"
 
 	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/buildx"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/buildx"
+	"github.com/james-lawrence/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql/internal/transformx"
 )
 
 // mappedParam converts a *ast.Field that represents a struct into an array

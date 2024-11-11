@@ -3,7 +3,7 @@ package example
 import (
 	"context"
 
-	"bitbucket.org/jatone/genieql/internal/sqlx"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
 func example4(ctx context.Context, q sqlx.Queryer, arg1 int) ExampleScanner {
