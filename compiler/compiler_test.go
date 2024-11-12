@@ -48,7 +48,7 @@ var _ = Describe("Compiler generation test", func() {
 		Expect(err).To(Succeed())
 
 		// log.Println("generated\n", formatted)
-		os.WriteFile("derp.go", []byte(formatted), 0600)
+		// os.WriteFile("derp.go", []byte(formatted), 0600)
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
 
