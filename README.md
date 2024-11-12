@@ -9,17 +9,8 @@ into your codebase. primary areas of focus are:
 with query builders.
 
 # is it production ready?
-its nearing production ready, essentially beta code, but it is in use on few production applications already.
-
-- it only supports postgresql currently.
-- sqlite support is otw.
-- adding additional support is very straight forward, just implement the Dialect interface. see the postgresql implementation as the example.
-- test coverage is getting added. (a good chunk already exists but working on a better test harness for integration tests)
-
-mainly getting it out early to solicite feedback on the api
-of the code that gets generated and feature requests.
-
-as a result you should expect the api to change/break until around 1.0.
+its nearing production ready, currently we have 1 more change we want to make to the dsl.
+but has otherwise been stable for a few years.
 
 # documentation
 release notes, and roadmap documentation
@@ -27,7 +18,7 @@ can be found in the documentation directory.
 everything else will be found in godoc.
 
 ## genieql commands
-- genieql bootstrap - saves database information for generation.
+- genieql bootstrap - setups dialect information for generation from database connection strings.
 - genieql auto - runs the gql scripts to generate database code.
 
 ## examples
