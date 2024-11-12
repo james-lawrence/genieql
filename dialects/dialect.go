@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/columninfo"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 	"golang.org/x/text/transform"
@@ -45,20 +46,6 @@ func Register(dialect string, imp DialectFactory) error {
 }
 
 // LookupDialect lookup a registered dialect.
-func LookupDialect(config genieql.Configuration) (genieql.Dialect, error) {
-	var (
-		err     error
-		factory DialectFactory
-	)
-
-	if factory, err = dialects.LookupDialect(config.Dialect); err != nil {
-		return nil, err
-	}
-
-	return factory.Connect(config)
-}
-
-// LookupDialect lookup a registered dialect.
 func LookupDialectByName(config genieql.Configuration) (genieql.Dialect, error) {
 	var (
 		err     error
@@ -75,9 +62,7 @@ func LookupDialectByName(config genieql.Configuration) (genieql.Dialect, error) 
 // MustLookupDialect lookup a gesitered dialect or panic
 func MustLookupDialect(c genieql.Configuration) genieql.Dialect {
 	d, err := LookupDialect(c)
-	if err != nil {
-		panic(err)
-	}
+	errorsx.MaybePanic(err)
 
 	return d
 }
@@ -170,9 +155,7 @@ func (t Test) ColumnNameTransformer(opts ...transform.Transformer) genieql.Colum
 
 func (t Test) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	mustLookupType := func(d genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
-		if err != nil {
-			panic(err)
-		}
+		errorsx.MaybePanic(err)
 		return d
 	}
 

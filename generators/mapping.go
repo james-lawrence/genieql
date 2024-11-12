@@ -6,8 +6,9 @@ import (
 	"go/types"
 
 	"bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/buildx"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 )
@@ -24,7 +25,8 @@ func mappedParam(ctx Context, param *ast.Field) (m genieql.MappingConfig, infos 
 		// when scanning for types we need to reset the build tags to
 		// ensure we see the generated code for the other package.
 		sbtx := buildx.Clone(ctx.Build, buildx.Tags())
-		if pkg, err = genieql.LocatePackage(ipath, ".", sbtx, genieql.StrictPackageImport(ipath)); err != nil {
+
+		if pkg, err = astcodec.LocatePackage(ipath, ".", sbtx, genieql.StrictPackageImport(ipath)); err != nil {
 			return m, infos, err
 		}
 	}
@@ -52,7 +54,7 @@ func mappedStructure(ctx Context, param *ast.Field, ignoreSet ...string) ([]geni
 		// when scanning for types we need to reset the build tags to
 		// ensure we see the generated code for the other package.
 		sbtx := buildx.Clone(ctx.Build, buildx.Tags())
-		if pkg, err = genieql.LocatePackage(ipath, ".", sbtx, genieql.StrictPackageName(ctx.CurrentPackage.Name)); err != nil {
+		if pkg, err = astcodec.LocatePackage(ipath, ".", sbtx, genieql.StrictPackageName(ctx.CurrentPackage.Name)); err != nil {
 			return columns, infos, err
 		}
 	}

@@ -187,7 +187,7 @@ var _ = Describe("Query Functions", func() {
 var _ = Describe("ColumnUsageFilter", func() {
 	config := genieqltest.DialectPSQL()
 	ctx, err := genieqltest.GeneratorContext(config)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	DescribeTable("Postgresql - return a transformed query and the columns that were used",
 		func(query, expected string, usage int, cmap ...genieql.ColumnMap) {

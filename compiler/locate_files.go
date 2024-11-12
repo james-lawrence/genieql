@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"go/build"
 	"io"
@@ -12,12 +13,12 @@ import (
 	"bitbucket.org/jatone/genieql/generators"
 )
 
-func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
+func Autocompile(ctx context.Context, cctx generators.Context, dst io.Writer) (err error) {
 	var (
 		taggedFiles TaggedFiles
 	)
 
-	if taggedFiles, err = FindTaggedFiles(ctx.Build, ctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
+	if taggedFiles, err = FindTaggedFiles(cctx.Build, cctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
 		return err
 	}
 
@@ -28,11 +29,11 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	}
 
 	filtered := []*ast.File{}
-	err = genieql.NewUtils(ctx.FileSet).WalkFiles(func(path string, file *ast.File) {
+	err = genieql.NewUtils(cctx.FileSet).WalkFiles(func(path string, file *ast.File) {
 		if taggedFiles.IsTagged(filepath.Base(path)) {
 			filtered = append(filtered, file)
 		}
-	}, ctx.CurrentPackage)
+	}, cctx.CurrentPackage)
 
 	if err != nil {
 		return err
@@ -41,7 +42,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	log.Println("compiling", len(filtered), "files")
 
 	c := New(
-		ctx,
+		cctx,
 		Structure,
 		Scanner,
 		Function,
@@ -51,7 +52,7 @@ func Autocompile(ctx generators.Context, dst io.Writer) (err error) {
 	)
 
 	buf := bytes.NewBuffer(nil)
-	if err = c.Compile(buf, filtered...); err != nil {
+	if err = c.Compile(ctx, buf, filtered...); err != nil {
 		return err
 	}
 
@@ -89,38 +90,7 @@ func (t TaggedFiles) IsTagged(name string) bool {
 }
 
 // Locate files with the specified build tags
-func FindTaggedFiles(bctx build.Context, path string, tags ...string) (TaggedFiles, error) {
-	var (
-		err         error
-		taggedFiles TaggedFiles
-	)
-
-	nctx := bctx
-	nctx.BuildTags = []string{}
-	normal, err := nctx.Import(".", path, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	ctx := bctx
-	ctx.BuildTags = tags
-	tagged, err := ctx.Import(".", path, build.IgnoreVendor)
-	if err != nil {
-		return taggedFiles, err
-	}
-
-	for _, t := range tagged.GoFiles {
-		missing := true
-		for _, n := range normal.GoFiles {
-			if t == n {
-				missing = false
-			}
-		}
-
-		if missing {
-			taggedFiles.Files = append(taggedFiles.Files, t)
-		}
-	}
-
-	return taggedFiles, nil
+func FindTaggedFiles(bctx build.Context, path string, tags ...string) (taggedFiles TaggedFiles, err error) {
+	taggedFiles.Files, err = genieql.FindTaggedFiles(bctx, path, tags...)
+	return taggedFiles, err
 }

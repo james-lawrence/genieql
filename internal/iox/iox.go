@@ -42,3 +42,15 @@ type NoopWriteCloser struct {
 func (t NoopWriteCloser) Close() error {
 	return nil
 }
+
+type writeNopCloser struct {
+	io.Writer
+}
+
+func (writeNopCloser) Close() error { return nil }
+
+// WriteNopCloser returns a WriteCloser with a no-op Close method wrapping
+// the provided Writer w.
+func WriteNopCloser(w io.Writer) io.WriteCloser {
+	return writeNopCloser{w}
+}

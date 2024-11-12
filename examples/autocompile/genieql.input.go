@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"bitbucket.org/jatone/genieql/examples/autocompile/pkga"
+	genieql "bitbucket.org/jatone/genieql/ginterp"
 	"bitbucket.org/jatone/genieql/internal/sqlx"
-	genieql "bitbucket.org/jatone/genieql/interp"
 )
 
 // Example1 ...
@@ -65,7 +65,7 @@ func Example2Scanner(genieql.Scanner, func(Example2)) {}
 // generates a scanner that consumes the given parameters.
 func CombinedScanner(genieql.Scanner, func(e1 Example1, e2 Example2)) {}
 
-// generates a scanner that for types from different packages
+// generates a scanner for types from different packages
 func CombinedScanner2(genieql.Scanner, func(e1 Example1, e2 pkga.Example1)) {}
 
 // generates a scanner that consumes the given parameters.

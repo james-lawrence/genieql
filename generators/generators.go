@@ -16,6 +16,7 @@ import (
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/dialects"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 
@@ -36,6 +37,9 @@ const (
 
 // Context - context for generators
 type Context struct {
+	Name           string
+	ModuleRoot     string
+	Cache          string
 	Build          build.Context
 	CurrentPackage *build.Package
 	FileSet        *token.FileSet
@@ -190,24 +194,17 @@ func OptionDebug(ctx *Context) {
 	ctx.Verbosity = VerbosityDebug
 }
 
-func NewContextDeprecated(bctx build.Context, name string, pkg string, options ...Option) (ctx Context, err error) {
-	var (
-		bpkg *build.Package
-	)
-
-	if bpkg, err = genieql.LocatePackage(pkg, ".", bctx, genieql.StrictPackageImport(pkg)); err != nil {
-		return ctx, err
-	}
-
-	return NewContext(bctx, name, bpkg, options...)
-}
-
 func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
 	var (
 		config  genieql.Configuration
 		dialect genieql.Dialect
 		driver  genieql.Driver
+		mroot   string
 	)
+
+	if mroot, err = genieql.FindModuleRoot("."); err != nil {
+		return ctx, err
+	}
 
 	config = genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
@@ -216,18 +213,30 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	)
 
 	if dialect, err = dialects.LookupDialect(config); err != nil {
-		return ctx, err
+		return ctx, errors.Wrap(err, "unable to lookup dialect")
 	}
 
 	if driver, err = genieql.LookupDriver(config.Driver); err != nil {
-		return ctx, err
+		return ctx, errorsx.Wrap(err, "unable to lookup driver")
 	}
 
 	if driver, err = genieql.LoadCustomColumnTypes(config, driver); err != nil {
-		return ctx, err
+		return ctx, errorsx.Wrap(err, "unable to load custom types")
+	}
+
+	cachedir := filepath.Join(config.Location, ".cache")
+	if err = os.MkdirAll(cachedir, 0700); err != nil {
+		return ctx, errorsx.Wrap(err, "unable to ensure cache directory")
+	}
+
+	if err = os.MkdirAll(filepath.Join(cachedir, "compiled"), 0700); err != nil {
+		return ctx, errorsx.Wrap(err, "unable to ensure compiled directory")
 	}
 
 	ctx = Context{
+		ModuleRoot:     mroot + "/",
+		Name:           name,
+		Cache:          cachedir,
 		Build:          bctx,
 		CurrentPackage: pkg,
 		FileSet:        token.NewFileSet(),

@@ -2,87 +2,53 @@ package compiler
 
 import (
 	"go/ast"
-	"io"
 	"log"
-	"reflect"
 
 	"github.com/pkg/errors"
-	yaegi "github.com/traefik/yaegi/interp"
 
+	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
-	interp "bitbucket.org/jatone/genieql/interp/genieql"
 )
 
 // Function matcher - identifies and generates simple sql functions.
 // - only passes arguments to the query that are referenced by the query.
-func Function(ctx Context, i *yaegi.Interpreter, src *ast.File, fn *ast.FuncDecl) (r Result, err error) {
+func Function(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		v           reflect.Value
-		f           func(interp.Function)
-		ok          bool
-		gen         compilegen
-		declPattern *ast.FuncType
-		formatted   string
-		pattern     = astutil.TypePattern(astutil.Expr("genieql.Function"))
+		formatted string
+		pattern   = astutil.TypePattern(astutil.Expr("genieql.Function"))
 	)
 
-	if len(fn.Type.Params.List) < 1 {
-		ctx.Debugln("no match not enough params", nodeInfo(ctx, fn))
+	if len(pos.Type.Params.List) < 1 {
+		cctx.Debugln("no match not enough params", nodeInfo(cctx, pos))
 		return r, ErrNoMatch
 	}
 
-	if !pattern(astutil.MapFieldsToTypeExpr(fn.Type.Params.List[:1]...)...) {
-		ctx.Traceln("no match pattern", nodeInfo(ctx, fn))
+	if !pattern(astutil.MapFieldsToTypeExpr(pos.Type.Params.List[:1]...)...) {
+		cctx.Traceln("no match pattern", nodeInfo(cctx, pos))
 		return r, ErrNoMatch
 	}
 
-	if len(fn.Type.Params.List) < 2 {
+	if len(pos.Type.Params.List) < 2 {
 		return r, errorsx.String("genieql.Function requires 2 parameters, a genieql.Function and the function definition")
 	}
 
-	// rewrite scanner declaration function.
-	if declPattern, ok = fn.Type.Params.List[1].Type.(*ast.FuncType); !ok {
-		return r, errorsx.String("genieql.Function second parameter must be a function type")
+	pos.Type.Params.List = pos.Type.Params.List[:1]
+
+	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions)); err != nil {
+		return r, errors.Wrapf(err, "genieql.Function %s", nodeInfo(cctx, pos))
 	}
 
-	fn.Type.Params.List = fn.Type.Params.List[:1]
+	log.Printf("genieql.Function identified %s\n", nodeInfo(cctx, pos))
+	cctx.Debugln(formatted)
 
-	if formatted, err = formatSource(ctx, src); err != nil {
-		return r, errors.Wrapf(err, "genieql.Function %s", nodeInfo(ctx, fn))
-	}
-
-	log.Printf("genieql.Function identified %s\n", nodeInfo(ctx, fn))
-	ctx.Debugln(formatted)
-
-	gen = CompileGenFn(func(i *yaegi.Interpreter, dst io.Writer) error {
-		if _, err = i.Eval(formatted); err != nil {
-			ctx.Println(formatted)
-			return errors.Wrap(err, "failed to compile source")
-		}
-
-		if v, err = i.Eval(ctx.CurrentPackage.Name + "." + fn.Name.String()); err != nil {
-			return errors.Wrapf(err, "retrieving %s failed", nodeInfo(ctx, fn))
-		}
-
-		if f, ok = v.Interface().(func(interp.Function)); !ok {
-			return errors.Errorf("genieql.Function - %s - unable to convert function to be invoked", nodeInfo(ctx, fn))
-		}
-
-		fgen := interp.NewFunction(
-			ctx.Context,
-			fn.Name.String(),
-			declPattern,
-			fn.Doc,
-		)
-
-		f(fgen)
-
-		return fgen.Generate(dst)
-	})
+	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "FunctionFromFile")
+	// printjen(content)
 
 	return Result{
-		Generator: gen,
+		Ident:     pos.Name.Name,
+		Generator: CompileGenFn(runmod(cctx, pos)),
+		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
 		Priority:  PriorityFunctions,
 	}, nil
 }

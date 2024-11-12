@@ -1,7 +1,9 @@
 package astcodec
 
 import (
+	"bytes"
 	"go/format"
+	"go/token"
 	"io"
 	"os"
 
@@ -41,7 +43,7 @@ func ReformatFile(in *os.File) (err error) {
 		return err
 	}
 
-	if raw, err = imports.Process("generated.go", []byte(string(raw)), nil); err != nil {
+	if raw, err = imports.Process("generated.go", []byte(string(raw)), &imports.Options{Fragment: true, Comments: true, TabIndent: true, TabWidth: 8}); err != nil {
 		return errors.Wrap(err, "failed to add required imports")
 	}
 
@@ -89,4 +91,16 @@ func FormatNoImports(s string) (_ string, err error) {
 	}
 
 	return string(raw), nil
+}
+
+func FormatAST(fset *token.FileSet, src any) (_ string, err error) {
+	var (
+		buf bytes.Buffer
+	)
+
+	if err = format.Node(&buf, fset, src); err != nil {
+		return "", errors.Wrap(err, "failed to format")
+	}
+
+	return buf.String(), nil
 }

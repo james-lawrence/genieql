@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"bitbucket.org/jatone/genieql/internal/debugx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -44,9 +45,7 @@ func LookupDriver(name string) (Driver, error) {
 // MustLookupDriver panics if the driver cannot be found, convience method.
 func MustLookupDriver(name string) Driver {
 	driver, err := LookupDriver(name)
-	if err != nil {
-		panic(err)
-	}
+	errorsx.MaybePanic(err)
 	return driver
 }
 

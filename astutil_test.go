@@ -9,27 +9,13 @@ import (
 	"go/token"
 
 	. "bitbucket.org/jatone/genieql"
+	"bitbucket.org/jatone/genieql/astcodec"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Astutil", func() {
-	Describe("LocatePackage", func() {
-		It("find a the specified package", func() {
-			var err error
-			var p *build.Package
-
-			p, err = LocatePackage("go/build", ".", build.Default, StrictPackageName("build"))
-			Expect(err).ToNot(HaveOccurred())
-			Expect(p.Name).To(Equal("build"))
-
-			p, err = LocatePackage("does/not/exist", ".", build.Default, StrictPackageName("exist"))
-			Expect(err).To(HaveOccurred())
-			Expect(p).To(BeNil())
-		})
-	})
-
 	Describe("ExtractFields", func() {
 		It("should extract the fields from the provided ast.Spec", func() {
 			var err error
@@ -86,7 +72,7 @@ var _ = Describe("Astutil", func() {
 	Describe("FindUniqueDeclaration", func() {
 		It("should return the declaration if it is unique", func() {
 			fset := token.NewFileSet()
-			p, err := LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
+			p, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
 			typ, err := NewUtils(fset).FindUniqueType(FilterName("Package"), p)
@@ -97,7 +83,7 @@ var _ = Describe("Astutil", func() {
 		It("should return an error if the declaration is ambiguous", func() {
 			fset := token.NewFileSet()
 
-			p, err := LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
+			p, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
 			typ, err := NewUtils(fset).FindUniqueType(FilterName("Package"), p, p)
@@ -107,7 +93,7 @@ var _ = Describe("Astutil", func() {
 
 		It("should return an error if the declaration is not found", func() {
 			fset := token.NewFileSet()
-			p, err := LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
+			p, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 
 			typ, err := NewUtils(fset).FindUniqueType(FilterName("DoesNotExist"), p)
@@ -127,20 +113,22 @@ var _ = Describe("Astutil", func() {
 	Describe("PrintPackage", func() {
 		It("should return any error that occurred", func() {
 			fset := token.NewFileSet()
-			pkg, err := LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
+			pkg, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
 			p := ASTPrinter{}
 			w := errWriter{err: fmt.Errorf("boom")}
-			Expect(PrintPackage(p, w, fset, pkg, []string{})).To(MatchError("failed to print the package header: boom"))
+			Expect(PrintPackage(p, w, fset, pkg, []string{}, nil)).To(MatchError("failed to print the package header: boom"))
 		})
 
 		It("should write out the package name and the preface", func() {
 			fset := token.NewFileSet()
-			pkg, err := LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
+			pkg, err := astcodec.LocatePackage("go/ast", ".", build.Default, StrictPackageName("ast"))
 			Expect(err).ToNot(HaveOccurred())
+			pkg.Imports = nil
+
 			p := ASTPrinter{}
 			w := bytes.NewBuffer([]byte{})
-			Expect(PrintPackage(p, w, fset, pkg, []string{})).ToNot(HaveOccurred())
+			Expect(PrintPackage(p, w, fset, pkg, []string{}, nil)).ToNot(HaveOccurred())
 			Expect(w.String()).To(Equal(fmt.Sprintf("package ast\n%s\n\n", fmt.Sprintf(Preface, ""))))
 		})
 	})

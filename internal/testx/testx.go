@@ -10,7 +10,7 @@ import (
 
 func Fixture(fixture string) []byte {
 	buf, err := os.ReadFile(fixture)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 	return buf
 }
 
@@ -19,19 +19,14 @@ func Fixture(fixture string) []byte {
 // will panic on error.
 func ReadString(in io.Reader) (s string) {
 	var (
-		err error
 		raw []byte
 	)
 
 	if seeker, ok := in.(io.Seeker); ok {
-		if err = iox.Rewind(seeker); err != nil {
-			panic(err)
-		}
+		errorsx.MaybePanic(iox.Rewind(seeker))
 	}
 
-	if raw, err = io.ReadAll(in); err != nil {
-		panic(err)
-	}
+	raw = errorsx.Must(io.ReadAll(in))
 
 	return string(raw)
 }

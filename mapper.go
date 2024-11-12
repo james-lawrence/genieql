@@ -126,7 +126,7 @@ func (t MappingConfig) MappedColumnInfo(driver Driver, dialect Dialect, fset *to
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields: %s.%s", pkg.Name, t.Type)
+		return []ColumnInfo(nil), []ColumnInfo(nil), errors.Wrapf(err, "failed to lookup fields 0: %s.%s", pkg.Name, t.Type)
 	}
 
 	columns = t.Columns
@@ -158,7 +158,7 @@ func (t MappingConfig) MapColumns(fset *token.FileSet, pkg *build.Package, local
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return cmap, umap, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+		return cmap, umap, errors.Wrapf(err, "failed to lookup fields 1: %s.%s", t.Package.Name, t.Type)
 	}
 
 	mm := func(c ColumnInfo, f *ast.Field) (cmap *ColumnMap) {
@@ -194,7 +194,7 @@ func (t MappingConfig) MapColumnsToFields(fset *token.FileSet, pkg *build.Packag
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields 2: %s.%s", t.Package.Name, t.Type)
 	}
 
 	mFields, uFields := mapFields(columns, fields, func(c ColumnInfo, f *ast.Field) *ast.Field { return MapFieldToNativeType(c, f, t.Aliaser()) })
@@ -209,7 +209,7 @@ func (t MappingConfig) MapFieldsToColumns2(fset *token.FileSet, pkg *build.Packa
 	)
 
 	if fields, err = t.TypeFields(fset, pkg); err != nil {
-		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields: %s.%s", t.Package.Name, t.Type)
+		return []*ast.Field{}, []*ast.Field{}, errors.Wrapf(err, "failed to lookup fields 3: %s.%s", t.Package.Name, t.Type)
 	}
 
 	mFields, uFields := mapFields(columns, fields, func(c ColumnInfo, f *ast.Field) *ast.Field { return MapFieldToSQLType(c, f, t.Aliaser()) })
@@ -227,7 +227,22 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(path, d, 0666)
+
+	tmp, err := os.MkdirTemp(filepath.Dir(path), "mkcache")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+
+	if err = os.WriteFile(filepath.Join(tmp, name), d, 0666); err != nil {
+		return err
+	}
+
+	if err = os.Rename(filepath.Join(tmp, name), path); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ReadMapper loads the structure -> result row mapping from disk.

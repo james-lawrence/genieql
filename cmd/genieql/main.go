@@ -12,14 +12,14 @@ import (
 	_ "github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
-	// register the postgresql dialect
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/generators"
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 
 	// register the drivers
 	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	// register the postgresql dialect
+	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 )
 
 func main() {
@@ -46,6 +46,18 @@ func main() {
 	gg := generator{
 		buildInfo: &bi,
 	}
+	// go debugx.OnSignal(context.Background(), func(ctx context.Context) error {
+	// 	dctx, done := context.WithTimeout(ctx, envx.Duration(30*time.Second, "GENIEQL_PROFILING_DURATION"))
+	// 	defer done()
+	// 	switch envx.String("cpu", "GENIEQL_PROFILING_STRATEGY") {
+	// 	case "heap":
+	// 		return debugx.Heap(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	// 	case "mem":
+	// 		return debugx.Memory(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	// 	default:
+	// 		return debugx.CPU(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	// 	}
+	// }, syscall.SIGUSR1)
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	app.Command("version", "print version").Action(func(*kingpin.ParseContext) error {

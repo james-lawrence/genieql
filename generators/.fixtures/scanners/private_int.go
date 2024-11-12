@@ -184,6 +184,7 @@ func (t privateIntDynamic) Scan(arg *int) error {
 				tmp := int(c0.Int64)
 				*arg = tmp
 			}
+
 		}
 	}
 

@@ -8,11 +8,11 @@ import (
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 )
 
-type columnValueTransformer struct {
+type ColumnValueTransformer struct {
 	offset int
 }
 
-func (t *columnValueTransformer) Transform(c genieql.ColumnInfo) string {
+func (t *ColumnValueTransformer) Transform(c genieql.ColumnInfo) string {
 	t.offset++
 	p, _ := offsetPlaceholder{}.String(t.offset)
 	return p

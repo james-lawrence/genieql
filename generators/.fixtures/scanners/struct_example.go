@@ -296,41 +296,49 @@ func (t structExampleDynamic) Scan(arg *StructA) error {
 				tmp := int(c0.Int64)
 				arg.A = tmp
 			}
+
 		case cn1:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				arg.B = tmp
 			}
+
 		case cn2:
 			if c2.Valid {
 				tmp := int(c2.Int64)
 				arg.C = tmp
 			}
+
 		case cn3:
 			if c3.Valid {
 				tmp := c3.Bool
 				arg.D = tmp
 			}
+
 		case cn4:
 			if c4.Valid {
 				tmp := c4.Bool
 				arg.E = tmp
 			}
+
 		case cn5:
 			if c5.Valid {
 				tmp := c5.Bool
 				arg.F = tmp
 			}
+
 		case cn6:
 			if c6.Valid {
 				tmp := int(c6.Int64)
 				*arg.G = tmp
 			}
+
 		case cn7:
 			if c7.Valid {
 				tmp := c7.Bool
 				*arg.H = tmp
 			}
+
 		}
 	}
 

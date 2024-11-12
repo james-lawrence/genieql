@@ -4,7 +4,7 @@
 package pkga
 
 import (
-	genieql "bitbucket.org/jatone/genieql/interp"
+	genieql "bitbucket.org/jatone/genieql/ginterp"
 )
 
 // Example1 ...

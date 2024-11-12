@@ -4,7 +4,11 @@
 package example1
 
 import (
-	genieql "bitbucket.org/jatone/genieql/interp"
+	"context"
+	"time"
+
+	genieql "bitbucket.org/jatone/genieql/ginterp"
+	"bitbucket.org/jatone/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
 )
 

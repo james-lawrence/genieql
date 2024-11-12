@@ -5,6 +5,7 @@ import (
 	"go/parser"
 
 	. "bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -60,9 +61,7 @@ func expr(sl ...string) []ast.Expr {
 	xl := make([]ast.Expr, 0, len(sl))
 	for _, s := range sl {
 		x, err := parser.ParseExpr(s)
-		if err != nil {
-			panic(err)
-		}
+		errorsx.MaybePanic(err)
 		xl = append(xl, x)
 	}
 	return xl

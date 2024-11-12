@@ -4,10 +4,19 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/pkg/errors"
 )
+
+func Wrap(err error, message string) error {
+	return errors.Wrap(err, message)
+}
+
+func Wrapf(err error, format string, args ...interface{}) error {
+	return errors.Wrapf(err, format, args...)
+}
 
 // Compact returns the first error in the set, if any.
 func Compact(errs ...error) error {
@@ -67,11 +76,71 @@ func StackChecksum(err error) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// PanicOnError panic when error is seen.
-func PanicOnError(err error) {
+func Must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+
+	return v
+}
+
+// MaybePanic panic when error is seen.
+func MaybePanic(err error) {
 	if err == nil {
 		return
 	}
 
 	panic(err)
+}
+
+func MaybeLog(err error) {
+	if err == nil {
+		return
+	}
+
+	if cause := log.Output(2, fmt.Sprintln(err)); cause != nil {
+		panic(cause)
+	}
+}
+
+type Unrecoverable struct {
+	cause error
+}
+
+func (t Unrecoverable) Unrecoverable() {}
+
+func (t Unrecoverable) Unwrap() error {
+	return t.cause
+}
+
+func (t Unrecoverable) Error() string {
+	return t.cause.Error()
+}
+
+func (t Unrecoverable) Is(target error) bool {
+	type unrecoverable interface {
+		Unrecoverable()
+	}
+
+	_, ok := target.(unrecoverable)
+	return ok
+}
+
+func (t Unrecoverable) As(target any) bool {
+	type unrecoverable interface {
+		Unrecoverable()
+	}
+
+	if x, ok := target.(*unrecoverable); ok {
+		*x = t
+		return ok
+	}
+
+	return false
+}
+
+func NewUnrecoverable(err error) error {
+	return Unrecoverable{
+		cause: err,
+	}
 }

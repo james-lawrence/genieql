@@ -13,8 +13,8 @@ import (
 
 	"bitbucket.org/jatone/genieql/astcodec"
 	"bitbucket.org/jatone/genieql/astutil"
+	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/buildx"
 	"bitbucket.org/jatone/genieql/internal/drivers"
 	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
@@ -47,7 +47,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 	)
 
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
