@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	uuid "github.com/gofrs/uuid"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 )
@@ -26,33 +27,17 @@ func NewPostgresql(template string) (string, *sql.DB) {
 	name := uuid.Must(uuid.NewV4()).String()
 	psql := mustOpen(fmt.Sprintf(dbtemplate, "postgres"))
 	defer psql.Close()
-	mustExec(psql.Exec(generatePostgresql(name, template)))
+	errorsx.Must(psql.Exec(generatePostgresql(name, template)))
 	return name, mustOpen(fmt.Sprintf(dbtemplate, name))
 }
 
 func DestroyPostgresql(template, name string) {
 	psql := mustOpen(fmt.Sprintf(dbtemplate, "postgres"))
 	defer psql.Close()
-	mustExec(psql.Exec(destroyPostgresql(name)))
+	errorsx.Must(psql.Exec(destroyPostgresql(name)))
 }
 
 func mustOpen(cstring string) *sql.DB {
-	pcfg := mustParse(pgx.ParseConfig(cstring))
+	pcfg := errorsx.Must(pgx.ParseConfig(cstring))
 	return stdlib.OpenDB(*pcfg)
-}
-
-func mustExec(result sql.Result, err error) sql.Result {
-	if err != nil {
-		panic(err)
-	}
-
-	return result
-}
-
-func mustParse(c *pgx.ConnConfig, err error) *pgx.ConnConfig {
-	if err != nil {
-		panic(err)
-	}
-
-	return c
 }

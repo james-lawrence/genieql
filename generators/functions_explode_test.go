@@ -59,10 +59,10 @@ var _ = ginkgo.Describe("FunctionsExplode", func() {
 	)
 
 	stdlib, err := genieql.LookupDriver(drivers.StandardLib)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	psql, err := genieql.LookupDriver(drivers.PGX)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	ginkgo.DescribeTable("build a exploding function based on the options",
 		explodetest,

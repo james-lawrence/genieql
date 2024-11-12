@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/jatone/genieql"
 	"bitbucket.org/jatone/genieql/columninfo"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"bitbucket.org/jatone/genieql/internal/stringsx"
 	"bitbucket.org/jatone/genieql/internal/transformx"
 	"golang.org/x/text/transform"
@@ -61,9 +62,7 @@ func LookupDialectByName(config genieql.Configuration) (genieql.Dialect, error) 
 // MustLookupDialect lookup a gesitered dialect or panic
 func MustLookupDialect(c genieql.Configuration) genieql.Dialect {
 	d, err := LookupDialect(c)
-	if err != nil {
-		panic(err)
-	}
+	errorsx.MaybePanic(err)
 
 	return d
 }
@@ -156,9 +155,7 @@ func (t Test) ColumnNameTransformer(opts ...transform.Transformer) genieql.Colum
 
 func (t Test) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	mustLookupType := func(d genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
-		if err != nil {
-			panic(err)
-		}
+		errorsx.MaybePanic(err)
 		return d
 	}
 

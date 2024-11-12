@@ -20,7 +20,7 @@ import (
 const Dialect = "wasi"
 
 func init() {
-	errorsx.PanicOnError(dialects.Register(Dialect, dialectFactory{}))
+	errorsx.MaybePanic(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type dialectFactory struct{}
@@ -53,7 +53,7 @@ func (t dialect) Insert(n int, offset int, table string, conflict string, column
 
 	_, rptr, rlen := ffiguest.ByteBuffer(rs)
 
-	errorsx.PanicOnError(ffierrors.Error(
+	errorsx.MaybePanic(ffierrors.Error(
 		_insertquery(
 			int64(n),
 			int64(offset),
@@ -82,7 +82,7 @@ func (t dialect) Select(table string, columns, predicates []string) string {
 
 	_, rptr, rlen := ffiguest.ByteBuffer(rs)
 
-	errorsx.PanicOnError(ffierrors.Error(
+	errorsx.MaybePanic(ffierrors.Error(
 		_selectquery(
 			tableptr, tablelen,
 			columnsptr, columnslen, columnssize,
@@ -108,7 +108,7 @@ func (t dialect) Update(table string, columns, predicates, returning []string) s
 
 	_, rptr, rlen := ffiguest.ByteBuffer(rs)
 
-	errorsx.PanicOnError(ffierrors.Error(
+	errorsx.MaybePanic(ffierrors.Error(
 		_updatequery(
 			tableptr, tablelen,
 			columnsptr, columnslen, columnssize,
@@ -134,7 +134,7 @@ func (t dialect) Delete(table string, columns, predicates []string) string {
 
 	_, rptr, rlen := ffiguest.ByteBuffer(rs)
 
-	errorsx.PanicOnError(ffierrors.Error(
+	errorsx.MaybePanic(ffierrors.Error(
 		_deletequery(
 			tableptr, tablelen,
 			columnsptr, columnslen, columnssize,
@@ -210,7 +210,7 @@ func (t dialect) QuotedString(s string) string {
 	sptr, slen := ffiguest.String(s)
 	_, rptr, rlen := ffiguest.ByteBuffer(rs)
 
-	errorsx.PanicOnError(ffierrors.Error(
+	errorsx.MaybePanic(ffierrors.Error(
 		_quotedString(sptr, slen, unsafe.Pointer(&rlen), rptr),
 		errors.New("unable to quote string"),
 	))

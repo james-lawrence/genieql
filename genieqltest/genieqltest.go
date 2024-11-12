@@ -14,22 +14,15 @@ import (
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/generators"
 	"bitbucket.org/jatone/genieql/internal/drivers"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 )
 
-func mustlookupcolumn(c genieql.ColumnDefinition, err error) genieql.ColumnDefinition {
-	if err != nil {
-		panic(err)
-	}
-
-	return c
-}
-
 func NewColumnMap(d genieql.Driver, typ string, local string, field string) genieql.ColumnMap {
 	return genieql.ColumnMap{
 		ColumnInfo: genieql.ColumnInfo{
-			Definition: mustlookupcolumn(d.LookupType(typ)),
+			Definition: errorsx.Must(d.LookupType(typ)),
 			Name:       field,
 		},
 		Dst:   astutil.SelExpr(local, field),

@@ -114,8 +114,8 @@ github.com/pkg/errors
 # github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 ## explicit
 github.com/serenize/snaker
-# github.com/tetratelabs/wazero v1.7.3
-## explicit; go 1.20
+# github.com/tetratelabs/wazero v1.8.1
+## explicit; go 1.21
 github.com/tetratelabs/wazero
 github.com/tetratelabs/wazero/api
 github.com/tetratelabs/wazero/experimental

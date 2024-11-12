@@ -27,7 +27,7 @@ var _ = Describe("Batch Insert", func() {
 
 	config := DialectConfig1()
 	ctx, err := genieqltest.GeneratorContext(config)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	DescribeTable(
 		"examples",

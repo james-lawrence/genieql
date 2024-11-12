@@ -184,6 +184,7 @@ func (t boolDynamic) Scan(arg *bool) error {
 				tmp := c0.Bool
 				*arg = tmp
 			}
+
 		}
 	}
 

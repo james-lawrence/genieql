@@ -32,7 +32,7 @@ func NewDialect(q *sql.DB) genieql.Dialect {
 }
 
 func init() {
-	errorsx.PanicOnError(dialects.Register(Dialect, dialectFactory{}))
+	errorsx.MaybePanic(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type queryer interface {

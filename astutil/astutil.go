@@ -10,15 +10,14 @@ import (
 	"go/types"
 	"strconv"
 
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 
 // Expr converts a template expression into an ast.Expr node.
 func Expr(template string) ast.Expr {
 	expr, err := parser.ParseExpr(template)
-	if err != nil {
-		panic(err)
-	}
+	errorsx.MaybePanic(err)
 
 	return expr
 }

@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/jatone/genieql/columninfo"
 	"bitbucket.org/jatone/genieql/dialects"
 	"bitbucket.org/jatone/genieql/internal/debugx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 )
 
 // Dialect constant representing the dialect name.
@@ -24,13 +25,7 @@ func NewDialect(q *sql.DB) genieql.Dialect {
 }
 
 func init() {
-	maybePanic := func(err error) {
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	maybePanic(dialects.Register(Dialect, dialectFactory{}))
+	errorsx.MaybePanic(dialects.Register(Dialect, dialectFactory{}))
 }
 
 type queryer interface {

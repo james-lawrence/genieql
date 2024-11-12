@@ -7,15 +7,12 @@ import (
 	"strings"
 
 	"bitbucket.org/jatone/genieql"
-	"github.com/pkg/errors"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 )
 
 func currentPackage(bctx build.Context, path string, dir string) *build.Package {
 	pkg, err := bctx.Import(".", dir, build.IgnoreVendor)
-	if err != nil {
-		log.Printf("failed to load package for %s %v\n", dir, errors.WithStack(err))
-		panic(err)
-	}
+	errorsx.MaybePanic(errorsx.Wrapf(err, "failed to load package for %s", dir))
 	pkg.ImportPath = path
 
 	return pkg

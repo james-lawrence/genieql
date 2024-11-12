@@ -232,21 +232,25 @@ func (t multipleParamDynamic) Scan(arg1, arg2 *int, arg3 *bool, arg4 *string) er
 				tmp := int(c0.Int64)
 				*arg1 = tmp
 			}
+
 		case cn1:
 			if c1.Valid {
 				tmp := int(c1.Int64)
 				*arg2 = tmp
 			}
+
 		case cn2:
 			if c2.Valid {
 				tmp := c2.Bool
 				*arg3 = tmp
 			}
+
 		case cn3:
 			if c3.Valid {
 				tmp := c3.String
 				*arg4 = tmp
 			}
+
 		}
 	}
 

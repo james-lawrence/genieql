@@ -241,12 +241,12 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 				}
 				m.Result = ir
 
-				log.Println("compiling", m.Result.Ident, m.Result.Location)
-				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
-					m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
-					donefn(m)
-					return
-				}
+				// log.Println("compiling", m.Result.Ident, m.Result.Location)
+				// if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
+				// 	m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
+				// 	donefn(m)
+				// 	return
+				// }
 
 				log.Println("generating code initiated", m.Ident, m.Location)
 				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, false, m.Result); err != nil {
@@ -316,11 +316,13 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
+		wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// 8s w/ tinygo, 28s with golang
 		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
-		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		// wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
+	wazero.NewRuntimeConfigInterpreter()
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to build wasi snapshot preview1")

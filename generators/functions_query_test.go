@@ -47,7 +47,7 @@ var _ = ginkgo.Describe("Query Functions", func() {
 	)
 
 	driver, err := genieql.LookupDriver(drivers.StandardLib)
-	errorsx.PanicOnError(err)
+	errorsx.MaybePanic(err)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),

@@ -336,14 +336,17 @@ func (t customScannerDynamic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 			if err := c0.AssignTo(i1); err != nil {
 				return err
 			}
+
 		case cn1:
 			if err := c1.AssignTo(i2); err != nil {
 				return err
 			}
+
 		case cn2:
 			if err := c2.AssignTo(b1); err != nil {
 				return err
 			}
+
 		case cn3:
 			switch c3.InfinityModifier {
 			case pgtype.Infinity:
@@ -357,6 +360,7 @@ func (t customScannerDynamic) Scan(i1, i2 *int, b1 *bool, t1 *time.Time) error {
 					return err
 				}
 			}
+
 		}
 	}
 
@@ -928,94 +932,117 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 			if err := c0.AssignTo(&sp0.BigintField); err != nil {
 				return err
 			}
+
 		case cn1:
 			if err := c1.AssignTo(&sp0.BitField); err != nil {
 				return err
 			}
+
 		case cn2:
 			if err := c2.AssignTo(&sp0.BitVaryingField); err != nil {
 				return err
 			}
+
 		case cn3:
 			if err := c3.AssignTo(&sp0.BoolField); err != nil {
 				return err
 			}
+
 		case cn4:
 			if err := c4.AssignTo(&sp0.ByteArrayField); err != nil {
 				return err
 			}
+
 		case cn5:
 			if err := c5.AssignTo(&sp0.CharacterField); err != nil {
 				return err
 			}
+
 		case cn6:
 			if err := c6.AssignTo(&sp0.CharacterFixedField); err != nil {
 				return err
 			}
+
 		case cn7:
 			if err := c7.AssignTo(&sp0.CidrField); err != nil {
 				return err
 			}
+
 		case cn8:
 			if err := c8.AssignTo(&sp0.DecimalField); err != nil {
 				return err
 			}
+
 		case cn9:
 			if err := c9.AssignTo(&sp0.DoublePrecisionField); err != nil {
 				return err
 			}
+
 		case cn10:
 			if err := c10.AssignTo(&sp0.InetField); err != nil {
 				return err
 			}
+
 		case cn11:
 			if err := c11.AssignTo(&sp0.Int2Array); err != nil {
 				return err
 			}
+
 		case cn12:
 			if err := c12.AssignTo(&sp0.Int4Array); err != nil {
 				return err
 			}
+
 		case cn13:
 			if err := c13.AssignTo(&sp0.Int8Array); err != nil {
 				return err
 			}
+
 		case cn14:
 			if err := c14.AssignTo(&sp0.IntField); err != nil {
 				return err
 			}
+
 		case cn15:
 			if err := c15.AssignTo(&sp0.IntervalField); err != nil {
 				return err
 			}
+
 		case cn16:
 			if err := c16.AssignTo(&sp0.JSONField); err != nil {
 				return err
 			}
+
 		case cn17:
 			if err := c17.AssignTo(&sp0.JsonbField); err != nil {
 				return err
 			}
+
 		case cn18:
 			if err := c18.AssignTo(&sp0.MacaddrField); err != nil {
 				return err
 			}
+
 		case cn19:
 			if err := c19.AssignTo(&sp0.NumericField); err != nil {
 				return err
 			}
+
 		case cn20:
 			if err := c20.AssignTo(&sp0.RealField); err != nil {
 				return err
 			}
+
 		case cn21:
 			if err := c21.AssignTo(&sp0.SmallintField); err != nil {
 				return err
 			}
+
 		case cn22:
 			if err := c22.AssignTo(&sp0.TextField); err != nil {
 				return err
 			}
+
 		case cn23:
 			switch c23.InfinityModifier {
 			case pgtype.Infinity:
@@ -1029,14 +1056,17 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 					return err
 				}
 			}
+
 		case cn24:
 			if err := c24.AssignTo(&sp0.UUIDArray); err != nil {
 				return err
 			}
+
 		case cn25:
 			if err := c25.AssignTo(&sp0.UUIDField); err != nil {
 				return err
 			}
+
 		}
 	}
 
@@ -1342,18 +1372,22 @@ func (t example2ScannerDynamic) Scan(sp0 *Example2) error {
 			if err := c0.AssignTo(&sp0.BoolField); err != nil {
 				return err
 			}
+
 		case cn1:
 			if err := c1.AssignTo(&sp0.Int4Array); err != nil {
 				return err
 			}
+
 		case cn2:
 			if err := c2.AssignTo(&sp0.Int8Array); err != nil {
 				return err
 			}
+
 		case cn3:
 			if err := c3.AssignTo(&sp0.TextField); err != nil {
 				return err
 			}
+
 		case cn4:
 			switch c4.InfinityModifier {
 			case pgtype.Infinity:
@@ -1367,14 +1401,17 @@ func (t example2ScannerDynamic) Scan(sp0 *Example2) error {
 					return err
 				}
 			}
+
 		case cn5:
 			if err := c5.AssignTo(&sp0.UUIDArray); err != nil {
 				return err
 			}
+
 		case cn6:
 			if err := c6.AssignTo(&sp0.UUIDField); err != nil {
 				return err
 			}
+
 		}
 	}
 
@@ -2827,6 +2864,7 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 					return err
 				}
 			}
+
 		case cn1:
 			switch c1.InfinityModifier {
 			case pgtype.Infinity:
@@ -2840,6 +2878,7 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 					return err
 				}
 			}
+
 		case cn2:
 			switch c2.InfinityModifier {
 			case pgtype.Infinity:
@@ -2853,10 +2892,12 @@ func (t timestampScannerDynamic) Scan(sp0 *Timestamp) error {
 					return err
 				}
 			}
+
 		case cn3:
 			if err := c3.AssignTo(&sp0.UUID); err != nil {
 				return err
 			}
+
 		}
 	}
 

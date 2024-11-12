@@ -76,8 +76,16 @@ func StackChecksum(err error) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// PanicOnError panic when error is seen.
-func PanicOnError(err error) {
+func Must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+
+	return v
+}
+
+// MaybePanic panic when error is seen.
+func MaybePanic(err error) {
 	if err == nil {
 		return
 	}

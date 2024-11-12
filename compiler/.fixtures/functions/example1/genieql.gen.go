@@ -605,94 +605,117 @@ func (t example1ScannerDynamic) Scan(i *Example1) error {
 			if err := c0.AssignTo(&i.BigintField); err != nil {
 				return err
 			}
+
 		case cn1:
 			if err := c1.AssignTo(&i.BitField); err != nil {
 				return err
 			}
+
 		case cn2:
 			if err := c2.AssignTo(&i.BitVaryingField); err != nil {
 				return err
 			}
+
 		case cn3:
 			if err := c3.AssignTo(&i.BoolField); err != nil {
 				return err
 			}
+
 		case cn4:
 			if err := c4.AssignTo(&i.ByteArrayField); err != nil {
 				return err
 			}
+
 		case cn5:
 			if err := c5.AssignTo(&i.CharacterField); err != nil {
 				return err
 			}
+
 		case cn6:
 			if err := c6.AssignTo(&i.CharacterFixedField); err != nil {
 				return err
 			}
+
 		case cn7:
 			if err := c7.AssignTo(&i.CidrField); err != nil {
 				return err
 			}
+
 		case cn8:
 			if err := c8.AssignTo(&i.DecimalField); err != nil {
 				return err
 			}
+
 		case cn9:
 			if err := c9.AssignTo(&i.DoublePrecisionField); err != nil {
 				return err
 			}
+
 		case cn10:
 			if err := c10.AssignTo(&i.InetField); err != nil {
 				return err
 			}
+
 		case cn11:
 			if err := c11.AssignTo(&i.Int2Array); err != nil {
 				return err
 			}
+
 		case cn12:
 			if err := c12.AssignTo(&i.Int4Array); err != nil {
 				return err
 			}
+
 		case cn13:
 			if err := c13.AssignTo(&i.Int8Array); err != nil {
 				return err
 			}
+
 		case cn14:
 			if err := c14.AssignTo(&i.IntField); err != nil {
 				return err
 			}
+
 		case cn15:
 			if err := c15.AssignTo(&i.IntervalField); err != nil {
 				return err
 			}
+
 		case cn16:
 			if err := c16.AssignTo(&i.JSONField); err != nil {
 				return err
 			}
+
 		case cn17:
 			if err := c17.AssignTo(&i.JsonbField); err != nil {
 				return err
 			}
+
 		case cn18:
 			if err := c18.AssignTo(&i.MacaddrField); err != nil {
 				return err
 			}
+
 		case cn19:
 			if err := c19.AssignTo(&i.NumericField); err != nil {
 				return err
 			}
+
 		case cn20:
 			if err := c20.AssignTo(&i.RealField); err != nil {
 				return err
 			}
+
 		case cn21:
 			if err := c21.AssignTo(&i.SmallintField); err != nil {
 				return err
 			}
+
 		case cn22:
 			if err := c22.AssignTo(&i.TextField); err != nil {
 				return err
 			}
+
 		case cn23:
 			switch c23.InfinityModifier {
 			case pgtype.Infinity:
@@ -706,14 +729,17 @@ func (t example1ScannerDynamic) Scan(i *Example1) error {
 					return err
 				}
 			}
+
 		case cn24:
 			if err := c24.AssignTo(&i.UUIDArray); err != nil {
 				return err
 			}
+
 		case cn25:
 			if err := c25.AssignTo(&i.UUIDField); err != nil {
 				return err
 			}
+
 		}
 	}
 

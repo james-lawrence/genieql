@@ -187,6 +187,7 @@ func (t timeDynamic) Scan(arg *time.Time) error {
 				tmp := c0.Time
 				*arg = tmp
 			}
+
 		}
 	}
 

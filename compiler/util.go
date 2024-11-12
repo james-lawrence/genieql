@@ -208,7 +208,7 @@ func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl, tmpdir s
 
 func printjen(f *jen.File) {
 	var buf bytes.Buffer
-	errorsx.PanicOnError(f.Render(&buf))
+	errorsx.MaybePanic(f.Render(&buf))
 	log.Println(buf.String())
 }
 

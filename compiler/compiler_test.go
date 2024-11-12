@@ -12,7 +12,7 @@ import (
 	"bitbucket.org/jatone/genieql/buildx"
 	"bitbucket.org/jatone/genieql/compiler"
 	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/langx"
+	"bitbucket.org/jatone/genieql/internal/errorsx"
 	_ "bitbucket.org/jatone/genieql/internal/postgresql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,7 +30,7 @@ var _ = Describe("Compiler generation test", func() {
 			buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate),
 		)
 
-		pkg, err := bctx.ImportDir(langx.Must(filepath.Abs(dir)), build.IgnoreVendor)
+		pkg, err := bctx.ImportDir(errorsx.Must(filepath.Abs(dir)), build.IgnoreVendor)
 		Expect(err).To(Succeed())
 		pkg.ImportPath = "bitbucket.org/jatone/genieql/compiler/.fixtures/functions/example1"
 
@@ -48,7 +48,6 @@ var _ = Describe("Compiler generation test", func() {
 		Expect(err).To(Succeed())
 
 		// log.Println("generated\n", formatted)
-
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
 
