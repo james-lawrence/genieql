@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/iox"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/iox"
 )
 
 func Fixture(fixture string) []byte {

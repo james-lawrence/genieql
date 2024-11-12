@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v3"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 )
 
 // DefaultTypeDefinitions determine the type definition for an expression.

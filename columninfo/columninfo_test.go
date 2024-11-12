@@ -3,9 +3,9 @@ package columninfo_test
 import (
 	"unicode"
 
-	"bitbucket.org/jatone/genieql"
-	. "bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql"
+	. "github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/internal/transformx"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 

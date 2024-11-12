@@ -3,12 +3,12 @@ package generators_test
 import (
 	"bytes"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 	"golang.org/x/text/transform"
 
-	"bitbucket.org/jatone/genieql/columninfo"
-	. "bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/columninfo"
+	. "github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/transformx"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

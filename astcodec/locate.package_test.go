@@ -3,8 +3,8 @@ package astcodec_test
 import (
 	"go/build"
 
-	"bitbucket.org/jatone/genieql"
-	. "bitbucket.org/jatone/genieql/astcodec"
+	"github.com/james-lawrence/genieql"
+	. "github.com/james-lawrence/genieql/astcodec"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

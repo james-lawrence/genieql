@@ -13,8 +13,8 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/slicesx"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/slicesx"
 	"github.com/pkg/errors"
 )
 

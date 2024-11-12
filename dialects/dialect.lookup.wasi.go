@@ -2,7 +2,7 @@
 
 package dialects
 
-import "bitbucket.org/jatone/genieql"
+import "github.com/james-lawrence/genieql"
 
 // LookupDialect lookup a registered dialect.
 func LookupDialect(config genieql.Configuration) (genieql.Dialect, error) {

@@ -4,17 +4,17 @@ import (
 	"go/ast"
 	"go/token"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/genieqltest"
-	. "bitbucket.org/jatone/genieql/ginterp"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/genieqltest"
+	. "github.com/james-lawrence/genieql/ginterp"
 
 	"bytes"
 	"io"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/membufx"
-	"bitbucket.org/jatone/genieql/internal/testx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/membufx"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

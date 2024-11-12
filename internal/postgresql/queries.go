@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 )
 
 type ColumnValueTransformer struct {

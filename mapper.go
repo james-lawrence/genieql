@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/transformx"
 	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"

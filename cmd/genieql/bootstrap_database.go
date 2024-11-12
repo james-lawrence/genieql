@@ -7,7 +7,7 @@ import (
 
 	"github.com/alecthomas/kingpin"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 )
 
 // data stored in qlgenie.conf - dialect, default alias strategy, map definition directory,

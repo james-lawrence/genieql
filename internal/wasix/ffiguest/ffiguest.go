@@ -7,8 +7,8 @@ import (
 	"os"
 	"unsafe"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/wasix/ffierrors"
 )
 
 func Error(code uint32, msg error) error {

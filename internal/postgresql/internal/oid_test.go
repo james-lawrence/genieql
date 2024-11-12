@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgtype"
 
-	. "bitbucket.org/jatone/genieql/internal/postgresql/internal"
+	. "github.com/james-lawrence/genieql/internal/postgresql/internal"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

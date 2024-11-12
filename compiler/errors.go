@@ -1,7 +1,7 @@
 package compiler
 
 import (
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // Well known errors for the compiler

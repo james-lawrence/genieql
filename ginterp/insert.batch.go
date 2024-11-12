@@ -7,14 +7,14 @@ import (
 	"go/types"
 	"io"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/generators/functions"
-	"bitbucket.org/jatone/genieql/generators/typespec"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/generators/functions"
+	"github.com/james-lawrence/genieql/generators/typespec"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 	"github.com/pkg/errors"
 )
 

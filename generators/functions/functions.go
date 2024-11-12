@@ -10,9 +10,9 @@ import (
 	"log"
 	"strings"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/generators"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/generators"
 	"github.com/pkg/errors"
 )
 

@@ -9,13 +9,13 @@ import (
 	"github.com/alecthomas/kingpin"
 	"github.com/pkg/errors"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/buildx"
-	"bitbucket.org/jatone/genieql/cmd"
-	"bitbucket.org/jatone/genieql/compiler"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/buildx"
+	"github.com/james-lawrence/genieql/cmd"
+	"github.com/james-lawrence/genieql/compiler"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // general generator for genieql, will locate files to consider and process them.

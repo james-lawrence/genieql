@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 )
 
 // ColumnConstantContext for building column sets.

@@ -3,13 +3,13 @@ package genieql_test
 import (
 	"go/ast"
 
-	. "bitbucket.org/jatone/genieql"
+	. "github.com/james-lawrence/genieql"
 	"golang.org/x/text/transform"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astutil"
 )
 
 var _ = Describe("Mapper", func() {

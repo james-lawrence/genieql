@@ -4,8 +4,8 @@ import (
 	"go/ast"
 	"go/parser"
 
-	. "bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	. "github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

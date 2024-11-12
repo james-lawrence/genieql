@@ -1,7 +1,7 @@
 package ginterp_test
 
 import (
-	// . "bitbucket.org/jatone/genieql/ginterp"
+	// . "github.com/james-lawrence/genieql/ginterp"
 
 	. "github.com/onsi/ginkgo/v2"
 	// . "github.com/onsi/gomega"

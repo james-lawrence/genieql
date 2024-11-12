@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 func currentPackage(bctx build.Context, path string, dir string) *build.Package {

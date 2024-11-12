@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"unsafe"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/bytesx"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/postgresql"
-	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
-	"bitbucket.org/jatone/genieql/internal/wasix/ffiguest"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/bytesx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/internal/wasix/ffierrors"
+	"github.com/james-lawrence/genieql/internal/wasix/ffiguest"
 	"golang.org/x/text/transform"
 )
 

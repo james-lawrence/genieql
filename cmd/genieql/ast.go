@@ -7,9 +7,9 @@ import (
 	"go/token"
 	"os"
 
-	"bitbucket.org/jatone/genieql"
 	"github.com/alecthomas/kingpin"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/james-lawrence/genieql"
 )
 
 // ast utility - used to consume a golang file and print the AST.

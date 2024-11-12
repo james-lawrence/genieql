@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql/internal/transformx"
 	"golang.org/x/text/transform"
 )
 

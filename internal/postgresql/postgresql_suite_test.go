@@ -3,7 +3,7 @@ package postgresql_test
 import (
 	"database/sql"
 
-	"bitbucket.org/jatone/genieql/internal/sqlxtest"
+	"github.com/james-lawrence/genieql/internal/sqlxtest"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

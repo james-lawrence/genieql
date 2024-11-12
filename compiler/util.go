@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/dave/jennifer/jen"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/tetratelabs/wazero"
 )
 
@@ -110,7 +110,7 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 		jen.If(
 			jen.List(
 				jen.Id("tree"), jen.Id("err"),
-			).Op("=").Qual("bitbucket.org/jatone/genieql/ginterp", "LoadFile").Call(),
+			).Op("=").Qual("github.com/james-lawrence/genieql/ginterp", "LoadFile").Call(),
 			jen.Id("err").Op("!=").Id("nil"),
 		).Block(
 			jen.Id("log").Dot("Fatalln").Call(
@@ -127,7 +127,7 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 					),
 				),
 				jen.Lit(cfgname),
-				jen.Qual("bitbucket.org/jatone/genieql/ginterp", "WasiPackage").Call(),
+				jen.Qual("github.com/james-lawrence/genieql/ginterp", "WasiPackage").Call(),
 			),
 			jen.Id("err").Op("!=").Id("nil"),
 		).Block(
@@ -142,9 +142,9 @@ func normalizeFnDecl(src *ast.File) *ast.File {
 	ast.Walk(
 		astcodec.Multivisit(
 			// astcodec.Printer(),
-			astcodec.NewRemoveImport("bitbucket.org/jatone/genieql/ginterp"),
-			astcodec.NewEnsureImport("bitbucket.org/jatone/genieql/ginterp"),
-			astcodec.NewEnsureImport("bitbucket.org/jatone/genieql"),
+			astcodec.NewRemoveImport("github.com/james-lawrence/genieql/ginterp"),
+			astcodec.NewEnsureImport("github.com/james-lawrence/genieql/ginterp"),
+			astcodec.NewEnsureImport("github.com/james-lawrence/genieql"),
 			astcodec.NewIdentReplacement(func(i *ast.Ident) *ast.Ident {
 				return ast.NewIdent("ginterp")
 			}, func(i *ast.Ident) bool { return i.Name == "genieql" }),

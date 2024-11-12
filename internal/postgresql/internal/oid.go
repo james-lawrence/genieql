@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgtype"
 
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astutil"
 )
 
 // OIDToType maps object id to golang types.

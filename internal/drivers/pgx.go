@@ -3,8 +3,8 @@ package drivers
 import (
 	"reflect"
 
-	"bitbucket.org/jatone/genieql"
 	"github.com/jackc/pgtype"
+	"github.com/james-lawrence/genieql"
 )
 
 // implements the pgx driver https://github.com/jackc/pgx

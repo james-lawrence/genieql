@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
-	"bitbucket.org/jatone/genieql/examples/autocompile/pkga"
-	genieql "bitbucket.org/jatone/genieql/ginterp"
-	"bitbucket.org/jatone/genieql/internal/sqlx"
+	"github.com/james-lawrence/genieql/examples/autocompile/pkga"
+	genieql "github.com/james-lawrence/genieql/ginterp"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
 // Example1 ...

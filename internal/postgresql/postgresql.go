@@ -13,14 +13,14 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/internal/debugx"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/postgresql/internal"
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/debugx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/postgresql/internal"
+	"github.com/james-lawrence/genieql/internal/transformx"
 )
 
 // Dialect constant representing the dialect name.

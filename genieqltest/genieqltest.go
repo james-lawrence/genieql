@@ -7,16 +7,16 @@ import (
 	"log"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/buildx"
-	"bitbucket.org/jatone/genieql/columninfo"
-	"bitbucket.org/jatone/genieql/dialects"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/buildx"
+	"github.com/james-lawrence/genieql/columninfo"
+	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 )
 
 func NewColumnMap(d genieql.Driver, typ string, local string, field string) genieql.ColumnMap {

@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
-	genieql "bitbucket.org/jatone/genieql/ginterp"
-	"bitbucket.org/jatone/genieql/internal/sqlx"
 	"github.com/jackc/pgtype"
+	genieql "github.com/james-lawrence/genieql/ginterp"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
 func Example1(gql genieql.Structure) {

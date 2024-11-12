@@ -15,7 +15,7 @@ import (
 	"strings"
 	"text/template"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 )
 
 // Transformation to apply to the file.

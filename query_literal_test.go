@@ -5,7 +5,7 @@ import (
 	"go/printer"
 	"go/token"
 
-	. "bitbucket.org/jatone/genieql"
+	. "github.com/james-lawrence/genieql"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

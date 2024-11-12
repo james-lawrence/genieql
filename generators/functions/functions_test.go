@@ -5,15 +5,15 @@ import (
 	"go/ast"
 	"os"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/genieqltest"
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/genieqltest"
+	_ "github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 
-	. "bitbucket.org/jatone/genieql/generators/functions"
+	. "github.com/james-lawrence/genieql/generators/functions"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

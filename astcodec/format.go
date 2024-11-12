@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"bitbucket.org/jatone/genieql/internal/iox"
+	"github.com/james-lawrence/genieql/internal/iox"
 	"github.com/pkg/errors"
 	"golang.org/x/tools/imports"
 )

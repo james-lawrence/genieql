@@ -3,7 +3,7 @@ package genieql
 import (
 	"go/ast"
 
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astutil"
 	"golang.org/x/text/transform"
 
 	. "github.com/onsi/ginkgo/v2"

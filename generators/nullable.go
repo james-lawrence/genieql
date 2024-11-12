@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"go/types"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 	"github.com/pkg/errors"
 )
 

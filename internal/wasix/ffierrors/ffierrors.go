@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 const (

@@ -18,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/tools/go/packages"
 
-	"bitbucket.org/jatone/genieql/astbuild"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/astbuild"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 type Module struct {
