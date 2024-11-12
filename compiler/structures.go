@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/astutil"
 )
 
 // Structure matcher - identifies structure generators.

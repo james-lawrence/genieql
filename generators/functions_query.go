@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zieckey/goini"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astutil"
 )
 
 const defaultQueryParamName = "q"

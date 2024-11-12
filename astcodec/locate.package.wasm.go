@@ -7,9 +7,9 @@ import (
 	"go/build"
 	"unsafe"
 
-	"bitbucket.org/jatone/genieql/internal/bytesx"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/wasix/ffiguest"
+	"github.com/james-lawrence/genieql/internal/bytesx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/wasix/ffiguest"
 )
 
 // LocatePackage finds a package by its name.

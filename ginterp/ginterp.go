@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"go/ast"
 
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 	// register the drivers
 
-	"bitbucket.org/jatone/genieql/generators"
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/generators"
+	_ "github.com/james-lawrence/genieql/internal/drivers"
 	// register the postgresql dialect
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 	// register the wasi dialect
-	_ "bitbucket.org/jatone/genieql/internal/wasidialect"
+	_ "github.com/james-lawrence/genieql/internal/wasidialect"
 )
 
 type definition interface {

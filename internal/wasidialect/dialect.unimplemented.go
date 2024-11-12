@@ -5,7 +5,7 @@ package wasidialect
 import (
 	"unsafe"
 
-	"bitbucket.org/jatone/genieql/internal/wasix/ffierrors"
+	"github.com/james-lawrence/genieql/internal/wasix/ffierrors"
 )
 
 // Insert(n int, offset int, table string, conflict string, columns, projection, defaults []string) string

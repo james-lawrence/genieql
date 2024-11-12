@@ -8,8 +8,8 @@ import (
 	"go/types"
 	"log"
 
-	"bitbucket.org/jatone/genieql/astbuild"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/astbuild"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/packages"
 )

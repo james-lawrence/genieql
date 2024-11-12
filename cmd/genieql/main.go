@@ -12,14 +12,14 @@ import (
 	_ "github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 
 	// register the drivers
-	_ "bitbucket.org/jatone/genieql/internal/drivers"
+	_ "github.com/james-lawrence/genieql/internal/drivers"
 	// register the postgresql dialect
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 )
 
 func main() {

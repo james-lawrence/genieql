@@ -1,6 +1,6 @@
 package example
 
-import "bitbucket.org/jatone/genieql/internal/sqlx"
+import "github.com/james-lawrence/genieql/internal/sqlx"
 
 func example2(q sqlx.Queryer, _default int, _genieql_q int, _genieql_query int) ExampleScanner {
 	const query = `SELECT * FROM example WHERE id = $1`

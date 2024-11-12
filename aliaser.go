@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"bitbucket.org/jatone/genieql/internal/transformx"
+	"github.com/james-lawrence/genieql/internal/transformx"
 	"github.com/serenize/snaker"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"

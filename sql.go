@@ -5,8 +5,8 @@ import (
 	"go/ast"
 	"sort"
 
-	"bitbucket.org/jatone/genieql/astutil"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 	"golang.org/x/text/transform"
 )
 

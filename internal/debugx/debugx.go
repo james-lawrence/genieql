@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"bitbucket.org/jatone/genieql/internal/contextx"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	"bitbucket.org/jatone/genieql/internal/iox"
-	"bitbucket.org/jatone/genieql/internal/stringsx"
+	"github.com/james-lawrence/genieql/internal/contextx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/iox"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 	"github.com/pkg/errors"
 )
 

@@ -7,13 +7,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/astcodec"
-	"bitbucket.org/jatone/genieql/buildx"
-	"bitbucket.org/jatone/genieql/compiler"
-	"bitbucket.org/jatone/genieql/generators"
-	"bitbucket.org/jatone/genieql/internal/errorsx"
-	_ "bitbucket.org/jatone/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/buildx"
+	"github.com/james-lawrence/genieql/compiler"
+	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/errorsx"
+	_ "github.com/james-lawrence/genieql/internal/postgresql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -32,7 +32,7 @@ var _ = Describe("Compiler generation test", func() {
 
 		pkg, err := bctx.ImportDir(errorsx.Must(filepath.Abs(dir)), build.IgnoreVendor)
 		Expect(err).To(Succeed())
-		pkg.ImportPath = "bitbucket.org/jatone/genieql/compiler/.fixtures/functions/example1"
+		pkg.ImportPath = "github.com/james-lawrence/genieql/compiler/.fixtures/functions/example1"
 
 		ctx, err := generators.NewContext(
 			bctx,
@@ -48,6 +48,7 @@ var _ = Describe("Compiler generation test", func() {
 		Expect(err).To(Succeed())
 
 		// log.Println("generated\n", formatted)
+		os.WriteFile("derp.go", []byte(formatted), 0600)
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
 

@@ -9,8 +9,8 @@ import (
 	"log"
 	"path/filepath"
 
-	"bitbucket.org/jatone/genieql"
-	"bitbucket.org/jatone/genieql/generators"
+	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/generators"
 )
 
 func Autocompile(ctx context.Context, cctx generators.Context, dst io.Writer) (err error) {

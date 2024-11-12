@@ -10,7 +10,7 @@ import (
 	"go/types"
 	"strconv"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 )
 

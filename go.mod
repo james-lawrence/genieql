@@ -1,4 +1,4 @@
-module bitbucket.org/jatone/genieql
+module github.com/james-lawrence/genieql
 
 go 1.23.2
 

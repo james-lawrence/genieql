@@ -6,7 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 
-	"bitbucket.org/jatone/genieql/internal/envx"
+	"github.com/james-lawrence/genieql/internal/envx"
 )
 
 func WasiPackage() *build.Package {

@@ -7,7 +7,7 @@ import (
 	// load in the sqllite driver.
 	_ "github.com/mattn/go-sqlite3"
 
-	. "bitbucket.org/jatone/genieql/internal/sqlite3"
+	. "github.com/james-lawrence/genieql/internal/sqlite3"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

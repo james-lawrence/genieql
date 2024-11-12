@@ -6,7 +6,7 @@ import (
 	"go/token"
 	"go/types"
 
-	"bitbucket.org/jatone/genieql/astutil"
+	"github.com/james-lawrence/genieql/astutil"
 )
 
 const (

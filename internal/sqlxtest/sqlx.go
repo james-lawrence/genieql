@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // TemplateDatabaseName template database name

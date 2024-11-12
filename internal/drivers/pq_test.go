@@ -1,8 +1,8 @@
 package drivers_test
 
 import (
-	"bitbucket.org/jatone/genieql"
-	. "bitbucket.org/jatone/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql"
+	. "github.com/james-lawrence/genieql/internal/drivers"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

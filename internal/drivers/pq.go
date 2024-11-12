@@ -1,7 +1,7 @@
 package drivers
 
 import (
-	"bitbucket.org/jatone/genieql"
+	"github.com/james-lawrence/genieql"
 )
 
 // implements the lib/pq driver https://github.com/lib/pq

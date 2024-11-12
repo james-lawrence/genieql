@@ -7,7 +7,7 @@ import (
 	"go/token"
 	"strconv"
 
-	"bitbucket.org/jatone/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // Expr converts a template expression into an ast.Expr node.
