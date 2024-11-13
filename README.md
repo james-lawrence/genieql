@@ -1,4 +1,4 @@
-# genieql - sql query and code generation.
+# genieql - sql query and code generation. test
 its purpose is to generate a decent amount of the
 boilerplate code for interacting with database/sql
 as possible without putting any runtime dependencies
