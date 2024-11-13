@@ -2,7 +2,6 @@ package drivers_test
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/james-lawrence/genieql"
 	. "github.com/james-lawrence/genieql/internal/drivers"
@@ -14,7 +13,6 @@ var _ = Describe("drivers", func() {
 	var (
 		exampleDriver = NewDriver(
 			"",
-			map[string]reflect.Value{},
 			genieql.ColumnDefinition{Type: "string", ColumnType: "sql.NullString", Native: "string"},
 			genieql.ColumnDefinition{Type: "*string", ColumnType: "sql.NullString", Native: "*string"},
 			genieql.ColumnDefinition{Type: "int", ColumnType: "sql.NullInt64", Native: "int"},

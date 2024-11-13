@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/james-lawrence/genieql/internal/debugx"
@@ -59,7 +58,6 @@ func PrintRegisteredDrivers() {
 // Driver - driver specific details.
 type Driver interface {
 	LookupType(s string) (ColumnDefinition, error)
-	Exported() (string, map[string]reflect.Value)
 	AddColumnDefinitions(supported ...ColumnDefinition)
 }
 
@@ -123,7 +121,7 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 }
 
 // NewDriver builds a new driver from the component parts
-func NewDriver(path string, exports map[string]reflect.Value, supported ...ColumnDefinition) Driver {
+func NewDriver(path string, supported ...ColumnDefinition) Driver {
 	mapped := make(map[string]ColumnDefinition, len(supported))
 	for _, typedef := range supported {
 		mapped[typedef.Type] = typedef
@@ -132,12 +130,11 @@ func NewDriver(path string, exports map[string]reflect.Value, supported ...Colum
 		}
 	}
 
-	return &driver{importPath: path, exports: exports, supported: mapped}
+	return &driver{importPath: path, supported: mapped}
 }
 
 type driver struct {
 	importPath string
-	exports    map[string]reflect.Value
 	supported  map[string]ColumnDefinition
 }
 
@@ -147,10 +144,6 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 	}
 
 	return ColumnDefinition{}, errors.Errorf("unsupported type: %s", l)
-}
-
-func (t driver) Exported() (path string, res map[string]reflect.Value) {
-	return t.importPath, t.exports
 }
 
 func (t *driver) AddColumnDefinitions(supported ...ColumnDefinition) {
