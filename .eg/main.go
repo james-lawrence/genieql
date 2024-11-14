@@ -43,7 +43,13 @@ func main() {
 		eg.Build(
 			c1.BuildFromFile(".eg/Containerfile"),
 		),
-		eg.Module(ctx, c1, Debug, Setup, eggolang.AutoCompile(), eggolang.AutoTest()),
+		eg.Module(
+			ctx,
+			c1,
+			Debug,
+			Setup,
+			eggolang.AutoCompile(eggolang.CompileOptionTags("no_duckdb_arrow")),
+			eggolang.AutoTest(eggolang.TestOptionTags("no_duckdb_arrow"))),
 	)
 
 	if err != nil {

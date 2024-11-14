@@ -1,13 +1,13 @@
 package duckdb
 
 /*
+#include <stdlib.h>
 #include <duckdb.h>
 */
 import "C"
 
 import (
 	"database/sql/driver"
-	"errors"
 	"unsafe"
 )
 
@@ -33,20 +33,20 @@ type Appender struct {
 func NewAppenderFromConn(driverConn driver.Conn, schema, table string) (*Appender, error) {
 	con, ok := driverConn.(*conn)
 	if !ok {
-		return nil, getError(errInvalidCon, nil)
+		return nil, getError(errAppenderInvalidCon, nil)
 	}
 	if con.closed {
-		return nil, getError(errClosedCon, nil)
+		return nil, getError(errAppenderClosedCon, nil)
 	}
 
 	var cSchema *C.char
 	if schema != "" {
 		cSchema = C.CString(schema)
-		defer C.duckdb_free(unsafe.Pointer(cSchema))
+		defer C.free(unsafe.Pointer(cSchema))
 	}
 
 	cTable := C.CString(table)
-	defer C.duckdb_free(unsafe.Pointer(cTable))
+	defer C.free(unsafe.Pointer(cTable))
 
 	var duckdbAppender C.duckdb_appender
 	state := C.duckdb_appender_create(con.duckdbCon, cSchema, cTable, &duckdbAppender)
@@ -73,10 +73,10 @@ func NewAppenderFromConn(driverConn driver.Conn, schema, table string) (*Appende
 		a.types[i] = C.duckdb_appender_column_type(duckdbAppender, C.idx_t(i))
 
 		// Ensure that we only create an appender for supported column types.
-		t := Type(C.duckdb_get_type_id(a.types[i]))
-		name, found := unsupportedTypeToStringMap[t]
+		duckdbType := C.duckdb_get_type_id(a.types[i])
+		name, found := unsupportedTypeMap[duckdbType]
 		if found {
-			err := addIndexToError(unsupportedTypeError(name), i+1)
+			err := columnError(unsupportedTypeError(name), i+1)
 			destroyTypeSlice(a.ptr, a.types)
 			C.duckdb_appender_destroy(&duckdbAppender)
 			return nil, getError(errAppenderCreation, err)
@@ -111,26 +111,15 @@ func (a *Appender) Close() error {
 	a.closed = true
 
 	// Append all remaining chunks.
-	errAppend := a.appendDataChunks()
+	err := a.appendDataChunks()
 
-	// We flush before closing to get a meaningful error message.
-	var errFlush error
-	state := C.duckdb_appender_flush(a.duckdbAppender)
-	if state == C.DuckDBError {
-		errFlush = duckdbError(C.duckdb_appender_error(a.duckdbAppender))
-	}
-
-	// Destroy all appender data and the appender.
+	// Destroy all appender data.
 	destroyTypeSlice(a.ptr, a.types)
-	var errClose error
-	state = C.duckdb_appender_destroy(&a.duckdbAppender)
-	if state == C.DuckDBError {
-		errClose = errAppenderClose
-	}
+	state := C.duckdb_appender_destroy(&a.duckdbAppender)
 
-	err := errors.Join(errAppend, errFlush, errClose)
-	if err != nil {
-		return getError(invalidatedAppenderError(err), nil)
+	if err != nil || state == C.DuckDBError {
+		// We destroyed the appender, so we cannot retrieve the duckdb internal error.
+		return getError(errAppenderClose, invalidatedAppenderError(err))
 	}
 	return nil
 }
@@ -228,5 +217,5 @@ func destroyTypeSlice(ptr unsafe.Pointer, slice []C.duckdb_logical_type) {
 	for _, t := range slice {
 		C.duckdb_destroy_logical_type(&t)
 	}
-	C.duckdb_free(ptr)
+	C.free(ptr)
 }

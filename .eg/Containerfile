@@ -9,7 +9,7 @@ RUN add-apt-repository -n ppa:egdaemon/eg
 RUN add-apt-repository -n ppa:egdaemon/duckdb
 RUN apt-get update
 RUN apt-get -y install dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
-RUN apt-get -y install golang-1.23 podman rsync vim eg dpkg tree pinentry-tty
+RUN apt-get -y install golang-1.23 podman rsync vim eg duckdb dpkg tree pinentry-tty
 RUN apt-get -y install postgresql postgresql-client postgresql-contrib postgresql-client-common
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
