@@ -8,31 +8,30 @@ github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
 ## explicit; go 1.15
 github.com/alecthomas/units
-# github.com/apache/arrow-go/v18 v18.0.0
-## explicit; go 1.22.0
-github.com/apache/arrow-go/v18/arrow
-github.com/apache/arrow-go/v18/arrow/array
-github.com/apache/arrow-go/v18/arrow/arrio
-github.com/apache/arrow-go/v18/arrow/bitutil
-github.com/apache/arrow-go/v18/arrow/cdata
-github.com/apache/arrow-go/v18/arrow/decimal
-github.com/apache/arrow-go/v18/arrow/decimal128
-github.com/apache/arrow-go/v18/arrow/decimal256
-github.com/apache/arrow-go/v18/arrow/encoded
-github.com/apache/arrow-go/v18/arrow/endian
-github.com/apache/arrow-go/v18/arrow/float16
-github.com/apache/arrow-go/v18/arrow/internal
-github.com/apache/arrow-go/v18/arrow/internal/debug
-github.com/apache/arrow-go/v18/arrow/internal/dictutils
-github.com/apache/arrow-go/v18/arrow/internal/flatbuf
-github.com/apache/arrow-go/v18/arrow/ipc
-github.com/apache/arrow-go/v18/arrow/memory
-github.com/apache/arrow-go/v18/arrow/memory/internal/cgoalloc
-github.com/apache/arrow-go/v18/arrow/memory/mallocator
-github.com/apache/arrow-go/v18/internal/bitutils
-github.com/apache/arrow-go/v18/internal/hashing
-github.com/apache/arrow-go/v18/internal/json
-github.com/apache/arrow-go/v18/internal/utils
+# github.com/apache/arrow/go/v17 v17.0.0
+## explicit; go 1.21
+github.com/apache/arrow/go/v17/arrow
+github.com/apache/arrow/go/v17/arrow/array
+github.com/apache/arrow/go/v17/arrow/arrio
+github.com/apache/arrow/go/v17/arrow/bitutil
+github.com/apache/arrow/go/v17/arrow/cdata
+github.com/apache/arrow/go/v17/arrow/decimal128
+github.com/apache/arrow/go/v17/arrow/decimal256
+github.com/apache/arrow/go/v17/arrow/encoded
+github.com/apache/arrow/go/v17/arrow/endian
+github.com/apache/arrow/go/v17/arrow/float16
+github.com/apache/arrow/go/v17/arrow/internal
+github.com/apache/arrow/go/v17/arrow/internal/debug
+github.com/apache/arrow/go/v17/arrow/internal/dictutils
+github.com/apache/arrow/go/v17/arrow/internal/flatbuf
+github.com/apache/arrow/go/v17/arrow/ipc
+github.com/apache/arrow/go/v17/arrow/memory
+github.com/apache/arrow/go/v17/arrow/memory/internal/cgoalloc
+github.com/apache/arrow/go/v17/arrow/memory/mallocator
+github.com/apache/arrow/go/v17/internal/bitutils
+github.com/apache/arrow/go/v17/internal/hashing
+github.com/apache/arrow/go/v17/internal/json
+github.com/apache/arrow/go/v17/internal/utils
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 # github.com/dave/jennifer v1.7.1
@@ -117,8 +116,8 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/klauspost/cpuid/v2 v2.2.8
 ## explicit; go 1.15
 github.com/klauspost/cpuid/v2
-# github.com/marcboeker/go-duckdb v1.8.3
-## explicit; go 1.23
+# github.com/marcboeker/go-duckdb v1.7.1
+## explicit; go 1.21
 github.com/marcboeker/go-duckdb
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
@@ -303,6 +302,8 @@ golang.org/x/tools/internal/versions
 ## explicit; go 1.18
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
+# gonum.org/v1/gonum v0.15.1
+## explicit; go 1.22
 # gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 ## explicit; go 1.11
 # gopkg.in/yaml.v3 v3.0.1

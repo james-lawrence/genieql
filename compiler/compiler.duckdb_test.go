@@ -3,6 +3,7 @@ package compiler_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"go/build"
 	"os"
 	"path/filepath"
@@ -49,7 +50,7 @@ var _ = Describe("Compiler generation test", func() {
 
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
-
+		fmt.Println("DERP DERP", formatted)
 		Expect(formatted).To(Equal(string(expected)))
 	},
 		Entry("Example 2", "./.fixtures/functions/example2", ".fixtures/functions/example2/genieql.gen.go"),
