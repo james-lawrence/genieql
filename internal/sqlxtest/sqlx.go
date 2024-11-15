@@ -1,9 +1,11 @@
 package sqlxtest
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/pressly/goose/v3"
 )
 
 // TemplateDatabaseName template database name
@@ -60,6 +63,19 @@ func generateDuckDB(name, template string) error {
 
 	_, err = io.Copy(dst, src)
 	return err
+}
+
+func Migration(ctx context.Context, db *sql.DB, m fs.FS) error {
+	mprov, err := goose.NewProvider("", db, m, goose.WithStore(goosex.DuckdmbStore{}))
+	if err != nil {
+		return errorsx.Wrap(err, "unable to build migration provider")
+	}
+
+	if _, err := mprov.Up(ctx.Context); err != nil {
+		return errorsx.Wrap(err, "unable to run migrations")
+	}
+
+	return nil
 }
 
 func NewDuckDB(template string) (string, *sql.DB) {
