@@ -128,9 +128,12 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 			dataType  string
 			nullable  string
 			name      string
+			key       *string = new(string)
+			defaulted *string = new(string)
+			extra     *string = new(string)
 		)
 
-		if err = rows.Scan(&name, &dataType, &nullable); err != nil {
+		if err = rows.Scan(&name, &dataType, &nullable, &key, &defaulted, &extra); err != nil {
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 

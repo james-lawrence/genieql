@@ -14,13 +14,12 @@ type columnValueTransformer struct {
 
 func (t *columnValueTransformer) Transform(c genieql.ColumnInfo) string {
 	t.offset++
-	return fmt.Sprintf("?%d", t.offset)
+	return fmt.Sprintf("$%d", t.offset)
 }
 
 // Insert generates an insert query for DuckDB.
 func Insert(n int, offset int, table, conflict string, columns, projection, defaulted []string) string {
 	const insertTmpl = "INSERT INTO :gql.insert.tablename: (:gql.insert.columns:) VALUES :gql.insert.values::gql.insert.conflict: RETURNING :gql.insert.returning:"
-
 	columnOrder := strings.Join(quotedColumns(projection...), ",")
 	insertions := strings.Join(quotedColumns(columns...), ",")
 	offset++
@@ -55,20 +54,20 @@ func Update(table string, columns, predicates, returning []string) string {
 func Select(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
 	columnOrder := strings.Join(quotedColumns(columns...), ",")
-	return fmt.Sprintf(selectByFieldTmpl, columnOrder, table, strings.Join(clauses, " AND "))
+	return fmt.Sprintf(selectByFieldTmpl, columnOrder, quotedString(table), strings.Join(clauses, " AND "))
 }
 
 // Delete generates a delete query.
 func Delete(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
-	return fmt.Sprintf(deleteTmpl, table, strings.Join(clauses, " AND "))
+	return fmt.Sprintf(deleteTmpl, quotedString(table), strings.Join(clauses, " AND "))
 }
 
 // predicate formats WHERE clauses with placeholders.
 func predicate(offset int, predicates ...string) ([]string, int) {
 	clauses := make([]string, 0, len(predicates))
 	for idx, predicate := range quotedColumns(predicates...) {
-		clauses = append(clauses, fmt.Sprintf("%s = ?%d", predicate, offset+idx))
+		clauses = append(clauses, fmt.Sprintf("%s = $%d", predicate, offset+idx))
 	}
 
 	if len(clauses) == 0 {
@@ -134,7 +133,7 @@ func (t defaultPlaceholder) String(offset int) (string, int) {
 type offsetPlaceholder struct{}
 
 func (t offsetPlaceholder) String(offset int) (string, int) {
-	return fmt.Sprintf("?%d", offset), offset + 1
+	return fmt.Sprintf("$%d", offset), offset + 1
 }
 
 const selectByFieldTmpl = "SELECT %s FROM %s WHERE %s"

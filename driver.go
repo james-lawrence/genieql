@@ -142,7 +142,6 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 	if typedef, ok := t.supported[l]; ok {
 		return typedef, nil
 	}
-
 	return ColumnDefinition{}, errors.Errorf("unsupported type: %s", l)
 }
 
@@ -158,6 +157,5 @@ func (t *driver) AddColumnDefinitions(supported ...ColumnDefinition) {
 	for k, v := range t.supported {
 		mapped[k] = v
 	}
-
 	t.supported = mapped
 }
