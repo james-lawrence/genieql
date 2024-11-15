@@ -11,6 +11,12 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
+// Generators generate schema and configuration for testing.
+//go:generate dropdb --if-exists -U postgres genieql_test_template
+//go:generate createdb -U postgres genieql_test_template
+//go:generate psql -X -1 -f .migrations/postgresql/structure.sql genieql_test_template
+//go:generate genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx --output-file=generators-test.config postgres://$USER@localhost:5432/genieql_test_template?sslmode=disable
+
 // Build Tag constants
 const (
 	BuildTagIgnore   = "genieql.ignore"   // used to filter out files from the build context using !genieql.ignore

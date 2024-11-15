@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
+
+	. "github.com/onsi/gomega"
 )
 
 // Logging enable logging if stdout terminal is a tty.
@@ -19,4 +21,16 @@ func Logging() {
 	}
 
 	log.SetOutput(io.Discard)
+}
+
+func MaybePanic(err error) {
+	Expect(err).To(Succeed())
+}
+
+func Must[T any](v T, err error) T {
+	if err != nil {
+		Expect(err).To(Succeed())
+	}
+
+	return v
 }
