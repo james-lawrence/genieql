@@ -7,6 +7,7 @@ import (
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/drivers"
 	. "github.com/james-lawrence/genieql/internal/sqlite3"
+	"github.com/james-lawrence/genieql/internal/testx"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -17,7 +18,7 @@ var _ = Describe("Sqlite3", func() {
 		dbfile  *os.File
 		db      *sql.DB
 		dialect genieql.Dialect
-		driver  = genieql.MustLookupDriver(drivers.StandardLib)
+		driver  = testx.Must(genieql.LookupDriver(drivers.StandardLib))
 	)
 
 	BeforeEach(func() {

@@ -2,6 +2,7 @@ package drivers_test
 
 import (
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func TestDriver(t *testing.T) {
+	testx.Logging()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Driver Suite")
 }

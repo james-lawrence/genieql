@@ -5,19 +5,18 @@ import (
 
 	"github.com/james-lawrence/genieql"
 	. "github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/testx"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("pgx", func() {
 	It("should register the driver", func() {
-		_, err := genieql.LookupDriver(PGX)
-		Expect(err).ToNot(HaveOccurred())
+		testx.Must(genieql.LookupDriver(PGX))
 	})
 
 	DescribeTable("LookupType",
-		lookupDefinitionTest(genieql.MustLookupDriver(PGX).LookupType),
+		lookupDefinitionTest(testx.Must(genieql.LookupDriver(PGX)).LookupType),
 		Entry("example 1 - unimplemented", "rune", "", errors.New("failed")),
 		Entry("example 2 - unimplemented", "*rune", "", errors.New("failed")),
 		Entry("example 3 - float32", "float32", "pgtype.Float4", nil),
