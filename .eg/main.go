@@ -27,7 +27,8 @@ func Setup(ctx context.Context, id eg.Op) error {
 		runtime.New("pg_isready").Attempts(15), // 15 attempts = ~3seconds
 		runtime.New("su postgres -l -c 'psql --no-psqlrc -U postgres -d postgres -c \"CREATE ROLE root WITH SUPERUSER LOGIN\"'"),
 		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://localhost:5432/genieql_examples?sslmode=disable"),
-		runtime.New("go generate ./... && go fmt ./..."),
+		runtime.New("go generate ./..."),
+		runtime.New("go fmt ./..."),
 	)
 }
 
