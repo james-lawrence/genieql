@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
@@ -65,28 +64,19 @@ func generateDuckDB(name, template string) error {
 	return err
 }
 
-func Migration(ctx context.Context, db *sql.DB, m fs.FS) error {
-	mprov, err := goose.NewProvider("", db, m, goose.WithStore(goosex.DuckdmbStore{}))
+func Migrate(ctx context.Context, db *sql.DB, migrations fs.FS, options ...goose.ProviderOption) error {
+	mprov, err := goose.NewProvider("", db, migrations, options...)
 	if err != nil {
 		return errorsx.Wrap(err, "unable to build migration provider")
 	}
 
-	if _, err := mprov.Up(ctx.Context); err != nil {
+	if _, err := mprov.Up(ctx); err != nil {
 		return errorsx.Wrap(err, "unable to run migrations")
 	}
 
 	return nil
 }
 
-func NewDuckDB(template string) (string, *sql.DB) {
-	var err error
-	name := filepath.Join(os.TempDir(), uuid.Must(uuid.NewV4()).String()+".db")
-	errorsx.Must(generateDuckDB(name, template), err)
-	db := errorsx.Must(sql.Open("duckdb", name))
-	return name, db
-}
-
-func DestroyDuckDB(template, name string) {
-	var err error
-	errorsx.Must(os.Remove(name), err)
+func NewDuckDB() *sql.DB {
+	return errorsx.Must(sql.Open("duckdb", ""))
 }

@@ -3,7 +3,6 @@ package compiler_test
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"go/build"
 	"os"
 	"path/filepath"
@@ -51,8 +50,9 @@ var _ = Describe("Compiler generation test", func() {
 		expected, err := os.ReadFile(resultpath)
 		Expect(err).To(Succeed())
 		errorsx.MaybePanic(os.WriteFile("derp.go.txt", []byte(formatted), 0600))
-		fmt.Println("DERP DERP", formatted)
 		Expect(formatted).To(Equal(string(expected)))
+		errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
+
 	},
 		Entry("Example 2", "./.fixtures/functions/example2", ".fixtures/functions/example2/genieql.gen.go"),
 	)
