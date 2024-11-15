@@ -26,6 +26,7 @@ func Setup(ctx context.Context, id eg.Op) error {
 		ctx,
 		runtime.New("pg_isready").Attempts(15), // 15 attempts = ~3seconds
 		runtime.New("su postgres -l -c 'psql --no-psqlrc -U postgres -d postgres -c \"CREATE ROLE root WITH SUPERUSER LOGIN\"'"),
+		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./... && go fmt ./..."),
 	)
 }
@@ -42,7 +43,7 @@ func main() {
 		eg.Build(
 			c1.BuildFromFile(".eg/Containerfile"),
 		),
-		eg.Module(ctx, c1, Debug, eggolang.AutoCompile(), Setup, eggolang.AutoTest()),
+		eg.Module(ctx, c1, Debug, Setup, eggolang.AutoCompile(), eggolang.AutoTest()),
 	)
 
 	if err != nil {
