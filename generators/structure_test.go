@@ -13,6 +13,7 @@ import (
 	"github.com/james-lawrence/genieql/dialects"
 	_ "github.com/james-lawrence/genieql/internal/drivers"
 	_ "github.com/james-lawrence/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/internal/testx"
 
 	. "github.com/james-lawrence/genieql/generators"
 
@@ -35,7 +36,7 @@ var _ = ginkgo.Describe("Structure", func() {
 		),
 	)
 
-	driver := genieql.MustLookupDriver(config.Driver)
+	driver := testx.Must(genieql.LookupDriver(config.Driver))
 	dialect := dialects.MustLookupDialect(config)
 
 	ginkgo.DescribeTable("build a structure based on the definition file",

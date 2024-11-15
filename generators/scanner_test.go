@@ -2,7 +2,6 @@ package generators_test
 
 import (
 	"bytes"
-	"fmt"
 	"go/build"
 	"go/parser"
 	"go/token"
@@ -73,7 +72,6 @@ var _ = ginkgo.Describe("Scanner", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
 			// log.Println(formatted.String())
-			fmt.Println("RESULT:\n", formatted.String())
 			Expect(formatted.String()).To(Equal(string(expected)))
 		},
 		ginkgo.Entry("scanner int", `package example; type Int func(arg int)`, ".fixtures/scanners/int.go"),

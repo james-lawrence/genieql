@@ -5,13 +5,14 @@ import (
 
 	"github.com/james-lawrence/genieql/internal/drivers"
 	. "github.com/james-lawrence/genieql/internal/duckdb"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("duckdb", func() {
 	Describe("dialect", func() {
-		driver := genieql.MustLookupDriver(drivers.DuckDB)
+		driver := testx.Must(genieql.LookupDriver(drivers.DuckDB))
 
 		It("should return the columns in the query in sorted order", func() {
 			info, err := NewDialect(DB).ColumnInformationForQuery(

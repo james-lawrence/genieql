@@ -9,7 +9,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/james-lawrence/genieql/internal/debugx"
-	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -39,13 +38,6 @@ func RegisterDriver(driver string, imp Driver) error {
 // LookupDriver lookup a registered driver.
 func LookupDriver(name string) (Driver, error) {
 	return drivers.LookupDriver(name)
-}
-
-// MustLookupDriver panics if the driver cannot be found, convience method.
-func MustLookupDriver(name string) Driver {
-	driver, err := LookupDriver(name)
-	errorsx.MaybePanic(err)
-	return driver
 }
 
 // PrintRegisteredDrivers print drivers in the registry, debugging utility.
@@ -142,6 +134,7 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 	if typedef, ok := t.supported[l]; ok {
 		return typedef, nil
 	}
+
 	return ColumnDefinition{}, errors.Errorf("unsupported type: %s", l)
 }
 

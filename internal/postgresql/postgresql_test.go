@@ -5,13 +5,14 @@ import (
 
 	"github.com/james-lawrence/genieql/internal/drivers"
 	. "github.com/james-lawrence/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("postgresql", func() {
 	Describe("dialect", func() {
-		driver := genieql.MustLookupDriver(drivers.PGX)
+		driver := testx.Must(genieql.LookupDriver(drivers.PGX))
 		It("should return the columns in the query in sorted order", func() {
 			info, err := NewDialect(DB).ColumnInformationForQuery(
 				driver,

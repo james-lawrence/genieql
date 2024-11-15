@@ -3,23 +3,22 @@ package drivers_test
 import (
 	"github.com/james-lawrence/genieql"
 	. "github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 )
 
 var _ = Describe("duckdb", func() {
 	It("should register the driver", func() {
-		_, err := genieql.LookupDriver(DuckDB)
-		Expect(err).ToNot(HaveOccurred())
+		_ = testx.Must(genieql.LookupDriver(DuckDB))
 	})
 
 	DescribeTable("LookupType",
-		lookupDefinitionTest(genieql.MustLookupDriver(DuckDB).LookupType),
+		lookupDefinitionTest(testx.Must(genieql.LookupDriver(DuckDB)).LookupType),
 		Entry("example 1 - unimplemented", "rune", "", errors.New("failed")),
 		Entry("example 2 - unimplemented", "*rune", "", errors.New("failed")),
-		Entry("example 3 - int", "int", "duckdb.Int8", nil),
-		Entry("example 4 - *int", "*int", "duckdb.Int8", nil),
+		Entry("example 3 - int", "int", "duckdb.Int64", nil),
+		Entry("example 4 - *int", "*int", "duckdb.Int64", nil),
 		Entry("example 5 - int32", "int32", "duckdb.Int32", nil),
 		Entry("example 6 - *int32", "*int32", "duckdb.Int32", nil),
 		Entry("example 7 - int64", "int64", "duckdb.Int64", nil),

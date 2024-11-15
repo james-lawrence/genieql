@@ -14,6 +14,7 @@ import (
 	"github.com/james-lawrence/genieql/dialects"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/drivers"
+	"github.com/james-lawrence/genieql/internal/testx"
 
 	. "github.com/james-lawrence/genieql/internal/postgresql"
 
@@ -38,7 +39,7 @@ var _ = Describe("Scanner", func() {
 		),
 	)
 
-	driver := genieql.MustLookupDriver(drivers.PGX)
+	driver := testx.Must(genieql.LookupDriver(drivers.PGX))
 	dialect := dialects.MustLookupDialect(config)
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
