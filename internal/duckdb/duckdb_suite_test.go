@@ -32,11 +32,14 @@ var _ = BeforeSuite(func(ctx context.Context) {
 })
 
 var _ = AfterSuite(func() {
+	if DB == nil {
+		return
+	}
 	testx.MaybePanic(DB.Close())
 })
 
 var _ = BeforeEach(func() {
-	testx.Must(DB.Begin())
+	TX = testx.Must(DB.Begin())
 })
 
 var _ = AfterEach(func() {
