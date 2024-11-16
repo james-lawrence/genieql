@@ -688,9 +688,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	var (
 		formatted string
 		digest    string
-		cached    fs.File
 		srcdir    = filepath.Join(tmpdir, "src")
-		dstdir    = filepath.Join(tmpdir, "bin")
 	)
 
 	if err = os.MkdirAll(srcdir, 0700); err != nil {
@@ -734,6 +732,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	}
 
 	cachemod := filepath.Join("compiled", md5x.Hex(digest))
+	dstdir := filepath.Join(cctx.Cache, cachemod)
 
 	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
 		return &generedmodule{
@@ -750,19 +749,8 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	// log.Println("RUNNING", cmd.String())
-
 	if err = cmd.Run(); err != nil {
 		return nil, errors.Wrap(err, "unable to compile module")
-	}
-
-	if cached, err = os.Create(filepath.Join(cctx.Cache, cachemod)); err != nil {
-		return nil, errorsx.Wrap(err, "unable to create cached")
-	}
-	defer cached.Close()
-
-	if err = os.Rename(dstdir, filepath.Join(cctx.Cache, cachemod)); err != nil {
-		return nil, errorsx.Wrap(err, "unable to move compiled module to cache")
 	}
 
 	if err = transforms.CloneFile(filepath.Join(cctx.Cache, cachemod+".go"), maindst.Name()); err != nil {
