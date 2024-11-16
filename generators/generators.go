@@ -17,6 +17,8 @@ import (
 	"github.com/james-lawrence/genieql/astutil"
 	"github.com/james-lawrence/genieql/dialects"
 	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/md5x"
+	"github.com/james-lawrence/genieql/internal/userx"
 	"github.com/pkg/errors"
 )
 
@@ -218,8 +220,8 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 		return ctx, errorsx.Wrap(err, "unable to load custom types")
 	}
 
-	// cachedir := userx.DefaultCacheDirectory(md5x.Hex(config.Location))
-	cachedir := filepath.Join(config.Location, ".cache")
+	cachedir := userx.DefaultCacheDirectory(md5x.Hex(config.Location))
+	// cachedir := filepath.Join(config.Location, ".cache")
 	if err = os.MkdirAll(cachedir, 0700); err != nil {
 		return ctx, errorsx.Wrapf(err, "unable to ensure cache directory: %s", cachedir)
 	}

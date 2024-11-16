@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/james-lawrence/genieql"
 
@@ -248,7 +247,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 				// 	return
 				// }
 
-				log.Println("generating code initiated", m.Ident, m.Location)
 				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, false, m.Result); err != nil {
 					m.cause = errors.Wrapf(err, "%s: unable to generate", m.Location)
 					donefn(m)
@@ -311,18 +309,17 @@ type module interface {
 }
 
 func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, cache wazero.CompilationCache, mpath string, compileonly bool, ir Result) (err error) {
-	cctx.Context.Debugln("generating code initiated", ir.Location)
-	defer cctx.Context.Debugln("generating code completed", ir.Location)
+	log.Println("generating code initiated", ir.Ident, ir.Location)
+	defer cctx.Context.Debugln("generating code completed", ir.Ident, ir.Location)
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
 		wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// 8s w/ tinygo, 28s with golang
-		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
-	wazero.NewRuntimeConfigInterpreter()
+
 	wasienv, err := wasi_snapshot_preview1.NewBuilder(runtime).Instantiate(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to build wasi snapshot preview1")
@@ -637,16 +634,7 @@ func modgenerate(ctx context.Context, cctx Context, scratchpad string, ir Result
 	return m, errors.Wrapf(err, "%s: failed to generate", ir.Location)
 }
 
-var ml sync.Mutex
-
 func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, compiled wazero.CompiledModule) (err error) {
-	// wazero filesystem and our mapper isn't concurrency friendly.
-	// we lock here to prevent issues; hopefully in the future we can remove this.
-	// but this gives us the ability to concurrently compile modules (slow) while
-	// synchronizing the execution (fast)
-	ml.Lock()
-	defer ml.Unlock()
-
 	m, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if cause, ok := err.(*sys.ExitError); ok && cause.ExitCode() == ffierrors.ErrUnrecoverable {
 		return errorsx.NewUnrecoverable(cause)
@@ -754,11 +742,10 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 			compiledpath: filepath.Join(cctx.Cache, cachemod),
 		}, nil
 	} else {
-		log.Println("module not found in cache, compiling")
+		cctx.Debugln("module not found in cache, compiling")
 	}
 
 	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
-	// cmd := exec.CommandContext(ctx, "tinygo", "build", "-o", dstdir, filepath.Join(srcdir, "main.go"))
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
