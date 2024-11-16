@@ -745,7 +745,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 		return nil, errors.Wrap(err, "unable to calculate md5")
 	}
 
-	cachemod := filepath.Join("compiled", md5x.String(digest))
+	cachemod := filepath.Join("compiled", md5x.Hex(digest))
 
 	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
 		return &generedmodule{
