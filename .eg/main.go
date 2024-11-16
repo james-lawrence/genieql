@@ -8,25 +8,22 @@ import (
 	"github.com/egdaemon/eg/runtime/wasi/egenv"
 	"github.com/egdaemon/eg/runtime/wasi/eggit"
 	"github.com/egdaemon/eg/runtime/wasi/shell"
+	"github.com/egdaemon/eg/runtime/x/wasi/egbug"
 	"github.com/egdaemon/eg/runtime/x/wasi/eggolang"
+	"github.com/egdaemon/eg/runtime/x/wasi/egpostgresql"
 )
-
-func Debug(ctx context.Context, id eg.Op) error {
-	return shell.Run(
-		ctx,
-		shell.New("echo ${PATH}"),
-	)
-}
 
 func Setup(ctx context.Context, id eg.Op) error {
 	runtime := shell.Runtime().
 		Environ("GOBIN", "/usr/local/bin").
-		Environ("USER", "root")
+		Environ("USER", "root").
+		Environ("GOCACHE", eggolang.CacheBuildDirectory()).
+		Environ("GOMODCACHE", eggolang.CacheModuleDirectory())
+
 	return shell.Run(
 		ctx,
-		runtime.New("pg_isready").Attempts(15), // 15 attempts = ~3seconds
-		runtime.New("su postgres -l -c 'psql --no-psqlrc -U postgres -d postgres -c \"CREATE ROLE root WITH SUPERUSER LOGIN\"'"),
-		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://localhost:5432/genieql_examples?sslmode=disable"),
+		runtime.New("go install ./..."),
+		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./..."),
 		runtime.New("go fmt ./..."),
 	)
@@ -47,7 +44,8 @@ func main() {
 		eg.Module(
 			ctx,
 			c1,
-			Debug,
+			egbug.Debug,
+			egpostgresql.Auto,
 			Setup,
 			eggolang.AutoCompile(eggolang.CompileOptionTags("no_duckdb_arrow")),
 			eggolang.AutoTest(eggolang.TestOptionTags("no_duckdb_arrow"))),

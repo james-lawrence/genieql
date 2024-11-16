@@ -13,8 +13,6 @@ RUN apt-get -y install golang-1.23 podman rsync vim eg duckdb dpkg tree pinentry
 RUN apt-get -y install postgresql postgresql-client postgresql-contrib postgresql-client-common
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
-RUN go install github.com/james-lawrence/genieql/...@latest
-RUN echo "local all all trust\nhost all all 127.0.0.1/32 trust" > /etc/postgresql/16/main/pg_hba.conf
 RUN systemctl enable postgresql
 
 CMD /usr/sbin/init
