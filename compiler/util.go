@@ -18,7 +18,9 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/internal/envx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/userx"
 	"github.com/tetratelabs/wazero"
 )
 
@@ -79,6 +81,7 @@ func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir st
 					WithReadOnlyDirMount(cctx.ModuleRoot, "").
 					WithDirMount(tmpdir, tmpdir).
 					WithDirMount(filepath.Join(cctx.ModuleRoot, ".genieql"), "/.genieql").
+					WithDirMount(cctx.Cache, "/.genieql/cache").
 					WithReadOnlyDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).
@@ -195,6 +198,12 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 		"GOOS", cctx.Build.GOOS,
 	).WithEnv(
 		"GOARCH", cctx.Build.GOARCH,
+	).WithEnv(
+		"USER", envx.String("root", "USER"),
+	).WithEnv(
+		"HOME", userx.HomeDirectoryOrDefault("/root"),
+	).WithEnv(
+		"CACHE_DIRECTORY", "/.genieql/cache",
 	)
 }
 
