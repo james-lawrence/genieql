@@ -22,4 +22,4 @@ everything else will be found in godoc.
 - genieql auto - runs the gql scripts to generate database code.
 
 ## examples
-see the examples directory.
+see the examples directory. 
