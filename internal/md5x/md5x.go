@@ -11,13 +11,13 @@ func Digest(b []byte) string {
 	return hex.EncodeToString(d[:])
 }
 
-// String to md5 hex encoded string
-func String(s string) string {
+// Hex to md5 hex encoded string
+func Hex(s string) string {
 	return Digest([]byte(s))
 }
 
-// DigestX digest byte slice
-func DigestX(b []byte) []byte {
-	d := md5.Sum(b)
+// Bytes digest byte slice
+func Bytes[T ~[]byte | string](b T) []byte {
+	d := md5.Sum([]byte(b))
 	return d[:]
 }

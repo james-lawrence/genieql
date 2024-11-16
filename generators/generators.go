@@ -218,13 +218,14 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 		return ctx, errorsx.Wrap(err, "unable to load custom types")
 	}
 
+	// cachedir := userx.DefaultCacheDirectory(md5x.Hex(config.Location))
 	cachedir := filepath.Join(config.Location, ".cache")
 	if err = os.MkdirAll(cachedir, 0700); err != nil {
-		return ctx, errorsx.Wrap(err, "unable to ensure cache directory")
+		return ctx, errorsx.Wrapf(err, "unable to ensure cache directory: %s", cachedir)
 	}
 
 	if err = os.MkdirAll(filepath.Join(cachedir, "compiled"), 0700); err != nil {
-		return ctx, errorsx.Wrap(err, "unable to ensure compiled directory")
+		return ctx, errorsx.Wrapf(err, "unable to ensure compiled directory: %s", cachedir)
 	}
 
 	ctx = Context{

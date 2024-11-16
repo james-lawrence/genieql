@@ -83,14 +83,12 @@ func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table
 }
 
 func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
+	const columnInformationQuery = `DESCRIBE %s`
 	var (
 		tx  *sql.Tx
 		err error
 	)
-	const columnInformationQuery = `DESCRIBE %s`
-
-	uid := md5x.String(query)
-	table := fmt.Sprintf("gql_%s", uid)
+	table := fmt.Sprintf("gql_%s", md5x.Hex(query))
 
 	tx, err = t.db.Begin()
 	if err != nil {
