@@ -52,7 +52,7 @@ func (t Context) Println(args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprintln(args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprintln(args...)))
 }
 
 // Printf ...
@@ -61,7 +61,7 @@ func (t Context) Printf(format string, args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprintf(format, args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprintf(format, args...)))
 }
 
 // Debug logs
@@ -70,7 +70,7 @@ func (t Context) Debug(args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprint(args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprint(args...)))
 }
 
 // Debugf logs
@@ -79,7 +79,7 @@ func (t Context) Debugf(format string, args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprintf(format, args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprintf(format, args...)))
 }
 
 // Debugln logs
@@ -88,7 +88,7 @@ func (t Context) Debugln(args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprintln(args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprintln(args...)))
 }
 
 // Traceln detailed logging
@@ -97,7 +97,7 @@ func (t Context) Traceln(args ...interface{}) {
 		return
 	}
 
-	log.Output(2, fmt.Sprintln(args...))
+	errorsx.MaybePanic(log.Output(2, fmt.Sprintln(args...)))
 }
 
 func reserved(s string) bool {
@@ -191,8 +191,17 @@ func OptionDebug(ctx *Context) {
 }
 
 func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
+	config := genieql.MustReadConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join(genieql.ConfigurationDirectory(), name),
+		),
+	)
+
+	return NewContextFromConfig(bctx, config, pkg, options...)
+}
+
+func NewContextFromConfig(bctx build.Context, config genieql.Configuration, pkg *build.Package, options ...Option) (ctx Context, err error) {
 	var (
-		config  genieql.Configuration
 		dialect genieql.Dialect
 		driver  genieql.Driver
 		mroot   string
@@ -201,12 +210,6 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 	if mroot, err = genieql.FindModuleRoot("."); err != nil {
 		return ctx, err
 	}
-
-	config = genieql.MustReadConfiguration(
-		genieql.ConfigurationOptionLocation(
-			filepath.Join(genieql.ConfigurationDirectory(), name),
-		),
-	)
 
 	if dialect, err = dialects.LookupDialect(config); err != nil {
 		return ctx, errors.Wrap(err, "unable to lookup dialect")
@@ -232,7 +235,7 @@ func NewContext(bctx build.Context, name string, pkg *build.Package, options ...
 
 	ctx = Context{
 		ModuleRoot:     mroot + "/",
-		Name:           name,
+		Name:           config.Name,
 		Cache:          cachedir,
 		Build:          bctx,
 		CurrentPackage: pkg,
