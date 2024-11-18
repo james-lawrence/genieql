@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/pressly/goose/v3"
 	"github.com/pressly/goose/v3/database"
 )
@@ -24,19 +25,19 @@ func (t DuckdbStore) CreateVersionTable(ctx context.Context, db database.DBTxCon
 		tstamp timestamp NOT NULL DEFAULT now()
 	)`, t.Tablename(), t.Tablename(), t.Tablename())
 	_, err := db.ExecContext(ctx, q)
-	return err
+	return errorsx.Wrap(err, "unable to create versioned table")
 }
 
 func (t DuckdbStore) Insert(ctx context.Context, db database.DBTxConn, req database.InsertRequest) error {
 	q := fmt.Sprintf(`INSERT INTO %s (version_id, is_applied) VALUES ($1, $2)`, t.Tablename())
 	row := db.QueryRowContext(ctx, q, req.Version, true)
-	return row.Err()
+	return errorsx.Wrap(row.Err(), "unable to insert version")
 }
 
 func (t DuckdbStore) Delete(ctx context.Context, db database.DBTxConn, version int64) error {
 	q := fmt.Sprintf(`DELETE FROM %s WHERE version_id=$1`, t.Tablename())
 	row := db.QueryRowContext(ctx, q, version)
-	return row.Err()
+	return errorsx.Wrap(row.Err(), "unable to delete version")
 }
 
 func (t DuckdbStore) GetMigration(ctx context.Context, db database.DBTxConn, version int64) (*database.GetMigrationResult, error) {
@@ -45,7 +46,7 @@ func (t DuckdbStore) GetMigration(ctx context.Context, db database.DBTxConn, ver
 	var isApplied bool
 	err := db.QueryRowContext(ctx, q, version).Scan(&timestamp, &isApplied)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err, "unable to load migration")
 	}
 
 	return &database.GetMigrationResult{
@@ -55,9 +56,9 @@ func (t DuckdbStore) GetMigration(ctx context.Context, db database.DBTxConn, ver
 }
 
 func (t DuckdbStore) GetLatestVersion(ctx context.Context, db database.DBTxConn) (id int64, err error) {
-	q := fmt.Sprintf(`SELECT version_id, is_applied from %s ORDER BY id DESC LIMIT 1`, t.Tablename())
+	q := fmt.Sprintf(`SELECT version_id from %s ORDER BY id DESC LIMIT 1`, t.Tablename())
 	err = db.QueryRowContext(ctx, q).Scan(&id)
-	return id, err
+	return id, errorsx.Wrap(err, "unable to load latest migration")
 }
 
 func (t DuckdbStore) ListMigrations(ctx context.Context, db database.DBTxConn) ([]*database.ListMigrationsResult, error) {

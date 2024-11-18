@@ -28,7 +28,7 @@ var (
 
 var _ = BeforeSuite(func(ctx context.Context) {
 	DB = sqlxtest.NewDuckDB()
-	sqlxtest.Migrate(ctx, DB, os.DirFS("../../.migrations/duckdb"), goose.WithStore(goosex.DuckdbStore{}))
+	testx.MaybePanic(sqlxtest.Migrate(ctx, DB, os.DirFS("../../.migrations/duckdb"), goose.WithStore(goosex.DuckdbStore{})))
 })
 
 var _ = AfterSuite(func() {

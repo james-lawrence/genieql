@@ -55,8 +55,8 @@ var stdlib = NewDriver(
 	"",
 	genieql.ColumnDefinition{
 		Type:       "sql.NullString",
-		Native:     stringExprString,
 		ColumnType: "sql.NullString",
+		Native:     stringExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.String)
@@ -70,8 +70,8 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullInt64",
-		Native:     intExprString,
 		ColumnType: "sql.NullInt64",
+		Native:     intExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
@@ -85,8 +85,8 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullInt32",
-		Native:     intExprString,
 		ColumnType: "sql.NullInt32",
+		Native:     intExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
@@ -115,8 +115,8 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullBool",
-		Native:     boolExprString,
 		ColumnType: "sql.NullBool",
+		Native:     boolExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Bool
@@ -130,8 +130,8 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullTime",
-		Native:     timeExprString,
 		ColumnType: "sql.NullTime",
+		Native:     timeExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Time

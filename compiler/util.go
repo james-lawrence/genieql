@@ -10,7 +10,6 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -213,12 +212,6 @@ func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl, tmpdir s
 	).WithEnv(
 		"GENIEQL_WASI_FUNCTION_NAME", fn.Name.Name,
 	)
-}
-
-func printjen(f *jen.File) {
-	var buf bytes.Buffer
-	errorsx.MaybePanic(f.Render(&buf))
-	log.Println(buf.String())
 }
 
 func mergescratch(tree *ast.File, p string) (formatted string, err error) {

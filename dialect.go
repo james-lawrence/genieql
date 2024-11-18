@@ -1,6 +1,8 @@
 package genieql
 
-import "golang.org/x/text/transform"
+import (
+	"golang.org/x/text/transform"
+)
 
 // Dialect interface for describing a sql dialect.
 type Dialect interface {

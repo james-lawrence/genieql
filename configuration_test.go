@@ -50,19 +50,21 @@ var _ = Describe("Configuration", func() {
 			Expect(config.Password).To(Equal(""))
 		})
 
-		It("should error if port is missing", func() {
+		It("should handle missing ports", func() {
 			uri, err := url.Parse("postgres://soandso@localhost/databasename?sslmode=disable")
 			Expect(err).ToNot(HaveOccurred())
-			_, err = NewConfiguration(
+			config, err := NewConfiguration(
 				ConfigurationOptionDriver("github.com/jackc/pgx"),
 				ConfigurationOptionDatabase(uri),
 			)
-			Expect(err).To(MatchError(ErrRequireHostAndPort))
-		})
-
-		It("should error if port is invalid", func() {
-			_, err := url.Parse("postgres://soandso@localhost:abc1/databasename?sslmode=disable")
-			Expect(err.Error()).To(Equal("parse \"postgres://soandso@localhost:abc1/databasename?sslmode=disable\": invalid port \":abc1\" after host"))
+			Expect(err).To(Succeed())
+			Expect(config.Driver).To(Equal("github.com/jackc/pgx"))
+			Expect(config.Dialect).To(Equal("postgres"))
+			Expect(config.Database).To(Equal("databasename"))
+			Expect(config.Host).To(Equal("localhost"))
+			Expect(config.Port).To(Equal(0))
+			Expect(config.Username).To(Equal("soandso"))
+			Expect(config.Password).To(Equal(""))
 		})
 	})
 
@@ -138,7 +140,7 @@ var _ = Describe("Configuration", func() {
 			Expect(string(raw)).To(Equal(exampleBootstrapConfiguration))
 		})
 
-		PIt("should error if we can't write to the directory", func() {
+		It("should error if we can't write to the directory", func() {
 			Expect(os.Chmod(tmpdir, 0444)).ToNot(HaveOccurred())
 			path := filepath.Join(tmpdir, "dir", "dummy.config")
 
@@ -152,14 +154,18 @@ var _ = Describe("Configuration", func() {
 
 		It("should error if uri is invalid", func() {
 			path := filepath.Join(tmpdir, "dummy.config")
-			uri, err := url.Parse("postgres://soandso@localhost/databasename?sslmode=disable")
-			Expect(err).ToNot(HaveOccurred())
-			err = Bootstrap(
+			uri := &url.URL{
+				Scheme: "postgresq",
+				Host:   "localhost:abc123",
+				Path:   "databasename",
+			}
+
+			err := Bootstrap(
 				ConfigurationOptionLocation(path),
 				ConfigurationOptionDriver("github.com/jackc/pgx"),
 				ConfigurationOptionDatabase(uri),
 			)
-			Expect(err).To(MatchError(ErrRequireHostAndPort))
+			Expect(err).To(MatchError("strconv.Atoi: parsing \"abc123\": invalid syntax"))
 		})
 	})
 })

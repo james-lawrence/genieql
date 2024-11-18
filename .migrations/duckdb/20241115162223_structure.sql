@@ -25,13 +25,8 @@ CREATE TABLE IF NOT EXISTS example1 (
   character_fixed_field char(10) NOT NULL DEFAULT '',
   byte_array_field bytea NOT NULL DEFAULT ''::bytea,
   interval_field interval NOT NULL DEFAULT INTERVAL '1 seconds',
-  cidr_field cidr NOT NULL DEFAULT '0.0.0.0/8'::cidr,
   inet_field inet NOT NULL DEFAULT '0.0.0.0'::inet,
-  macaddr_field macaddr NOT NULL DEFAULT '00:00:00:00:00:00'::macaddr,
-  bit_field bit(8) NOT NULL DEFAULT '00000000'::bit(8),
-  bit_varying_field bit varying (8) NOT NULL DEFAULT '0'::bit(1),
   json_field json NOT NULL DEFAULT '{}'::json,
-  jsonb_field jsonb NOT NULL DEFAULT '{}'::jsonb,
   text_field text NOT NULL DEFAULT '',
   bool_field boolean NOT NULL DEFAULT 'f',
   uuid_array uuid[] not null default '{}'::uuid[],
@@ -52,7 +47,7 @@ CREATE TABLE IF NOT EXISTS example2 (
 );
 
 CREATE TABLE IF NOT EXISTS example3 (
-  id BIGSERIAL PRIMARY KEY,
+  uid uuid PRIMARY KEY,
   email   text DEFAULT '',
   created timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
   updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp

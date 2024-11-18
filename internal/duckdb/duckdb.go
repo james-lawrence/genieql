@@ -3,6 +3,7 @@ package duckdb
 import (
 	"database/sql"
 	"fmt"
+	"go/ast"
 	"go/types"
 	"log"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/james-lawrence/genieql/dialects"
 	"github.com/james-lawrence/genieql/internal/debugx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/langx"
 	"github.com/james-lawrence/genieql/internal/md5x"
 	"github.com/james-lawrence/genieql/internal/transformx"
 )
@@ -25,7 +27,7 @@ const Dialect = "duckdb"
 
 // NewDialect creates a duckdb Dialect from the queryer
 func NewDialect(q *sql.DB) genieql.Dialect {
-	return dialectImplementation{db: q}
+	return DialectFn{db: q}
 }
 
 func init() {
@@ -39,54 +41,53 @@ type queryer interface {
 type dialectFactory struct{}
 
 func (t dialectFactory) Connect(config genieql.Configuration) (_ genieql.Dialect, err error) {
-	db, err := sql.Open(Dialect, config.ConnectionURL)
+	db, err := sql.Open(Dialect, config.Database)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to connect to DuckDB: %s", config.ConnectionURL)
+		return nil, errors.Wrapf(err, "unable to connect to DuckDB: %s", config.Database)
 	}
-	return dialectImplementation{db: db}, nil
+	return DialectFn{db: db}, nil
 }
 
-type dialectImplementation struct {
+type DialectFn struct {
 	db *sql.DB
 }
 
-func (t dialectImplementation) Insert(n int, offset int, table, conflict string, columns, projection, defaults []string) string {
+func (t DialectFn) Insert(n int, offset int, table, conflict string, columns, projection, defaults []string) string {
 	return Insert(n, offset, table, conflict, columns, projection, defaults)
 }
 
-func (t dialectImplementation) Select(table string, columns, predicates []string) string {
+func (t DialectFn) Select(table string, columns, predicates []string) string {
 	return Select(table, columns, predicates)
 }
 
-func (t dialectImplementation) Update(table string, columns, predicates, returning []string) string {
+func (t DialectFn) Update(table string, columns, predicates, returning []string) string {
 	return Update(table, columns, predicates, returning)
 }
 
-func (t dialectImplementation) Delete(table string, columns, predicates []string) string {
+func (t DialectFn) Delete(table string, columns, predicates []string) string {
 	return Delete(table, columns, predicates)
 }
 
-func (t dialectImplementation) ColumnValueTransformer() genieql.ColumnTransformer {
+func (t DialectFn) ColumnValueTransformer() genieql.ColumnTransformer {
 	return &columnValueTransformer{}
 }
 
-func (t dialectImplementation) ColumnNameTransformer(transforms ...transform.Transformer) genieql.ColumnTransformer {
+func (t DialectFn) ColumnNameTransformer(transforms ...transform.Transformer) genieql.ColumnTransformer {
 	return columninfo.NewNameTransformer(
 		transformx.Wrap("\""),
 		transform.Chain(transforms...),
 	)
 }
 
-func (t dialectImplementation) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
+func (t DialectFn) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
 	const columnInformationQuery = `DESCRIBE %s`
 	return columnInformation(d, t.db, columnInformationQuery, table)
 }
 
-func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query string) ([]genieql.ColumnInfo, error) {
+func (t DialectFn) ColumnInformationForQuery(d genieql.Driver, query string) (_ []genieql.ColumnInfo, err error) {
 	const columnInformationQuery = `DESCRIBE %s`
 	var (
-		tx  *sql.Tx
-		err error
+		tx *sql.Tx
 	)
 	table := fmt.Sprintf("gql_%s", md5x.Hex(query))
 
@@ -94,7 +95,9 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 	if err != nil {
 		return nil, errors.Wrap(err, "failure to start transaction")
 	}
-	defer tx.Rollback()
+	defer func() {
+		err = errorsx.Compact(err, tx.Rollback())
+	}()
 
 	q := fmt.Sprintf("CREATE TEMPORARY TABLE %s AS (%s LIMIT 1)", table, query)
 	if _, err = tx.Exec(q); err != nil {
@@ -104,8 +107,12 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 	return columnInformation(d, tx, columnInformationQuery, table)
 }
 
-func (t dialectImplementation) QuotedString(s string) string {
+func (t DialectFn) QuotedString(s string) string {
 	return quotedString(s)
+}
+
+func (t DialectFn) SQLDB(cb func(db *sql.DB)) {
+	cb(t.db)
 }
 
 func columnInformation(d genieql.Driver, q queryer, query, table string) ([]genieql.ColumnInfo, error) {
@@ -135,13 +142,19 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
-		expr := astutil.Expr(dataType)
+		expr := totypeexpr(dataType)
+		if expr == nil {
+			log.Println("skipping column", name, "driver missing type", dataType, "please open an issue")
+			continue
+		}
+
 		if columndef, err = d.LookupType(types.ExprString(expr)); err != nil {
 			log.Println("skipping column", name, "driver missing type", types.ExprString(expr), "please open an issue")
 			continue
 		}
 
 		columndef.Nullable = (nullable == "YES")
+		columndef.PrimaryKey = (langx.Autoderef(key) == "PRI")
 		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(columndef))
 
 		columns = append(columns, genieql.ColumnInfo{
@@ -153,4 +166,26 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 	columns = genieql.SortColumnInfo(columns)(genieql.ByName)
 
 	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
+}
+
+// OIDToType maps object id to golang types.
+func totypeexpr(id string) ast.Expr {
+	switch id {
+	case "VARCHAR":
+		return astutil.Expr("sql.NullString")
+	case "BOOLEAN":
+		return astutil.Expr("sql.NullBool")
+	case "BIGINT":
+		return astutil.Expr("sql.NullInt64")
+	case "INTEGER":
+		return astutil.Expr("sql.NullInt32")
+	case "SMALLINT":
+		return astutil.Expr("sql.NullInt16")
+	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
+		return astutil.Expr("sql.NullTime")
+	case "UUID":
+		return astutil.Expr("duckdb.UUID")
+	default:
+		return nil
+	}
 }
