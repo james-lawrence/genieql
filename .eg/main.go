@@ -23,6 +23,7 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
+		runtime.New("md5sum /usr/include/duckdb.h"),
 		runtime.New("go install ./..."),
 		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./..."),
