@@ -17,6 +17,7 @@ func Setup(ctx context.Context, id eg.Op) error {
 	runtime := shell.Runtime().
 		Environ("GOBIN", "/usr/local/bin").
 		Environ("USER", "root").
+		Environ("LD_LIBRARY_PATH", "/usr/local/lib").
 		Environ("GOCACHE", eggolang.CacheBuildDirectory()).
 		Environ("GOMODCACHE", eggolang.CacheModuleDirectory())
 
@@ -47,8 +48,8 @@ func main() {
 			egbug.Debug,
 			egpostgresql.Auto,
 			Setup,
-			eggolang.AutoCompile(eggolang.CompileOptionTags("no_duckdb_arrow")),
-			eggolang.AutoTest(eggolang.TestOptionTags("no_duckdb_arrow"))),
+			eggolang.AutoCompile(eggolang.CompileOptionTags("no_duckdb_arrow", "duckdb_use_lib")),
+			eggolang.AutoTest(eggolang.TestOptionTags("no_duckdb_arrow", "duckdb_use_lib"))),
 	)
 
 	if err != nil {
