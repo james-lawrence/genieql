@@ -9,7 +9,7 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/jackc/pgtype v1.14.4
 	github.com/jackc/pgx/v4 v4.18.3
-	github.com/marcboeker/go-duckdb v1.8.3
+	github.com/marcboeker/go-duckdb v1.7.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/onsi/ginkgo/v2 v2.21.0
@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	github.com/apache/arrow-go/v18 v18.0.0 // indirect
+	github.com/apache/arrow/go/v17 v17.0.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
@@ -42,6 +42,7 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
+	gonum.org/v1/gonum v0.15.1 // indirect
 )
 
 require (

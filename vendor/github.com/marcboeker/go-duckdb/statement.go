@@ -1,6 +1,7 @@
 package duckdb
 
 /*
+#include <stdlib.h>
 #include <duckdb.h>
 */
 import "C"
@@ -134,18 +135,18 @@ func (s *stmt) bind(args []driver.NamedValue) error {
 		case string:
 			val := C.CString(v)
 			if rv := C.duckdb_bind_varchar(*s.stmt, C.idx_t(i+1), val); rv == C.DuckDBError {
-				C.duckdb_free(unsafe.Pointer(val))
+				C.free(unsafe.Pointer(val))
 				return errCouldNotBind
 			}
-			C.duckdb_free(unsafe.Pointer(val))
+			C.free(unsafe.Pointer(val))
 		case []byte:
 			val := C.CBytes(v)
 			l := len(v)
 			if rv := C.duckdb_bind_blob(*s.stmt, C.idx_t(i+1), val, C.uint64_t(l)); rv == C.DuckDBError {
-				C.duckdb_free(unsafe.Pointer(val))
+				C.free(unsafe.Pointer(val))
 				return errCouldNotBind
 			}
-			C.duckdb_free(unsafe.Pointer(val))
+			C.free(unsafe.Pointer(val))
 		case time.Time:
 			val := C.duckdb_timestamp{
 				micros: C.int64_t(v.UTC().UnixMicro()),
