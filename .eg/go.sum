@@ -1,2 +1,4 @@
 github.com/egdaemon/eg v0.0.0-20241116092011-e829840fb1c8 h1:YBB42kUdtb+ExGdgaVHim9yld93fcemhJJTV68DNQv0=
 github.com/egdaemon/eg v0.0.0-20241116092011-e829840fb1c8/go.mod h1:f2GRyborqCst8bbFF1Xb2xV6eeTIzTUilwWbKV5Pfl4=
+github.com/egdaemon/eg v0.0.0-20241121155149-d2c0ba8e8f69 h1:7HuWq93OG60zy9L1SFuPh/I7jd+sBBE+igcB6RufntY=
+github.com/egdaemon/eg v0.0.0-20241121155149-d2c0ba8e8f69/go.mod h1:Hon65B5JBZgDyoUGp/3hiKgW90DonV2mOAFXFiuuVKI=
