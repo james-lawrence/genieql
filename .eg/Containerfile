@@ -7,15 +7,14 @@ RUN apt-get install -y software-properties-common build-essential apt-file curl 
 RUN add-apt-repository -n ppa:longsleep/golang-backports
 RUN add-apt-repository -n ppa:egdaemon/eg
 RUN add-apt-repository -n ppa:egdaemon/duckdb
+RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 RUN apt-get update
 RUN apt-get install -y dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
 RUN apt-get install -y golang-1.23 podman rsync vim dpkg tree pinentry-tty
-RUN apt-get install -y postgresql postgresql-client postgresql-contrib postgresql-client-common
+RUN apt-get install -y libpq5 postgresql-16 postgresql-client-16 postgresql-contrib-16 postgresql-client-common
 RUN apt-get install -o Acquire::ForceIPv4=true -y eg duckdb
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
-RUN ldconfig -v | grep duckdb
-RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/duckdb.conf
-RUN ldconfig -v | grep duckdb
+RUN systemctl disable eg-daemon.service eg-runner.service eg-runner-build.service
 RUN systemctl enable postgresql
-
 CMD /usr/sbin/init

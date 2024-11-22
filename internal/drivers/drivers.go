@@ -7,6 +7,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // DefaultTypeDefinitions determine the type definition for an expression.
@@ -45,14 +46,14 @@ func NewDriver(path string, types ...genieql.ColumnDefinition) genieql.Driver {
 }
 
 func init() {
-	genieql.RegisterDriver(StandardLib, stdlib)
+	errorsx.MaybePanic(genieql.RegisterDriver(StandardLib, stdlib))
 }
 
 // StandardLib driver only uses types from stdlib.
 const StandardLib = "genieql.default"
 
 var stdlib = NewDriver(
-	"",
+	StandardLib,
 	genieql.ColumnDefinition{
 		Type:       "sql.NullString",
 		ColumnType: "sql.NullString",
@@ -69,24 +70,9 @@ var stdlib = NewDriver(
 		}`,
 	},
 	genieql.ColumnDefinition{
-		Type:       "sql.NullInt64",
-		ColumnType: "sql.NullInt64",
-		Native:     intExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
-		}`,
-	},
-	genieql.ColumnDefinition{
 		Type:       "sql.NullInt32",
 		ColumnType: "sql.NullInt32",
-		Native:     intExprString,
+		Native:     int32ExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
@@ -176,7 +162,7 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "int32",
-		Native:     intExprString,
+		Native:     int32ExprString,
 		ColumnType: "sql.NullInt32",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
@@ -192,7 +178,7 @@ var stdlib = NewDriver(
 	genieql.ColumnDefinition{
 		Type:       "*int32",
 		Nullable:   true,
-		Native:     intExprString,
+		Native:     int32ExprString,
 		ColumnType: "sql.NullInt32",
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
@@ -206,9 +192,24 @@ var stdlib = NewDriver(
 		}`,
 	},
 	genieql.ColumnDefinition{
-		Type:       "int64",
-		Native:     intExprString,
+		Type:       "sql.NullInt64",
 		ColumnType: "sql.NullInt64",
+		Native:     int64ExprString,
+		Decode: `func() {
+			if {{ .From | expr }}.Valid {
+				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+				{{ .To | autodereference | expr }} = tmp
+			}
+		}`,
+		Encode: `func() {
+			{{ .To | expr }}.Valid = true
+			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+		}`,
+	},
+	genieql.ColumnDefinition{
+		Type:       "int64",
+		ColumnType: "sql.NullInt64",
+		Native:     int64ExprString,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int64
@@ -222,9 +223,9 @@ var stdlib = NewDriver(
 	},
 	genieql.ColumnDefinition{
 		Type:       "*int64",
-		Nullable:   true,
-		Native:     intExprString,
 		ColumnType: "sql.NullInt64",
+		Native:     intExprString,
+		Nullable:   true,
 		Decode: `func() {
 			if {{ .From | expr }}.Valid {
 				tmp := {{ .From | expr }}.Int64

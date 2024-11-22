@@ -39,7 +39,7 @@ var _ = Describe("Insert", func() {
 			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 			// Expect(os.WriteFile("derp.txt", formatted.Bytes(), 0600)).To(Succeed())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
-			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
+			Expect(formatted.String()).To(Equal(testx.IOString(out)))
 		},
 		Entry(
 			"example 1 - basic insert",

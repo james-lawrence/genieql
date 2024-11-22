@@ -2,11 +2,12 @@ package drivers
 
 import (
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // implements the pgx driver https://github.com/jackc/pgx
 func init() {
-	genieql.RegisterDriver(PGX, NewDriver("github.com/jackc/pgtype", pgx...))
+	errorsx.MaybePanic(genieql.RegisterDriver(PGX, NewDriver("github.com/jackc/pgtype", pgx...)))
 }
 
 // PGX - driver for github.com/jackc/pgx
