@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	. "github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/testx"
+	"github.com/james-lawrence/genieql/internal/userx"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -112,12 +114,8 @@ var _ = Describe("Configuration", func() {
 		var uri *url.URL
 
 		BeforeEach(func() {
-			var err error
-			tmpdir, err = os.MkdirTemp(".", "bootstrap")
-			tmpdir = filepath.Clean(tmpdir)
-			Expect(err).ToNot(HaveOccurred())
-			uri, err = url.Parse("postgres://soandso:password@localhost:5432/databasename?sslmode=disable")
-			Expect(err).ToNot(HaveOccurred())
+			tmpdir = testx.TempDir()
+			uri = testx.Must(url.Parse("postgres://soandso:password@localhost:5432/databasename?sslmode=disable"))
 		})
 
 		AfterEach(func() {
@@ -141,7 +139,12 @@ var _ = Describe("Configuration", func() {
 		})
 
 		It("should error if we can't write to the directory", func() {
-			Expect(os.Chmod(tmpdir, 0444)).ToNot(HaveOccurred())
+			// disable this test when running as root temporarily. need to fix ci/cd.
+			// essentially this test will not work if root because permissions are ignored.
+			if u := userx.CurrentUserOrDefault(userx.Root()); u.Username == "root" {
+				return
+			}
+			Expect(os.Chmod(tmpdir, 0444)).To(Succeed())
 			path := filepath.Join(tmpdir, "dir", "dummy.config")
 
 			err := Bootstrap(

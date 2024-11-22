@@ -26,11 +26,3 @@ func Logging() {
 func MaybePanic(err error) {
 	Expect(err).To(Succeed())
 }
-
-func Must[T any](v T, err error) T {
-	if err != nil {
-		Expect(err).To(Succeed())
-	}
-
-	return v
-}

@@ -43,7 +43,7 @@ var _ = Describe("Batch Insert", func() {
 			// log.Println(formatted.String())
 			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
 
-			Expect(formatted.String()).To(Equal(testx.ReadString(out)))
+			Expect(formatted.String()).To(Equal(testx.IOString(out)))
 		},
 		Entry(
 			"example 1 - batch insert",

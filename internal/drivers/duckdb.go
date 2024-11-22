@@ -5,9 +5,11 @@ import (
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
+const DuckDB = "github.com/marcboeker/go-duckdb"
+
 // implements the duckdb driver https://github.com/marcboeker/go-duckdb
 func init() {
-	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver("github.com/marcboeker/go-duckdb", ddb...)))
+	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 
 const ddbDefaultDecode = `func() {}`
@@ -24,8 +26,6 @@ const ddbDefaultEncode = `func() {}`
 // 		{{ error "err" | ast }}
 // 	}
 // }`
-
-const DuckDB = "github.com/marcboeker/go-duckdb"
 
 var ddb = []genieql.ColumnDefinition{
 	{

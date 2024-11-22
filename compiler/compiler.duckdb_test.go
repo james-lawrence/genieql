@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"go/build"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -15,10 +14,10 @@ import (
 	"github.com/james-lawrence/genieql/compiler"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/duckdb"
-	_ "github.com/james-lawrence/genieql/internal/duckdb"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/goosex"
 	"github.com/james-lawrence/genieql/internal/sqlxtest"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pressly/goose/v3"
@@ -50,15 +49,14 @@ var _ = Describe("Compiler generation test", func() {
 		gctx.Dialect.(duckdb.DialectFn).SQLDB(func(db *sql.DB) {
 			Expect(sqlxtest.Migrate(ctx, db, os.DirFS("../.migrations/duckdb"), goose.WithStore(goosex.DuckdbStore{}))).To(Succeed())
 		})
-		log.Printf("dialect: %T - %T\n", gctx.Dialect, gctx.Driver)
+
 		Expect(compiler.Autocompile(ctx, gctx, buf)).To(Succeed())
 		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 
-		expected, err := os.ReadFile(resultpath)
-		Expect(err).To(Succeed())
+		expected := testx.ReadString(resultpath)
 		// errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
-		Expect(formatted).To(Equal(string(expected)))
+		Expect(formatted).To(Equal(expected))
 
 	},
 		Entry("Example 2", "./.fixtures/functions/example2", ".fixtures/functions/example2/genieql.gen.go"),
