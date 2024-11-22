@@ -4,7 +4,11 @@
 package example2
 
 import (
+	"context"
+	"time"
+
 	genieql "github.com/james-lawrence/genieql/ginterp"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
 func Example1(gql genieql.Structure) {
@@ -21,18 +25,18 @@ func Example2(gql genieql.Structure) {
 
 func Example1Scanner(genieql.Scanner, func(i Example1)) {}
 
-// func ExampleComboScanner(
-// 	gql genieql.Scanner,
-// 	pattern func(i int, ts time.Time, e1 Example1, e2 Example2),
-// ) {
-// }
+func ExampleComboScanner(
+	gql genieql.Scanner,
+	pattern func(i int, ts time.Time, e1 Example1, e2 Example2),
+) {
+}
 
-// func Example1Insert1(
-// 	gql genieql.Insert,
-// 	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow,
-// ) {
-// 	gql.Into("example1").Default("uuid_field")
-// }
+func Example1Insert1(
+	gql genieql.Insert,
+	pattern func(ctx context.Context, q sqlx.Queryer, a Example1) NewExample1ScannerStaticRow,
+) {
+	gql.Into("example1").Default("uuid_field")
+}
 
 // func Example1Insert2(
 // 	gql genieql.Insert,
