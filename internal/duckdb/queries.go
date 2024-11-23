@@ -109,7 +109,7 @@ func selectPlaceholder(columns, defaults []string) []placeholder {
 }
 
 func quotedString(s string) string {
-	return fmt.Sprintf("`%s`", s)
+	return fmt.Sprintf("\"%s\"", s)
 }
 
 func quotedColumns(columns ...string) []string {

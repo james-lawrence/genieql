@@ -15,6 +15,7 @@ import (
 	"github.com/james-lawrence/genieql/astutil"
 	"github.com/james-lawrence/genieql/columninfo"
 	"github.com/james-lawrence/genieql/dialects"
+	"github.com/james-lawrence/genieql/internal/debugx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/langx"
 	"github.com/james-lawrence/genieql/internal/md5x"
@@ -154,7 +155,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 		columndef.Nullable = (nullable == "YES")
 		columndef.PrimaryKey = (langx.Autoderef(key) == "PRI")
-		fmt.Println("found column", name, types.ExprString(expr), spew.Sdump(columndef))
+		debugx.Println("found column", name, types.ExprString(expr), spew.Sdump(columndef))
 
 		columns = append(columns, genieql.ColumnInfo{
 			Name:       name,

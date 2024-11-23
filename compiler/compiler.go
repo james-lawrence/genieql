@@ -297,6 +297,10 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		}
 	}
 
+	// log.Println("--------------------------------------------------------------")
+	// log.Printf("scratch: %s\n", errorsx.Must(iox.ReadString(working)))
+	// log.Println("--------------------------------------------------------------")
+
 	return errors.Wrap(errorsx.Compact(
 		astcodec.ReformatFile(working),
 		iox.Rewind(working),
