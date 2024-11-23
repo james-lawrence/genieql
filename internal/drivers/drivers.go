@@ -52,97 +52,122 @@ func init() {
 // StandardLib driver only uses types from stdlib.
 const StandardLib = "genieql.default"
 
+const (
+	StdlibEncodeString = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.String = {{ .From | expr }}
+	}`
+	StdlibDecodeString = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .Type | expr }}({{ .From | expr }}.String)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeInt32 = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Int32 = int32({{ .From | expr }})
+	}`
+	StdlibDecodeInt32 = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeBool = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Bool = {{ .From | expr }}
+	}`
+	StdlibDecodeBool = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .From | expr }}.Bool
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeFloat64 = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Float64 = {{ .From | expr }}
+	}`
+	StdlibDecodeFloat64 = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeTime = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Time = {{ .From | expr }}
+	}`
+	StdlibDecodeTime = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .From | expr }}.Time
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeInt64 = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+	}`
+	StdlibDecodeInt64 = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeInt16 = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.Int16 = int16({{ .From | expr }})
+	}`
+	StdlibDecodeInt16 = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .Type | expr }}({{ .From | expr }}.Int16)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+)
+
 var stdlib = NewDriver(
 	StandardLib,
 	genieql.ColumnDefinition{
 		Type:       "sql.NullString",
 		ColumnType: "sql.NullString",
 		Native:     stringExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.String)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.String = {{ .From | expr }}
-		}`,
+		Decode:     StdlibDecodeString,
+		Encode:     StdlibEncodeString,
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullInt32",
 		ColumnType: "sql.NullInt32",
 		Native:     int32ExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Int32)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int32 = int32({{ .From | expr }})
-		}`,
+		Decode:     StdlibDecodeInt32,
+		Encode:     StdlibEncodeInt32,
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullFloat64",
-		Native:     float64ExprString,
 		ColumnType: "sql.NullFloat64",
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Float64)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Float64 = {{ .From | expr }}
-		}`,
+		Native:     float64ExprString,
+		Decode:     StdlibDecodeFloat64,
+		Encode:     StdlibEncodeFloat64,
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullBool",
 		ColumnType: "sql.NullBool",
 		Native:     boolExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .From | expr }}.Bool
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Bool = {{ .From | expr }}
-		}`,
+		Decode:     StdlibDecodeBool,
+		Encode:     StdlibEncodeBool,
 	},
 	genieql.ColumnDefinition{
 		Type:       "sql.NullTime",
 		ColumnType: "sql.NullTime",
 		Native:     timeExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .From | expr }}.Time
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Time = {{ .From | expr }}
-		}`,
+		Decode:     StdlibDecodeTime,
+		Encode:     StdlibEncodeTime,
 	},
 	genieql.ColumnDefinition{
 		Type:       "int",
-		Native:     intExprString,
 		ColumnType: "sql.NullInt64",
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
-		}`,
+		Native:     intExprString,
+		Decode:     StdlibDecodeInt64,
+		Encode:     StdlibEncodeInt64,
 	},
 	genieql.ColumnDefinition{
 		Type:       "*int",
@@ -195,16 +220,8 @@ var stdlib = NewDriver(
 		Type:       "sql.NullInt64",
 		ColumnType: "sql.NullInt64",
 		Native:     int64ExprString,
-		Decode: `func() {
-			if {{ .From | expr }}.Valid {
-				tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
-				{{ .To | autodereference | expr }} = tmp
-			}
-		}`,
-		Encode: `func() {
-			{{ .To | expr }}.Valid = true
-			{{ .To | expr }}.Int64 = int64({{ .From | expr }})
-		}`,
+		Decode:     StdlibDecodeInt64,
+		Encode:     StdlibEncodeInt64,
 	},
 	genieql.ColumnDefinition{
 		Type:       "int64",

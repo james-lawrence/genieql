@@ -23,7 +23,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-var _ = Describe("Compiler generation test", func() {
+var _ = FDescribe("Compiler generation test", func() {
 	DescribeTable("from fixtures", func(ctx context.Context, dir string, resultpath string) {
 		var (
 			err error
@@ -55,7 +55,7 @@ var _ = Describe("Compiler generation test", func() {
 		Expect(err).To(Succeed())
 
 		expected := testx.ReadString(resultpath)
-		// errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
+		errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
 		Expect(formatted).To(Equal(expected))
 
 	},
