@@ -21,6 +21,8 @@ import (
 	_ "github.com/james-lawrence/genieql/internal/drivers"
 	// register the postgresql dialect
 	_ "github.com/james-lawrence/genieql/internal/postgresql"
+	// register the duckdb dialect
+	_ "github.com/james-lawrence/genieql/internal/duckdb"
 )
 
 func main() {
@@ -47,6 +49,8 @@ func main() {
 	gg := generator{
 		BuildInfo: &bi,
 	}
+
+	duckdb := duckdb{}
 	// go debugx.OnSignal(context.Background(), func(ctx context.Context) error {
 	// 	dctx, done := context.WithTimeout(ctx, envx.Duration(30*time.Second, "GENIEQL_PROFILING_DURATION"))
 	// 	defer done()
@@ -73,6 +77,7 @@ func main() {
 	astcli.configure(app)
 	bootstrap.configure(app)
 	gg.configure(app)
+	duckdb.configure(app)
 
 	if cmd, err := app.Parse(os.Args[1:]); err != nil {
 		fmts := "%s\n"

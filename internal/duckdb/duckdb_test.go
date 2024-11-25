@@ -54,22 +54,22 @@ var _ = Describe("duckdb", func() {
 
 		It("should support insert queries", func() {
 			q := NewDialect(DB).Insert(1, 0, "table", "", []string{"c1", "c2", "c2"}, []string{"c1", "c2", "c2"}, []string{"c1"})
-			Expect(q).To(Equal("INSERT INTO `table` (`c1`,`c2`,`c2`) VALUES (DEFAULT,$1,$2) RETURNING `c1`,`c2`,`c2`"))
+			Expect(q).To(Equal("INSERT INTO \"table\" (\"c1\",\"c2\",\"c2\") VALUES (DEFAULT,$1,$2) RETURNING \"c1\",\"c2\",\"c2\""))
 		})
 
 		It("should support select queries", func() {
 			q := NewDialect(DB).Select("table", []string{"c1", "c2", "c2"}, []string{"c1"})
-			Expect(q).To(Equal("SELECT `c1`,`c2`,`c2` FROM `table` WHERE `c1` = $1"))
+			Expect(q).To(Equal("SELECT \"c1\",\"c2\",\"c2\" FROM \"table\" WHERE \"c1\" = $1"))
 		})
 
 		It("should support update queries", func() {
 			q := NewDialect(DB).Update("table", []string{"c1", "c2", "c2"}, []string{"c1"}, []string{"c1", "c2", "c2"})
-			Expect(q).To(Equal("UPDATE `table` SET `c1` = $1, `c2` = $2, `c2` = $3 WHERE `c1` = $4 RETURNING `c1`,`c2`,`c2`"))
+			Expect(q).To(Equal("UPDATE \"table\" SET \"c1\" = $1, \"c2\" = $2, \"c2\" = $3 WHERE \"c1\" = $4 RETURNING \"c1\",\"c2\",\"c2\""))
 		})
 
 		It("should support delete queries", func() {
 			q := NewDialect(DB).Delete("table", []string{"c1", "c2", "c2"}, []string{"c1"})
-			Expect(q).To(Equal("DELETE FROM `table` WHERE `c1` = $1"))
+			Expect(q).To(Equal("DELETE FROM \"table\" WHERE \"c1\" = $1"))
 		})
 	})
 })

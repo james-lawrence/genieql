@@ -21,18 +21,18 @@ CREATE TABLE IF NOT EXISTS example1 (
   numeric_field numeric NOT NULL DEFAULT 1.0,
   real_field real NOT NULL DEFAULT 1.0,
   double_precision_field double precision NOT NULL DEFAULT 1.0,
-  character_field varchar(10) NOT NULL DEFAULT '',
-  character_fixed_field char(10) NOT NULL DEFAULT '',
+  -- character_field varchar(10) NOT NULL DEFAULT '',
+  -- character_fixed_field char(10) NOT NULL DEFAULT '',
   byte_array_field bytea NOT NULL DEFAULT ''::bytea,
   interval_field interval NOT NULL DEFAULT INTERVAL '1 seconds',
   inet_field inet NOT NULL DEFAULT '0.0.0.0'::inet,
-  json_field json NOT NULL DEFAULT '{}'::json,
+  -- json_field json NOT NULL DEFAULT '{}'::json,
   text_field text NOT NULL DEFAULT '',
   bool_field boolean NOT NULL DEFAULT 'f',
-  uuid_array uuid[] not null default '{}'::uuid[],
-  int2_array int2[] not null default '{}'::int2[],
-  int4_array int4[] not null default '{}'::int4[],
-  int8_array int8[] not null default '{}'::int8[],
+  -- uuid_array uuid[] not null default '{}'::uuid[],
+  -- int2_array int2[] not null default '{}'::int2[],
+  -- int4_array int4[] not null default '{}'::int4[],
+  -- int8_array int8[] not null default '{}'::int8[],
   timestamp_field timestamptz NOT NULL DEFAULT current_timestamp
 );
 
@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS example2 (
   uuid_field uuid PRIMARY KEY,
   text_field text NOT NULL DEFAULT '',
   bool_field boolean NOT NULL DEFAULT 'f',
-  uuid_array uuid[] not null default '{}'::uuid[],
-  int4_array int4[] not null default '{}'::int4[],
-  int8_array int8[] not null default '{}'::int8[],
+  -- uuid_array uuid[] not null default '{}'::uuid[],
+  -- int4_array int4[] not null default '{}'::int4[],
+  -- int8_array int8[] not null default '{}'::int8[],
   timestamp_field timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
 );
 

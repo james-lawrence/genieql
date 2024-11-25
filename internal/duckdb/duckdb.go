@@ -170,7 +170,13 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 // OIDToType maps object id to golang types.
 func totypeexpr(id string) ast.Expr {
+	// if strings.HasPrefix(id, "DECIMAL") {
+	// 	return astutil.Expr("sql.NullFloat64")
+	// }
+
 	switch id {
+	case "FLOAT":
+		return astutil.Expr("sql.NullFloat64")
 	case "VARCHAR":
 		return astutil.Expr("sql.NullString")
 	case "BOOLEAN":
@@ -184,7 +190,7 @@ func totypeexpr(id string) ast.Expr {
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
 		return astutil.Expr("sql.NullTime")
 	case "UUID":
-		return astutil.Expr("duckdb.UUID")
+		return astutil.Expr("UUID")
 	default:
 		return nil
 	}
