@@ -26,7 +26,7 @@ type generator struct {
 }
 
 func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
-	cli := app.Command("auto", "generats code from files marked with the build tag `go:build genieql.generate`. see examples/autocompile/genieql.input.go for usage").Action(t.execute)
+	cli := app.Command("auto", "generats code from files marked with the build tag `go:build genieql.generate`. see examples for usage").Action(t.execute)
 	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag(
 		"output",

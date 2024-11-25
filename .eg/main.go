@@ -22,7 +22,7 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
-		runtime.New("go install ./..."),
+		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./..."),
 		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./..."),
 		runtime.New("go fmt ./..."),
@@ -47,8 +47,8 @@ func main() {
 			egbug.Debug,
 			egpostgresql.Auto,
 			Setup,
-			eggolang.AutoCompile(eggolang.CompileOptionTags("no_duckdb_arrow")),
-			eggolang.AutoTest(eggolang.TestOptionTags("no_duckdb_arrow"))),
+			eggolang.AutoCompile(eggolang.CompileOptionTags("genieql.duckdb", "no_duckdb_arrow")),
+			eggolang.AutoTest(eggolang.TestOptionTags("genieql.duckdb", "no_duckdb_arrow"))),
 	)
 
 	if err != nil {

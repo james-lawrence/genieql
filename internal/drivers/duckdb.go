@@ -20,11 +20,22 @@ const ddbDefaultDecode = `func() {
 	}
 }`
 
-// const ddbDefaultEncode = `func() {
-// 	if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
-// 		{{ error "err" | ast }}
-// 	}
-// }`
+const ddbDecodeUUID = `func() {
+	if {{ .From | expr }}.Valid {
+		if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
+			return err
+		} else {
+			{{ .To | autodereference | expr }} = uid.String()
+		}
+	}
+}`
+
+const ddbEncodeUUID = `func() {
+	if {{ .From | expr }}.Valid {
+		tmp := {{ .Type | expr }}({{ .From | expr }}.String)
+		{{ .To | autodereference | expr }} = tmp
+	}
+}`
 
 var ddb = []genieql.ColumnDefinition{
 	{
@@ -68,11 +79,19 @@ var ddb = []genieql.ColumnDefinition{
 		Encode:     StdlibEncodeInt16,
 	},
 	{
+		DBTypeName: "FLOAT",
+		Type:       "sql.NullFloat64",
+		ColumnType: "sql.NullFloat64",
+		Native:     float64ExprString,
+		Decode:     StdlibDecodeFloat64,
+		Encode:     StdlibEncodeFloat64,
+	},
+	{
 		DBTypeName: "UUID",
-		Type:       "sql.NullString",
+		Type:       "UUID",
 		ColumnType: "sql.NullString",
 		Native:     stringExprString,
-		Decode:     StdlibDecodeString,
+		Decode:     ddbDecodeUUID,
 		Encode:     StdlibEncodeString,
 	},
 	{

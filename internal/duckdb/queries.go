@@ -43,7 +43,7 @@ func Insert(n int, offset int, table, conflict string, columns, projection, defa
 
 // Update generates an update query.
 func Update(table string, columns, predicates, returning []string) string {
-	const updateTmpl = "UPDATE `%s` SET %s WHERE %s RETURNING %s"
+	const updateTmpl = "UPDATE \"%s\" SET %s WHERE %s RETURNING %s"
 	updates, offset := predicate(1, columns...)
 	clauses, _ := predicate(offset, predicates...)
 	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "),
