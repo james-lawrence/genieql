@@ -11,6 +11,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
 	bstrap "github.com/james-lawrence/genieql/bootstrap"
 	"github.com/james-lawrence/genieql/bootstrap/autocompile"
@@ -22,7 +23,7 @@ import (
 )
 
 type bootstrapPackage struct {
-	buildInfo
+	genieql.BuildInfo
 	rename      map[string]string
 	importPaths []string
 	buildTags   []string

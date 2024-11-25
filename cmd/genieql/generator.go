@@ -20,7 +20,7 @@ import (
 
 // general generator for genieql, will locate files to consider and process them.
 type generator struct {
-	*buildInfo
+	*genieql.BuildInfo
 	configName string
 	output     string
 }
@@ -37,28 +37,22 @@ func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
 
 func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	var (
-		ctx   generators.Context
-		pname = t.buildInfo.CurrentPackageImport()
+		pname = t.BuildInfo.CurrentPackageImport()
 		dst   io.WriteCloser
 		buf   = bytes.NewBuffer(nil)
 		bpkg  *build.Package
-		bctx  = buildx.Clone(t.buildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
+		bctx  = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
 	)
 
 	if bpkg, err = astcodec.LocatePackage(pname, ".", bctx, genieql.StrictPackageImport(pname)); err != nil {
 		return errorsx.Wrap(err, "unable to locate package")
 	}
 
-	if ctx, err = generators.NewContext(bctx, t.configName, bpkg); err != nil {
-		return err
-	}
-	ctx.Verbosity = t.buildInfo.Verbosity
-
-	if pname != ctx.CurrentPackage.ImportPath {
-		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, ctx.CurrentPackage.ImportPath)
+	if pname != bpkg.ImportPath {
+		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, bpkg.ImportPath)
 	}
 
-	if err = compiler.Autocompile(context.Background(), ctx, buf); err != nil {
+	if err = compiler.AutoGenerate(context.Background(), t.configName, bctx, bpkg, buf, generators.OptionVerbosity(t.Verbosity)); err != nil {
 		return err
 	}
 

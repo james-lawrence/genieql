@@ -190,6 +190,12 @@ func OptionDebug(ctx *Context) {
 	ctx.Verbosity = VerbosityDebug
 }
 
+func OptionVerbosity(n int) Option {
+	return func(ctx *Context) {
+		ctx.Verbosity = n
+	}
+}
+
 func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
 	config := genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(

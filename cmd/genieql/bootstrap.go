@@ -1,9 +1,12 @@
 package main
 
-import "github.com/alecthomas/kingpin"
+import (
+	"github.com/alecthomas/kingpin"
+	"github.com/james-lawrence/genieql"
+)
 
 type bootstrap struct {
-	buildInfo
+	genieql.BuildInfo
 }
 
 func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
@@ -14,7 +17,7 @@ func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
 	).Default()
 
 	(&bootstrapPackage{
-		buildInfo: t.buildInfo,
+		BuildInfo: t.BuildInfo,
 	}).configure(
 		bootstrap.Command("package", "generate the boilerplate for each package provided"),
 	)
