@@ -14,6 +14,7 @@ import (
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/stringsx"
 
 	// register the drivers
@@ -36,15 +37,15 @@ func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	bi := mustBuildInfo()
+	bi := errorsx.Must(genieql.NewBuildInfo())
 
 	bootstrap := &bootstrap{
-		buildInfo: bi,
+		BuildInfo: bi,
 	}
 	astcli := astcli{}
 
 	gg := generator{
-		buildInfo: &bi,
+		BuildInfo: &bi,
 	}
 	// go debugx.OnSignal(context.Background(), func(ctx context.Context) error {
 	// 	dctx, done := context.WithTimeout(ctx, envx.Duration(30*time.Second, "GENIEQL_PROFILING_DURATION"))
