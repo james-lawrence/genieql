@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/types"
 	"log"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
@@ -170,9 +171,9 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 // OIDToType maps object id to golang types.
 func totypeexpr(id string) ast.Expr {
-	// if strings.HasPrefix(id, "DECIMAL") {
-	// 	return astutil.Expr("sql.NullFloat64")
-	// }
+	if strings.HasPrefix(id, "DECIMAL") {
+		return astutil.Expr("sql.NullFloat64")
+	}
 
 	switch id {
 	case "FLOAT":
@@ -190,8 +191,9 @@ func totypeexpr(id string) ast.Expr {
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
 		return astutil.Expr("sql.NullTime")
 	case "UUID":
-		return astutil.Expr("UUID")
+		return astutil.Expr("duckdbtypes.UUID")
 	default:
+		log.Println("DERP DERP", id)
 		return nil
 	}
 }

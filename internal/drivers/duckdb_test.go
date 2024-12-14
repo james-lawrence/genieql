@@ -22,6 +22,6 @@ var _ = Describe("duckdb", func() {
 		Entry("example 5 - int16", "SMALLINT", "sql.NullInt16", nil),
 		Entry("example 6 - bool", "BOOLEAN", "sql.NullBool", nil),
 		Entry("example 7 - time.Time", "TIMESTAMPZ", "sql.NullTime", nil),
-		Entry("example 7 - uuid", "UUID", "sql.NullString", nil),
+		Entry("example 7 - uuid", "UUID", "sql.NullUUID", nil),
 	)
 })

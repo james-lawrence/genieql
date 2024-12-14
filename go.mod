@@ -1,6 +1,6 @@
 module github.com/james-lawrence/genieql
 
-go 1.23.2
+go 1.23.4
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
@@ -31,6 +31,7 @@ require (
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
+	github.com/james-lawrence/duckdbtypes v0.0.0-20241213231521-8d931a3296e6 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect

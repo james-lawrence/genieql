@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	_ "github.com/james-lawrence/duckdbtypes"
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
@@ -12,28 +13,15 @@ func init() {
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 
-const ddbDefaultEncode = `func() {}`
+const ddbDefaultEncode = `func() {
+	if err := {{ .To | expr }}.Scan({{ .From | localident | expr }}); err != nil {
+		{{ error "err" | ast }}
+	}
+}`
 
 const ddbDefaultDecode = `func() {
-	if err := {{ .From | expr }}.Scan({{.To | autoreference | expr}}); err != nil {
-		return err
-	}
-}`
-
-const ddbDecodeUUID = `func() {
-	if {{ .From | expr }}.Valid {
-		if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
-			return err
-		} else {
-			{{ .To | autodereference | expr }} = uid.String()
-		}
-	}
-}`
-
-const ddbEncodeUUID = `func() {
-	if {{ .From | expr }}.Valid {
-		tmp := {{ .Type | expr }}({{ .From | expr }}.String)
-		{{ .To | autodereference | expr }} = tmp
+	if err := {{ .From | expr }}.AssignTo({{.To | autoreference | expr}}); err != nil {
+		{{ error "err" | ast }}
 	}
 }`
 
@@ -88,11 +76,11 @@ var ddb = []genieql.ColumnDefinition{
 	},
 	{
 		DBTypeName: "UUID",
-		Type:       "UUID",
-		ColumnType: "sql.NullString",
+		Type:       "duckdbtypes.UUID",
+		ColumnType: "duckdbtypes.UUID",
 		Native:     stringExprString,
-		Decode:     ddbDecodeUUID,
-		Encode:     StdlibEncodeString,
+		Decode:     ddbDefaultDecode,
+		Encode:     ddbDefaultEncode,
 	},
 	{
 		DBTypeName: "TIMESTAMPZ",

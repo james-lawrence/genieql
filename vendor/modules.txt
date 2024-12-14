@@ -33,8 +33,6 @@ github.com/apache/arrow-go/v18/internal/bitutils
 github.com/apache/arrow-go/v18/internal/hashing
 github.com/apache/arrow-go/v18/internal/json
 github.com/apache/arrow-go/v18/internal/utils
-# github.com/apache/arrow/go/v17 v17.0.0
-## explicit; go 1.21
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 # github.com/dave/jennifer v1.7.1
@@ -107,6 +105,10 @@ github.com/jackc/pgtype
 github.com/jackc/pgx/v4
 github.com/jackc/pgx/v4/internal/sanitize
 github.com/jackc/pgx/v4/stdlib
+# github.com/james-lawrence/duckdbtypes v0.0.0-20241213231521-8d931a3296e6
+## explicit; go 1.23.4
+github.com/james-lawrence/duckdbtypes
+github.com/james-lawrence/duckdbtypes/internal/uuidx
 # github.com/klauspost/compress v1.17.11
 ## explicit; go 1.21
 github.com/klauspost/compress
@@ -323,8 +325,6 @@ golang.org/x/tools/internal/versions
 ## explicit; go 1.18
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# gonum.org/v1/gonum v0.15.1
-## explicit; go 1.22
 # gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 ## explicit; go 1.11
 # gopkg.in/yaml.v3 v3.0.1
