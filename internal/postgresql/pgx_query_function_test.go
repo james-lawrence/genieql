@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/token"
-	"os"
 	"path/filepath"
 
 	"github.com/james-lawrence/genieql"
@@ -82,20 +81,20 @@ var _ = Describe("Scanner", func() {
 				Driver:         driver,
 			}
 			buffer.WriteString("package example\n\n")
-			Expect(generators.NewQueryFunction(ctx, options...).Generate(buffer)).ToNot(HaveOccurred())
+			Expect(generators.NewQueryFunction(ctx, options...).Generate(buffer)).To(Succeed())
 			buffer.WriteString("\n")
 
-			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).ToNot(HaveOccurred())
+			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).To(Succeed())
 
-			expected, err := os.ReadFile(fixture)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(formatted.String()).To(Equal(string(expected)))
+			expected := testx.ReadString(fixture)
+			// errorsx.MaybePanic(os.WriteFile(fixture, formatted.Bytes(), 0600))
+			Expect(formatted.String()).To(Equal(expected))
 		},
 		Entry(
 			"example 1 - net.IPNet rows scanner",
 			".fixtures/functions-query/output1.go",
 			generators.QFOName("queryFunction1"),
-			generators.QFOSharedParameters(astutil.Field(astutil.SelExpr("net", "IPNet"), ast.NewIdent("a"))),
+			generators.QFOSharedParameters(astutil.Field(astutil.SelExpr("netip", "Prefix"), ast.NewIdent("a"))),
 			generators.QFOScanner(exampleScanner),
 			generators.QFOQueryer("q", astutil.SelExpr("sqlx", "Queryer")),
 		),
@@ -103,7 +102,7 @@ var _ = Describe("Scanner", func() {
 			"example 2 - net.IPNet row scanner",
 			".fixtures/functions-query/output2.go",
 			generators.QFOName("queryFunction2"),
-			generators.QFOSharedParameters(astutil.Field(astutil.SelExpr("net", "IPNet"), ast.NewIdent("a"))),
+			generators.QFOSharedParameters(astutil.Field(astutil.SelExpr("netip", "Prefix"), ast.NewIdent("a"))),
 			generators.QFOScanner(exampleRowScanner),
 			generators.QFOQueryer("q", astutil.SelExpr("sqlx", "Queryer")),
 		),

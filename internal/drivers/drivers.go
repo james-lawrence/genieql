@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
@@ -52,6 +52,14 @@ func init() {
 // StandardLib driver only uses types from stdlib.
 const StandardLib = "genieql.default"
 
+const (
+	EncodeCopy = `func() {
+		{{ .To | expr }} = {{ .From | expr }}
+	}`
+	DecodeCopy = `func() {
+		{{ if .Column.Definition.Nullable }}*{{ end }}{{ .To | expr }} = {{ .From | expr }}
+	}`
+)
 const (
 	StdlibEncodeString = `func() {
 		{{ .To | expr }}.Valid = true

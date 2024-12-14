@@ -5,7 +5,6 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"os"
 	"path/filepath"
 
 	"github.com/james-lawrence/genieql"
@@ -65,10 +64,10 @@ var _ = Describe("Scanner", func() {
 					buffer.WriteString("\n")
 				}
 			}
-			expected, err := os.ReadFile(fixture)
-			Expect(err).To(Succeed())
+			expected := testx.ReadString(fixture)
 			Expect(astcodec.FormatOutput(formatted, buffer.Bytes())).To(Succeed())
-			Expect(formatted.String()).To(Equal(string(expected)))
+			// errorsx.MaybePanic(os.WriteFile(fixture, formatted.Bytes(), 0600))
+			Expect(formatted.String()).To(Equal(expected))
 		},
 		Entry("int",
 			`package example; type Int func(arg1 int)`,
@@ -85,14 +84,14 @@ var _ = Describe("Scanner", func() {
 			".fixtures/scanners/json.go",
 			generators.ScannerOptionOutputMode(generators.ModeStatic|generators.ModeInterface),
 		),
-		Entry("net.IPNet",
-			`package example; type IPNet func(arg1 net.IPNet)`,
+		Entry("netip.Addr",
+			`package example; type IPNet func(arg1 netip.Addr)`,
 			".fixtures/scanners/ipnet.go",
 			generators.ScannerOptionOutputMode(generators.ModeStatic|generators.ModeInterface),
 		),
 
-		Entry("[]net.IPNet",
-			`package example; type IPNetArray func(arg1 []net.IPNet)`,
+		Entry("[]netip.Prefix",
+			`package example; type IPNetArray func(arg1 []netip.Prefix)`,
 			".fixtures/scanners/ipnet_array.go",
 			generators.ScannerOptionOutputMode(generators.ModeStatic|generators.ModeInterface),
 		),

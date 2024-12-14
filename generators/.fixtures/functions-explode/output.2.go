@@ -17,44 +17,44 @@ func explodeFunction1(arg1 *Foo) ([]interface{}, error) {
 		c4 pgtype.Timestamptz // field5
 	)
 
-	if err := c0.Set(arg1.field1); err != nil {
+	if err := c0.Scan(arg1.field1); err != nil {
 		return []interface{}(nil), err
 	}
 
-	if err := c1.Set(arg1.field2); err != nil {
+	if err := c1.Scan(arg1.field2); err != nil {
 		return []interface{}(nil), err
 	}
 
-	if err := c2.Set(arg1.field3); err != nil {
+	if err := c2.Scan(arg1.field3); err != nil {
 		return []interface{}(nil), err
 	}
 
 	switch arg1.field4 {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
-		if err := c3.Set(pgtype.Infinity); err != nil {
+		if err := c3.Scan(pgtype.Infinity); err != nil {
 			return []interface{}(nil), err
 		}
 	case time.Unix(math.MinInt64, math.MinInt64):
-		if err := c3.Set(pgtype.NegativeInfinity); err != nil {
+		if err := c3.Scan(pgtype.NegativeInfinity); err != nil {
 			return []interface{}(nil), err
 		}
 	default:
-		if err := c3.Set(arg1.field4); err != nil {
+		if err := c3.Scan(arg1.field4); err != nil {
 			return []interface{}(nil), err
 		}
 	}
 
 	switch *arg1.field5 {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
-		if err := c4.Set(pgtype.Infinity); err != nil {
+		if err := c4.Scan(pgtype.Infinity); err != nil {
 			return []interface{}(nil), err
 		}
 	case time.Unix(math.MinInt64, math.MinInt64):
-		if err := c4.Set(pgtype.NegativeInfinity); err != nil {
+		if err := c4.Scan(pgtype.NegativeInfinity); err != nil {
 			return []interface{}(nil), err
 		}
 	default:
-		if err := c4.Set(arg1.field5); err != nil {
+		if err := c4.Scan(arg1.field5); err != nil {
 			return []interface{}(nil), err
 		}
 	}

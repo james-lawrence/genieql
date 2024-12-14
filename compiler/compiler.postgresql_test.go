@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"go/build"
-	"os"
 	"path/filepath"
 
 	"github.com/james-lawrence/genieql"
@@ -14,6 +13,7 @@ import (
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	_ "github.com/james-lawrence/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/internal/testx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -47,15 +47,10 @@ var _ = Describe("Compiler generation test", func() {
 		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 
-		// log.Println("generated\n", formatted)
-		// os.WriteFile("derp.go", []byte(formatted), 0600)
-		expected, err := os.ReadFile(resultpath)
-		Expect(err).To(Succeed())
+		expected := testx.ReadString(resultpath)
 
-		// Expect(os.WriteFile("derp.go", []byte(formatted), 0600)).To(Succeed())
-		// Expect(os.WriteFile("derp.expected.go", []byte(expected), 0600)).To(Succeed())
-
-		Expect(formatted).To(Equal(string(expected)))
+		// errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
+		Expect(formatted).To(Equal(expected))
 	},
 		Entry("Example 1", "./.fixtures/functions/example1", ".fixtures/functions/example1/genieql.gen.go"),
 	)

@@ -36,8 +36,10 @@ func (t intStatic) Scan(arg1 *int) error {
 		return err
 	}
 
-	if err := c0.AssignTo(arg1); err != nil {
+	if vc0, err := c0.Value(); err != nil {
 		return err
+	} else {
+		*arg1 = vc0.(int)
 	}
 
 	return t.Rows.Err()
@@ -89,8 +91,10 @@ func (t IntStaticRow) Scan(arg1 *int) error {
 		return err
 	}
 
-	if err := c0.AssignTo(arg1); err != nil {
+	if vc0, err := c0.Value(); err != nil {
 		return err
+	} else {
+		*arg1 = vc0.(int)
 	}
 
 	return nil

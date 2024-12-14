@@ -14,13 +14,15 @@ func init() {
 }
 
 const pgxDefaultDecode = `func() {
-	if err := {{ .From | expr }}.AssignTo({{.To | autoreference | expr}}); err != nil {
-		return err
+	if v{{ .From | expr }}, err := {{ .From | expr }}.Value(); err != nil {
+		{{ error "err" | ast }}
+	} else {
+	 	{{.To | autodereference | expr}} = v{{ .From | expr }}.({{ if .Column.Definition.Nullable }}*{{ end }}{{.Native | expr}})
 	}
 }`
 
 const pgxDefaultEncode = `func() {
-	if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
+	if err := {{ .To | expr }}.Scan({{ .From | localident | expr }}); err != nil {
 		{{ error "err" | ast }}
 	}
 }`
@@ -35,8 +37,10 @@ const pgxTimeDecode = `func() {
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
 		{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 	default:
-		if err := {{ .From | expr }}.AssignTo({{ .To | autoreference | expr }}); err != nil {
-			return err
+		if v{{ .From | expr }}, err := {{ .From | expr }}.Value(); err != nil {
+			{{ error "err" | ast }}
+		} else {
+			{{.To | autodereference | expr}} = v{{ .From | expr }}.({{ if .Column.Definition.Nullable }}*{{ end }}{{.Native | expr}})
 		}
 	}
 }`
@@ -44,15 +48,15 @@ const pgxTimeDecode = `func() {
 const pgxTimeEncode = `func() {
 	switch {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }} {
 	case time.Unix(math.MaxInt64-62135596800, 999999999):
-		if err := {{ .To | expr }}.Set(pgtype.Infinity); err != nil {
+		if err := {{ .To | expr }}.Scan(pgtype.Infinity); err != nil {
 			{{ error "err" | ast }}
 		}
 	case time.Unix(math.MinInt64, math.MinInt64):
-		if err := {{ .To | expr }}.Set(pgtype.NegativeInfinity); err != nil {
+		if err := {{ .To | expr }}.Scan(pgtype.NegativeInfinity); err != nil {
 			{{ error "err" | ast }}
 		}
 	default:
-		if err := {{ .To | expr }}.Set({{ .From | localident | expr }}); err != nil {
+		if err := {{ .To | expr }}.Scan({{ .From | localident | expr }}); err != nil {
 			{{ error "err" | ast }}
 		}
 	}
@@ -61,38 +65,38 @@ const pgxTimeEncode = `func() {
 var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.OID",
-		Native:     stringExprString,
+		Native:     uint32ExprString,
 		ColumnType: "pgtype.OID",
 		Decode:     pgxDefaultDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
 		Type:       "pgtype.OIDValue",
-		Native:     stringExprString,
+		Native:     uint32ExprString,
 		ColumnType: "pgtype.OIDValue",
 		Decode:     pgxDefaultDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
 		Type:       "pgtype.CIDR",
+		ColumnType: cidrExpr,
 		Native:     cidrExpr,
-		ColumnType: "pgtype.CIDR",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.CIDRArray",
 		Native:     cidrArrayExpr,
-		ColumnType: "pgtype.CIDRArray",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: cidrArrayExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Macaddr",
+		ColumnType: macExpr,
 		Native:     macExpr,
-		ColumnType: "pgtype.Macaddr",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Name",
@@ -104,35 +108,14 @@ var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.Inet",
 		Native:     ipExpr,
-		ColumnType: "pgtype.Inet",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: ipExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Numeric",
 		Native:     float64ExprString,
 		ColumnType: "pgtype.Numeric",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "pgtype.Bytea",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.Bytea",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "pgtype.Bit",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.Bit",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "pgtype.Varbit",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.Varbit",
 		Decode:     pgxDefaultDecode,
 		Encode:     pgxDefaultEncode,
 	},
@@ -167,9 +150,9 @@ var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.Int2Array",
 		Native:     intArrExpr,
-		ColumnType: "pgtype.Int2Array",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: intArrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Int4",
@@ -181,9 +164,9 @@ var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.Int4Array",
 		Native:     intArrExpr,
-		ColumnType: "pgtype.Int4Array",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: intArrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Int8",
@@ -195,9 +178,9 @@ var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.Int8Array",
 		Native:     intArrExpr,
-		ColumnType: "pgtype.Int8Array",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: intArrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "pgtype.Text",
@@ -209,24 +192,24 @@ var pgx = []genieql.ColumnDefinition{
 	{
 		Type:       "pgtype.TextArray",
 		Native:     stringArrExpr,
-		ColumnType: "pgtype.TextArray",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: stringArrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
-	{
-		Type:       "pgtype.Varchar",
-		Native:     stringExprString,
-		ColumnType: "pgtype.Varchar",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "pgtype.BPChar",
-		Native:     stringExprString,
-		ColumnType: "pgtype.BPChar",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
+	// {
+	// 	Type:       "pgtype.Varchar",
+	// 	Native:     stringExprString,
+	// 	ColumnType: "pgtype.Text",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
+	// {
+	// 	Type:       "pgtype.BPChar",
+	// 	Native:     stringExprString,
+	// 	ColumnType: "pgtype.Text",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
 	{
 		Type:       "pgtype.Date",
 		Native:     timeExprString,
@@ -257,106 +240,106 @@ var pgx = []genieql.ColumnDefinition{
 	},
 	{
 		Type:       "pgtype.UUID",
-		Native:     stringExprString,
 		ColumnType: "pgtype.UUID",
+		Native:     stringExprString,
 		Decode:     pgxDefaultDecode,
 		Encode:     pgxDefaultEncode,
 	},
 	{
 		Type:       "pgtype.UUIDArray",
 		Native:     stringArrExpr,
-		ColumnType: "pgtype.UUIDArray",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: stringArrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
-	{
-		Type:       "pgtype.JSONB",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.JSONB",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "pgtype.JSON",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.JSON",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
+	// {
+	// 	Type:       "pgtype.JSONB",
+	// 	Native:     bytesExpr,
+	// 	ColumnType: "pgtype.JSONB",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
+	// {
+	// 	Type:       "pgtype.JSON",
+	// 	Native:     bytesExpr,
+	// 	ColumnType: "pgtype.JSON",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
 	{
 		Type:       "json.RawMessage",
 		Native:     bytesExpr,
-		ColumnType: "pgtype.JSON",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: bytesExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
 		Type:       "*json.RawMessage",
 		Nullable:   true,
 		Native:     bytesExpr,
-		ColumnType: "pgtype.JSON",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: bytesExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "net.IPNet",
+		Type:       "netip.Prefix",
 		Native:     cidrExpr,
-		ColumnType: "pgtype.CIDR",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: cidrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "*net.IPNet",
+		Type:       "*netip.Prefix",
 		Nullable:   true,
 		Native:     cidrExpr,
-		ColumnType: "pgtype.CIDR",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: cidrExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "[]net.IPNet",
+		Type:       "[]netip.Prefix",
 		Native:     cidrArrayExpr,
-		ColumnType: "pgtype.CIDRArray",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: cidrArrayExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "*[]net.IPNet",
+		Type:       "*[]netip.Prefix",
 		Nullable:   true,
 		Native:     cidrArrayExpr,
-		ColumnType: "pgtype.CIDRArray",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		ColumnType: cidrArrayExpr,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "net.IP",
+		Type:       "netip.Addr",
+		ColumnType: ipExpr,
 		Native:     ipExpr,
-		ColumnType: "pgtype.Inet",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
 	{
-		Type:       "*net.IP",
+		Type:       "*netip.Addr",
 		Nullable:   true,
+		ColumnType: ipExpr,
 		Native:     ipExpr,
-		ColumnType: "pgtype.Inet",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
+		Decode:     DecodeCopy,
+		Encode:     EncodeCopy,
 	},
-	{
-		Type:       "[]byte",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.Bytea",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "*[]byte",
-		Native:     bytesExpr,
-		ColumnType: "pgtype.Bytea",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
+	// {
+	// 	Type:       "[]byte",
+	// 	Native:     bytesExpr,
+	// 	ColumnType: "pgtype.Bytea",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
+	// {
+	// 	Type:       "*[]byte",
+	// 	Native:     bytesExpr,
+	// 	ColumnType: "pgtype.Bytea",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
 	{
 		Type:       "[]string",
 		Native:     stringArrExpr,
@@ -371,20 +354,20 @@ var pgx = []genieql.ColumnDefinition{
 		Decode:     pgxDefaultDecode,
 		Encode:     pgxDefaultEncode,
 	},
-	{
-		Type:       "[]int",
-		Native:     intArrExpr,
-		ColumnType: "pgtype.Int8Array",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
-	{
-		Type:       "*[]int",
-		Native:     intArrExpr,
-		ColumnType: "pgtype.Int8Array",
-		Decode:     pgxDefaultDecode,
-		Encode:     pgxDefaultEncode,
-	},
+	// {
+	// 	Type:       "[]int",
+	// 	Native:     intArrExpr,
+	// 	ColumnType: "pgtype.Int8Array",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
+	// {
+	// 	Type:       "*[]int",
+	// 	Native:     intArrExpr,
+	// 	ColumnType: "pgtype.Int8Array",
+	// 	Decode:     pgxDefaultDecode,
+	// 	Encode:     pgxDefaultEncode,
+	// },
 	{
 		Type:       "time.Duration",
 		Native:     durationExpr,

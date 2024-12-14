@@ -112,6 +112,7 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			From   ast.Expr
 			To     ast.Expr
 			Type   ast.Expr
+			Native ast.Expr
 			Column genieql.ColumnMap
 		}
 
@@ -132,7 +133,7 @@ func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]
 			to = &ast.StarExpr{X: astutil.UnwrapExpr(to)}
 		}
 
-		if gen, err = genFunctionLiteral(ctx, column.Definition.Decode, stmtCtx{Type: astutil.UnwrapExpr(typex), From: local, To: to, Column: column}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(ctx, column.Definition.Decode, stmtCtx{Type: astutil.UnwrapExpr(typex), Native: typex, From: local, To: to, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -156,6 +157,7 @@ func ColumnMapEncoder(ctx Context) func(int, genieql.ColumnMap, func(string) ast
 			From   ast.Expr
 			To     ast.Expr
 			Type   ast.Expr
+			Native ast.Expr
 			Column genieql.ColumnMap
 		}
 
@@ -188,7 +190,7 @@ func ColumnMapEncoder(ctx Context) func(int, genieql.ColumnMap, func(string) ast
 			from = &ast.StarExpr{X: from}
 		}
 
-		if gen, err = genFunctionLiteral(ctx, column.Definition.Encode, stmtCtx{Type: astutil.UnwrapExpr(typex), From: from, To: local, Column: column}, errHandler); err != nil {
+		if gen, err = genFunctionLiteral(ctx, column.Definition.Encode, stmtCtx{Type: astutil.UnwrapExpr(typex), Native: typex, From: from, To: local, Column: column}, errHandler); err != nil {
 			return nil, err
 		}
 
@@ -330,15 +332,15 @@ func builtinType(x ast.Expr) bool {
 
 	// TODO these shouldn't really be here. think of a way to associate with the driver.
 	switch name {
-	case "interface{}":
+	case "interface{}", "any":
 		fallthrough
 	case "time.Time", "[]time.Time", "time.Duration", "[]time.Duration":
 		fallthrough
 	case "json.RawMessage":
 		fallthrough
-	case "net.IPNet", "[]net.IPNet":
+	case "net.IPNet", "[]net.IPNet", "netip.Prefix", "[]netip.Prefix":
 		fallthrough
-	case "net.IP", "[]net.IP":
+	case "net.IP", "[]net.IP", "netip.Addr", "[]netip.Addr":
 		fallthrough
 	case "net.HardwareAddr":
 		fallthrough

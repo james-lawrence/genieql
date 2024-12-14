@@ -99,7 +99,7 @@ func TimestampInsert(
 	gql genieql.Insert,
 	pattern func(ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow,
 ) {
-	gql.Into("timestamp_examples").Default("id")
+	gql.Into("timestamp_examples").Default("uuid")
 }
 
 // create a merge insert
@@ -107,5 +107,5 @@ func ConflictInsert(
 	gql genieql.Insert,
 	pattern func(ctx context.Context, q sqlx.Queryer, e Timestamp) NewTimestampScannerStaticRow,
 ) {
-	gql.Into("timestamp_examples").Default("id").Conflict("ON CONFLICT (id) DO NOTHING")
+	gql.Into("timestamp_examples").Default("uuid").Conflict("ON CONFLICT (uuid) DO NOTHING")
 }
