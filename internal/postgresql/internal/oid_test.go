@@ -3,7 +3,7 @@ package internal_test
 import (
 	"go/types"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	. "github.com/james-lawrence/genieql/internal/postgresql/internal"
 	. "github.com/onsi/ginkgo/v2"

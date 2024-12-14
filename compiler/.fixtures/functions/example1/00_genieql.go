@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	genieql "github.com/james-lawrence/genieql/ginterp"
 	"github.com/james-lawrence/genieql/internal/sqlx"
 )

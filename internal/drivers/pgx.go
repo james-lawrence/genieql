@@ -5,13 +5,13 @@ import (
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
-// implements the pgx driver https://github.com/jackc/pgx
-func init() {
-	errorsx.MaybePanic(genieql.RegisterDriver(PGX, NewDriver("github.com/jackc/pgtype", pgx...)))
-}
-
 // PGX - driver for github.com/jackc/pgx
 const PGX = "github.com/jackc/pgx"
+
+// implements the pgx driver https://github.com/jackc/pgx
+func init() {
+	errorsx.MaybePanic(genieql.RegisterDriver(PGX, NewDriver(PGX, pgx...)))
+}
 
 const pgxDefaultDecode = `func() {
 	if err := {{ .From | expr }}.AssignTo({{.To | autoreference | expr}}); err != nil {

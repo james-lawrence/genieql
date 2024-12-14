@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/james-lawrence/genieql/examples/postgresql/autocompile/pkga"
 	"github.com/james-lawrence/genieql/internal/sqlx"
 )

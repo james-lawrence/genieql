@@ -3,7 +3,7 @@ package internal
 import (
 	"go/ast"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/james-lawrence/genieql/astutil"
 )

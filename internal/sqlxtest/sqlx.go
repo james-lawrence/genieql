@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/gofrs/uuid"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/pressly/goose/v3"
 )

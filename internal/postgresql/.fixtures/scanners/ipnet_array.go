@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // IPNetArray scanner interface.
