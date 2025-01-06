@@ -13,14 +13,13 @@ import (
 )
 
 func Setup(ctx context.Context, id eg.Op) error {
-	runtime := shell.Runtime().
-		Environ("GOBIN", "/usr/local/bin").
-		Environ("USER", "root").
-		Environ("GOCACHE", eggolang.CacheBuildDirectory()).
-		Environ("GOMODCACHE", eggolang.CacheModuleDirectory())
+	runtime := eggolang.Runtime().
+		Environ("GOBIN", "/usr/local/bin")
 
 	return shell.Run(
 		ctx,
+		runtime.Newf("tree -L 2 %s", eggolang.CacheDirectory()),
+		runtime.Newf("tree -L 2 %s", eggolang.CacheBuildDirectory()),
 		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./..."),
 		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./..."),
