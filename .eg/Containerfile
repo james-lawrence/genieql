@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG GOBIN=/usr/local/bin
 
 RUN apt-get update
-RUN apt-get install -y software-properties-common build-essential apt-file curl apt-transport-https
+RUN apt-get install -y software-properties-common build-essential apt-file curl apt-transport-https sudo
 RUN add-apt-repository -n ppa:longsleep/golang-backports
 RUN add-apt-repository -n ppa:egdaemon/eg
 RUN add-apt-repository -n ppa:egdaemon/duckdb
