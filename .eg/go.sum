@@ -1,4 +1,2 @@
-github.com/egdaemon/eg v0.0.0-20241220213807-4b406fc7aa69 h1:sSN0e1uptMoaggflPdr4+BD73kMwZJDWaN8urDXw/yA=
-github.com/egdaemon/eg v0.0.0-20241220213807-4b406fc7aa69/go.mod h1:Tv/P5QY5bN9tNT6XkcjwOC7yI0EvL0N9YkX39AsiFXE=
-github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
-github.com/gofrs/uuid v4.4.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
+github.com/egdaemon/eg v0.0.0-20250105182232-0b53e54c8c24 h1:v4wXhNV5iUDu7Blds+34weNXCoxkt/kRcCEoOhoKBeo=
+github.com/egdaemon/eg v0.0.0-20250105182232-0b53e54c8c24/go.mod h1:mBnxuNCD/zoUo4G1Cub69uIppx/IioEe0SHkw7oFNHA=
