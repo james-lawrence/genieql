@@ -18,8 +18,11 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
-		runtime.Newf("ls -lha %s", eggolang.CacheDirectory()),
-		runtime.Newf("ls -lha %s", eggolang.CacheBuildDirectory()),
+
+		runtime.Newf("ls -lha %s", egenv.CacheDirectory()).Lenient(true),
+		runtime.Newf("ls -lha %s", eggolang.CacheDirectory()).Lenient(true),
+		runtime.Newf("ls -lha %s", eggolang.CacheBuildDirectory()).Lenient(true),
+		runtime.New("ls -lha ."),
 		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./..."),
 		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
 		runtime.New("go generate ./..."),
