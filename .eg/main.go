@@ -48,8 +48,8 @@ func main() {
 			c1,
 			egpostgresql.Auto,
 			Setup,
-			eggolang.AutoCompile(eggolang.CompileOptionTags("genieql.duckdb", "no_duckdb_arrow")),
-			eggolang.AutoTest(eggolang.TestOptionTags("genieql.duckdb", "no_duckdb_arrow"))),
+			eggolang.AutoCompile(eggolang.CompileOption.Tags("genieql.duckdb", "no_duckdb_arrow")),
+			eggolang.AutoTest(eggolang.TestOption.Tags("genieql.duckdb", "no_duckdb_arrow"))),
 	)
 
 	if err != nil {
