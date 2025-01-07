@@ -20,6 +20,7 @@ func Setup(ctx context.Context, id eg.Op) error {
 		ctx,
 
 		runtime.Newf("ls -lha %s", egenv.CacheDirectory()).Lenient(true),
+		runtime.Newf("tree -L 2 %s", egenv.CacheDirectory()).Lenient(true),
 		runtime.Newf("ls -lha %s", eggolang.CacheDirectory()).Lenient(true),
 		runtime.Newf("ls -lha %s", eggolang.CacheBuildDirectory()).Lenient(true),
 		runtime.New("ls -lha ."),
