@@ -17,4 +17,12 @@ RUN apt-get install -o Acquire::ForceIPv4=true -y eg duckdb
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
 RUN systemctl disable eg-daemon.service eg-runner.service eg-runner-build.service
 RUN systemctl enable postgresql
+
+RUN systemd-sysusers
+RUN systemd-tmpfiles --create
+
+# ensure the clone directory is marked as safe to deal with permissioning issues.
+# until we can identify a way to resolve the problem holistically.
+RUN sudo -E -H -u egd git config --global --add safe.directory /opt/eg
+
 CMD /usr/sbin/init
