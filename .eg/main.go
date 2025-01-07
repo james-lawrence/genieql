@@ -18,7 +18,6 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
-
 		runtime.Newf("ls -lha %s", egenv.CacheDirectory()).Lenient(true),
 		runtime.Newf("ls -lha %s", egenv.CacheDirectory(".eg")).Lenient(true),
 		runtime.Newf("tree -L 2 %s", egenv.CacheDirectory()).Lenient(true),
