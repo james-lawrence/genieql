@@ -19,7 +19,7 @@ import (
 )
 
 var _ = Describe("Compiler generation test", func() {
-	DescribeTable("from fixtures", func(dir string, resultpath string) {
+	DescribeTable("from fixtures", func(sctx context.Context, dir string, resultpath string) {
 		var (
 			err error
 			buf = bytes.NewBuffer(nil)
@@ -43,7 +43,7 @@ var _ = Describe("Compiler generation test", func() {
 		)
 		Expect(err).To(Succeed())
 
-		Expect(compiler.Autocompile(context.Background(), ctx, buf)).To(Succeed())
+		Expect(compiler.Autocompile(sctx, ctx, buf)).To(Succeed())
 		formatted, err := astcodec.Format(buf.String())
 		Expect(err).To(Succeed())
 

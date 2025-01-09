@@ -17,10 +17,12 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
-		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./...").Environ("GOBIN", "/usr/local/bin").Privileged(),
-		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://root@localhost:5432/genieql_examples?sslmode=disable"),
-		runtime.New("go generate ./..."),
-		runtime.New("go fmt ./..."),
+		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./..."),
+		runtime.New("cp /home/egd/go/bin/genieql /usr/local/bin").Privileged(),
+		runtime.New("genieql bootstrap --queryer=sqlx.Queryer --driver=github.com/jackc/pgx postgres://localhost:5432/genieql_examples?sslmode=disable").Privileged(),
+		runtime.New("go generate ./...").Privileged(),
+		runtime.New("go fmt ./...").Privileged(),
+		runtime.New("chmod 0770 .genieql").Privileged(),
 	)
 }
 

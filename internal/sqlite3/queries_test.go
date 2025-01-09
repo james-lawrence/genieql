@@ -60,7 +60,7 @@ var _ = Describe("queries", func() {
 				err error
 			)
 
-			dbfile, err = os.CreateTemp(".sqllite", "")
+			dbfile, err = os.CreateTemp(os.TempDir(), "sqllite.*")
 			Expect(err).ToNot(HaveOccurred())
 
 			db, err = sql.Open("sqlite3", dbfile.Name())
