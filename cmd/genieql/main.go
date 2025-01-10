@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kingpin"
-	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 
 	"github.com/james-lawrence/genieql"

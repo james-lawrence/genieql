@@ -8,7 +8,7 @@ import (
 
 	"github.com/james-lawrence/genieql"
 
-	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/dialects"
 	_ "github.com/james-lawrence/genieql/internal/drivers"

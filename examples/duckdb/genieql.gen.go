@@ -522,3 +522,5 @@ func Example1Insert(ctx context.Context, q sqlx.Queryer, e Example1) Example1Sca
 	c7.String = e.UUIDField // uuid_field
 	return NewExample1ScannerStaticRow(q.QueryRowContext(ctx, query, c0, c1, c2, c3, c4, c5, c6, c7))
 }
+
+

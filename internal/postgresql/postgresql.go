@@ -8,8 +8,8 @@ import (
 	"log"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 
@@ -47,7 +47,12 @@ func (t dialectFactory) Connect(config genieql.Configuration) (_ genieql.Dialect
 		return nil, errors.Wrapf(err, "unable to parse postgresql connection string: %s", config.ConnectionURL)
 	}
 
-	return dialectImplementation{db: stdlib.OpenDB(*pcfg)}, nil
+	slib := stdlib.OpenDB(*pcfg)
+	if err = slib.Ping(); err != nil {
+		return nil, errors.Wrapf(err, "unable to connect to database: %s", config.ConnectionURL)
+	}
+
+	return dialectImplementation{db: slib}, nil
 }
 
 func NewColumnValueTransformer() genieql.ColumnTransformer {

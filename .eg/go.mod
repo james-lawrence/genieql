@@ -2,10 +2,9 @@ module eg/compute
 
 go 1.23.4
 
-require github.com/egdaemon/eg v0.0.0-20250109040402-abef8a58ba54
+require github.com/egdaemon/eg v0.0.0-20250111014242-6518d321ca8d
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect

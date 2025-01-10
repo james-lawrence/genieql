@@ -1,4 +1,4 @@
-FROM ubuntu:noble
+FROM ubuntu:oracular
 ARG DEBIAN_FRONTEND=noninteractive
 ARG GOBIN=/usr/local/bin
 
@@ -13,7 +13,7 @@ RUN apt-get update
 RUN apt-get install -y dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
 RUN apt-get install -y golang-1.23 podman rsync vim dpkg tree pinentry-tty
 RUN apt-get install -y libpq5 postgresql-16 postgresql-client-16 postgresql-contrib-16 postgresql-client-common
-RUN apt-get install -o Acquire::ForceIPv4=true -y eg duckdb
+RUN apt-get install -y eg duckdb
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
 RUN systemctl disable eg-daemon.service eg-runner.service eg-runner-build.service
 RUN systemctl enable postgresql
@@ -21,8 +21,15 @@ RUN systemctl enable postgresql
 RUN systemd-sysusers
 RUN systemd-tmpfiles --create
 
-# ensure the clone directory is marked as safe to deal with permissioning issues.
-# until we can identify a way to resolve the problem holistically.
-RUN sudo -E -H -u egd git config --global --add safe.directory /opt/eg
+
+RUN printf '%%wheel ALL=(ALL:ALL) NOPASSWD: ALL\n' | tee -a /etc/sudoers.d/egd
+
+RUN apt-get install -y bindfs
+
+RUN mkdir /workload
+RUN echo "[Unit]\nDescription=mounts userspace\nAfter=network.target\n\n[Service]\nType=oneshot\nRemainAfterExit=true\nLimitNOFILE=infinity\nExecStart=/usr/bin/bindfs --create-as-mounter --multithreaded -m egd --map=root/egd:@root/@egd /eg.mnt /workload\n\n[Install]\nWantedBy=default.target" > /usr/lib/systemd/system/eg-mount.service
+RUN systemctl enable eg-mount.service
+
+RUN apt-get install -y iproute2
 
 CMD /usr/sbin/init
