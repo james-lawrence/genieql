@@ -18,7 +18,6 @@ RUN apt-get install -y eg
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
 
 RUN systemctl enable postgresql
-RUN systemctl enable eg-bindfs.service
 
 RUN systemd-sysusers
 RUN systemd-tmpfiles --create

@@ -19,19 +19,17 @@ func Setup(ctx context.Context, id eg.Op) error {
 		ctx,
 		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./...").Environ("GOBIN", egenv.EphemeralDirectory()),
 		runtime.Newf("cp %s /usr/local/bin", egenv.EphemeralDirectory("genieql")).Privileged(),
-		runtime.New("go generate ./..."),
-		runtime.New("go fmt ./..."),
 	)
 }
 
 func Generate(ctx context.Context, id eg.Op) error {
-	runtime := eggolang.Runtime()
+	runtime := eggolang.Runtime().EnvironFrom(egpostgresql.Environ()...)
 
 	log.Println("postgresql", egpostgresql.AutoLocatePort(ctx))
 	return shell.Run(
 		ctx,
-		runtime.New("go generate ./...").Privileged(),
-		runtime.New("go fmt ./...").Privileged(),
+		runtime.New("go generate ./..."),
+		runtime.New("go fmt ./..."),
 	)
 }
 

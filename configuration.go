@@ -74,8 +74,8 @@ func WriteConfiguration(config Configuration) error {
 	return errors.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
-// ReadConfiguration reads the genieql configuration file to the specified path.
-func ReadConfiguration(config *Configuration) error {
+// ReadConfiguration reads the genieql configuration file from the specified path.
+func ReadConfiguration(config *Configuration, options ...ConfigurationOption) error {
 	var (
 		err error
 		raw []byte
@@ -85,7 +85,11 @@ func ReadConfiguration(config *Configuration) error {
 		return errors.Wrap(err, "failed to read configuration file")
 	}
 
-	return errors.Wrap(yaml.Unmarshal(raw, config), "failed to parse configuration file")
+	if err = yaml.Unmarshal(raw, config); err != nil {
+		return errors.Wrap(err, "failed to parse configuration file")
+	}
+
+	return nil
 }
 
 // MustConfiguration builds a configuration from the provided options.

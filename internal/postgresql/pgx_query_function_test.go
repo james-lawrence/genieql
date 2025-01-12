@@ -30,17 +30,17 @@ var _ = Describe("Scanner", func() {
 			"example.go",
 		},
 	}
-	config := genieql.MustConfiguration(
-		genieql.NewConfiguration(
-			genieql.ConfigurationOptionLocation(
-				filepath.Join("..", "..", ".genieql", "default.config"),
-			),
-			genieql.ConfigurationOptionDialect(Dialect),
+
+	config := genieql.MustReadConfiguration(
+		genieql.ConfigurationOptionLocation(
+			filepath.Join("..", "..", ".genieql", "default.config"),
 		),
+		genieql.ConfigurationOptionDialect(Dialect),
 	)
 
 	driver := testx.Must(genieql.LookupDriver(drivers.PGX))
 	dialect := dialects.MustLookupDialect(config)
+
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
 		Type: &ast.FuncType{
