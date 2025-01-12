@@ -2,7 +2,7 @@ module eg/compute
 
 go 1.23.4
 
-require github.com/egdaemon/eg v0.0.0-20250111014242-6518d321ca8d
+require github.com/egdaemon/eg v0.0.0-20250112050016-78b5dfce3a7d
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect

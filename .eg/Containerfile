@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG GOBIN=/usr/local/bin
 
 RUN apt-get update
-RUN apt-get install -y software-properties-common build-essential apt-file curl apt-transport-https sudo
+RUN apt-get install -y software-properties-common build-essential apt-file curl apt-transport-https sudo iproute2
 RUN add-apt-repository -n ppa:longsleep/golang-backports
 RUN add-apt-repository -n ppa:egdaemon/eg
 RUN add-apt-repository -n ppa:egdaemon/duckdb
@@ -13,23 +13,17 @@ RUN apt-get update
 RUN apt-get install -y dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
 RUN apt-get install -y golang-1.23 podman rsync vim dpkg tree pinentry-tty
 RUN apt-get install -y libpq5 postgresql-16 postgresql-client-16 postgresql-contrib-16 postgresql-client-common
-RUN apt-get install -y eg duckdb
+RUN apt-get install -y eg
+
 RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
-RUN systemctl disable eg-daemon.service eg-runner.service eg-runner-build.service
+
 RUN systemctl enable postgresql
+RUN systemctl enable eg-bindfs.service
 
 RUN systemd-sysusers
 RUN systemd-tmpfiles --create
 
 
-RUN printf '%%wheel ALL=(ALL:ALL) NOPASSWD: ALL\n' | tee -a /etc/sudoers.d/egd
-
-RUN apt-get install -y bindfs
-
-RUN mkdir /workload
-RUN echo "[Unit]\nDescription=mounts userspace\nAfter=network.target\n\n[Service]\nType=oneshot\nRemainAfterExit=true\nLimitNOFILE=infinity\nExecStart=/usr/bin/bindfs --create-as-mounter --multithreaded -m egd --map=root/egd:@root/@egd /eg.mnt /workload\n\n[Install]\nWantedBy=default.target" > /usr/lib/systemd/system/eg-mount.service
-RUN systemctl enable eg-mount.service
-
-RUN apt-get install -y iproute2
+RUN printf '%%wheel ALL=(ALL:ALL) NOPASSWD: ALL\n' | tee -a /etc/sudoers.d/eg
 
 CMD /usr/sbin/init

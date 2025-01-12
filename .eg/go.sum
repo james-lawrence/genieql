@@ -1,13 +1,5 @@
-github.com/egdaemon/eg v0.0.0-20250110224009-d77748cb6d18 h1:kSfV9Y3tV93bFdfCMFv6AanwecB2aWme8Fpt2Y90NE0=
-github.com/egdaemon/eg v0.0.0-20250110224009-d77748cb6d18/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
-github.com/egdaemon/eg v0.0.0-20250110235250-c3f531538f0b h1:tx6TGIadgorMdySBRne1Jb9EcMSsrlfMDTTHIVvUdhg=
-github.com/egdaemon/eg v0.0.0-20250110235250-c3f531538f0b/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
-github.com/egdaemon/eg v0.0.0-20250111002853-86ea91c2a6a2 h1:++Zpn4zXAHYBC/adJV6I9YXf5JA8ppiD7wx85k92UlY=
-github.com/egdaemon/eg v0.0.0-20250111002853-86ea91c2a6a2/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
-github.com/egdaemon/eg v0.0.0-20250111012635-4cbf24b856e6 h1:FFgYaH+UHur9QpFy/Q4Ey05hmghYbxuJEohhXsgWqqI=
-github.com/egdaemon/eg v0.0.0-20250111012635-4cbf24b856e6/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
-github.com/egdaemon/eg v0.0.0-20250111014242-6518d321ca8d h1:RlyCmS2WF1PHavnVmBrBtoRn/cw+KR4RzTwbcUM0lfM=
-github.com/egdaemon/eg v0.0.0-20250111014242-6518d321ca8d/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
+github.com/egdaemon/eg v0.0.0-20250112050016-78b5dfce3a7d h1:1Q/Pb//BMn9oGxQOS9/3qqiLeqWWKAqY7z+xkXBiapE=
+github.com/egdaemon/eg v0.0.0-20250112050016-78b5dfce3a7d/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
 github.com/gofrs/uuid v4.4.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
