@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
 	"io/fs"
-	"os"
 
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v5"
@@ -45,23 +43,6 @@ func DestroyPostgresql(template, name string) {
 func mustOpen(cstring string) *sql.DB {
 	pcfg := errorsx.Must(pgx.ParseConfig(cstring))
 	return stdlib.OpenDB(*pcfg)
-}
-
-func generateDuckDB(name, template string) error {
-	src, err := os.Open(template)
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(name)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	return err
 }
 
 func Migrate(ctx context.Context, db *sql.DB, migrations fs.FS, options ...goose.ProviderOption) error {

@@ -5,6 +5,7 @@ import (
 	"go/build"
 	"go/token"
 	"log"
+	"net/url"
 	"path/filepath"
 
 	"github.com/james-lawrence/genieql"
@@ -50,10 +51,14 @@ func DialectConfig1(options ...genieql.ConfigurationOption) genieql.Configuratio
 }
 
 func DialectPSQL(options ...genieql.ConfigurationOption) genieql.Configuration {
+	// pgx/v5 isnt defaulting the database correctly, havent had a chance to investigate why.
+	// this url defaults the database to postgres.
+	uri, _ := url.Parse("postgres:///postgres?sslmode=disable")
 	return genieql.MustConfiguration(
 		genieql.Configuration{
-			Dialect: "postgres",
-			Driver:  drivers.PGX,
+			Dialect:       "postgres",
+			Driver:        drivers.PGX,
+			ConnectionURL: uri.String(),
 		}.Clone(options...),
 	)
 }

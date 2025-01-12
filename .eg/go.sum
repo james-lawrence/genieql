@@ -1,5 +1,7 @@
 github.com/egdaemon/eg v0.0.0-20250112050016-78b5dfce3a7d h1:1Q/Pb//BMn9oGxQOS9/3qqiLeqWWKAqY7z+xkXBiapE=
 github.com/egdaemon/eg v0.0.0-20250112050016-78b5dfce3a7d/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
+github.com/egdaemon/eg v0.0.0-20250112194508-f5df7b89788d h1:cGXSPxgss5NoGZMpdahDo5/fgcBAdEhvhBBBrJ575Oo=
+github.com/egdaemon/eg v0.0.0-20250112194508-f5df7b89788d/go.mod h1:JvI8qxHWWwtFpjWYSQ66AG7Bkyptmu9+ezx+upOjHpQ=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
 github.com/gofrs/uuid v4.4.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
