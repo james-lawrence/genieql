@@ -70,7 +70,7 @@ func WriteConfiguration(config Configuration) error {
 	if raw, err = yaml.Marshal(config); err != nil {
 		return errors.Wrap(err, "failed to serialize configuration to yaml")
 	}
-	log.Println("DERP DERP", config.Location, config.Name)
+
 	return errors.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
