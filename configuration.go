@@ -70,7 +70,7 @@ func WriteConfiguration(config Configuration) error {
 	if raw, err = yaml.Marshal(config); err != nil {
 		return errors.Wrap(err, "failed to serialize configuration to yaml")
 	}
-
+	log.Println("DERP DERP", config.Location, config.Name)
 	return errors.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
@@ -168,7 +168,13 @@ func ConfigurationOptionDatabase(uri *url.URL) ConfigurationOption {
 			sport    string
 			port     int
 			database string
+			wdir     string
 		)
+
+		if wdir, err = os.Getwd(); err != nil {
+			return err
+		}
+
 		splits := strings.Split(uri.Host, ":")
 		switch len(splits) {
 		case 2:
@@ -183,7 +189,7 @@ func ConfigurationOptionDatabase(uri *url.URL) ConfigurationOption {
 
 		switch uri.Scheme {
 		case "duckdb":
-			database = uri.Path
+			database = filepath.Join(wdir, uri.Path)
 		default:
 			database = strings.Trim(uri.Path, "/")
 		}

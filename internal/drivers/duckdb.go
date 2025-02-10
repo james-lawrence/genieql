@@ -9,7 +9,7 @@ const DuckDB = "github.com/marcboeker/go-duckdb"
 
 // implements the duckdb driver https://github.com/marcboeker/go-duckdb
 func init() {
-	genieql.DebugColumnDefinitions(ddb...)
+	// genieql.DebugColumnDefinitions(ddb...)
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 

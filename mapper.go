@@ -223,6 +223,7 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 		return err
 	}
 
+	log.Println("WRITING MAP", config.Location, config.Database, m.Package.Name, m.Type, name)
 	path := filepath.Join(config.Location, config.Database, m.Package.Name, m.Type, name)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err

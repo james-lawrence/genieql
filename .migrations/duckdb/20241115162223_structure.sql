@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS example1 (
   decimal_field decimal NOT NULL DEFAULT 1.0,
   numeric_field numeric NOT NULL DEFAULT 1.0,
   real_field real NOT NULL DEFAULT 1.0,
+  uinteger_field uinteger NOT NULL DEFAULT 1,
   double_precision_field double precision NOT NULL DEFAULT 1.0,
   -- character_field varchar(10) NOT NULL DEFAULT '',
   -- character_fixed_field char(10) NOT NULL DEFAULT '',

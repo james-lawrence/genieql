@@ -94,7 +94,6 @@ type ColumnDefinition struct {
 type driverRegistry map[string]Driver
 
 func (t driverRegistry) RegisterDriver(driver string, imp Driver) error {
-	log.Println("REGISTERING", driver)
 	if _, exists := t[driver]; exists {
 		return ErrDuplicateDriver
 	}
@@ -115,7 +114,7 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 
 func DebugColumnDefinitions(supported ...ColumnDefinition) {
 	for _, typedef := range supported {
-		log.Println("DERP DERP", typedef.Type, typedef.DBTypeName)
+		log.Println("column definition debug", typedef.Type, typedef.DBTypeName)
 	}
 }
 
@@ -138,13 +137,10 @@ type driver struct {
 }
 
 func (t driver) LookupType(l string) (ColumnDefinition, error) {
-	if l == "UINTEGER" {
-		log.Println("DERP DERP", l)
-	}
 	if typedef, ok := t.supported[l]; ok {
 		return typedef, nil
 	}
-	log.Println("FAILED TO LOCATE TYPE", t.importPath, l)
+
 	return ColumnDefinition{}, errors.Errorf("%s - unsupported type: %s", t.importPath, l)
 }
 
