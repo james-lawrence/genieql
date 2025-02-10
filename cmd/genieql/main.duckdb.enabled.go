@@ -8,8 +8,10 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"path/filepath"
 
 	"github.com/alecthomas/kingpin"
+	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/goosex"
 	_ "github.com/marcboeker/go-duckdb"
@@ -17,7 +19,12 @@ import (
 )
 
 func (t *duckdb) execute(*kingpin.ParseContext) (err error) {
-	db, err := sql.Open("duckdb", t.database)
+	dbpath := filepath.Join(genieql.ConfigurationDirectory(), ".duckdb", t.database)
+	if err = os.MkdirAll(filepath.Dir(dbpath), 0700); err != nil {
+		return err
+	}
+
+	db, err := sql.Open("duckdb", dbpath)
 	if err != nil {
 		return err
 	}

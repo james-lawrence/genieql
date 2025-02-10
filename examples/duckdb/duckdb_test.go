@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -19,7 +20,7 @@ func ExampleExample1Insert() {
 	ctx, done := context.WithTimeout(context.Background(), 5*time.Second)
 	defer done()
 
-	db := errorsx.Must(sql.Open("duckdb", "duck.db"))
+	db := errorsx.Must(sql.Open("duckdb", filepath.Join("..", "..", ".genieql", ".duckdb", "duck.db")))
 	defer db.Close()
 
 	uid := uuid.Must(uuid.NewV7()).String()
@@ -31,6 +32,7 @@ func ExampleExample1Insert() {
 		RealField:     3.1,
 		SmallintField: 4,
 		TextField:     "hello world",
+		UintegerField: 2,
 	}
 	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
 
@@ -42,6 +44,7 @@ func ExampleExample1Insert() {
 		"float", res.RealField == ex.RealField,
 		"bool", res.BoolField == ex.BoolField,
 		"text", res.TextField == ex.TextField,
+		"uinteger", res.UintegerField == ex.UintegerField,
 	)
-	// Output: uid true bigint true int true smallint true float true bool true text true
+	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true
 }

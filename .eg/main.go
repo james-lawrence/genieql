@@ -52,11 +52,19 @@ func main() {
 			Setup,
 			Generate,
 			eggolang.AutoCompile(
-				eggolang.CompileOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
-				// eggolang.CompileOption.Debug(true),
+				eggolang.CompileOption.BuildOptions(
+					eggolang.Build(
+						eggolang.BuildOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
+					),
+				),
 			),
 			eggolang.AutoTest(
-				eggolang.TestOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
+				eggolang.TestOption.BuildOptions(
+					eggolang.Build(
+						eggolang.BuildOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
+					),
+				),
+				// eggolang.TestOption.Verbose(true),
 			),
 		),
 	)

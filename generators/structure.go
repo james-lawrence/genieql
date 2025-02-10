@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"html/template"
 	"io"
-	"log"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/drivers"
@@ -144,7 +143,6 @@ func (t structure) Generate(dst io.Writer) error {
 		return err
 	}
 
-	log.Println("CHECKPOINT 1")
 	typeDefinitions := composeTypeDefinitions(t.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	ctx := context{
 		Name:    t.Name,

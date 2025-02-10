@@ -55,7 +55,7 @@ var _ = Describe("Compiler generation test", func() {
 		Expect(err).To(Succeed())
 
 		expected := testx.ReadString(resultpath)
-		// errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
+		errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
 		Expect(formatted).To(Equal(expected))
 
 	},

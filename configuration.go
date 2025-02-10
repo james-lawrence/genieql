@@ -168,12 +168,7 @@ func ConfigurationOptionDatabase(uri *url.URL) ConfigurationOption {
 			sport    string
 			port     int
 			database string
-			wdir     string
 		)
-
-		if wdir, err = os.Getwd(); err != nil {
-			return err
-		}
 
 		splits := strings.Split(uri.Host, ":")
 		switch len(splits) {
@@ -189,7 +184,7 @@ func ConfigurationOptionDatabase(uri *url.URL) ConfigurationOption {
 
 		switch uri.Scheme {
 		case "duckdb":
-			database = filepath.Join(wdir, uri.Path)
+			database = filepath.Join(ConfigurationDirectory(), ".duckdb", uri.Path)
 		default:
 			database = strings.Trim(uri.Path, "/")
 		}
