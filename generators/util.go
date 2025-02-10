@@ -59,6 +59,7 @@ func genFunctionLiteral(ctx Context, example string, tctx interface{}, errorHand
 type transforms func(x ast.Expr) ast.Expr
 
 func argumentsNative(ctx Context) transforms {
+	log.Println("CHECKPOINT 4")
 	def := composeTypeDefinitionsExpr(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(x ast.Expr) (out ast.Expr) {
 		var (
@@ -106,6 +107,7 @@ func nulltypes(ctx Context) transforms {
 
 // decode a column to a local variable.
 func decode(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+	log.Println("CHECKPOINT 2")
 	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
@@ -150,6 +152,7 @@ func fallbackDefinition(s string) genieql.ColumnDefinition {
 
 // ColumnMapEncoder a column to a local variable.
 func ColumnMapEncoder(ctx Context) func(int, genieql.ColumnMap, func(string) ast.Node) ([]ast.Stmt, error) {
+	log.Println("CHECKPOINT 3")
 	lookupTypeDefinition := composeTypeDefinitions(ctx.Driver.LookupType, drivers.DefaultTypeDefinitions)
 	return func(i int, column genieql.ColumnMap, errHandler func(string) ast.Node) (output []ast.Stmt, err error) {
 		type stmtCtx struct {
