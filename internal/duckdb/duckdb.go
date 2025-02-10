@@ -149,7 +149,8 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 		}
 
 		if columndef, err = d.LookupType(types.ExprString(expr)); err != nil {
-			log.Println("skipping column", name, "driver missing type", types.ExprString(expr), "please open an issue")
+			log.Println(err)
+			log.Println("skipping column", name, err, "please open an issue")
 			continue
 		}
 
@@ -176,19 +177,21 @@ func totypeexpr(id string) ast.Expr {
 
 	switch id {
 	case "FLOAT":
-		return astutil.Expr("sql.NullFloat64")
+		return astutil.Expr("FLOAT")
 	case "VARCHAR":
-		return astutil.Expr("sql.NullString")
+		return astutil.Expr("VARCHAR")
 	case "BOOLEAN":
-		return astutil.Expr("sql.NullBool")
+		return astutil.Expr("BOOLEAN")
 	case "BIGINT":
-		return astutil.Expr("sql.NullInt64")
+		return astutil.Expr("BIGINT")
+	case "UINTEGER":
+		return astutil.Expr("UINTEGER")
 	case "INTEGER":
-		return astutil.Expr("sql.NullInt32")
+		return astutil.Expr("INTEGER")
 	case "SMALLINT":
-		return astutil.Expr("sql.NullInt16")
+		return astutil.Expr("SMALLINT")
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
-		return astutil.Expr("sql.NullTime")
+		return astutil.Expr("TIMESTAMPZ")
 	case "UUID":
 		return astutil.Expr("UUID")
 	default:
