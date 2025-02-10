@@ -31,3 +31,10 @@ func Example1Insert(
 ) {
 	gql.Into("example1")
 }
+
+func Example1FindByID(
+	gql genieql.Function,
+	pattern func(ctx context.Context, q sqlx.Queryer, id string) NewExample1ScannerStaticRow,
+) {
+	gql = gql.Query(`SELECT ` + Example1ScannerStaticColumns + ` FROM example1 WHERE "uuid_field" = {id}`)
+}

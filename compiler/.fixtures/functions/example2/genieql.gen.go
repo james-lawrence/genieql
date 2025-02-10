@@ -625,7 +625,7 @@ func Example1Insert3Explode(a *Example1) ([]interface{}, error) {
 func Example1Insert3(ctx context.Context, q sqlx.Queryer, id int, a Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO "example1" ("bigint_field","bool_field","int_field","real_field","smallint_field","text_field","timestamp_field","uinteger_field","uuid_field") VALUES ($2,$3,$4,$5,$6,$7,$8,$9,DEFAULT) ON CONFLICT id = $1 AND b = $2 WHERE id = $1 RETURNING "bigint_field","bool_field","int_field","real_field","smallint_field","text_field","timestamp_field","uinteger_field"`
 	var (
-		c0 int             // id
+		c0 sql.NullInt64   // id
 		c1 sql.NullInt64   // bigint_field
 		c2 sql.NullBool    // bool_field
 		c3 sql.NullInt32   // int_field
