@@ -188,6 +188,8 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("UINTEGER")
 	case "UBIGINT":
 		return astutil.Expr("UBIGINT")
+	case "USMALLINT":
+		return astutil.Expr("USMALLINT")
 	case "INTEGER":
 		return astutil.Expr("INTEGER")
 	case "SMALLINT":
