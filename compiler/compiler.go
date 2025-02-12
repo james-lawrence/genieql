@@ -269,7 +269,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		}
 
 		if err != nil {
-			log.Println("DERP", err)
 			return err
 		}
 
