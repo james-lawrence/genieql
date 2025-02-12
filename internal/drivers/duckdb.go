@@ -96,6 +96,14 @@ var ddb = []genieql.ColumnDefinition{
 		Encode:     StdlibEncodeInt16,
 	},
 	{
+		DBTypeName: "USMALLINT",
+		Type:       "USMALLINT",
+		ColumnType: "sql.NullInt32",
+		Native:     uint16ExprString,
+		Decode:     StdlibDecodeInt32,
+		Encode:     StdlibEncodeInt32,
+	},
+	{
 		DBTypeName: "FLOAT",
 		Type:       "FLOAT",
 		ColumnType: "sql.NullFloat64",
