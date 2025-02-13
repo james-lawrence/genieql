@@ -30,34 +30,13 @@ const ddbEncodeUUID = `func() {
 	}
 }`
 
-// const ddbDecodeINET = `func() {
-// 	if {{ .From | expr }}.Valid {
-// 		if ip := net.ParseIP({{ .From | expr }}.String); ip == nil {
-// 			return fmt.Errorf("unable to parse ip: %s", {{ .From | expr }}.String)
-// 		} else {
-// 			{{ .To | autodereference | expr }} = {{ .From | expr }}
-// 		}
-// 	}
-// }`
-
-// const ddbEncodeINET = `
-// func() {
-// 	if {{ .From | expr }}.Valid {
-// 		if ip := net.ParseIP({{ .From | expr }}.String); ip == nil {
-// 			return fmt.Errorf("unable to parse ip: %s", {{ .From | expr }}.String)
-// 		} else {
-// 			{{ .To | autodereference | expr }} = ip
-// 		}
-// 	}
-// }
-// `
-
 const ddbDecodeINET = `func() {
-	{{ .To | expr }} = {{ .From | expr }}
+	{{ .To | expr }} = net.ParseIP({{ .From | expr }}.String)
 }`
 
 const ddbEncodeINET = `func() {
-	{{ .To | expr }} = {{ .From | expr }}
+	{{ .To | expr }}.Valid = true
+	{{ .To | expr }}.String = {{ .From | expr }}.String()
 }`
 
 var ddb = []genieql.ColumnDefinition{
@@ -152,7 +131,7 @@ var ddb = []genieql.ColumnDefinition{
 	{
 		DBTypeName: "INET",
 		Type:       "INET",
-		ColumnType: "net.IP",
+		ColumnType: "sql.NullString",
 		Native:     ipExpr,
 		Decode:     ddbDecodeINET,
 		Encode:     ddbEncodeINET,

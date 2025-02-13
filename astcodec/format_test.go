@@ -21,7 +21,7 @@ var _ = Describe("Formatting", func() {
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
 			err := errors.Unwrap(astcodec.FormatOutput(buffer, []byte(invalidCode)))
-			Expect(err).To(MatchError("generated.go:2:1: expected 'package', found 'func'"))
+			Expect(err).To(MatchError("failed to add required imports: generated.go:2:1: expected 'package', found 'func'"))
 		})
 	})
 })

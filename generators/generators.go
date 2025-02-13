@@ -229,7 +229,6 @@ func NewContextFromConfig(bctx build.Context, config genieql.Configuration, pkg 
 		return ctx, errorsx.Wrap(err, "unable to load custom types")
 	}
 
-	log.Println("cache dir from", config.Version, config.Location)
 	cachedir := userx.DefaultCacheDirectory(md5x.Hex(config.Version, config.Location))
 	if err = os.MkdirAll(cachedir, 0700); err != nil {
 		return ctx, errorsx.Wrapf(err, "unable to ensure cache directory: %s", cachedir)
