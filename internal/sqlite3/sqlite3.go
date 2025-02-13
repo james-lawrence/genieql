@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 
 	"github.com/james-lawrence/genieql"
@@ -41,7 +40,7 @@ func (t dialectFactory) Connect(config genieql.Configuration) (genieql.Dialect, 
 	)
 
 	db, err = sql.Open(config.Dialect, config.ConnectionURL)
-	return dialectImplementation{db: db}, errors.Wrap(err, "failure to open database connection")
+	return dialectImplementation{db: db}, errorsx.Wrap(err, "failure to open database connection")
 }
 
 type dialectImplementation struct {
@@ -85,13 +84,13 @@ func (t dialectImplementation) ColumnInformationForQuery(d genieql.Driver, query
 
 	tx, err := t.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "failure to start transaction")
+		return nil, errorsx.Wrap(err, "failure to start transaction")
 	}
 	defer tx.Rollback()
 
 	q := fmt.Sprintf("CREATE TABLE %s AS %s", table, query)
 	if _, err = tx.Exec(q); err != nil {
-		return nil, errors.Wrapf(err, "failure to execute %s", q)
+		return nil, errorsx.Wrapf(err, "failure to execute %s", q)
 	}
 
 	return columnInformation(d, tx, columnInformationQuery, table)
@@ -109,7 +108,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 	)
 
 	if rows, err = q.Query(fmt.Sprintf(query, table)); err != nil {
-		return nil, errors.Wrapf(err, "failed to query column information: %s, %s", query, table)
+		return nil, errorsx.Wrapf(err, "failed to query column information: %s, %s", query, table)
 	}
 
 	for rows.Next() {
@@ -124,7 +123,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 		)
 
 		if err = rows.Scan(&id, &name, &expr, &nullable, &defaultVal, &primary); err != nil {
-			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
+			return nil, errorsx.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
 		if columndef, err = d.LookupType(expr); err != nil {
@@ -145,7 +144,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 	columns = genieql.SortColumnInfo(columns)(genieql.ByName)
 
-	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
+	return columns, errorsx.Wrap(rows.Err(), "error retrieving column information")
 }
 
 func isNullable(i int) bool {

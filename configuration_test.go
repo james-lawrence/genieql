@@ -100,11 +100,12 @@ var _ = Describe("Configuration", func() {
 				ConfigurationOptionDriver("github.com/jackc/pgx"),
 				ConfigurationOptionDatabase(uri),
 				ConfigurationOptionLocation(filepath.Join(tmpdir, "dummy.config")),
+				ConfigurationOptionZeroDynamic,
 			)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(WriteConfiguration(config)).ToNot(HaveOccurred())
 
-			Expect(ReadConfiguration(&readConfig)).ToNot(HaveOccurred())
+			Expect(ReadConfiguration(&readConfig, ConfigurationOptionZeroDynamic)).ToNot(HaveOccurred())
 			Expect(readConfig).To(Equal(config))
 		})
 	})

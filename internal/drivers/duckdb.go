@@ -13,14 +13,6 @@ func init() {
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 
-const ddbDefaultEncode = `func() {}`
-
-const ddbDefaultDecode = `func() {
-	if err := {{ .From | expr }}.Scan({{.To | autoreference | expr}}); err != nil {
-		return err
-	}
-}`
-
 const ddbDecodeUUID = `func() {
 	if {{ .From | expr }}.Valid {
 		if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
@@ -36,6 +28,36 @@ const ddbEncodeUUID = `func() {
 		tmp := {{ .Type | expr }}({{ .From | expr }}.String)
 		{{ .To | autodereference | expr }} = tmp
 	}
+}`
+
+// const ddbDecodeINET = `func() {
+// 	if {{ .From | expr }}.Valid {
+// 		if ip := net.ParseIP({{ .From | expr }}.String); ip == nil {
+// 			return fmt.Errorf("unable to parse ip: %s", {{ .From | expr }}.String)
+// 		} else {
+// 			{{ .To | autodereference | expr }} = {{ .From | expr }}
+// 		}
+// 	}
+// }`
+
+// const ddbEncodeINET = `
+// func() {
+// 	if {{ .From | expr }}.Valid {
+// 		if ip := net.ParseIP({{ .From | expr }}.String); ip == nil {
+// 			return fmt.Errorf("unable to parse ip: %s", {{ .From | expr }}.String)
+// 		} else {
+// 			{{ .To | autodereference | expr }} = ip
+// 		}
+// 	}
+// }
+// `
+
+const ddbDecodeINET = `func() {
+	{{ .To | expr }} = {{ .From | expr }}
+}`
+
+const ddbEncodeINET = `func() {
+	{{ .To | expr }} = {{ .From | expr }}
 }`
 
 var ddb = []genieql.ColumnDefinition{
@@ -126,5 +148,13 @@ var ddb = []genieql.ColumnDefinition{
 		Native:     timeExprString,
 		Decode:     StdlibDecodeTime,
 		Encode:     StdlibEncodeTime,
+	},
+	{
+		DBTypeName: "INET",
+		Type:       "INET",
+		ColumnType: "net.IP",
+		Native:     ipExpr,
+		Decode:     ddbDecodeINET,
+		Encode:     ddbEncodeINET,
 	},
 }

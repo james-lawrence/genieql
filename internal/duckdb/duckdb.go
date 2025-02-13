@@ -8,7 +8,6 @@ import (
 	"log"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/pkg/errors"
 	"golang.org/x/text/transform"
 
 	"github.com/james-lawrence/genieql"
@@ -43,7 +42,7 @@ type dialectFactory struct{}
 func (t dialectFactory) Connect(config genieql.Configuration) (_ genieql.Dialect, err error) {
 	db, err := sql.Open(Dialect, config.Database)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to connect to DuckDB: %s", config.Database)
+		return nil, errorsx.Wrapf(err, "unable to connect to DuckDB: %s", config.Database)
 	}
 	return DialectFn{db: db}, nil
 }
@@ -93,7 +92,7 @@ func (t DialectFn) ColumnInformationForQuery(d genieql.Driver, query string) (_ 
 
 	tx, err = t.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "failure to start transaction")
+		return nil, errorsx.Wrap(err, "failure to start transaction")
 	}
 	defer func() {
 		err = errorsx.Compact(err, tx.Rollback())
@@ -101,7 +100,7 @@ func (t DialectFn) ColumnInformationForQuery(d genieql.Driver, query string) (_ 
 
 	q := fmt.Sprintf("CREATE TEMPORARY TABLE %s AS (%s LIMIT 1)", table, query)
 	if _, err = tx.Exec(q); err != nil {
-		return nil, errors.Wrapf(err, "failure to execute %s", q)
+		return nil, errorsx.Wrapf(err, "failure to execute %s", q)
 	}
 
 	return columnInformation(d, tx, columnInformationQuery, table)
@@ -123,7 +122,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 	)
 
 	if rows, err = q.Query(fmt.Sprintf(query, table)); err != nil {
-		return nil, errors.Wrapf(err, "failed to query column information: %s, %s", query, table)
+		return nil, errorsx.Wrapf(err, "failed to query column information: %s, %s", query, table)
 	}
 	defer rows.Close()
 
@@ -139,7 +138,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 		)
 
 		if err = rows.Scan(&name, &dataType, &nullable, &key, &defaulted, &extra); err != nil {
-			return nil, errors.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
+			return nil, errorsx.Wrapf(err, "error scanning column information for table (%s): %s", table, query)
 		}
 
 		expr := totypeexpr(dataType)
@@ -166,7 +165,7 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 	columns = genieql.SortColumnInfo(columns)(genieql.ByName)
 
-	return columns, errors.Wrap(rows.Err(), "error retrieving column information")
+	return columns, errorsx.Wrap(rows.Err(), "error retrieving column information")
 }
 
 // OIDToType maps object id to golang types.
@@ -196,6 +195,8 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("SMALLINT")
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
 		return astutil.Expr("TIMESTAMPZ")
+	case "INET":
+		return astutil.Expr("INET")
 	case "UUID":
 		return astutil.Expr("UUID")
 	default:

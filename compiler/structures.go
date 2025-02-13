@@ -4,10 +4,9 @@ import (
 	"go/ast"
 	"log"
 
-	"github.com/pkg/errors"
-
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 // Structure matcher - identifies structure generators.
@@ -24,7 +23,7 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 	src = normalizeFnDecl(src)
 
 	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(src, astcodec.FindFunctions)); err != nil {
-		return r, errors.Wrapf(err, "genieql.Structure %s", nodeInfo(cctx, pos))
+		return r, errorsx.Wrapf(err, "genieql.Structure %s", nodeInfo(cctx, pos))
 	}
 
 	log.Printf("genieql.Structure identified %s\n", nodeInfo(cctx, pos))

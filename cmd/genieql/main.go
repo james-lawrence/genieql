@@ -10,7 +10,6 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	_ "github.com/jackc/pgx/v5"
-	"github.com/pkg/errors"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/generators"
@@ -33,7 +32,7 @@ func main() {
 			log.Println(genieql.PrintDebug())
 			log.Fatalln(string(debug.Stack()))
 		case error:
-			log.Fatalln(errors.Wrap(err, genieql.PrintDebug()))
+			log.Fatalln(errorsx.Wrap(err, genieql.PrintDebug()))
 		}
 	}()
 
@@ -85,7 +84,7 @@ func main() {
 			fmts = "%+v\n"
 		}
 
-		log.Printf(fmts, errors.Wrap(err, stringsx.DefaultIfBlank(cmd, fmt.Sprintf("parsing failed: %s", strings.Join(os.Args, " ")))))
+		log.Printf(fmts, errorsx.Wrap(err, stringsx.DefaultIfBlank(cmd, fmt.Sprintf("parsing failed: %s", strings.Join(os.Args, " ")))))
 		log.Fatalln(genieql.PrintDebug())
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/alecthomas/kingpin"
-	"github.com/pkg/errors"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
@@ -49,7 +48,7 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	if pname != bpkg.ImportPath {
-		return errors.Errorf("expected the current package to have the correct path %s != %s", pname, bpkg.ImportPath)
+		return errorsx.Errorf("expected the current package to have the correct path %s != %s", pname, bpkg.ImportPath)
 	}
 
 	if err = compiler.AutoGenerate(context.Background(), t.configName, bctx, bpkg, buf, generators.OptionVerbosity(t.Verbosity)); err != nil {
@@ -57,11 +56,11 @@ func (t *generator) execute(*kingpin.ParseContext) (err error) {
 	}
 
 	if dst, err = cmd.StdoutOrFile(t.output, cmd.DefaultWriteFlags); err != nil {
-		return errors.Wrap(err, "unable to setup output")
+		return errorsx.Wrap(err, "unable to setup output")
 	}
 
 	if _, err = io.Copy(dst, buf); err != nil {
-		return errors.Wrap(err, "failed to write generated code")
+		return errorsx.Wrap(err, "failed to write generated code")
 	}
 
 	return nil

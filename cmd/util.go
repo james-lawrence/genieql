@@ -6,9 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
-
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/iox"
 )
 
@@ -43,7 +42,7 @@ func WriteStdoutOrFile(g genieql.Generator, fpath string, flags int) error {
 	if len(fpath) > 0 {
 		log.Println("writing results to", fpath)
 		if dst, err = os.OpenFile(fpath, flags, 0666); err != nil {
-			dst = errWriter{err: errors.Wrap(err, "")}
+			dst = errWriter{err: errorsx.Wrap(err, "")}
 		}
 		defer dst.Close()
 	}

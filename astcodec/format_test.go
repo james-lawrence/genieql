@@ -2,8 +2,7 @@ package astcodec_test
 
 import (
 	"bytes"
-
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/james-lawrence/genieql/astcodec"
 
@@ -21,7 +20,7 @@ var _ = Describe("Formatting", func() {
 
 		It("should error when invalid code is provided", func() {
 			buffer := bytes.NewBuffer([]byte{})
-			err := errors.Cause(astcodec.FormatOutput(buffer, []byte(invalidCode)))
+			err := errors.Unwrap(astcodec.FormatOutput(buffer, []byte(invalidCode)))
 			Expect(err).To(MatchError("generated.go:2:1: expected 'package', found 'func'"))
 		})
 	})

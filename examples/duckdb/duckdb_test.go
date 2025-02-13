@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
 	"path/filepath"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/james-lawrence/genieql/internal/errorsx"
+	"github.com/james-lawrence/genieql/internal/sqlx"
 
 	_ "github.com/marcboeker/go-duckdb"
 )
@@ -33,8 +35,10 @@ func ExampleExample1Insert() {
 		SmallintField: 4,
 		TextField:     "hello world",
 		UintegerField: 2,
+		InetField:     net.IPv6interfacelocalallnodes,
 	}
-	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
+
+	errorsx.MaybePanic(Example1Insert(ctx, sqlx.Debug(db), ex).Scan(&res))
 
 	fmt.Println(
 		"uid", res.UUIDField == ex.UUIDField,
@@ -45,6 +49,7 @@ func ExampleExample1Insert() {
 		"bool", res.BoolField == ex.BoolField,
 		"text", res.TextField == ex.TextField,
 		"uinteger", res.UintegerField == ex.UintegerField,
+		"ip", res.InetField.Equal(net.IPv6interfacelocalallnodes),
 	)
 	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true
 }

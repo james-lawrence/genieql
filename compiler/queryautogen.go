@@ -4,8 +4,6 @@ import (
 	"go/ast"
 	"log"
 
-	"github.com/pkg/errors"
-
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
 	"github.com/james-lawrence/genieql/internal/errorsx"
@@ -37,7 +35,7 @@ func QueryAutogen(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err
 	pos.Type.Results.List = []*ast.Field(nil)
 
 	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions)); err != nil {
-		return r, errors.Wrapf(err, "genieql.QueryAutogen %s", nodeInfo(cctx, pos))
+		return r, errorsx.Wrapf(err, "genieql.QueryAutogen %s", nodeInfo(cctx, pos))
 	}
 
 	log.Printf("genieql.QueryAutogen identified %s\n", nodeInfo(cctx, pos))

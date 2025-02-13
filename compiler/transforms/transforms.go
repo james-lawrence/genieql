@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/pkg/errors"
 	"golang.org/x/tools/go/packages"
 
 	"github.com/james-lawrence/genieql/astbuild"
@@ -151,19 +150,19 @@ func Print(w io.Writer, fset *token.FileSet, c ast.Node) (err error) {
 
 func PrepareSourceModule(mroot string, dstdir string) (err error) {
 	if err = os.MkdirAll(dstdir, 0700); err != nil {
-		return errors.Wrap(err, "failed to ensure destination directory exists")
+		return errorsx.Wrap(err, "failed to ensure destination directory exists")
 	}
 
 	if err = CloneIO(filepath.Join(dstdir, "go.mod"), strings.NewReader(Gomod())); err != nil {
-		return errors.Wrap(err, "unable to generate go.mod")
+		return errorsx.Wrap(err, "unable to generate go.mod")
 	}
 
 	if err = CloneIO(filepath.Join(dstdir, "go.work"), strings.NewReader(Gowork(mroot))); err != nil {
-		return errors.Wrap(err, "unable to generate go.work")
+		return errorsx.Wrap(err, "unable to generate go.work")
 	}
 
 	if err = CloneFS(filepath.Join(dstdir, ".genieql"), ".", os.DirFS(filepath.Join(mroot, ".genieql"))); err != nil {
-		return errors.Wrap(err, "unable to clone genieql")
+		return errorsx.Wrap(err, "unable to clone genieql")
 	}
 	return nil
 }

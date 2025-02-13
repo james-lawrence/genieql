@@ -8,10 +8,10 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/james-lawrence/genieql/internal/errorsx"
-	"github.com/pkg/errors"
+	"github.com/james-lawrence/genieql/internal/stringsx"
 	"gopkg.in/yaml.v3"
 )
 
@@ -58,7 +58,7 @@ func Bootstrap(options ...ConfigurationOption) error {
 	}
 
 	if err := os.MkdirAll(config.Location, 0755); err != nil {
-		return errors.Wrap(err, "failed to make bootstrap directory")
+		return errorsx.Wrap(err, "failed to make bootstrap directory")
 	}
 
 	return WriteConfiguration(config)
@@ -72,10 +72,10 @@ func WriteConfiguration(config Configuration) error {
 	)
 
 	if raw, err = yaml.Marshal(config); err != nil {
-		return errors.Wrap(err, "failed to serialize configuration to yaml")
+		return errorsx.Wrap(err, "failed to serialize configuration to yaml")
 	}
 
-	return errors.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
+	return errorsx.Wrap(os.WriteFile(filepath.Join(config.Location, config.Name), raw, 0666), "failed to persist configuration to disk")
 }
 
 // ReadConfiguration reads the genieql configuration file from the specified path.
@@ -86,13 +86,16 @@ func ReadConfiguration(config *Configuration, options ...ConfigurationOption) er
 	)
 
 	if raw, err = os.ReadFile(filepath.Join(config.Location, config.Name)); err != nil {
-		return errors.Wrap(err, "failed to read configuration file")
+		return errorsx.Wrap(err, "failed to read configuration file")
 	}
 
 	if err = yaml.Unmarshal(raw, config); err != nil {
-		return errors.Wrap(err, "failed to parse configuration file")
+		return errorsx.Wrap(err, "failed to parse configuration file")
 	}
 
+	if *config, err = config.Clone(options...); err != nil {
+		return errorsx.Wrap(err, "failed to apply options to config")
+	}
 	return nil
 }
 
@@ -121,9 +124,9 @@ func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 		cachebuster string
 	)
 
-	cachebuster = errorsx.Zero(uuid.NewV4()).String()
+	cachebuster = time.Now().Truncate(time.Hour).String()
 	if info, ok := debug.ReadBuildInfo(); ok {
-		cachebuster = info.Main.Version
+		cachebuster = stringsx.DefaultIfBlank(info.Main.Version, cachebuster)
 	}
 
 	var (
@@ -172,6 +175,12 @@ func ConfigurationOptionRowType(rt string) ConfigurationOption {
 		c.RowType = rt
 		return nil
 	}
+}
+
+// ConfigurationOptionRowType specify the default type to use for static row scanners.
+func ConfigurationOptionZeroDynamic(c *Configuration) error {
+	c.Version = ""
+	return nil
 }
 
 // ConfigurationOptionDatabase specify the database connection information.
