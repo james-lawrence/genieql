@@ -23,13 +23,6 @@ const ddbDecodeUUID = `func() {
 	}
 }`
 
-// const ddbEncodeUUID = `func() {
-// 	if {{ .From | expr }}.Valid {
-// 		tmp := {{ .Type | expr }}({{ .From | expr }}.String)
-// 		{{ .To | autodereference | expr }} = tmp
-// 	}
-// }`
-
 const ddbDecodeINET = `func() {
 	{{ .To | expr }} = net.ParseIP({{ .From | expr }}.String)
 	// {{ .To | expr }} = net.IP({{ .From | expr }})
