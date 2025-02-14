@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -26,14 +27,15 @@ func ExampleExample1Insert() {
 
 	uid := uuid.Must(uuid.NewV7()).String()
 	ex := Example1{
-		BigintField:   1,
-		BoolField:     true,
-		UUIDField:     uid,
-		IntField:      2,
-		RealField:     3.1,
-		SmallintField: 4,
-		TextField:     "hello world",
-		UintegerField: 2,
+		BigintField:    1,
+		BoolField:      true,
+		UUIDField:      uid,
+		IntField:       2,
+		RealField:      3.1,
+		SmallintField:  4,
+		TextField:      "hello world",
+		UintegerField:  2,
+		ByteArrayField: []byte{0x2},
 		// InetField:     net.IPv6interfacelocalallnodes,
 	}
 
@@ -48,7 +50,8 @@ func ExampleExample1Insert() {
 		"bool", res.BoolField == ex.BoolField,
 		"text", res.TextField == ex.TextField,
 		"uinteger", res.UintegerField == ex.UintegerField,
+		"binary", bytes.Compare(res.ByteArrayField, ex.ByteArrayField),
 		// "ip", res.InetField.Equal(net.IPv6interfacelocalallnodes),
 	)
-	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true
+	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0
 }

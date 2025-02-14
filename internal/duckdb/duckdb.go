@@ -195,7 +195,10 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("SMALLINT")
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
 		return astutil.Expr("TIMESTAMPZ")
-	// needs changes upstream
+	case "BINARY":
+		return astutil.Expr("BINARY")
+	case "BLOB":
+		return astutil.Expr("BLOB")
 	// case "INET":
 	// 	return astutil.Expr("INET")
 	case "UUID":

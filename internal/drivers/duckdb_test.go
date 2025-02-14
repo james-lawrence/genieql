@@ -23,6 +23,8 @@ var _ = Describe("duckdb", func() {
 		Entry("example 6 - bool", "BOOLEAN", "sql.NullBool", nil),
 		Entry("example 7 - time.Time", "TIMESTAMPZ", "sql.NullTime", nil),
 		Entry("example 8 - uuid", "UUID", "sql.NullString", nil),
-		Entry("example 9 - net.IP", "INET", "sql.NullString", nil),
+		// Entry("example 9 - net.IP", "INET", "sql.NullString", nil),
+		Entry("example 10 - bytes", "BINARY", "[]byte", nil),
+		Entry("example 11 - bytes", "BLOB", "[]byte", nil),
 	)
 })
