@@ -27,10 +27,9 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 	}
 
 	log.Printf("genieql.Structure identified %s\n", nodeInfo(cctx, pos))
-	cctx.Debugln(formatted)
+	// cctx.Debugln(formatted)
 
 	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "StructureFromFile")
-	// printjen(content)
 
 	return Result{
 		Ident:     pos.Name.Name,

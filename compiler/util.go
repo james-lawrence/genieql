@@ -17,6 +17,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/james-lawrence/genieql/astcodec"
+	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/envx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/userx"
@@ -189,6 +190,8 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 		"GENIEQL_WASI_PACKAGE_BINARY_ONLY", strconv.FormatBool(cctx.CurrentPackage.BinaryOnly),
 	).WithEnv(
 		"GENIEQL_WASI_PACKAGE_GO_FILES", strings.Join(cctx.CurrentPackage.GoFiles, ","),
+	).WithEnv(
+		"GENIEQL_WASI_DEBUG", strconv.FormatBool(cctx.Verbosity >= generators.VerbosityDebug),
 	).WithEnv(
 		"GOROOT", cctx.Build.GOROOT,
 	).WithEnv(

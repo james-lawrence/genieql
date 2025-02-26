@@ -51,6 +51,14 @@ var ddb = []genieql.ColumnDefinition{
 		Decode:     StdlibDecodeString,
 		Encode:     StdlibEncodeString,
 	},
+	// {
+	// 	DBTypeName: "VARCHAR[]",
+	// 	Type:       "VARCHAR[]",
+	// 	ColumnType: "sql.Null[[]string]",
+	// 	Native:     stringArrExpr,
+	// 	Decode:     StdlibDecodeNull,
+	// 	Encode:     StdlibEncodeNull,
+	// },
 	{
 		DBTypeName: "BOOLEAN",
 		Type:       "BOOLEAN",
@@ -99,6 +107,14 @@ var ddb = []genieql.ColumnDefinition{
 		Decode:     StdlibDecodeInt16,
 		Encode:     StdlibEncodeInt16,
 	},
+	// {
+	// 	DBTypeName: "SMALLINT[]",
+	// 	Type:       "SMALLINTARRAY",
+	// 	ColumnType: "sql.Null[[]int]",
+	// 	Native:     intArrExpr,
+	// 	Decode:     StdlibDecodeNull,
+	// 	Encode:     StdlibEncodeNull,
+	// },
 	{
 		DBTypeName: "USMALLINT",
 		Type:       "USMALLINT",
@@ -110,6 +126,14 @@ var ddb = []genieql.ColumnDefinition{
 	{
 		DBTypeName: "FLOAT",
 		Type:       "FLOAT",
+		ColumnType: "sql.NullFloat64",
+		Native:     float32ExprString,
+		Decode:     StdlibDecodeFloat64,
+		Encode:     StdlibEncodeFloat64,
+	},
+	{
+		DBTypeName: "DOUBLE",
+		Type:       "DOUBLE",
 		ColumnType: "sql.NullFloat64",
 		Native:     float64ExprString,
 		Decode:     StdlibDecodeFloat64,

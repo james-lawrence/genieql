@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS example1 (
   uuid_field uuid PRIMARY KEY,
   smallint_field smallint NOT NULL DEFAULT 1,
   int_field integer NOT NULL DEFAULT 1,
+  int2_field int2 NOT NULL DEFAULT 1,
   bigint_field bigint NOT NULL DEFAULT 1,
   decimal_field decimal NOT NULL DEFAULT 1.0,
   numeric_field numeric NOT NULL DEFAULT 1.0,
@@ -29,11 +30,12 @@ CREATE TABLE IF NOT EXISTS example1 (
   inet_field inet NOT NULL DEFAULT '0.0.0.0'::inet,
   -- json_field json NOT NULL DEFAULT '{}'::json,
   text_field text NOT NULL DEFAULT '',
+  text_array text[] not null default [],
   bool_field boolean NOT NULL DEFAULT 'f',
-  -- uuid_array uuid[] not null default '{}'::uuid[],
-  -- int2_array int2[] not null default '{}'::int2[],
-  -- int4_array int4[] not null default '{}'::int4[],
-  -- int8_array int8[] not null default '{}'::int8[],
+  -- uuid_array uuid[] not null default [],
+  int2_array int2[] not null default [],
+  -- int4_array int4[] not null default [],
+  -- int8_array int8[] not null default [],
   timestamp_field timestamptz NOT NULL DEFAULT current_timestamp
 );
 

@@ -36,6 +36,7 @@ func ExampleExample1Insert() {
 		TextField:      "hello world",
 		UintegerField:  2,
 		ByteArrayField: []byte{0x2},
+		// Int2Array:      []int{9},
 		// InetField:     net.IPv6interfacelocalallnodes,
 	}
 
@@ -51,6 +52,7 @@ func ExampleExample1Insert() {
 		"text", res.TextField == ex.TextField,
 		"uinteger", res.UintegerField == ex.UintegerField,
 		"binary", bytes.Compare(res.ByteArrayField, ex.ByteArrayField),
+		// "int array", slices.Compare(res.Int2Array, ex.Int2Array),
 		// "ip", res.InetField.Equal(net.IPv6interfacelocalallnodes),
 	)
 	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0

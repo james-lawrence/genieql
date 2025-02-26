@@ -84,7 +84,7 @@ const (
 	}`
 	StdlibEncodeFloat64 = `func() {
 		{{ .To | expr }}.Valid = true
-		{{ .To | expr }}.Float64 = {{ .From | expr }}
+		{{ .To | expr }}.Float64 = float64({{ .From | expr }})
 	}`
 	StdlibDecodeFloat64 = `func() {
 		if {{ .From | expr }}.Valid {

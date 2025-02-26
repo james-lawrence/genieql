@@ -426,6 +426,7 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 		qptr uint32, qlen uint32, rlen uint32, rptr uint32) (errcode uint32) {
 		s, err := ffihost.ReadString(m.Memory(), qptr, qlen)
 		if err != nil {
+			log.Println(err)
 			return 1
 		}
 
@@ -747,13 +748,15 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 		cctx.Debugln("module not found in cache, compiling")
 	}
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, filepath.Join(srcdir, "main.go"))
+	mpath := filepath.Join(srcdir, "main.go")
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, mpath)
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
 	if err = cmd.Run(); err != nil {
-		return nil, errorsx.Wrap(err, "unable to compile module")
+		contents := errorsx.Must(os.ReadFile(mpath))
+		return nil, errorsx.Wrapf(err, "unable to compile module: %s\n%s", mpath, contents)
 	}
 
 	if err = transforms.CloneFile(filepath.Join(cctx.Cache, cachemod+".go"), maindst.Name()); err != nil {
