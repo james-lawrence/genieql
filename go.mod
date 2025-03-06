@@ -55,7 +55,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/tetratelabs/wazero v1.8.1
+	github.com/tetratelabs/wazero v1.9.0
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/mod v0.22.0
 	golang.org/x/net v0.31.0 // indirect
