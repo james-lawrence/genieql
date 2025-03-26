@@ -246,8 +246,8 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 				// 	return
 				// }
 
-				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, false, m.Result); err != nil {
-					m.cause = errorsx.Wrapf(err, "%s: unable to generate", m.Location)
+				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
+					m.cause = errorsx.Wrapf(err, "%s: unable to compile", m.Location)
 					donefn(m)
 					return
 				}
@@ -260,10 +260,17 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		for i := 0; i < len(g); i++ {
 			r := <-output
 			if r.cause != nil {
+				log.Println("failed to compile", r.cause)
+				err = errorsx.Compact(err, r.cause)
+				continue
+			}
+
+			if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
 				log.Println("failed to generate", r.cause)
 				err = errorsx.Compact(err, r.cause)
 				continue
 			}
+
 			gset = append(gset, r)
 		}
 
