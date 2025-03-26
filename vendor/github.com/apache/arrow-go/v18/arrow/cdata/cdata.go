@@ -21,8 +21,8 @@ package cdata
 
 // implement handling of the Arrow C Data Interface. At least from a consuming side.
 
-// #include "arrow/c/abi.h"
-// #include "arrow/c/helpers.h"
+// #include "abi.h"
+// #include "helpers.h"
 // #include <stdlib.h>
 // int stream_get_schema(struct ArrowArrayStream* st, struct ArrowSchema* out) { return st->get_schema(st, out); }
 // int stream_get_next(struct ArrowArrayStream* st, struct ArrowArray* out) { return st->get_next(st, out); }
@@ -64,6 +64,11 @@ type (
 	CArrowArray = C.struct_ArrowArray
 	// CArrowArrayStream is the C Stream Interface object for handling streams of record batches.
 	CArrowArrayStream = C.struct_ArrowArrayStream
+
+	CArrowAsyncDeviceStreamHandler = C.struct_ArrowAsyncDeviceStreamHandler
+	CArrowAsyncProducer            = C.struct_ArrowAsyncProducer
+	CArrowAsyncTask                = C.struct_ArrowAsyncTask
+	CArrowDeviceArray              = C.struct_ArrowDeviceArray
 )
 
 // Map from the defined strings to their corresponding arrow.DataType interface
