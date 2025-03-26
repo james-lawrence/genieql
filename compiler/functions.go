@@ -49,7 +49,7 @@ func Function(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err err
 		Bid:       uid,
 		Ident:     pos.Name.Name,
 		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
+		Mod:       modgenfn(genmod(cctx, pos, uid, formatted, content, src.Imports...)),
 		Priority:  PriorityFunctions,
 	}, nil
 }

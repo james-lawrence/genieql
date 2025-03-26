@@ -3,6 +3,7 @@ package compiler
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"go/ast"
 	"go/build"
 	"go/token"
@@ -233,21 +234,15 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 					}
 				}
 
-				m, cause := modgenerate(ctx, t, scratchpad, ir)
+				log.Println("DERP DERP", ir.Bid)
+				m, cause := modgenerate(ctx, t, ir.Bid, scratchpad, ir)
 				if cause != nil {
 					donefn(&generedmodule{cause: cause})
 					return
 				}
 				m.Result = ir
 
-				// log.Println("compiling", m.Result.Ident, m.Result.Location)
-				// if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
-				// 	m.cause = errorsx.Wrapf(err, "%s: unable to generate", m.Location)
-				// 	donefn(m)
-				// 	return
-				// }
-
-				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, true, m.Result); err != nil {
+				if err = generate(ctx, t, m.root, m.buf, cache, m.compiledpath, false, m.Result); err != nil {
 					m.cause = errorsx.Wrapf(err, "%s: unable to compile", m.Location)
 					donefn(m)
 					return
@@ -266,11 +261,11 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 				continue
 			}
 
-			if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
-				log.Println("failed to generate", r.cause)
-				err = errorsx.Compact(err, r.cause)
-				continue
-			}
+			// if err = generate(ctx, t, r.root, r.buf, cache, r.compiledpath, false, r.Result); err != nil {
+			// 	log.Println("failed to generate", r.cause)
+			// 	err = errorsx.Compact(err, r.cause)
+			// 	continue
+			// }
 
 			gset = append(gset, r)
 		}
@@ -639,9 +634,10 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 	return errorsx.Wrapf(ir.Generator.Generate(ctx, tmpdir, buf, runtime, mpath, compileonly), "%s: failed to generate", ir.Location)
 }
 
-func modgenerate(ctx context.Context, cctx Context, scratchpad string, ir Result) (m *generedmodule, err error) {
+func modgenerate(ctx context.Context, cctx Context, bid string, scratchpad string, ir Result) (m *generedmodule, err error) {
 	cctx.Context.Debugln("generating code initiated", ir.Location)
 	defer cctx.Context.Debugln("generating code completed", ir.Location)
+	scratchpad = fmt.Sprintf("//go:build !genieql.%s\n%s", bid, scratchpad)
 	m, err = ir.Mod.Generate(ctx, scratchpad)
 	return m, errorsx.Wrapf(err, "%s: failed to generate", ir.Location)
 }
@@ -684,7 +680,7 @@ type generedmodule struct {
 	cause        error
 }
 
-func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
+func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, bid string, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
 	var (
 		maindst *os.File
 	)
@@ -757,11 +753,11 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-tags", "-trimpath", "-o", dstdir, mpath)
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-tags", fmt.Sprintf("genieql.%s", bid), "-trimpath", "-o", dstdir, mpath)
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-
+	log.Println("ZERP ZERP", cmd.String())
 	if err = cmd.Run(); err != nil {
 		contents := errorsx.Must(os.ReadFile(mpath))
 		return nil, errorsx.Wrapf(err, "unable to compile module: %s\n%s", mpath, contents)
