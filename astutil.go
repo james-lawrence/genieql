@@ -541,7 +541,7 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 		imported = []ast.Decl{
 			&ast.GenDecl{
 				Tok:   token.IMPORT,
-				Specs: slicesx.MapTransform[*ast.ImportSpec, ast.Spec](func(is *ast.ImportSpec) ast.Spec { return is }, imports...),
+				Specs: slicesx.MapTransform(func(is *ast.ImportSpec) ast.Spec { return is }, imports...),
 			},
 		}
 	}
@@ -554,11 +554,10 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 	}
 
 	printer.FprintAST(dst, fset, past)
-
 	printer.Fprintf(dst, Preface, strings.Join(args, " "))
-
 	printer.Fprintf(
 		dst,
+		"%s",
 		debuggogen(),
 	)
 
@@ -570,7 +569,6 @@ func PrintPackage(printer ASTPrinter, dst io.Writer, fset *token.FileSet, pkg *b
 // debuggogen generates an informational string about the details of where go:generate
 // line that is triggered this process is located.
 func debuggogen() string {
-
 	// check if executed by go generate
 	if os.Getenv("GOPACKAGE") == "" && os.Getenv("GOFILE") == "" && os.Getenv("GOLINE") == "" {
 		return ""

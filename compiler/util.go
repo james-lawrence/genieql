@@ -230,9 +230,9 @@ func mergescratch(tree *ast.File, p string) (formatted string, err error) {
 	return astcodec.FormatAST(fset, tree)
 }
 
-func genmain(cfgname string, pkg *build.Package, name, gintpkg, gintfn string) *jen.File {
+func genmain(cfgname string, pkg *build.Package, bid, name, gintpkg, gintfn string) *jen.File {
 	content := jen.NewFile("main")
-	content.PackageComment("//go:build genieql.generate")
+	content.PackageComment(fmt.Sprintf("//go:build genieql.generate genieql.%s", strings.ReplaceAll(bid, "-", "")))
 
 	content.Func().Id("main").Params().Block(
 		append(

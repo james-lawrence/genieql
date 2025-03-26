@@ -181,7 +181,7 @@ type File struct {
 func (t File) Generate(dst io.Writer) error {
 	printer := genieql.ASTPrinter{}
 
-	printer.Fprintf(dst, flattenTags(t.BuildTags))
+	printer.Fprintf(dst, "%s", flattenTags(t.BuildTags))
 	printer.FprintAST(dst, t.Tokens, t.Node)
 
 	return printer.Err()

@@ -46,6 +46,7 @@ const (
 
 // Result of a matcher
 type Result struct {
+	Bid       string
 	Ident     string
 	Location  token.Position // source location that generated this result.
 	Priority  int
@@ -756,7 +757,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, mpath)
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-tags", "-trimpath", "-o", dstdir, mpath)
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
