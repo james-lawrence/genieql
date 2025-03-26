@@ -151,7 +151,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	}
 	defer os.RemoveAll(t.tmpdir)
 
-	log.Println("COMPILE INVOKED")
 	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.tmp.*.go"); err != nil {
 		return errorsx.Wrap(err, "unable to open scratch file")
 	}
