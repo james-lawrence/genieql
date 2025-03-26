@@ -34,7 +34,7 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func genmod(cctx Context, pos *ast.FuncDecl, bid string, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
+func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
 	return func(ctx context.Context, scratchpad string) (m *generedmodule, err error) {
 		var (
 			tmpdir string
@@ -46,7 +46,7 @@ func genmod(cctx Context, pos *ast.FuncDecl, bid string, cfg string, content *je
 		// we don't cleanup the tmpdir here because its underneath another tmpdir that will be removed
 		// when needed.
 
-		if m, err = compilemodule(ctx, cctx, pos, bid, scratchpad, tmpdir, cfg, content, imports...); err != nil {
+		if m, err = compilemodule(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
 			return nil, errorsx.Wrap(err, "unable to generate module directory")
 		}
 
@@ -230,9 +230,9 @@ func mergescratch(tree *ast.File, p string) (formatted string, err error) {
 	return astcodec.FormatAST(fset, tree)
 }
 
-func genmain(cfgname string, pkg *build.Package, bid, name, gintpkg, gintfn string) *jen.File {
+func genmain(cfgname string, pkg *build.Package, name, gintpkg, gintfn string) *jen.File {
 	content := jen.NewFile("main")
-	content.PackageComment(fmt.Sprintf("//go:build genieql.generate genieql.%s", strings.ReplaceAll(bid, "-", "")))
+	content.PackageComment("//go:build genieql.generate")
 
 	content.Func().Id("main").Params().Block(
 		append(

@@ -41,14 +41,14 @@ func Inserts(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err erro
 	cctx.Debugln(formatted)
 
 	uid := errorsx.Must(uuid.NewV4()).String()
-	content := genmain(cctx.Name, cctx.CurrentPackage, uid, pos.Name.String(), "ginterp", "InsertFromFile")
+	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "InsertFromFile")
 	// printjen(content)
 
 	return Result{
 		Bid:       uid,
 		Ident:     pos.Name.Name,
 		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, uid, formatted, content, src.Imports...)),
+		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
 		Priority:  PriorityFunctions,
 	}, nil
 }

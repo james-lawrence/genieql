@@ -151,6 +151,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	}
 	defer os.RemoveAll(t.tmpdir)
 
+	log.Println("COMPILE INVOKED")
 	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.tmp.*.go"); err != nil {
 		return errorsx.Wrap(err, "unable to open scratch file")
 	}
@@ -680,7 +681,7 @@ type generedmodule struct {
 	cause        error
 }
 
-func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, bid string, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
+func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, tmpdir string, cfg string, main *jen.File, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
 	var (
 		maindst *os.File
 	)
@@ -753,7 +754,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, bid str
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-tags", fmt.Sprintf("genieql.%s", bid), "-trimpath", "-o", dstdir, mpath)
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", "-w -s", "-trimpath", "-o", dstdir, mpath)
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
