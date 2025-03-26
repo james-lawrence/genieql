@@ -235,7 +235,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 					}
 				}
 
-				log.Println("DERP DERP", ir.Bid)
 				m, cause := modgenerate(ctx, t, ir.Bid, scratchpad, ir)
 				if cause != nil {
 					donefn(&generedmodule{cause: cause})
@@ -758,7 +757,7 @@ func compilemodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratch
 	cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	log.Println("ZERP ZERP", cmd.String())
+
 	if err = cmd.Run(); err != nil {
 		contents := errorsx.Must(os.ReadFile(mpath))
 		return nil, errorsx.Wrapf(err, "unable to compile module: %s\n%s", mpath, contents)
