@@ -8,5 +8,5 @@ import (
 )
 
 func (t *duckdb) execute(*kingpin.ParseContext) (err error) {
-	return errorsx.String("genieql was not compiled with duckdb please add -tags genieql.duckdb,no_duckdb_arrow to your build")
+	return errorsx.String("genieql was not compiled with duckdb please add -tags genieql.duckdb to your build")
 }

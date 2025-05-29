@@ -102,6 +102,16 @@ const (
 			{{ .To | autodereference | expr }} = tmp
 		}
 	}`
+	StdlibEncodeDuration = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.V = {{ .From | expr }}
+	}`
+	StdlibDecodeDuration = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .From | expr }}.V
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
 	StdlibEncodeInt64 = `func() {
 		{{ .To | expr }}.Valid = true
 		{{ .To | expr }}.Int64 = int64({{ .From | expr }})
@@ -109,6 +119,16 @@ const (
 	StdlibDecodeInt64 = `func() {
 		if {{ .From | expr }}.Valid {
 			tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+			{{ .To | autodereference | expr }} = tmp
+		}
+	}`
+	StdlibEncodeUint64 = `func() {
+		{{ .To | expr }}.Valid = true
+		{{ .To | expr }}.V = {{ .From | expr }}
+	}`
+	StdlibDecodeUint64 = `func() {
+		if {{ .From | expr }}.Valid {
+			tmp := {{ .From | expr }}.V
 			{{ .To | autodereference | expr }} = tmp
 		}
 	}`

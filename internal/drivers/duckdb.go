@@ -94,10 +94,10 @@ var ddb = []genieql.ColumnDefinition{
 	{
 		DBTypeName: "UBIGINT",
 		Type:       "UBIGINT",
-		ColumnType: "sql.NullInt64",
+		ColumnType: "sql.Null[uint64]",
 		Native:     uint64ExprString,
-		Decode:     StdlibDecodeInt64,
-		Encode:     StdlibEncodeInt64,
+		Decode:     StdlibDecodeUint64,
+		Encode:     StdlibEncodeUint64,
 	},
 	{
 		DBTypeName: "SMALLINT",
@@ -179,4 +179,13 @@ var ddb = []genieql.ColumnDefinition{
 		Decode:     ddbDecodeBinary,
 		Encode:     ddbEncodeBinary,
 	},
+	// go-duckdb needs support.
+	// {
+	// 	DBTypeName: "INTERVAL",
+	// 	Type:       "INTERVAL",
+	// 	ColumnType: "sql.Null[time.Duration]",
+	// 	Native:     durationExpr,
+	// 	Decode:     StdlibDecodeDuration,
+	// 	Encode:     StdlibEncodeDuration,
+	// },
 }
