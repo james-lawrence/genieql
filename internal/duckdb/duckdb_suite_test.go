@@ -9,7 +9,7 @@ import (
 	"github.com/james-lawrence/genieql/internal/goosex"
 	"github.com/james-lawrence/genieql/internal/sqlxtest"
 	"github.com/james-lawrence/genieql/internal/testx"
-	_ "github.com/marcboeker/go-duckdb"
+	_ "github.com/marcboeker/go-duckdb/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pressly/goose/v3"
