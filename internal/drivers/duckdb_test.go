@@ -26,5 +26,6 @@ var _ = Describe("duckdb", func() {
 		// Entry("example 9 - net.IP", "INET", "sql.NullString", nil),
 		Entry("example 10 - bytes", "BINARY", "[]byte", nil),
 		Entry("example 11 - bytes", "BLOB", "[]byte", nil),
+		Entry("example 12 - uint64", "UBIGINT", "sql.Null[uint64]", nil),
 	)
 })

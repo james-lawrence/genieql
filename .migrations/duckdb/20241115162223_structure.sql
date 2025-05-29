@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS type1 (
 	field4 boolean,
 	field5 int DEFAULT 0 NOT NULL,
 	field6 int,
-	field7 timestamp with time zone DEFAULT (now() at time zone 'utc') NOT NULL,
+	field7 timestamp with time zone DEFAULT (now()) NOT NULL,
 	field8 timestamp with time zone,
 	unmappedField int DEFAULT 1 NOT NULL
 );
@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS example1 (
   int_field integer NOT NULL DEFAULT 1,
   int2_field int2 NOT NULL DEFAULT 1,
   bigint_field bigint NOT NULL DEFAULT 1,
+  ubigint_field ubigint NOT NULL DEFAULT 1,
   decimal_field decimal NOT NULL DEFAULT 1.0,
   numeric_field numeric NOT NULL DEFAULT 1.0,
   real_field real NOT NULL DEFAULT 1.0,
