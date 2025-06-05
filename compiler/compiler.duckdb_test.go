@@ -43,9 +43,10 @@ var _ = Describe("Compiler generation test", func() {
 			"duckdb.test.config",
 			pkg,
 			generators.OptionOSArgs(),
-			generators.OptionDebug,
+			// generators.OptionDebug,
 		)
 		Expect(err).To(Succeed())
+
 		gctx.Dialect.(duckdb.DialectFn).SQLDB(func(db *sql.DB) {
 			Expect(sqlxtest.Migrate(ctx, db, os.DirFS("../.migrations/duckdb"), goose.WithStore(goosex.DuckdbStore{}))).To(Succeed())
 		})

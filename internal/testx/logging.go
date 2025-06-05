@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"testing"
 
 	"github.com/mattn/go-isatty"
 
@@ -16,7 +17,7 @@ func Logging() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.LUTC)
 	log.SetOutput(os.Stderr)
 
-	if isatty.IsTerminal(os.Stdout.Fd()) {
+	if isatty.IsTerminal(os.Stdout.Fd()) || testing.Verbose() {
 		return
 	}
 

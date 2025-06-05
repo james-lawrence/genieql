@@ -190,7 +190,6 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	if err != nil {
 		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
 	}
-	// cache := wazero.NewCompilationCache()
 	defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
 
 	t.Context.Println("build.GOPATH", t.Build.GOPATH)
@@ -319,9 +318,9 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
-		wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// 8s w/ tinygo, 28s with golang
-		// wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 
