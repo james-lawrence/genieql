@@ -17,6 +17,7 @@ import (
 	"github.com/dave/jennifer/jen"
 	"golang.org/x/tools/go/packages"
 
+	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astbuild"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/internal/errorsx"
@@ -161,7 +162,7 @@ func PrepareSourceModule(mroot string, dstdir string) (err error) {
 		return errorsx.Wrap(err, "unable to generate go.work")
 	}
 
-	if err = CloneFS(filepath.Join(dstdir, ".genieql"), ".", os.DirFS(filepath.Join(mroot, ".genieql"))); err != nil {
+	if err = CloneFS(filepath.Join(dstdir, genieql.RelDir()), ".", os.DirFS(filepath.Join(mroot, genieql.RelDir()))); err != nil {
 		return errorsx.Wrap(err, "unable to clone genieql")
 	}
 	return nil

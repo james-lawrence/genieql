@@ -32,6 +32,10 @@ const Preface = `
 // genieql %s
 `
 
+func RelDir() string {
+	return ".genieql"
+}
+
 // ConfigurationDirectory determines the configuration directory based on the
 // go environment.
 func ConfigurationDirectory() string {
@@ -41,7 +45,7 @@ func ConfigurationDirectory() string {
 	)
 
 	if defaultPath, err = FindModuleRoot("."); err == nil && defaultPath != "" {
-		return filepath.Join(defaultPath, ".genieql")
+		return filepath.Join(defaultPath, RelDir())
 	}
 
 	paths := filepath.SplitList(os.Getenv("GOPATH"))
@@ -54,7 +58,7 @@ func ConfigurationDirectory() string {
 		defaultPath = paths[0]
 	}
 
-	return filepath.Join(defaultPath, ".genieql")
+	return filepath.Join(defaultPath, RelDir())
 }
 
 // PrintColumnInfo ...

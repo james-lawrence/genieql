@@ -33,7 +33,7 @@ var _ = Describe("Scanner", func() {
 
 	config := genieql.MustReadConfiguration(
 		genieql.ConfigurationOptionLocation(
-			filepath.Join("..", "..", ".genieql", "default.config"),
+			filepath.Join("..", "..", genieql.RelDir(), "default.config"),
 		),
 		genieql.ConfigurationOptionDialect(Dialect),
 	)

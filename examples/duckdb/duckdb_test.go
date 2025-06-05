@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/sqlx"
 
@@ -22,7 +23,7 @@ func ExampleExample1Insert() {
 	ctx, done := context.WithTimeout(context.Background(), 5*time.Second)
 	defer done()
 
-	db := errorsx.Must(sql.Open("duckdb", filepath.Join("..", "..", ".genieql", ".duckdb", "duck.db")))
+	db := errorsx.Must(sql.Open("duckdb", filepath.Join("..", "..", genieql.RelDir(), ".duckdb", "duck.db")))
 	defer db.Close()
 
 	uid := uuid.Must(uuid.NewV7()).String()

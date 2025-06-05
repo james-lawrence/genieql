@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/envx"
@@ -80,8 +81,8 @@ func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir st
 				wazero.NewFSConfig().
 					WithReadOnlyDirMount(cctx.ModuleRoot, "").
 					WithDirMount(tmpdir, tmpdir).
-					WithDirMount(filepath.Join(cctx.ModuleRoot, ".genieql"), "/.genieql").
-					WithDirMount(cctx.Cache, "/.genieql/cache").
+					WithDirMount(filepath.Join(cctx.ModuleRoot, genieql.RelDir()), filepath.Join("/", genieql.RelDir())).
+					WithDirMount(cctx.Cache, filepath.Join("/", genieql.RelDir(), "cache")).
 					WithReadOnlyDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).

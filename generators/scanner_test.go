@@ -32,7 +32,7 @@ var _ = ginkgo.Describe("Scanner", func() {
 	config := genieql.MustConfiguration(
 		genieql.NewConfiguration(
 			genieql.ConfigurationOptionLocation(
-				filepath.Join(".", ".fixtures", ".genieql", "generators-test.config"),
+				filepath.Join(".", ".fixtures", genieql.RelDir(), "generators-test.config"),
 			),
 		),
 	)
