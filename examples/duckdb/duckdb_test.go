@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
-	"github.com/james-lawrence/genieql/internal/sqlx"
 
 	_ "github.com/marcboeker/go-duckdb/v2"
 )
@@ -43,7 +42,7 @@ func ExampleExample1Insert() {
 		// InetField:     net.IPv6interfacelocalallnodes,
 	}
 
-	errorsx.MaybePanic(Example1Insert(ctx, sqlx.Debug(db), ex).Scan(&res))
+	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
 
 	fmt.Println(
 		"uid", res.UUIDField == ex.UUIDField,
