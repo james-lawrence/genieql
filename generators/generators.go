@@ -238,7 +238,7 @@ func NewContextFromConfig(bctx build.Context, config genieql.Configuration, pkg 
 		return ctx, errorsx.Wrapf(err, "unable to ensure compiled directory: %s", cachedir)
 	}
 
-	log.Println("cachedir", cachedir)
+	log.Println("cachedir", cachedir, config.Version, config.Location, os.Environ())
 
 	ctx = Context{
 		ModuleRoot:     mroot + "/",
