@@ -82,7 +82,7 @@ func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir st
 					WithReadOnlyDirMount(cctx.ModuleRoot, "").
 					WithDirMount(tmpdir, tmpdir).
 					WithDirMount(filepath.Join(cctx.ModuleRoot, genieql.RelDir()), filepath.Join("/", genieql.RelDir())).
-					WithDirMount(cctx.Cache, filepath.Join("/", genieql.RelDir(), "cache")).
+					WithDirMount(userx.DefaultCacheDirectory(), userx.DefaultCacheDirectory()).
 					WithReadOnlyDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).
@@ -206,7 +206,7 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 	).WithEnv(
 		"HOME", userx.HomeDirectoryOrDefault("/root"),
 	).WithEnv(
-		"CACHE_DIRECTORY", "/.genieql/cache",
+		"CACHE_DIRECTORY", filepath.Dir(userx.DefaultCacheDirectory()),
 	)
 }
 
