@@ -17,13 +17,13 @@ func Setup(ctx context.Context, id eg.Op) error {
 
 	return shell.Run(
 		ctx,
-		runtime.New("go install -tags genieql.duckdb,no_duckdb_arrow ./...").Environ("GOBIN", egenv.EphemeralDirectory()),
+		runtime.New("go install -tags genieql.duckdb ./...").Environ("GOBIN", egenv.EphemeralDirectory()),
 		runtime.Newf("cp %s /usr/local/bin", egenv.EphemeralDirectory("genieql")).Privileged(),
 	)
 }
 
 func Generate(ctx context.Context, id eg.Op) error {
-	runtime := eggolang.Runtime().EnvironFrom(egpostgresql.Environ()...)
+	runtime := eggolang.Runtime().EnvironFrom(egpostgresql.Environ()...).Environ("CACHE_DIRECTORY", egenv.CacheDirectory())
 
 	log.Println("postgresql", egpostgresql.AutoLocatePort(ctx))
 	return shell.Run(
@@ -54,14 +54,14 @@ func main() {
 			eggolang.AutoCompile(
 				eggolang.CompileOption.BuildOptions(
 					eggolang.Build(
-						eggolang.BuildOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
+						eggolang.BuildOption.Tags("genieql.duckdb"),
 					),
 				),
 			),
 			eggolang.AutoTest(
 				eggolang.TestOption.BuildOptions(
 					eggolang.Build(
-						eggolang.BuildOption.Tags("genieql.duckdb", "no_duckdb_arrow"),
+						eggolang.BuildOption.Tags("genieql.duckdb"),
 					),
 				),
 				// eggolang.TestOption.Verbose(true),
