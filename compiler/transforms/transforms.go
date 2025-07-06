@@ -180,6 +180,10 @@ func JenAsAST(content *jen.File) (_ *ast.File, err error) {
 	return parser.ParseFile(token.NewFileSet(), "", buf.String(), parser.SkipObjectResolution)
 }
 
+func StringAsAST(content string) (_ *ast.File, err error) {
+	return parser.ParseFile(token.NewFileSet(), "", content, parser.SkipObjectResolution)
+}
+
 func unsafeLiteralFunction(dst *jen.File, name string, typ string, n any) {
 	dst.Func().Id(name).Params().List(jen.Id(typ)).Block(
 		jen.Return(

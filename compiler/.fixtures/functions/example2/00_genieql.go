@@ -5,6 +5,7 @@ package example2
 
 import (
 	"context"
+	"time"
 
 	genieql "github.com/james-lawrence/genieql/ginterp"
 	"github.com/james-lawrence/genieql/internal/sqlx"
@@ -74,7 +75,7 @@ func Example1Update2(
 
 func Example1Update3(
 	gql genieql.Function,
-	pattern func(ctx context.Context, q sqlx.Queryer, i int, ts duckdb.Timestamp) NewExample1ScannerStatic,
+	pattern func(ctx context.Context, q sqlx.Queryer, i int, ts time.Time) NewExample1ScannerStatic,
 ) {
 	gql = gql.Query(`UPDATE example2 SET WHERE id = {i} AND timestamp = {ts} RETURNING ` + Example1ScannerStaticColumns)
 }

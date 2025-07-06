@@ -13,8 +13,7 @@ import (
 // Scanner matcher - identifies scanner generators.
 func Scanner(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		formatted string
-		pattern   = astutil.TypePattern(astutil.Expr("genieql.Scanner"))
+		pattern = astutil.TypePattern(astutil.Expr("genieql.Scanner"))
 	)
 
 	if len(pos.Type.Params.List) < 1 {
@@ -33,22 +32,17 @@ func Scanner(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err erro
 
 	pos.Type.Params.List = pos.Type.Params.List[:1]
 
-	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions)); err != nil {
-		return r, errorsx.Wrapf(err, "genieql.Scanner %s", nodeInfo(cctx, pos))
-	}
-
 	log.Printf("genieql.Scanner identified %s\n", nodeInfo(cctx, pos))
-	cctx.Debugln(formatted)
 
 	uid := errorsx.Must(uuid.NewV4()).String()
 	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "ScannerFromFile")
 	// printjen(content)
+	fndecls := astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions, astcodec.FilterFunctionsByName("main"))
 
 	return Result{
-		Bid:       uid,
-		Ident:     pos.Name.Name,
-		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
-		Priority:  PriorityScanners,
+		Bid:      uid,
+		Ident:    pos.Name.Name,
+		Mod:      modgenfn(genmod(cctx, pos, content, fndecls, src.Imports...)),
+		Priority: PriorityScanners,
 	}, nil
 }

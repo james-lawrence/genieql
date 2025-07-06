@@ -72,6 +72,17 @@ func FindFunctions(d ast.Decl) bool {
 	return ok
 }
 
+func FilterFunctionsByName(n string) func(d ast.Decl) bool {
+	return func(d ast.Decl) bool {
+		fn, ok := d.(*ast.FuncDecl)
+		if !ok {
+			return ok
+		}
+
+		return fn.Name.Name != n
+	}
+}
+
 func FindFunctionsByName(n string) func(d ast.Decl) bool {
 	return func(d ast.Decl) bool {
 		fn, ok := d.(*ast.FuncDecl)

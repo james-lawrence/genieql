@@ -13,8 +13,7 @@ import (
 // BatchInserts matcher - identifies batch insert generators.
 func BatchInserts(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		formatted string
-		pattern   = astutil.TypePattern(astutil.Expr("genieql.InsertBatch"))
+		pattern = astutil.TypePattern(astutil.Expr("genieql.InsertBatch"))
 	)
 
 	if len(pos.Type.Params.List) < 2 {
@@ -33,22 +32,17 @@ func BatchInserts(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err
 
 	pos.Type.Params.List = pos.Type.Params.List[:1]
 
-	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions)); err != nil {
-		return r, errorsx.Wrapf(err, "genieql.InsertBatch %s", nodeInfo(cctx, pos))
-	}
-
 	log.Printf("genieql.InsertBatch identified %s\n", nodeInfo(cctx, pos))
-	cctx.Debugln(formatted)
 
 	uid := errorsx.Must(uuid.NewV4()).String()
 	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "InsertBatchFromFile")
 	// printjen(content)
+	fndecls := astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions, astcodec.FilterFunctionsByName("main"))
 
 	return Result{
-		Bid:       uid,
-		Ident:     pos.Name.Name,
-		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
-		Priority:  PriorityFunctions,
+		Bid:      uid,
+		Ident:    pos.Name.Name,
+		Mod:      modgenfn(genmod(cctx, pos, content, fndecls, src.Imports...)),
+		Priority: PriorityFunctions,
 	}, nil
 }

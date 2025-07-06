@@ -13,8 +13,7 @@ import (
 // QueryAutogen matcher - generate crud functions
 func QueryAutogen(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		formatted string
-		pattern   = astutil.TypePattern(astutil.Expr("genieql.QueryAutogen"))
+		pattern = astutil.TypePattern(astutil.Expr("genieql.QueryAutogen"))
 	)
 
 	if len(pos.Type.Params.List) < 1 {
@@ -35,22 +34,17 @@ func QueryAutogen(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err
 	pos.Type.Params.List = pos.Type.Params.List[:1]
 	pos.Type.Results.List = []*ast.Field(nil)
 
-	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions)); err != nil {
-		return r, errorsx.Wrapf(err, "genieql.QueryAutogen %s", nodeInfo(cctx, pos))
-	}
-
 	log.Printf("genieql.QueryAutogen identified %s\n", nodeInfo(cctx, pos))
-	cctx.Debugln(formatted)
 
 	uid := errorsx.Must(uuid.NewV4()).String()
 	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "QueryAutogenFromFile")
 	// printjen(content)
+	fndecls := astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions, astcodec.FilterFunctionsByName("main"))
 
 	return Result{
-		Bid:       uid,
-		Ident:     pos.Name.Name,
-		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
-		Priority:  PriorityFunctions,
+		Bid:      uid,
+		Ident:    pos.Name.Name,
+		Mod:      modgenfn(genmod(cctx, pos, content, fndecls, src.Imports...)),
+		Priority: PriorityFunctions,
 	}, nil
 }

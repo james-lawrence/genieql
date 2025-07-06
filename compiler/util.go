@@ -35,19 +35,9 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
+func genmod(cctx Context, pos *ast.FuncDecl, content *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
 	return func(ctx context.Context, scratchpad string) (m *generedmodule, err error) {
-		var (
-			tmpdir string
-		)
-
-		if tmpdir, err = os.MkdirTemp(cctx.tmpdir, "genmod.*"); err != nil {
-			return nil, errorsx.Wrap(err, "unable to create mod directory")
-		}
-		// we don't cleanup the tmpdir here because its underneath another tmpdir that will be removed
-		// when needed.
-
-		if m, err = compilemodule(ctx, cctx, pos, scratchpad, tmpdir, cfg, content, imports...); err != nil {
+		if m, err = genmodule(ctx, cctx, pos, scratchpad, content, decls, imports...); err != nil {
 			return nil, errorsx.Wrap(err, "unable to generate module directory")
 		}
 
@@ -55,14 +45,14 @@ func genmod(cctx Context, pos *ast.FuncDecl, cfg string, content *jen.File, impo
 	}
 }
 
-func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
+func runmod(cctx Context) func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
 	return func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
 		var (
 			c   wazero.CompiledModule
 			buf bytes.Buffer
 		)
 
-		if c, err = compilewasi(ctx, cctx, pos, runtime, mpath); err != nil {
+		if c, err = compilewasi(ctx, cctx, runtime, mpath); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
 		}
 		defer c.Close(ctx)
@@ -86,10 +76,10 @@ func runmod(cctx Context, pos *ast.FuncDecl) func(ctx context.Context, tmpdir st
 					WithReadOnlyDirMount(cctx.Build.GOROOT, cctx.Build.GOROOT),
 			).
 			WithArgs(os.Args...).
-			WithName(fmt.Sprintf("%s.%s", cctx.CurrentPackage.Name, pos.Name.String()))
+			WithName(cctx.CurrentPackage.Name)
 
 		mcfg = wasienv(cctx, mcfg)
-		mcfg = fndeclenv(cctx, mcfg, pos, tmpdir)
+		mcfg = fndeclenv(cctx, mcfg, tmpdir)
 
 		if err = run(ctx, mcfg, runtime, c); err != nil {
 			return errorsx.Wrapf(err, "unable to run module: %s", tmpdir)
@@ -210,11 +200,9 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 	)
 }
 
-func fndeclenv(cctx Context, cfg wazero.ModuleConfig, fn *ast.FuncDecl, tmpdir string) wazero.ModuleConfig {
+func fndeclenv(cctx Context, cfg wazero.ModuleConfig, tmpdir string) wazero.ModuleConfig {
 	return cfg.WithEnv(
 		"GENIEQL_WASI_FILEPATH", strings.TrimPrefix(filepath.Join(tmpdir, "input.go"), cctx.ModuleRoot),
-	).WithEnv(
-		"GENIEQL_WASI_FUNCTION_NAME", fn.Name.Name,
 	)
 }
 
@@ -259,8 +247,8 @@ func genmain(cfgname string, pkg *build.Package, name, gintpkg, gintfn string) *
 					jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to generate output")),
 				),
 			),
+			jen.Id("fmt").Dot("Fprintln").Call(jen.Id("os").Dot("Stdout")),
 		)...,
 	)
-
 	return content
 }

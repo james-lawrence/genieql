@@ -37,7 +37,7 @@ func LoadFile() (*ast.File, error) {
 	fset := token.NewFileSet()
 	fp := envx.String("", "GENIEQL_WASI_FILEPATH")
 
-	if envx.Boolean(false, "GENIEQL_WASI_DEBUG") {
+	if envx.Boolean(true, "GENIEQL_WASI_DEBUG") {
 		log.Println("LOADING FILE", fp)
 		// fsx.PrintDir(os.DirFS("."))
 		// fsx.PrintDir(os.DirFS(filepath.Dir(fp)))

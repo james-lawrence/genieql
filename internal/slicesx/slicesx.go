@@ -112,10 +112,10 @@ func MapTransformErr[T, X any](m func(T) (X, error), items ...T) (zero []X, err 
 	return results, nil
 }
 
-func Reduce[T any](v *T, options ...func(*T)) *T {
-	for _, opt := range options {
-		opt(v)
+func Reduce[T, X any](m func(X, T) X, z X, items ...T) (zero X) {
+	for _, i := range items {
+		z = m(z, i)
 	}
 
-	return v
+	return z
 }

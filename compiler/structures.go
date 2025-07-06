@@ -13,7 +13,6 @@ import (
 // Structure matcher - identifies structure generators.
 func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err error) {
 	var (
-		formatted     string
 		structPattern = astutil.TypePattern(astutil.Expr("genieql.Structure"))
 	)
 
@@ -23,21 +22,16 @@ func Structure(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err er
 
 	src = normalizeFnDecl(src)
 
-	if formatted, err = astcodec.FormatAST(cctx.FileSet, astcodec.SearchFileDecls(src, astcodec.FindFunctions)); err != nil {
-		return r, errorsx.Wrapf(err, "genieql.Structure %s", nodeInfo(cctx, pos))
-	}
-
 	log.Printf("genieql.Structure identified %s\n", nodeInfo(cctx, pos))
-	// cctx.Debugln(formatted)
 
 	uid := errorsx.Must(uuid.NewV4()).String()
 	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "StructureFromFile")
+	fndecls := astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions, astcodec.FilterFunctionsByName("main"))
 
 	return Result{
-		Bid:       uid,
-		Ident:     pos.Name.Name,
-		Generator: CompileGenFn(runmod(cctx, pos)),
-		Mod:       modgenfn(genmod(cctx, pos, formatted, content, src.Imports...)),
-		Priority:  PriorityStructure,
+		Bid:      uid,
+		Ident:    pos.Name.Name,
+		Mod:      modgenfn(genmod(cctx, pos, content, fndecls, src.Imports...)),
+		Priority: PriorityStructure,
 	}, nil
 }
