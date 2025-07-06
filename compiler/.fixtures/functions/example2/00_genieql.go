@@ -25,11 +25,11 @@ func Example2(gql genieql.Structure) {
 
 func Example1Scanner(genieql.Scanner, func(i Example1)) {}
 
-// func ExampleComboScanner(
-// 	gql genieql.Scanner,
-// 	pattern func(i int, ts time.Time, e1 Example1, e2 Example2),
-// ) {
-// }
+func ExampleComboScanner(
+	gql genieql.Scanner,
+	pattern func(i int, ts time.Time, e1 Example1, e2 Example2),
+) {
+}
 
 func Example1Insert1(
 	gql genieql.Insert,

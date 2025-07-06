@@ -216,19 +216,19 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 			return err
 		}
 
+		main := &ast.FuncDecl{
+			Name: ast.NewIdent("main"),
+			Type: &ast.FuncType{},
+			Body: &ast.BlockStmt{},
+		}
 		gmain := &ast.File{
 			Name: ast.NewIdent("main"),
 			Decls: []ast.Decl{
-				&ast.FuncDecl{
-					Name: ast.NewIdent("main"),
-					Type: &ast.FuncType{},
-					Body: &ast.BlockStmt{},
-				},
+				main,
 			},
 		}
-
 		loc := token.Position{}
-		main := astcodec.FileFindDecl[*ast.FuncDecl](gmain, astcodec.FindFunctionsByName("main"))
+
 		for _, ir := range g {
 			m, cause := modgenerate(ctx, t, ir.Bid, scratchpad, ir)
 			if cause != nil {
@@ -729,13 +729,13 @@ func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tr
 	dstdir := filepath.Join(cctx.Cache, cachemod)
 
 	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
-		log.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
+		cctx.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
 		return &generedmodule{
 			root:         tmpdir,
 			compiledpath: dstdir,
 		}, nil
 	} else {
-		cctx.Debugln("module not found in cache, compiling")
+		cctx.Println("module not found in cache, compiling")
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")
