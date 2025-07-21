@@ -212,6 +212,9 @@ github.com/pierrec/lz4/v4/internal/xxh32
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
 # github.com/pressly/goose/v3 v3.24.3
 ## explicit; go 1.23.0
 github.com/pressly/goose/v3
@@ -228,6 +231,11 @@ github.com/serenize/snaker
 # github.com/sethvargo/go-retry v0.3.0
 ## explicit; go 1.21
 github.com/sethvargo/go-retry
+# github.com/stretchr/testify v1.10.0
+## explicit; go 1.17
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
+github.com/stretchr/testify/require
 # github.com/tetratelabs/wazero v1.9.0
 ## explicit; go 1.22.0
 github.com/tetratelabs/wazero

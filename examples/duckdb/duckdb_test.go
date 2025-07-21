@@ -5,13 +5,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"path/filepath"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
-
 	_ "github.com/marcboeker/go-duckdb/v2"
 )
 
@@ -35,11 +35,11 @@ func ExampleExample1Insert() {
 		SmallintField:  4,
 		TextField:      "hello world",
 		UintegerField:  2,
-		UbigintField:   5,
+		UbigintField:   math.MaxUint64,
 		ByteArrayField: []byte{0x2},
 		// IntervalField:  time.Minute,
 		// Int2Array:      []int{9},
-		// InetField:     net.IPv6interfacelocalallnodes,
+		// InetField: netip.IPv6LinkLocalAllNodes(),
 	}
 
 	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
@@ -56,7 +56,7 @@ func ExampleExample1Insert() {
 		"binary", bytes.Compare(res.ByteArrayField, ex.ByteArrayField),
 		"ubigint", res.UbigintField == ex.UbigintField,
 		// "int array", slices.Compare(res.Int2Array, ex.Int2Array),
-		// "ip", res.InetField.Equal(net.IPv6interfacelocalallnodes),
+		// "ip", res.InetField.Compare(netip.IPv6LinkLocalAllNodes()) == 0,
 	)
 	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0 ubigint true
 }
