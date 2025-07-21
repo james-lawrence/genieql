@@ -16,6 +16,7 @@ const (
 	float64ExprString = "float64"
 	timeExprString    = "time.Time"
 	durationExpr      = "time.Duration"
+	netipAddrExpr     = "netip.Addr"
 	ipExpr            = "net.IP"
 	macExpr           = "net.HardwareAddr"
 	cidrExpr          = "net.IPNet"
