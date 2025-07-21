@@ -22,5 +22,9 @@ func (t *bootstrap) configure(app *kingpin.Application) *kingpin.CmdClause {
 		bootstrap.Command("package", "generate the boilerplate for each package provided"),
 	)
 
+	(&bootstrapCustom{}).configure(
+		bootstrap.Command("driver", "create a driver customization config"),
+	)
+
 	return bootstrap
 }
