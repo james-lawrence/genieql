@@ -9,7 +9,6 @@ const DuckDB = "github.com/marcboeker/go-duckdb"
 
 // implements the duckdb driver https://github.com/marcboeker/go-duckdb
 func init() {
-	// genieql.DebugColumnDefinitions(ddb...)
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 
@@ -21,17 +20,6 @@ const ddbDecodeUUID = `func() {
 			{{ .To | autodereference | expr }} = uid.String()
 		}
 	}
-}`
-
-const ddbDecodeINET = `func() {
-	{{ .To | expr }} = net.ParseIP({{ .From | expr }}.String)
-	// {{ .To | expr }} = net.IP({{ .From | expr }})
-}`
-
-const ddbEncodeINET = `func() {
-	{{ .To | expr }}.Valid = true
-	{{ .To | expr }}.String = {{ .From | expr }}.String()
-	// {{ .To | expr }} = []byte({{ .From | expr }})
 }`
 
 const ddbDecodeBinary = `func() {
@@ -154,14 +142,6 @@ var ddb = []genieql.ColumnDefinition{
 		Native:     timeExprString,
 		Decode:     StdlibDecodeTime,
 		Encode:     StdlibEncodeTime,
-	},
-	{
-		DBTypeName: "INET",
-		Type:       "INET",
-		ColumnType: "sql.NullString",
-		Native:     ipExpr,
-		Decode:     ddbDecodeINET,
-		Encode:     ddbEncodeINET,
 	},
 	{
 		DBTypeName: "BINARY",

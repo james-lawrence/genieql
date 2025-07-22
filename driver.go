@@ -114,7 +114,7 @@ func (t driverRegistry) LookupDriver(name string) (Driver, error) {
 
 func DebugColumnDefinitions(supported ...ColumnDefinition) {
 	for _, typedef := range supported {
-		log.Println("column definition debug", typedef.Type, typedef.DBTypeName)
+		log.Println("column definition debug", typedef.Type, typedef.DBTypeName, spew.Sdump(typedef))
 	}
 }
 
@@ -146,6 +146,10 @@ func (t driver) LookupType(l string) (ColumnDefinition, error) {
 
 func (t *driver) AddColumnDefinitions(supported ...ColumnDefinition) {
 	mapped := make(map[string]ColumnDefinition, len(supported)+len(t.supported))
+	for k, v := range t.supported {
+		mapped[k] = v
+	}
+
 	for _, typedef := range supported {
 		mapped[typedef.Type] = typedef
 		if typedef.DBTypeName != "" {
@@ -153,8 +157,7 @@ func (t *driver) AddColumnDefinitions(supported ...ColumnDefinition) {
 		}
 	}
 
-	for k, v := range t.supported {
-		mapped[k] = v
-	}
 	t.supported = mapped
+
+	// DebugColumnDefinitions(slicesx.FromIter(maps.Values(t.supported))...)
 }

@@ -1,5 +1,7 @@
 package slicesx
 
+import "iter"
+
 // Remove elements from the slice where the predicate returns true.
 func Remove[T any](remove func(T) bool, items ...T) []T {
 	result := make([]T, 0, len(items))
@@ -118,4 +120,12 @@ func Reduce[T, X any](m func(X, T) X, z X, items ...T) (zero X) {
 	}
 
 	return z
+}
+
+func FromIter[T any](m iter.Seq[T]) []T {
+	r := make([]T, 0, 128)
+	for v := range m {
+		r = append(r, v)
+	}
+	return r
 }
