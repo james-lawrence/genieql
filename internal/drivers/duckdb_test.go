@@ -48,7 +48,7 @@ func TestDuckdb(t *testing.T) {
 		})
 
 		t.Run("time.Time (TIMESTAMPZ)", func(t *testing.T) {
-			testfn(t, "TIMESTAMPZ", "sql.NullTime", nil)
+			testfn(t, "TIMESTAMPZ", "ducktype.NullTime", nil)
 		})
 
 		t.Run("uuid (UUID)", func(t *testing.T) {

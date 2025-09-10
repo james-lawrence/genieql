@@ -80,6 +80,13 @@ func Example1Update3(
 	gql = gql.Query(`UPDATE example2 SET WHERE id = {i} AND timestamp = {ts} RETURNING ` + Example1ScannerStaticColumns)
 }
 
+func Example1Update4(
+	gql genieql.Function,
+	pattern func(ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStatic,
+) {
+	gql = gql.Query(`UPDATE example1 SET timestamp_field = {e.TimestampField} RETURNING ` + Example1ScannerStaticColumns)
+}
+
 // test simple function generation with field replacement
 func Example1FindByBigintField(
 	gql genieql.Function,

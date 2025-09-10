@@ -1,4 +1,4 @@
-FROM ubuntu:oracular
+FROM ubuntu:plucky
 ARG DEBIAN_FRONTEND=noninteractive
 ARG GOBIN=/usr/local/bin
 
@@ -11,11 +11,11 @@ RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmo
 RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 RUN apt-get update
 RUN apt-get install -y dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
-RUN apt-get install -y golang-1.23 podman rsync vim dpkg tree pinentry-tty
+RUN apt-get install -y golang-1.24 podman rsync vim dpkg tree pinentry-tty
 RUN apt-get install -y libpq5 postgresql-16 postgresql-client-16 postgresql-contrib-16 postgresql-client-common
 RUN apt-get install -y eg
 
-RUN ln -s /usr/lib/go-1.23/bin/go /usr/local/bin/go
+RUN ln -s /usr/lib/go-1.24/bin/go /usr/local/bin/go
 
 RUN systemctl enable postgresql
 
