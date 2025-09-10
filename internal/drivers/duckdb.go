@@ -12,23 +12,50 @@ func init() {
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
 }
 
-const ddbDecodeUUID = `func() {
-	if {{ .From | expr }}.Valid {
-		if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
-			return err
-		} else {
-			{{ .To | autodereference | expr }} = uid.String()
+const (
+	ddbDecodeUUID = `func() {
+		if {{ .From | expr }}.Valid {
+			if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
+				return err
+			} else {
+				{{ .To | autodereference | expr }} = uid.String()
+			}
 		}
-	}
-}`
+	}`
 
-const ddbDecodeBinary = `func() {
-	{{ .To | expr }} ={{ .From | expr }}
-}`
+	ddbEncodeTime = `func() {
+		switch {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }} {
+		case time.Unix(math.MaxInt64-62135596800, 999999999):
+			{{ .To | expr }}.Infinity()
+		case time.Unix(math.MinInt64, math.MinInt64):
+			{{ .To | expr }}.NegativeInfinity()
+		default:
+			{{ .To | expr }}.Status = ducktype.Present
+			{{ .To | expr }}.Time = {{ .From | localident | expr }}
+		}
+	}`
 
-const ddbEncodeBinary = `func() {
-	{{ .To | expr }} = {{ .From | expr }}
-}`
+	ddbDecodeTime = `func() {
+		switch {{ .From | expr }}.InfinityModifier {
+		case ducktype.Infinity:
+			tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
+			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+		case ducktype.NegativeInfinity:
+			tmp := time.Unix(math.MinInt64, math.MinInt64)
+			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+		default:
+			{{ .To | autodereference | expr }} = {{ .From | localident | expr }}.Time
+		}
+	}`
+
+	ddbDecodeBinary = `func() {
+		{{ .To | expr }} ={{ .From | expr }}
+	}`
+
+	ddbEncodeBinary = `func() {
+		{{ .To | expr }} = {{ .From | expr }}
+	}`
+)
 
 var ddb = []genieql.ColumnDefinition{
 	{
@@ -138,10 +165,10 @@ var ddb = []genieql.ColumnDefinition{
 	{
 		DBTypeName: "TIMESTAMPZ",
 		Type:       "TIMESTAMPZ",
-		ColumnType: "sql.NullTime",
+		ColumnType: "ducktype.NullTime",
 		Native:     timeExprString,
-		Decode:     StdlibDecodeTime,
-		Encode:     StdlibEncodeTime,
+		Decode:     ddbDecodeTime,
+		Encode:     ddbEncodeTime,
 	},
 	{
 		DBTypeName: "BINARY",

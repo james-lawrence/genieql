@@ -6,9 +6,11 @@ package example2
 import (
 	"context"
 	"database/sql"
+	"math"
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/james-lawrence/genieql/ducktype"
 	"github.com/james-lawrence/genieql/internal/sqlx"
 )
 
@@ -100,8 +102,8 @@ func (t example1ScannerStatic) Scan(i *Example1) error {
 		c6  sql.NullFloat64
 		c7  sql.NullInt16
 		c8  sql.NullString
-		c9  sql.NullTime
-		c10 sql.Null[uint64]
+		c9  ducktype.NullTime
+		c10 ducktype.NullUint64
 		c11 sql.NullInt64
 		c12 sql.NullString
 	)
@@ -152,9 +154,15 @@ func (t example1ScannerStatic) Scan(i *Example1) error {
 		i.TextField = tmp
 	}
 
-	if c9.Valid {
-		tmp := c9.Time
+	switch c9.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		i.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		i.TimestampField = tmp
+	default:
+		i.TimestampField = c9.Time
 	}
 
 	if c10.Valid {
@@ -222,8 +230,8 @@ func (t Example1ScannerStaticRow) Scan(i *Example1) error {
 		c6  sql.NullFloat64
 		c7  sql.NullInt16
 		c8  sql.NullString
-		c9  sql.NullTime
-		c10 sql.Null[uint64]
+		c9  ducktype.NullTime
+		c10 ducktype.NullUint64
 		c11 sql.NullInt64
 		c12 sql.NullString
 	)
@@ -278,9 +286,15 @@ func (t Example1ScannerStaticRow) Scan(i *Example1) error {
 		i.TextField = tmp
 	}
 
-	if c9.Valid {
-		tmp := c9.Time
+	switch c9.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		i.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		i.TimestampField = tmp
+	default:
+		i.TimestampField = c9.Time
 	}
 
 	if c10.Valid {
@@ -358,8 +372,8 @@ func (t example1ScannerDynamic) Scan(i *Example1) error {
 		c6      sql.NullFloat64
 		c7      sql.NullInt16
 		c8      sql.NullString
-		c9      sql.NullTime
-		c10     sql.Null[uint64]
+		c9      ducktype.NullTime
+		c10     ducktype.NullUint64
 		c11     sql.NullInt64
 		c12     sql.NullString
 	)
@@ -461,9 +475,15 @@ func (t example1ScannerDynamic) Scan(i *Example1) error {
 			}
 
 		case cn9:
-			if c9.Valid {
-				tmp := c9.Time
+			switch c9.InfinityModifier {
+			case ducktype.Infinity:
+				tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 				i.TimestampField = tmp
+			case ducktype.NegativeInfinity:
+				tmp := time.Unix(math.MinInt64, math.MinInt64)
+				i.TimestampField = tmp
+			default:
+				i.TimestampField = c9.Time
 			}
 
 		case cn10:
@@ -570,13 +590,13 @@ func (t exampleComboScannerStatic) Scan(i *int, ts *time.Time, e1 *Example1, e2 
 		c8  sql.NullFloat64
 		c9  sql.NullInt16
 		c10 sql.NullString
-		c11 sql.NullTime
-		c12 sql.Null[uint64]
+		c11 ducktype.NullTime
+		c12 ducktype.NullUint64
 		c13 sql.NullInt64
 		c14 sql.NullString
 		c15 sql.NullBool
 		c16 sql.NullString
-		c17 sql.NullTime
+		c17 ducktype.NullTime
 		c18 sql.NullString
 	)
 
@@ -636,9 +656,15 @@ func (t exampleComboScannerStatic) Scan(i *int, ts *time.Time, e1 *Example1, e2 
 		e1.TextField = tmp
 	}
 
-	if c11.Valid {
-		tmp := c11.Time
+	switch c11.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e1.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e1.TimestampField = tmp
+	default:
+		e1.TimestampField = c11.Time
 	}
 
 	if c12.Valid {
@@ -669,9 +695,15 @@ func (t exampleComboScannerStatic) Scan(i *int, ts *time.Time, e1 *Example1, e2 
 		e2.TextField = tmp
 	}
 
-	if c17.Valid {
-		tmp := c17.Time
+	switch c17.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e2.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e2.TimestampField = tmp
+	default:
+		e2.TimestampField = c17.Time
 	}
 
 	if c18.Valid {
@@ -731,13 +763,13 @@ func (t ExampleComboScannerStaticRow) Scan(i *int, ts *time.Time, e1 *Example1, 
 		c8  sql.NullFloat64
 		c9  sql.NullInt16
 		c10 sql.NullString
-		c11 sql.NullTime
-		c12 sql.Null[uint64]
+		c11 ducktype.NullTime
+		c12 ducktype.NullUint64
 		c13 sql.NullInt64
 		c14 sql.NullString
 		c15 sql.NullBool
 		c16 sql.NullString
-		c17 sql.NullTime
+		c17 ducktype.NullTime
 		c18 sql.NullString
 	)
 
@@ -801,9 +833,15 @@ func (t ExampleComboScannerStaticRow) Scan(i *int, ts *time.Time, e1 *Example1, 
 		e1.TextField = tmp
 	}
 
-	if c11.Valid {
-		tmp := c11.Time
+	switch c11.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e1.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e1.TimestampField = tmp
+	default:
+		e1.TimestampField = c11.Time
 	}
 
 	if c12.Valid {
@@ -834,9 +872,15 @@ func (t ExampleComboScannerStaticRow) Scan(i *int, ts *time.Time, e1 *Example1, 
 		e2.TextField = tmp
 	}
 
-	if c17.Valid {
-		tmp := c17.Time
+	switch c17.InfinityModifier {
+	case ducktype.Infinity:
+		tmp := time.Unix(math.MaxInt64-62135596800, 999999999)
 		e2.TimestampField = tmp
+	case ducktype.NegativeInfinity:
+		tmp := time.Unix(math.MinInt64, math.MinInt64)
+		e2.TimestampField = tmp
+	default:
+		e2.TimestampField = c17.Time
 	}
 
 	if c18.Valid {
@@ -862,18 +906,18 @@ const Example1Insert1StaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,DEF
 // Example1Insert1Explode generated by genieql
 func Example1Insert1Explode(a *Example1) ([]interface{}, error) {
 	var (
-		c0  sql.NullInt64    // bigint_field
-		c1  sql.NullBool     // bool_field
-		c2  []byte           // byte_array_field
-		c3  sql.NullFloat64  // double_precision_field
-		c4  sql.NullInt16    // int2_field
-		c5  sql.NullInt32    // int_field
-		c6  sql.NullFloat64  // real_field
-		c7  sql.NullInt16    // smallint_field
-		c8  sql.NullString   // text_field
-		c9  sql.NullTime     // timestamp_field
-		c10 sql.Null[uint64] // ubigint_field
-		c11 sql.NullInt64    // uinteger_field
+		c0  sql.NullInt64       // bigint_field
+		c1  sql.NullBool        // bool_field
+		c2  []byte              // byte_array_field
+		c3  sql.NullFloat64     // double_precision_field
+		c4  sql.NullInt16       // int2_field
+		c5  sql.NullInt32       // int_field
+		c6  sql.NullFloat64     // real_field
+		c7  sql.NullInt16       // smallint_field
+		c8  sql.NullString      // text_field
+		c9  ducktype.NullTime   // timestamp_field
+		c10 ducktype.NullUint64 // ubigint_field
+		c11 sql.NullInt64       // uinteger_field
 	)
 
 	c0.Valid = true
@@ -902,8 +946,15 @@ func Example1Insert1Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	c9.Valid = true
-	c9.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c9.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c9.NegativeInfinity()
+	default:
+		c9.Status = ducktype.Present
+		c9.Time = a.TimestampField
+	}
 
 	c10.Valid = true
 	c10.V = a.UbigintField
@@ -918,17 +969,17 @@ func Example1Insert1Explode(a *Example1) ([]interface{}, error) {
 func Example1Insert1(ctx context.Context, q sqlx.Queryer, a Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,DEFAULT) RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
 	var (
-		c0  sql.NullInt64    // bigint_field
-		c1  sql.NullBool     // bool_field
-		c2  []byte           // byte_array_field
-		c3  sql.NullFloat64  // double_precision_field
-		c4  sql.NullInt16    // int2_field
-		c5  sql.NullInt32    // int_field
-		c6  sql.NullFloat64  // real_field
-		c7  sql.NullInt16    // smallint_field
-		c8  sql.NullString   // text_field
-		c9  sql.NullTime     // timestamp_field
-		c10 sql.Null[uint64] // ubigint_field
+		c0  sql.NullInt64       // bigint_field
+		c1  sql.NullBool        // bool_field
+		c2  []byte              // byte_array_field
+		c3  sql.NullFloat64     // double_precision_field
+		c4  sql.NullInt16       // int2_field
+		c5  sql.NullInt32       // int_field
+		c6  sql.NullFloat64     // real_field
+		c7  sql.NullInt16       // smallint_field
+		c8  sql.NullString      // text_field
+		c9  ducktype.NullTime   // timestamp_field
+		c10 ducktype.NullUint64 // ubigint_field
 		c11 sql.NullInt64
 	)
 	c0.Valid = true
@@ -948,8 +999,15 @@ func Example1Insert1(ctx context.Context, q sqlx.Queryer, a Example1) Example1Sc
 	c7.Int16 = int16(a.SmallintField)
 	c8.Valid = true
 	c8.String = a.TextField
-	c9.Valid = true
-	c9.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c9.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c9.NegativeInfinity()
+	default:
+		c9.Status = ducktype.Present
+		c9.Time = a.TimestampField
+	}
 	c10.Valid = true
 	c10.V = a.UbigintField
 	c11.Valid = true
@@ -963,18 +1021,18 @@ const Example1Insert2StaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,DEF
 // Example1Insert2Explode generated by genieql
 func Example1Insert2Explode(a *Example1) ([]interface{}, error) {
 	var (
-		c0  sql.NullInt64    // bigint_field
-		c1  sql.NullBool     // bool_field
-		c2  []byte           // byte_array_field
-		c3  sql.NullFloat64  // double_precision_field
-		c4  sql.NullInt16    // int2_field
-		c5  sql.NullInt32    // int_field
-		c6  sql.NullFloat64  // real_field
-		c7  sql.NullInt16    // smallint_field
-		c8  sql.NullString   // text_field
-		c9  sql.NullTime     // timestamp_field
-		c10 sql.Null[uint64] // ubigint_field
-		c11 sql.NullInt64    // uinteger_field
+		c0  sql.NullInt64       // bigint_field
+		c1  sql.NullBool        // bool_field
+		c2  []byte              // byte_array_field
+		c3  sql.NullFloat64     // double_precision_field
+		c4  sql.NullInt16       // int2_field
+		c5  sql.NullInt32       // int_field
+		c6  sql.NullFloat64     // real_field
+		c7  sql.NullInt16       // smallint_field
+		c8  sql.NullString      // text_field
+		c9  ducktype.NullTime   // timestamp_field
+		c10 ducktype.NullUint64 // ubigint_field
+		c11 sql.NullInt64       // uinteger_field
 	)
 
 	c0.Valid = true
@@ -1003,8 +1061,15 @@ func Example1Insert2Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	c9.Valid = true
-	c9.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c9.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c9.NegativeInfinity()
+	default:
+		c9.Status = ducktype.Present
+		c9.Time = a.TimestampField
+	}
 
 	c10.Valid = true
 	c10.V = a.UbigintField
@@ -1019,17 +1084,17 @@ func Example1Insert2Explode(a *Example1) ([]interface{}, error) {
 func Example1Insert2(ctx context.Context, q sqlx.Queryer, a Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,DEFAULT) RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field"`
 	var (
-		c0  sql.NullInt64    // bigint_field
-		c1  sql.NullBool     // bool_field
-		c2  []byte           // byte_array_field
-		c3  sql.NullFloat64  // double_precision_field
-		c4  sql.NullInt16    // int2_field
-		c5  sql.NullInt32    // int_field
-		c6  sql.NullFloat64  // real_field
-		c7  sql.NullInt16    // smallint_field
-		c8  sql.NullString   // text_field
-		c9  sql.NullTime     // timestamp_field
-		c10 sql.Null[uint64] // ubigint_field
+		c0  sql.NullInt64       // bigint_field
+		c1  sql.NullBool        // bool_field
+		c2  []byte              // byte_array_field
+		c3  sql.NullFloat64     // double_precision_field
+		c4  sql.NullInt16       // int2_field
+		c5  sql.NullInt32       // int_field
+		c6  sql.NullFloat64     // real_field
+		c7  sql.NullInt16       // smallint_field
+		c8  sql.NullString      // text_field
+		c9  ducktype.NullTime   // timestamp_field
+		c10 ducktype.NullUint64 // ubigint_field
 		c11 sql.NullInt64
 	)
 	c0.Valid = true
@@ -1049,8 +1114,15 @@ func Example1Insert2(ctx context.Context, q sqlx.Queryer, a Example1) Example1Sc
 	c7.Int16 = int16(a.SmallintField)
 	c8.Valid = true
 	c8.String = a.TextField
-	c9.Valid = true
-	c9.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c9.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c9.NegativeInfinity()
+	default:
+		c9.Status = ducktype.Present
+		c9.Time = a.TimestampField
+	}
 	c10.Valid = true
 	c10.V = a.UbigintField
 	c11.Valid = true
@@ -1064,18 +1136,18 @@ const Example1Insert3StaticColumns = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,DEF
 // Example1Insert3Explode generated by genieql
 func Example1Insert3Explode(a *Example1) ([]interface{}, error) {
 	var (
-		c0  sql.NullInt64    // bigint_field
-		c1  sql.NullBool     // bool_field
-		c2  []byte           // byte_array_field
-		c3  sql.NullFloat64  // double_precision_field
-		c4  sql.NullInt16    // int2_field
-		c5  sql.NullInt32    // int_field
-		c6  sql.NullFloat64  // real_field
-		c7  sql.NullInt16    // smallint_field
-		c8  sql.NullString   // text_field
-		c9  sql.NullTime     // timestamp_field
-		c10 sql.Null[uint64] // ubigint_field
-		c11 sql.NullInt64    // uinteger_field
+		c0  sql.NullInt64       // bigint_field
+		c1  sql.NullBool        // bool_field
+		c2  []byte              // byte_array_field
+		c3  sql.NullFloat64     // double_precision_field
+		c4  sql.NullInt16       // int2_field
+		c5  sql.NullInt32       // int_field
+		c6  sql.NullFloat64     // real_field
+		c7  sql.NullInt16       // smallint_field
+		c8  sql.NullString      // text_field
+		c9  ducktype.NullTime   // timestamp_field
+		c10 ducktype.NullUint64 // ubigint_field
+		c11 sql.NullInt64       // uinteger_field
 	)
 
 	c0.Valid = true
@@ -1104,8 +1176,15 @@ func Example1Insert3Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	c9.Valid = true
-	c9.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c9.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c9.NegativeInfinity()
+	default:
+		c9.Status = ducktype.Present
+		c9.Time = a.TimestampField
+	}
 
 	c10.Valid = true
 	c10.V = a.UbigintField
@@ -1120,18 +1199,18 @@ func Example1Insert3Explode(a *Example1) ([]interface{}, error) {
 func Example1Insert3(ctx context.Context, q sqlx.Queryer, id int, a Example1) Example1ScannerStaticRow {
 	const query = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,DEFAULT) ON CONFLICT id = $1 AND b = $2 WHERE id = $1 RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field"`
 	var (
-		c0  sql.NullInt64    // id
-		c1  sql.NullInt64    // bigint_field
-		c2  sql.NullBool     // bool_field
-		c3  []byte           // byte_array_field
-		c4  sql.NullFloat64  // double_precision_field
-		c5  sql.NullInt16    // int2_field
-		c6  sql.NullInt32    // int_field
-		c7  sql.NullFloat64  // real_field
-		c8  sql.NullInt16    // smallint_field
-		c9  sql.NullString   // text_field
-		c10 sql.NullTime     // timestamp_field
-		c11 sql.Null[uint64] // ubigint_field
+		c0  sql.NullInt64       // id
+		c1  sql.NullInt64       // bigint_field
+		c2  sql.NullBool        // bool_field
+		c3  []byte              // byte_array_field
+		c4  sql.NullFloat64     // double_precision_field
+		c5  sql.NullInt16       // int2_field
+		c6  sql.NullInt32       // int_field
+		c7  sql.NullFloat64     // real_field
+		c8  sql.NullInt16       // smallint_field
+		c9  sql.NullString      // text_field
+		c10 ducktype.NullTime   // timestamp_field
+		c11 ducktype.NullUint64 // ubigint_field
 		c12 sql.NullInt64
 	)
 	c0.Valid = true
@@ -1153,8 +1232,15 @@ func Example1Insert3(ctx context.Context, q sqlx.Queryer, id int, a Example1) Ex
 	c8.Int16 = int16(a.SmallintField)
 	c9.Valid = true
 	c9.String = a.TextField
-	c10.Valid = true
-	c10.Time = a.TimestampField
+	switch a.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c10.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c10.NegativeInfinity()
+	default:
+		c10.Status = ducktype.Present
+		c10.Time = a.TimestampField
+	}
 	c11.Valid = true
 	c11.V = a.UbigintField
 	c12.Valid = true
@@ -1205,7 +1291,7 @@ func (t *example1InsertBatch1) Next() bool {
 }
 
 func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Example1, bool) {
-	transform := func(a Example1) (c0 sql.NullInt64, c1 sql.NullBool, c2 []byte, c3 sql.NullFloat64, c4 sql.NullInt16, c5 sql.NullInt32, c6 sql.NullFloat64, c7 sql.NullInt16, c8 sql.NullString, c9 sql.NullTime, c10 sql.Null[uint64], c11 sql.NullInt64, c12 sql.NullString, err error) {
+	transform := func(a Example1) (c0 sql.NullInt64, c1 sql.NullBool, c2 []byte, c3 sql.NullFloat64, c4 sql.NullInt16, c5 sql.NullInt32, c6 sql.NullFloat64, c7 sql.NullInt16, c8 sql.NullString, c9 ducktype.NullTime, c10 ducktype.NullUint64, c11 sql.NullInt64, c12 sql.NullString, err error) {
 		c0.Valid = true
 		c0.Int64 = int64(a.BigintField)
 		c1.Valid = true
@@ -1223,8 +1309,15 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 		c7.Int16 = int16(a.SmallintField)
 		c8.Valid = true
 		c8.String = a.TextField
-		c9.Valid = true
-		c9.Time = a.TimestampField
+		switch a.TimestampField {
+		case time.Unix(math.MaxInt64-62135596800, 999999999):
+			c9.Infinity()
+		case time.Unix(math.MinInt64, math.MinInt64):
+			c9.NegativeInfinity()
+		default:
+			c9.Status = ducktype.Present
+			c9.Time = a.TimestampField
+		}
 		c10.Valid = true
 		c10.V = a.UbigintField
 		c11.Valid = true
@@ -1248,8 +1341,8 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 			r0c6  sql.NullFloat64
 			r0c7  sql.NullInt16
 			r0c8  sql.NullString
-			r0c9  sql.NullTime
-			r0c10 sql.Null[uint64]
+			r0c9  ducktype.NullTime
+			r0c10 ducktype.NullUint64
 			r0c11 sql.NullInt64
 			r0c12 sql.NullString
 			err   error
@@ -1270,8 +1363,8 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 			r0c6  sql.NullFloat64
 			r0c7  sql.NullInt16
 			r0c8  sql.NullString
-			r0c9  sql.NullTime
-			r0c10 sql.Null[uint64]
+			r0c9  ducktype.NullTime
+			r0c10 ducktype.NullUint64
 			r0c11 sql.NullInt64
 			r0c12 sql.NullString
 			r1c0  sql.NullInt64
@@ -1283,8 +1376,8 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 			r1c6  sql.NullFloat64
 			r1c7  sql.NullInt16
 			r1c8  sql.NullString
-			r1c9  sql.NullTime
-			r1c10 sql.Null[uint64]
+			r1c9  ducktype.NullTime
+			r1c10 ducktype.NullUint64
 			r1c11 sql.NullInt64
 			r1c12 sql.NullString
 			err   error
@@ -1329,6 +1422,22 @@ func Example1Update3(ctx context.Context, q sqlx.Queryer, i int, ts time.Time) E
 	c1.Valid = true
 	c1.Time = ts
 	return NewExample1ScannerStatic(q.QueryContext(ctx, query, c0, c1))
+}
+
+// Example1Update4 generated by genieql
+func Example1Update4(ctx context.Context, q sqlx.Queryer, e Example1) Example1Scanner {
+	const query = `UPDATE example1 SET timestamp_field = $1 RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
+	var c0 ducktype.NullTime // timestamp_field
+	switch e.TimestampField {
+	case time.Unix(math.MaxInt64-62135596800, 999999999):
+		c0.Infinity()
+	case time.Unix(math.MinInt64, math.MinInt64):
+		c0.NegativeInfinity()
+	default:
+		c0.Status = ducktype.Present
+		c0.Time = e.TimestampField
+	}
+	return NewExample1ScannerStatic(q.QueryContext(ctx, query, c0))
 }
 
 // Example1FindByBigintField generated by genieql

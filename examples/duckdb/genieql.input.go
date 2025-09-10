@@ -38,3 +38,10 @@ func Example1FindByID(
 ) {
 	gql = gql.Query(`SELECT ` + Example1ScannerStaticColumns + ` FROM example1 WHERE "uuid_field" = {id}`)
 }
+
+func Example1UpdateTime(
+	gql genieql.Function,
+	pattern func(ctx context.Context, q sqlx.Queryer, e Example1) NewExample1ScannerStaticRow,
+) {
+	gql = gql.Query(`UPDATE example1 SET timestamp_field = {e.TimestampField} RETURNING ` + Example1ScannerStaticColumns)
+}
