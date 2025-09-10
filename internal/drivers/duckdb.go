@@ -24,16 +24,16 @@ const (
 	}`
 
 	ddbEncodeTime = `func() {
-		switch {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }} {
-		case time.Unix(math.MaxInt64-62135596800, 999999999):
-			{{ .To | expr }}.Infinity()
-		case time.Unix(math.MinInt64, math.MinInt64):
-			{{ .To | expr }}.NegativeInfinity()
-		default:
-			{{ .To | expr }}.Status = ducktype.Present
-			{{ .To | expr }}.Time = {{ .From | localident | expr }}
-		}
-	}`
+      switch ts := {{ if .Column.Definition.Nullable }}*{{ end }}{{ .From | localident | expr }}; {
+      case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
+        {{ .To | expr }}.Infinity()
+      case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
+        {{ .To | expr }}.NegativeInfinity()
+      default:
+        {{ .To | expr }}.Status = ducktype.Present
+        {{ .To | expr }}.Time = {{ .From | localident | expr }}
+      }
+    }`
 
 	ddbDecodeTime = `func() {
 		switch {{ .From | expr }}.InfinityModifier {

@@ -650,10 +650,10 @@ func Example1InsertExplode(e *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = e.TextField
 
-	switch e.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := e.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -708,10 +708,10 @@ func Example1Insert(ctx context.Context, q sqlx.Queryer, e Example1) Example1Sca
 	c7.Int16 = int16(e.SmallintField)
 	c8.Valid = true
 	c8.String = e.TextField
-	switch e.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := e.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -741,10 +741,10 @@ func Example1UpdateTime(
 		Queryer, e Example1) Example1ScannerStaticRow {
 	const query = `UPDATE example1 SET timestamp_field = $1 RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
 	var c0 ducktype.NullTime // timestamp_field
-	switch e.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := e.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c0.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c0.NegativeInfinity()
 	default:
 		c0.Status = ducktype.Present

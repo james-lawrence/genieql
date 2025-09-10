@@ -946,10 +946,10 @@ func Example1Insert1Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -999,10 +999,10 @@ func Example1Insert1(ctx context.Context, q sqlx.Queryer, a Example1) Example1Sc
 	c7.Int16 = int16(a.SmallintField)
 	c8.Valid = true
 	c8.String = a.TextField
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -1061,10 +1061,10 @@ func Example1Insert2Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -1114,10 +1114,10 @@ func Example1Insert2(ctx context.Context, q sqlx.Queryer, a Example1) Example1Sc
 	c7.Int16 = int16(a.SmallintField)
 	c8.Valid = true
 	c8.String = a.TextField
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -1176,10 +1176,10 @@ func Example1Insert3Explode(a *Example1) ([]interface{}, error) {
 	c8.Valid = true
 	c8.String = a.TextField
 
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c9.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c9.NegativeInfinity()
 	default:
 		c9.Status = ducktype.Present
@@ -1232,10 +1232,10 @@ func Example1Insert3(ctx context.Context, q sqlx.Queryer, id int, a Example1) Ex
 	c8.Int16 = int16(a.SmallintField)
 	c9.Valid = true
 	c9.String = a.TextField
-	switch a.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := a.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c10.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c10.NegativeInfinity()
 	default:
 		c10.Status = ducktype.Present
@@ -1309,10 +1309,10 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 		c7.Int16 = int16(a.SmallintField)
 		c8.Valid = true
 		c8.String = a.TextField
-		switch a.TimestampField {
-		case time.Unix(math.MaxInt64-62135596800, 999999999):
+		switch ts := a.TimestampField; {
+		case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 			c9.Infinity()
-		case time.Unix(math.MinInt64, math.MinInt64):
+		case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 			c9.NegativeInfinity()
 		default:
 			c9.Status = ducktype.Present
@@ -1428,10 +1428,10 @@ func Example1Update3(ctx context.Context, q sqlx.Queryer, i int, ts time.Time) E
 func Example1Update4(ctx context.Context, q sqlx.Queryer, e Example1) Example1Scanner {
 	const query = `UPDATE example1 SET timestamp_field = $1 RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","int2_field","int_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
 	var c0 ducktype.NullTime // timestamp_field
-	switch e.TimestampField {
-	case time.Unix(math.MaxInt64-62135596800, 999999999):
+	switch ts := e.TimestampField; {
+	case time.Unix(math.MaxInt64-62135596800, 999999999).Equal(ts):
 		c0.Infinity()
-	case time.Unix(math.MinInt64, math.MinInt64):
+	case time.Unix(math.MinInt64, math.MinInt64).Equal(ts):
 		c0.NegativeInfinity()
 	default:
 		c0.Status = ducktype.Present
