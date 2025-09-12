@@ -207,8 +207,8 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("BINARY")
 	case "BLOB":
 		return astutil.Expr("BLOB")
-	// case "INET":
-	// 	return astutil.Expr("INET")
+	case "INET":
+		return astutil.Expr("INET")
 	case "UUID":
 		return astutil.Expr("UUID")
 	default:
