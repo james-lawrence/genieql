@@ -256,10 +256,10 @@ func extractOptionsFromParams(ctx Context, defaultedSet []string, fields ...*ast
 }
 
 func extractOptionsFromResult(ctx Context, field *ast.Field) (QueryFunctionOption, error) {
-	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
-	scanner, err := util.FindFunction(func(s string) bool {
+	util := genieql.NewUtils(ctx.FileSet)
+	scanner, err := util.FindFunctionInPackages(func(s string) bool {
 		return s == types.ExprString(field.Type)
-	})
+	}, ctx.CachedPackages()...)
 
 	return QFOScanner(scanner), err
 }
