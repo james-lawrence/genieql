@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"sync"
 
 	"github.com/alecthomas/kingpin"
 	_ "github.com/jackc/pgx/v5"
@@ -14,6 +16,8 @@ import (
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/debugx"
+	"github.com/james-lawrence/genieql/internal/envx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/stringsx"
 
@@ -37,6 +41,9 @@ func main() {
 		}
 	}()
 
+	var (
+		pmode string
+	)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	bi := errorsx.Must(genieql.NewBuildInfo())
@@ -51,20 +58,26 @@ func main() {
 	}
 
 	duckdb := duckdb{}
-	// go debugx.OnSignal(context.Background(), func(ctx context.Context) error {
-	// 	dctx, done := context.WithTimeout(ctx, envx.Duration(30*time.Second, "GENIEQL_PROFILING_DURATION"))
-	// 	defer done()
-	// 	switch envx.String("cpu", "GENIEQL_PROFILING_STRATEGY") {
-	// 	case "heap":
-	// 		return debugx.Heap(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
-	// 	case "mem":
-	// 		return debugx.Memory(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
-	// 	default:
-	// 		return debugx.CPU(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
-	// 	}
-	// }, syscall.SIGUSR1)
+
+	bg := &sync.WaitGroup{}
+	defer bg.Wait()
+
+	ctx, done := context.WithCancelCause(context.Background())
+	defer func() {
+		errorsx.Log(errorsx.Ignore(context.Cause(ctx), context.Canceled))
+	}()
+	defer done(nil)
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
+	app.Flag("profile", "enable profiler with the specified mode: trace,heap,mem,alloc,block,cpu").Short('p').Action(func(pc *kingpin.ParseContext) error {
+		bg.Add(1)
+		go func() {
+			defer bg.Done()
+			done(errorsx.Wrap(debugx.Profile(ctx, envx.String(pmode, "GENIEQL_PROFILING_STRATEGY")), "profiling failed"))
+		}()
+		return nil
+	}).StringVar(&pmode)
+
 	app.Command("version", "print version").Action(func(*kingpin.ParseContext) error {
 		if bi, ok := debug.ReadBuildInfo(); ok {
 			fmt.Println(bi.Main.Version)

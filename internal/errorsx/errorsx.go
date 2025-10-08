@@ -41,6 +41,16 @@ func Compact(errs ...error) error {
 	return nil
 }
 
+func Ignore(err error, ignore ...error) error {
+	for _, i := range ignore {
+		if errors.Is(err, i) {
+			return nil
+		}
+	}
+
+	return err
+}
+
 // NewErrRatelimit creates a new rate limit error with the provided backoff.
 func NewErrRatelimit(err error, backoff time.Duration) ErrRatelimit {
 	return ratelimit{error: err, backoff: backoff}
@@ -113,7 +123,7 @@ func MaybePanic(err error) {
 	panic(err)
 }
 
-func MaybeLog(err error) {
+func Log(err error) {
 	if err == nil {
 		return
 	}

@@ -182,7 +182,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	if err != nil {
 		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
 	}
-	defer errorsx.MaybeLog(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+	defer errorsx.Log(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
 
 	t.Context.Println("build.GOPATH", t.Build.GOPATH)
 	t.Context.Println("build.BuildTags", t.Build.BuildTags)
