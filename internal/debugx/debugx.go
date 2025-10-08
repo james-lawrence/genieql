@@ -7,15 +7,20 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime/pprof"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/james-lawrence/genieql/internal/contextx"
+	"github.com/james-lawrence/genieql/internal/envx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/iox"
 	"github.com/james-lawrence/genieql/internal/stringsx"
+	"github.com/pkg/profile"
 )
 
 var (
@@ -104,48 +109,83 @@ func OnSignal(ctx context.Context, do func(ctx context.Context) error, sigs ...o
 	}
 }
 
-// func CPU(dir string) func(context.Context) (err error) {
-// 	return func(ctx context.Context) (err error) {
-// 		return run(ctx, dir, profile.CPUProfile)
-// 	}
-// }
+func Profile(dctx context.Context, mode string) error {
+	switch mode {
+	case "trace":
+		return Trace(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	case "heap":
+		return Heap(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	case "mem":
+		return Memory(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	case "alloc":
+		return Allocs(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	case "block":
+		return Block(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	default:
+		return CPU(envx.String(os.TempDir(), "CACHE_DIRECTORY"))(dctx)
+	}
+}
 
-// func Memory(dir string) func(context.Context) (err error) {
-// 	return func(ctx context.Context) (err error) {
-// 		return run(ctx, dir, profile.MemProfile)
-// 	}
-// }
+func CPU(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.CPUProfile)
+	}
+}
 
-// func Heap(dir string) func(context.Context) (err error) {
-// 	return func(ctx context.Context) (err error) {
-// 		return run(ctx, dir, profile.MemProfileHeap)
-// 	}
-// }
+func Memory(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.MemProfile)
+	}
+}
 
-// func run(ctx context.Context, dir string, strategy func(*profile.Profile)) (err error) {
-// 	if err = os.MkdirAll(dir, 0700); err != nil {
-// 		return errorsx.Wrap(err, "unable to create profiling directory")
-// 	}
+func Heap(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.MemProfileHeap)
+	}
+}
 
-// 	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.profile", "{}", uuid.Must(uuid.NewV7()).String()))
-// 	if err != nil {
-// 		return errorsx.Wrap(err, "unable to create profiling directory")
-// 	}
-// 	defer os.RemoveAll(tmpdir)
+func Allocs(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.MemProfileAllocs)
+	}
+}
 
-// 	p := profile.Start(
-// 		strategy,
-// 		profile.NoShutdownHook,
-// 		profile.ProfilePath(tmpdir),
-// 	)
+func Block(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.BlockProfile)
+	}
+}
 
-// 	stoppable := StopFunc(func() {
-// 		p.Stop()
-// 		errorsx.MaybeLog(errorsx.Wrap(clone(path.Join(dir, "profile.pprof"), tmpdir), "unable to finalize profile"))
-// 	})
+func Trace(dir string) func(context.Context) (err error) {
+	return func(ctx context.Context) (err error) {
+		return run(ctx, dir, profile.TraceProfile)
+	}
+}
 
-// 	return errors.WithStack(Run(ctx, stoppable))
-// }
+func run(ctx context.Context, dir string, strategy func(*profile.Profile)) (err error) {
+	if err = os.MkdirAll(dir, 0700); err != nil {
+		return errorsx.Wrap(err, "unable to create profiling directory")
+	}
+
+	tmpdir, err := os.MkdirTemp(dir, strings.ReplaceAll("{}.*.pprof", "{}", uuid.Must(uuid.NewV7()).String()))
+	if err != nil {
+		return errorsx.Wrap(err, "unable to create profiling directory")
+	}
+	defer os.RemoveAll(tmpdir)
+
+	p := profile.Start(
+		strategy,
+		profile.NoShutdownHook,
+		profile.ProfilePath(tmpdir),
+	)
+
+	stoppable := StopFunc(func() {
+		p.Stop()
+		errorsx.Log(errorsx.Wrap(clone(path.Join(dir, "profile.pprof"), tmpdir), "unable to finalize profile"))
+	})
+
+	return errorsx.WithStack(Run(ctx, stoppable))
+}
 
 type Stoppable interface {
 	Stop()
