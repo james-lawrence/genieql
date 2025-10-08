@@ -41,9 +41,9 @@ func DetectScanner(ctx generators.Context, fnt *ast.FuncType) (r *ast.FuncDecl) 
 		return s == types.ExprString(fnt.Results.List[0].Type)
 	}
 
-	util := genieql.NewSearcher(ctx.FileSet, ctx.CurrentPackage)
+	util := genieql.NewUtils(ctx.FileSet)
 
-	if r, err = util.FindFunction(test); err != nil {
+	if r, err = util.FindFunctionInPackages(test, ctx.CachedPackages()...); err != nil {
 		log.Println("failed to find scanner", types.ExprString(fnt.Results.List[0].Type))
 		return nil
 	}

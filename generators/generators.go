@@ -44,6 +44,7 @@ type Context struct {
 	Driver         genieql.Driver
 	Verbosity      int
 	OSArgs         []string
+	packageCache   []*ast.Package
 }
 
 // Println ...
@@ -98,6 +99,11 @@ func (t Context) Traceln(args ...interface{}) {
 	}
 
 	errorsx.MaybePanic(log.Output(2, fmt.Sprintln(args...)))
+}
+
+// CachedPackages returns the cached AST packages for the current package
+func (t Context) CachedPackages() []*ast.Package {
+	return t.packageCache
 }
 
 func reserved(s string) bool {
@@ -240,13 +246,14 @@ func NewContextFromConfig(bctx build.Context, config genieql.Configuration, pkg 
 
 	log.Println("cachedir", cachedir, config.Version, config.Location)
 
+	fset := token.NewFileSet()
 	ctx = Context{
 		ModuleRoot:     mroot + "/",
 		Name:           config.Name,
 		Cache:          cachedir,
 		Build:          bctx,
 		CurrentPackage: pkg,
-		FileSet:        token.NewFileSet(),
+		FileSet:        fset,
 		Configuration:  config,
 		Dialect:        dialect,
 		Driver:         driver,
@@ -255,6 +262,11 @@ func NewContextFromConfig(bctx build.Context, config genieql.Configuration, pkg 
 
 	for _, opt := range options {
 		opt(&ctx)
+	}
+
+	util := genieql.NewUtils(fset)
+	if ctx.packageCache, err = util.ParsePackages(pkg); err != nil {
+		return ctx, errorsx.Wrap(err, "failed to parse and cache package")
 	}
 
 	return ctx, nil

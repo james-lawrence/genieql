@@ -336,6 +336,7 @@ type Utils interface {
 	ParsePackages(pkgset ...*build.Package) ([]*ast.Package, error)
 	FindUniqueType(f ast.Filter, packageSet ...*build.Package) (*ast.TypeSpec, error)
 	FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDecl, error)
+	FindFunctionInPackages(f ast.Filter, pkgs ...*ast.Package) (*ast.FuncDecl, error)
 	WalkFiles(delegate func(path string, file *ast.File), pkgset ...*build.Package) error
 }
 
@@ -416,6 +417,10 @@ func (t utils) FindFunction(f ast.Filter, pkgset ...*build.Package) (*ast.FuncDe
 		return nil, err
 	}
 
+	return t.FindFunctionInPackages(f, pkgs...)
+}
+
+func (t utils) FindFunctionInPackages(f ast.Filter, pkgs ...*ast.Package) (*ast.FuncDecl, error) {
 	found := []*ast.FuncDecl{}
 	for _, pkg := range pkgs {
 		found = append(found, FindFunc(pkg)...)
