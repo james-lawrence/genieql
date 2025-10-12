@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"net/netip"
 	"path/filepath"
 	"time"
 
@@ -40,7 +41,7 @@ func ExampleExample1Insert() {
 		ByteArrayField: []byte{0x2},
 		// IntervalField:  time.Minute,
 		// Int2Array:      []int{9},
-		// InetField: netip.IPv6LinkLocalAllNodes(),
+		InetField: netip.IPv4Unspecified(),
 	}
 
 	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
@@ -57,9 +58,9 @@ func ExampleExample1Insert() {
 		"binary", bytes.Compare(res.ByteArrayField, ex.ByteArrayField),
 		"ubigint", res.UbigintField == ex.UbigintField,
 		// "int array", slices.Compare(res.Int2Array, ex.Int2Array),
-		// "ip", res.InetField.Compare(netip.IPv6LinkLocalAllNodes()) == 0,
+		"ip", res.InetField,
 	)
-	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0 ubigint true
+	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0 ubigint true ip 0.0.0.0
 }
 
 func ExampleExample1UpdateTime() {
@@ -85,10 +86,10 @@ func ExampleExample1UpdateTime() {
 		UbigintField:   math.MaxUint64,
 		ByteArrayField: []byte{0x2},
 		TimestampField: time.Date(2025, time.September, 10, 0, 0, 0, 0, time.UTC),
+		InetField:      netip.IPv6LinkLocalAllNodes(),
 	}
 
 	errorsx.MaybePanic(Example1Insert(ctx, db, ex).Scan(&res))
-
 	fmt.Println(
 		"timestamp", res.TimestampField,
 	)

@@ -185,4 +185,5 @@ port: 5432
 database: databasename
 username: soandso
 password: password
+memorylimit: 16384
 `
