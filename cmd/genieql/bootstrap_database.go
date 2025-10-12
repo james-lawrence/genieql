@@ -21,6 +21,7 @@ type bootstrapDatabase struct {
 	driver         string
 	queryer        string
 	rowtype        string
+	memory         uint
 }
 
 func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
@@ -31,6 +32,7 @@ func (t *bootstrapDatabase) Bootstrap(ctx *kingpin.ParseContext) error {
 		genieql.ConfigurationOptionDatabase(t.dburi),
 		genieql.ConfigurationOptionQueryer(t.queryer),
 		genieql.ConfigurationOptionRowType(t.rowtype),
+		genieql.ConfigurationOptionMemory(t.memory),
 	)
 }
 
@@ -41,6 +43,7 @@ func (t *bootstrapDatabase) configure(bootstrap *kingpin.CmdClause) *kingpin.Cmd
 		Default("github.com/jackc/pgx").StringVar(&t.driver)
 	bootstrap.Flag("queryer", "the default queryer to use").Default("*sql.DB").StringVar(&t.queryer)
 	bootstrap.Flag("rowtype", "the default type to use for retrieving rows").Default("*sql.Row").StringVar(&t.rowtype)
+	bootstrap.Flag("memory-limit", "amount of memory to reserve during generation in pages (each page is 16 KiB)").Default("16384").UintVar(&t.memory)
 	bootstrap.Arg("uri", "uri for the database qlgenie will work with").Required().URLVar(&t.dburi)
 	bootstrap.Action(t.Bootstrap)
 

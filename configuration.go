@@ -31,6 +31,7 @@ type Configuration struct {
 	Database      string
 	Username      string
 	Password      string
+	MemoryLimit   uint32
 }
 
 // ReadMap the column -> struct mapping from disk cache.
@@ -131,9 +132,10 @@ func NewConfiguration(options ...ConfigurationOption) (Configuration, error) {
 
 	var (
 		config = Configuration{
-			Version: cachebuster,
-			Queryer: "*sql.DB",
-			RowType: "*sql.Row",
+			MemoryLimit: 16384,
+			Version:     cachebuster,
+			Queryer:     "*sql.DB",
+			RowType:     "*sql.Row",
 		}
 	)
 
@@ -181,6 +183,13 @@ func ConfigurationOptionRowType(rt string) ConfigurationOption {
 func ConfigurationOptionZeroDynamic(c *Configuration) error {
 	c.Version = ""
 	return nil
+}
+
+func ConfigurationOptionMemory(l uint) ConfigurationOption {
+	return func(c *Configuration) error {
+		c.MemoryLimit = uint32(l)
+		return nil
+	}
 }
 
 // ConfigurationOptionDatabase specify the database connection information.

@@ -296,7 +296,7 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 		ctx,
 		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// 8s w/ tinygo, 28s with golang
-		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(cctx.Configuration.MemoryLimit).WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 
