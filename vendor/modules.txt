@@ -242,7 +242,7 @@ github.com/sethvargo/go-retry
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/tetratelabs/wazero v1.9.1-0.20251027215902-5dd247b60ec7
+# github.com/tetratelabs/wazero v1.9.1-0.20251028162228-4668182376ff
 ## explicit; go 1.23.0
 github.com/tetratelabs/wazero
 github.com/tetratelabs/wazero/api
