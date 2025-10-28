@@ -749,14 +749,12 @@ func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tr
 
 	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
 		cctx.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
-		log.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
 		return &generedmodule{
 			root:         tmpdir,
 			compiledpath: dstdir,
 		}, nil
 	} else {
 		cctx.Println("module not found in cache, compiling", cctx.Cache, cachemod)
-		log.Println("module not found in cache, compiling", cctx.Cache, cachemod)
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")
