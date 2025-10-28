@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/james-lawrence/genieql/compiler/transforms"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/bytesx"
+	"github.com/james-lawrence/genieql/internal/debugx"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/iox"
 	"github.com/james-lawrence/genieql/internal/md5x"
@@ -34,6 +36,7 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"github.com/tetratelabs/wazero/sys"
 )
@@ -131,6 +134,8 @@ func (t Context) generators(in *ast.File) (results []Result) {
 // Compile consumes a filepath and processes writing any resulting
 // output into the dst.
 func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.File) (err error) {
+	defer debugx.Elapsed()()
+
 	var (
 		working *os.File
 		results = []Result{}
@@ -182,7 +187,9 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 	if err != nil {
 		return errorsx.Wrap(err, "unable to initialize wasi compilation cache")
 	}
-	defer errorsx.Log(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+	defer func() {
+		errorsx.Log(errorsx.Wrap(cache.Close(ctx), "failed to close wasi cache"))
+	}()
 
 	t.Context.Println("build.GOPATH", t.Build.GOPATH)
 	t.Context.Println("build.BuildTags", t.Build.BuildTags)
@@ -289,14 +296,22 @@ type module interface {
 }
 
 func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffer, cache wazero.CompilationCache, mpath string, compileonly bool, ir Result) (err error) {
+	defer debugx.Elapsed()()
 	cctx.Context.Debugln("generating code initiated", ir.Ident, ir.Location)
 	defer cctx.Context.Debugln("generating code completed", ir.Ident, ir.Location)
+
+	ctx = experimental.WithCompilationWorkers(ctx, int(float32(runtime.GOMAXPROCS(0))*0.8))
 
 	runtime := wazero.NewRuntimeWithConfig(
 		ctx,
 		// wazero.NewRuntimeConfigInterpreter().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(2048).WithCompilationCache(cache),
 		// 8s w/ tinygo, 28s with golang
-		wazero.NewRuntimeConfig().WithDebugInfoEnabled(false).WithCloseOnContextDone(true).WithMemoryLimitPages(cctx.Configuration.MemoryLimit).WithCompilationCache(cache),
+		wazero.NewRuntimeConfig().
+			WithCoreFeatures(api.CoreFeaturesV2|experimental.CoreFeaturesTailCall).
+			WithDebugInfoEnabled(false).
+			WithCloseOnContextDone(true).
+			WithMemoryLimitPages(cctx.Configuration.MemoryLimit).
+			WithCompilationCache(cache),
 	)
 	defer runtime.Close(ctx)
 
@@ -631,7 +646,7 @@ func run(ctx context.Context, cfg wazero.ModuleConfig, runtime wazero.Runtime, c
 	return nil
 }
 
-func compilewasi(ctx context.Context, cctx Context, runtime wazero.Runtime, cachemod string) (m wazero.CompiledModule, err error) {
+func compilewasi(ctx context.Context, runtime wazero.Runtime, cachemod string) (m wazero.CompiledModule, err error) {
 	var (
 		wasi []byte
 	)
@@ -639,6 +654,8 @@ func compilewasi(ctx context.Context, cctx Context, runtime wazero.Runtime, cach
 	if wasi, err = os.ReadFile(cachemod); err != nil {
 		return nil, errorsx.Wrap(err, "unable to read module")
 	}
+
+	defer debugx.Elapsed()()
 
 	c, err := runtime.CompileModule(ctx, wasi)
 	if err != nil {
@@ -655,7 +672,7 @@ type generedmodule struct {
 	compiledpath string
 }
 
-func genmodule(ctx context.Context, cctx Context, pos *ast.FuncDecl, scratchpad string, main *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
+func genmodule(_ context.Context, pos *ast.FuncDecl, main *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
 	tree, err := transforms.JenAsAST(main)
 	if err != nil {
 		return nil, err
@@ -674,6 +691,8 @@ func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tr
 		maindst *os.File
 		tmpdir  string
 	)
+
+	defer debugx.Elapsed()()
 
 	if tmpdir, err = os.MkdirTemp(cctx.tmpdir, "genmod.*"); err != nil {
 		return nil, errorsx.Wrap(err, "unable to create mod directory")
@@ -730,12 +749,14 @@ func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tr
 
 	if _, err = fs.Stat(os.DirFS(cctx.Cache), cachemod); err == nil {
 		cctx.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
+		log.Println("module found in cache, skipping compilation", cctx.Cache, cachemod)
 		return &generedmodule{
 			root:         tmpdir,
 			compiledpath: dstdir,
 		}, nil
 	} else {
-		cctx.Println("module not found in cache, compiling")
+		cctx.Println("module not found in cache, compiling", cctx.Cache, cachemod)
+		log.Println("module not found in cache, compiling", cctx.Cache, cachemod)
 	}
 
 	mpath := filepath.Join(srcdir, "main.go")

@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"runtime"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -248,4 +249,14 @@ func locateFirstInDir(dir string, names ...string) (result string) {
 	}
 
 	return result
+}
+
+// times the execution
+func Elapsed() func() {
+	fnptr, file, line, _ := runtime.Caller(1)
+	fnname := runtime.FuncForPC(fnptr).Name()
+	ts := time.Now()
+	return func() {
+		log.Printf("%s:%d - %s - elapsed %v\n", file, line, fnname, time.Since(ts))
+	}
 }

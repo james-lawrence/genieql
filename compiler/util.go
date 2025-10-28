@@ -35,9 +35,9 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func genmod(cctx Context, pos *ast.FuncDecl, content *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
+func genmod(_ Context, pos *ast.FuncDecl, content *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
 	return func(ctx context.Context, scratchpad string) (m *generedmodule, err error) {
-		if m, err = genmodule(ctx, cctx, pos, scratchpad, content, decls, imports...); err != nil {
+		if m, err = genmodule(ctx, pos, content, decls, imports...); err != nil {
 			return nil, errorsx.Wrap(err, "unable to generate module directory")
 		}
 
@@ -52,7 +52,7 @@ func runmod(cctx Context) func(ctx context.Context, tmpdir string, dst io.Writer
 			buf bytes.Buffer
 		)
 
-		if c, err = compilewasi(ctx, cctx, runtime, mpath); err != nil {
+		if c, err = compilewasi(ctx, runtime, mpath); err != nil {
 			return errorsx.Wrap(err, "unable to compile wasi module")
 		}
 		defer c.Close(ctx)
