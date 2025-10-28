@@ -71,7 +71,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/profile v1.7.0
-	github.com/tetratelabs/wazero v1.9.0
+	github.com/tetratelabs/wazero v1.9.1-0.20251027215902-5dd247b60ec7
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/mod v0.24.0
 	golang.org/x/net v0.40.0 // indirect
