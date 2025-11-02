@@ -143,12 +143,12 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports []*ast.ImportSpec
 	)
 
-	if t.tmpdir, err = os.MkdirTemp(t.CurrentPackage.Dir, "genieql.tmp.*"); err != nil {
+	if t.tmpdir, err = os.MkdirTemp("", "genieql.tmp.*"); err != nil {
 		return errorsx.Wrap(err, "unable to create tmp directory")
 	}
 	defer os.RemoveAll(t.tmpdir)
 
-	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.tmp.*.go"); err != nil {
+	if working, err = os.CreateTemp(t.tmpdir, "genieql.tmp.*.go"); err != nil {
 		return errorsx.Wrap(err, "unable to open scratch file")
 	}
 	defer os.RemoveAll(working.Name())

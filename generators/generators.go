@@ -197,11 +197,18 @@ func OptionVerbosity(n int) Option {
 }
 
 func NewContext(bctx build.Context, name string, pkg *build.Package, options ...Option) (ctx Context, err error) {
-	config := genieql.MustReadConfiguration(
+	var config genieql.Configuration
+	config, err = genieql.NewConfiguration(
 		genieql.ConfigurationOptionLocation(
 			filepath.Join(genieql.ConfigurationDirectory(), name),
 		),
 	)
+	if err != nil {
+		return ctx, err
+	}
+	if err = genieql.ReadConfiguration(&config); err != nil {
+		return ctx, err
+	}
 
 	return NewContextFromConfig(bctx, config, pkg, options...)
 }
