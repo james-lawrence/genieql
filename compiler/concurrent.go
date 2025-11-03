@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"io"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -25,7 +26,7 @@ type packagenode struct {
 	Files      []*ast.File
 	FileSet    *token.FileSet
 	Deps       []string
-	Output     []byte
+	Output     *bytes.Buffer
 	Err        error
 }
 
@@ -133,6 +134,37 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 				local := filepath.Join(pkg.Dir, parts[len(parts)-1])
 				if dep, err = t.buildContext.ImportDir(local, build.IgnoreVendor); err == nil {
 					log.Printf("  found local subdirectory: %s -> %s", importPath, local)
+				}
+			}
+
+			if (err != nil || dep == nil) && pkg.ImportPath != "" && pkg.ImportPath != "." {
+				var pkgPathParts []string
+				if pkg.ImportPath == "." {
+					pkgPathParts = []string{}
+				} else {
+					pkgPathParts = strings.Split(pkg.ImportPath, "/")
+				}
+				importParts := strings.Split(importPath, "/")
+				commonPrefix := 0
+				for i := 0; i < len(pkgPathParts) && i < len(importParts); i++ {
+					if pkgPathParts[i] == importParts[i] {
+						commonPrefix++
+					} else {
+						break
+					}
+				}
+				if commonPrefix > 0 {
+					relParts := importParts[commonPrefix:]
+					if len(relParts) > 0 {
+						currentDir := pkg.Dir
+						for i := 0; i < len(pkgPathParts)-commonPrefix; i++ {
+							currentDir = filepath.Dir(currentDir)
+						}
+						siblingPath := filepath.Join(currentDir, filepath.Join(relParts...))
+						if dep, err = t.buildContext.ImportDir(siblingPath, build.IgnoreVendor); err == nil {
+							log.Printf("  found sibling package: %s -> %s", importPath, siblingPath)
+						}
+					}
 				}
 			}
 
@@ -254,7 +286,7 @@ func (t *dependencygraph) compilelevel(ctx context.Context, level []*packagenode
 			}
 
 			mu.Lock()
-			n.Output = buf.Bytes()
+			n.Output = buf
 			mu.Unlock()
 		}(node)
 	}
@@ -295,11 +327,26 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode,
 	return nil
 }
 
-func AutocompileConcurrent(ctx context.Context, configName string, bctx build.Context, rootPkg *build.Package, opts []generators.Option) (map[string][]byte, error) {
+func AutoCompileGraph(ctx context.Context, configName string, bctx build.Context, rootPkg *build.Package, opts []generators.Option) (map[string]*bytes.Buffer, error) {
 	var (
 		err     error
 		rootDir string
 	)
+
+	if rootPkg.ImportPath == "" || rootPkg.ImportPath == "." {
+		var modpath string
+		if modpath, err = genieql.FindModulePath(rootPkg.Dir); err == nil && modpath != "" {
+			var modroot string
+			if modroot, err = genieql.FindModuleRoot(rootPkg.Dir); err == nil {
+				var relpath string
+				if relpath, err = filepath.Rel(modroot, rootPkg.Dir); err == nil && relpath != "." {
+					rootPkg.ImportPath = filepath.Join(modpath, relpath)
+				} else {
+					rootPkg.ImportPath = modpath
+				}
+			}
+		}
+	}
 
 	rootDir = rootPkg.Root
 	if rootDir == "" {
@@ -334,9 +381,36 @@ func AutocompileConcurrent(ctx context.Context, configName string, bctx build.Co
 		if err = graph.compilelevel(ctx, level); err != nil {
 			return nil, errorsx.Wrapf(err, "failed to compile level %d", i)
 		}
+
+		for _, node := range level {
+			if node.Err == nil && node.Output != nil {
+				var (
+					outpath = filepath.Join(node.Dir, "genieql.gen.go")
+					outcopy = bytes.NewBuffer(node.Output.Bytes())
+					outfile *os.File
+				)
+
+				gen := genieql.MultiGenerate(
+					genieql.NewCopyGenerator(bytes.NewBufferString("//go:build !genieql.ignore\n// +build !genieql.ignore")),
+					genieql.NewCopyGenerator(outcopy),
+				)
+
+				if outfile, err = os.Create(outpath); err != nil {
+					return nil, errorsx.Wrapf(err, "failed to create output file for %s", node.ImportPath)
+				}
+
+				if err = gen.Generate(outfile); err != nil {
+					outfile.Close()
+					return nil, errorsx.Wrapf(err, "failed to write output for %s", node.ImportPath)
+				}
+
+				outfile.Close()
+				log.Printf("  wrote output for %s", node.ImportPath)
+			}
+		}
 	}
 
-	results := make(map[string][]byte)
+	results := make(map[string]*bytes.Buffer)
 	for _, level := range levels {
 		for _, node := range level {
 			if node.Err != nil {
@@ -352,10 +426,10 @@ func AutocompileConcurrent(ctx context.Context, configName string, bctx build.Co
 func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Context, bpkg *build.Package, dst io.Writer, options ...generators.Option) error {
 	var (
 		err     error
-		results map[string][]byte
+		results map[string]*bytes.Buffer
 	)
 
-	if results, err = AutocompileConcurrent(ctx, cname, bctx, bpkg, options); err != nil {
+	if results, err = AutoCompileGraph(ctx, cname, bctx, bpkg, options); err != nil {
 		return err
 	}
 
@@ -372,24 +446,19 @@ func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Contex
 
 	gen := genieql.MultiGenerate(
 		genieql.NewCopyGenerator(bytes.NewBufferString("//go:build !genieql.ignore\n// +build !genieql.ignore")),
-		genieql.NewCopyGenerator(bytes.NewBuffer(result)),
+		genieql.NewCopyGenerator(result),
 	)
 
 	if err = gen.Generate(dst); err != nil {
 		return errorsx.Wrapf(err, "failed to write generated code for %s", bpkg.ImportPath)
 	}
 
-	deps := make(map[string][]byte)
-	for importPath, output := range results {
-		if importPath != bpkg.ImportPath {
-			deps[importPath] = output
-		}
-	}
-
-	if len(deps) > 0 {
-		log.Printf("compiled %d dependency packages:", len(deps))
-		for importPath := range deps {
-			log.Println("  -", importPath)
+	if len(results) > 1 {
+		log.Printf("compiled %d dependency packages:", len(results)-1)
+		for importPath := range results {
+			if importPath != bpkg.ImportPath {
+				log.Println("  -", importPath)
+			}
 		}
 	}
 

@@ -143,12 +143,12 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports []*ast.ImportSpec
 	)
 
-	if t.tmpdir, err = os.MkdirTemp("", "genieql.tmp.*"); err != nil {
+	if t.tmpdir, err = os.MkdirTemp(t.CurrentPackage.Dir, "genieql.tmp.*"); err != nil {
 		return errorsx.Wrap(err, "unable to create tmp directory")
 	}
 	defer os.RemoveAll(t.tmpdir)
 
-	if working, err = os.CreateTemp(t.tmpdir, "genieql.tmp.*.go"); err != nil {
+	if working, err = os.CreateTemp(t.Context.CurrentPackage.Dir, "genieql.tmp.*.go"); err != nil {
 		return errorsx.Wrap(err, "unable to open scratch file")
 	}
 	defer os.RemoveAll(working.Name())
@@ -177,7 +177,13 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports = astcodec.SearchImports(file, func(is *ast.ImportSpec) bool { return true })
 	}
 
-	t.CurrentPackage.GoFiles = append(t.CurrentPackage.GoFiles, filepath.Base(working.Name()))
+	var filtered []string
+	for _, f := range t.CurrentPackage.GoFiles {
+		if f != "genieql.gen.go" && !strings.HasPrefix(f, "genieql.tmp.") {
+			filtered = append(filtered, f)
+		}
+	}
+	t.CurrentPackage.GoFiles = append(filtered, filepath.Base(working.Name()))
 
 	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs, imports); err != nil {
 		return errorsx.Wrap(err, "unable to write header to scratch file")
@@ -686,7 +692,7 @@ func genmodule(_ context.Context, pos *ast.FuncDecl, main *jen.File, decls []ast
 	}, nil
 }
 
-func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tree *ast.File, scratchpad string, imports ...*ast.ImportSpec) (m *generedmodule, err error) {
+func compilemodule(ctx context.Context, cctx Context, srctree token.Position, tree *ast.File, scratchpad string) (m *generedmodule, err error) {
 	var (
 		maindst *os.File
 		tmpdir  string

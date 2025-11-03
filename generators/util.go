@@ -403,17 +403,32 @@ func importPath(ctx Context, x ast.Expr) (string, error) {
 			return is.Name.Name
 		}
 
-		if src, err := parser.ParseFile(ctx.FileSet, ctx.FileSet.File(x.Pos()).Name(), nil, parser.ImportsOnly); err != nil {
-			return "", errorsx.Wrap(err, "failed to read the source file while determining import")
+		var filenames []string
+		if file := ctx.FileSet.File(x.Pos()); file != nil {
+			filenames = []string{file.Name()}
 		} else {
-			for _, imp := range src.Imports {
-				if importSelector(imp) == types.ExprString(x.X) {
-					return strings.Trim(imp.Path.Value, "\""), nil
+			for _, f := range ctx.CurrentPackage.GoFiles {
+				filenames = append(filenames, filepath.Join(ctx.CurrentPackage.Dir, f))
+			}
+		}
+
+		if len(filenames) == 0 {
+			return "", errorsx.Errorf("unable to determine source file for import resolution")
+		}
+
+		for _, filename := range filenames {
+			if src, err := parser.ParseFile(ctx.FileSet, filename, nil, parser.ImportsOnly); err != nil {
+				continue
+			} else {
+				for _, imp := range src.Imports {
+					if importSelector(imp) == types.ExprString(x.X) {
+						return strings.Trim(imp.Path.Value, "\""), nil
+					}
 				}
 			}
-
-			return "", errorsx.Errorf("failed to match selector with import: %s", types.ExprString(x))
 		}
+
+		return "", errorsx.Errorf("failed to match selector with import: %s", types.ExprString(x))
 	default:
 		return ctx.CurrentPackage.ImportPath, nil
 	}
