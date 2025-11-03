@@ -370,7 +370,7 @@ func TestAutoCompileGraph_Integration_ThreeLevelDependencies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to find module root: %v", err)
 	}
-	pkg, err := bctx.ImportDir(filepath.Join(mroot, "examples/postgresql/autocompilegraph"), build.IgnoreVendor)
+	pkg, err := bctx.ImportDir(filepath.Join(mroot, "examples/postgresql/autocompilegraph/pkgd"), build.IgnoreVendor)
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
@@ -378,14 +378,13 @@ func TestAutoCompileGraph_Integration_ThreeLevelDependencies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AutoCompileGraph failed: %v", err)
 	}
-	if len(results) != 5 {
-		t.Errorf("expected 5 compiled packages (pkga, pkgb, pkgc, pkgd, root), got %d", len(results))
+	if len(results) != 4 {
+		t.Errorf("expected 4 compiled packages (pkga, pkgb, pkgc, pkgd), got %d", len(results))
 		for path := range results {
 			t.Logf("  - %s", path)
 		}
 	}
 	expectedPackages := []string{
-		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph",
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkga",
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgb",
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgc",
