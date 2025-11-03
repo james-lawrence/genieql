@@ -33,7 +33,7 @@ func WasiPackage() *build.Package {
 	}
 }
 
-func LoadFile() (*ast.File, error) {
+func LoadFile() (*ast.File, *token.FileSet, error) {
 	fset := token.NewFileSet()
 	fp := envx.String("", "GENIEQL_WASI_FILEPATH")
 
@@ -45,5 +45,6 @@ func LoadFile() (*ast.File, error) {
 		fsx.PrintString(filepath.Join(filepath.Dir(fp), "src", "main.go"))
 	}
 
-	return parser.ParseFile(fset, fp, nil, parser.ParseComments)
+	tree, err := parser.ParseFile(fset, fp, nil, parser.ParseComments)
+	return tree, fset, err
 }

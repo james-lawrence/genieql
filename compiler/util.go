@@ -97,13 +97,14 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 	return jen.Statement{
 		jen.Var().Defs(
 			jen.Id("tree").Id("*ast.File"),
+			jen.Id("fset").Id("*token.FileSet"),
 			jen.Id("err").Error(),
 			jen.Id("gctx").Id("generators.Context"),
 		),
 		jen.Qual("log", "SetFlags").Call(jen.Qual("log", "LstdFlags").Op("|").Qual("log", "Lshortfile")),
 		jen.If(
 			jen.List(
-				jen.Id("tree"), jen.Id("err"),
+				jen.Id("tree"), jen.Id("fset"), jen.Id("err"),
 			).Op("=").Qual("github.com/james-lawrence/genieql/ginterp", "LoadFile").Call(),
 			jen.Id("err").Op("!=").Id("nil"),
 		).Block(
@@ -122,6 +123,7 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 				),
 				jen.Lit(cfgname),
 				jen.Qual("github.com/james-lawrence/genieql/ginterp", "WasiPackage").Call(),
+				jen.Id("generators").Dot("OptionFileSet").Call(jen.Id("fset")),
 			),
 			jen.Id("err").Op("!=").Id("nil"),
 		).Block(
