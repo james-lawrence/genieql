@@ -186,6 +186,12 @@ func OptionOSArgs(args ...string) Option {
 	}
 }
 
+func OptionFileSet(fset *token.FileSet) Option {
+	return func(ctx *Context) {
+		ctx.FileSet = fset
+	}
+}
+
 func OptionDebug(ctx *Context) {
 	ctx.Verbosity = VerbosityDebug
 }
