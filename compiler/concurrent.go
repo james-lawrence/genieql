@@ -34,26 +34,26 @@ type dependencygraph struct {
 	nodes         map[string]*packagenode
 	visited       map[string]bool
 	processing    map[string]bool
-	buildContext  build.Context
-	rootDir       string
-	configName    string
-	generatorOpts []generators.Option
+	buildcontext  build.Context
+	rootdir       string
+	configname    string
+	generatoropts []generators.Option
 }
 
-func newdependencygraph(bctx build.Context, rootDir string, configName string, opts []generators.Option) *dependencygraph {
+func newdependencygraph(bctx build.Context, rootdir string, configname string, opts []generators.Option) *dependencygraph {
 	return &dependencygraph{
 		nodes:         make(map[string]*packagenode),
 		visited:       make(map[string]bool),
 		processing:    make(map[string]bool),
-		buildContext:  bctx,
-		rootDir:       rootDir,
-		configName:    configName,
-		generatorOpts: opts,
+		buildcontext:  bctx,
+		rootdir:       rootdir,
+		configname:    configname,
+		generatoropts: opts,
 	}
 }
 
-func (t *dependencygraph) discoverpackages(ctx context.Context, rootPkg *build.Package) error {
-	if err := t.visitpackage(ctx, rootPkg); err != nil {
+func (t *dependencygraph) discoverpackages(ctx context.Context, rootpkg *build.Package) error {
+	if err := t.visitpackage(ctx, rootpkg); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 
 	t.processing[pkg.ImportPath] = true
 
-	if tagged, err = FindTaggedFiles(t.buildContext, pkg.Dir, genieql.BuildTagGenerate); err != nil {
+	if tagged, err = FindTaggedFiles(t.buildcontext, pkg.Dir, genieql.BuildTagGenerate); err != nil {
 		return errorsx.Wrapf(err, "failed to find tagged files in %s", pkg.Dir)
 	}
 
@@ -85,13 +85,13 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 		return nil
 	}
 
-	pkgCopy := *pkg
-	pkgCopy.GoFiles = make([]string, len(pkg.GoFiles))
-	copy(pkgCopy.GoFiles, pkg.GoFiles)
+	pkgcopy := *pkg
+	pkgcopy.GoFiles = make([]string, len(pkg.GoFiles))
+	copy(pkgcopy.GoFiles, pkg.GoFiles)
 	node := &packagenode{
 		ImportPath: pkg.ImportPath,
 		Dir:        pkg.Dir,
-		Pkg:        &pkgCopy,
+		Pkg:        &pkgcopy,
 		FileSet:    token.NewFileSet(),
 		Deps:       []string{},
 	}
@@ -112,9 +112,9 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 		filtered = append(filtered, file)
 
 		for _, imp := range file.Imports {
-			importPath := imp.Path.Value[1 : len(imp.Path.Value)-1]
-			if !imports[importPath] {
-				imports[importPath] = true
+			importpath := imp.Path.Value[1 : len(imp.Path.Value)-1]
+			if !imports[importpath] {
+				imports[importpath] = true
 			}
 		}
 	}
@@ -122,76 +122,76 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 	node.Files = filtered
 	t.nodes[pkg.ImportPath] = node
 
-	for importPath := range imports {
+	for importpath := range imports {
 		var (
 			dep *build.Package
 		)
 
-		dep, err = t.buildContext.Import(importPath, pkg.Dir, build.FindOnly|build.IgnoreVendor)
+		dep, err = t.buildcontext.Import(importpath, pkg.Dir, build.FindOnly|build.IgnoreVendor)
 		if err != nil {
-			parts := strings.Split(importPath, "/")
+			parts := strings.Split(importpath, "/")
 			if len(parts) > 0 {
 				local := filepath.Join(pkg.Dir, parts[len(parts)-1])
-				if dep, err = t.buildContext.ImportDir(local, build.IgnoreVendor); err == nil {
-					log.Printf("  found local subdirectory: %s -> %s", importPath, local)
+				if dep, err = t.buildcontext.ImportDir(local, build.IgnoreVendor); err == nil {
+					log.Printf("  found local subdirectory: %s -> %s", importpath, local)
 				}
 			}
 
 			if (err != nil || dep == nil) && pkg.ImportPath != "" && pkg.ImportPath != "." {
-				var pkgPathParts []string
+				var pkgpathparts []string
 				if pkg.ImportPath == "." {
-					pkgPathParts = []string{}
+					pkgpathparts = []string{}
 				} else {
-					pkgPathParts = strings.Split(pkg.ImportPath, "/")
+					pkgpathparts = strings.Split(pkg.ImportPath, "/")
 				}
-				importParts := strings.Split(importPath, "/")
-				commonPrefix := 0
-				for i := 0; i < len(pkgPathParts) && i < len(importParts); i++ {
-					if pkgPathParts[i] == importParts[i] {
-						commonPrefix++
+				importparts := strings.Split(importpath, "/")
+				commonprefix := 0
+				for i := 0; i < len(pkgpathparts) && i < len(importparts); i++ {
+					if pkgpathparts[i] == importparts[i] {
+						commonprefix++
 					} else {
 						break
 					}
 				}
-				if commonPrefix > 0 {
-					relParts := importParts[commonPrefix:]
-					if len(relParts) > 0 {
-						currentDir := pkg.Dir
-						for i := 0; i < len(pkgPathParts)-commonPrefix; i++ {
-							currentDir = filepath.Dir(currentDir)
+				if commonprefix > 0 {
+					relparts := importparts[commonprefix:]
+					if len(relparts) > 0 {
+						currentdir := pkg.Dir
+						for i := 0; i < len(pkgpathparts)-commonprefix; i++ {
+							currentdir = filepath.Dir(currentdir)
 						}
-						siblingPath := filepath.Join(currentDir, filepath.Join(relParts...))
-						if dep, err = t.buildContext.ImportDir(siblingPath, build.IgnoreVendor); err == nil {
-							log.Printf("  found sibling package: %s -> %s", importPath, siblingPath)
+						siblingpath := filepath.Join(currentdir, filepath.Join(relparts...))
+						if dep, err = t.buildcontext.ImportDir(siblingpath, build.IgnoreVendor); err == nil {
+							log.Printf("  found sibling package: %s -> %s", importpath, siblingpath)
 						}
 					}
 				}
 			}
 
 			if err != nil || dep == nil {
-				log.Printf("  skipping import %s: %v", importPath, err)
+				log.Printf("  skipping import %s: %v", importpath, err)
 				continue
 			}
 		}
 
 		var rel string
-		rel, err = filepath.Rel(t.rootDir, dep.Dir)
+		rel, err = filepath.Rel(t.rootdir, dep.Dir)
 		if err != nil || filepath.IsAbs(rel) || (len(rel) >= 2 && rel[0] == '.' && rel[1] == '.') {
-			log.Printf("  skipping import %s: outside root (rel=%s, err=%v)", importPath, rel, err)
+			log.Printf("  skipping import %s: outside root (rel=%s, err=%v)", importpath, rel, err)
 			continue
 		}
 
-		dep, err = t.buildContext.ImportDir(dep.Dir, build.IgnoreVendor)
+		dep, err = t.buildcontext.ImportDir(dep.Dir, build.IgnoreVendor)
 		if err != nil {
-			log.Printf("  skipping import %s: failed to import dir: %v", importPath, err)
+			log.Printf("  skipping import %s: failed to import dir: %v", importpath, err)
 			continue
 		}
 
 		if dep.ImportPath == "." || dep.ImportPath == "" {
-			if filepath.IsAbs(importPath) || strings.Contains(importPath, ".") {
-				dep.ImportPath = importPath
+			if filepath.IsAbs(importpath) || strings.Contains(importpath, ".") {
+				dep.ImportPath = importpath
 			} else {
-				dep.ImportPath = pkg.ImportPath + "/" + importPath
+				dep.ImportPath = pkg.ImportPath + "/" + importpath
 			}
 		}
 
@@ -210,27 +210,33 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 func (t *dependencygraph) topologicalsort() ([][]*packagenode, error) {
 	var (
 		levels   [][]*packagenode
-		inDegree = make(map[string]int)
-		depCount = make(map[string]int)
+		indegree = make(map[string]int)
+		depcount = make(map[string]int)
 	)
 
-	for importPath, node := range t.nodes {
-		inDegree[importPath] = 0
-		depCount[importPath] = len(node.Deps)
+	for importpath, node := range t.nodes {
+		indegree[importpath] = 0
+		count := 0
+		for _, dep := range node.Deps {
+			if _, exists := t.nodes[dep]; exists {
+				count++
+			}
+		}
+		depcount[importpath] = count
 	}
 
 	for _, node := range t.nodes {
 		for _, dep := range node.Deps {
 			if _, exists := t.nodes[dep]; exists {
-				inDegree[dep]++
+				indegree[dep]++
 			}
 		}
 	}
 
 	for {
 		var current []*packagenode
-		for importPath, node := range t.nodes {
-			if depCount[importPath] == 0 {
+		for importpath, node := range t.nodes {
+			if depcount[importpath] == 0 {
 				current = append(current, node)
 			}
 		}
@@ -246,7 +252,7 @@ func (t *dependencygraph) topologicalsort() ([][]*packagenode, error) {
 			for _, dependent := range t.nodes {
 				for _, dep := range dependent.Deps {
 					if dep == node.ImportPath {
-						depCount[dependent.ImportPath]--
+						depcount[dependent.ImportPath]--
 					}
 				}
 			}
@@ -255,8 +261,8 @@ func (t *dependencygraph) topologicalsort() ([][]*packagenode, error) {
 
 	if len(t.nodes) > 0 {
 		var remaining []string
-		for importPath := range t.nodes {
-			remaining = append(remaining, importPath)
+		for importpath := range t.nodes {
+			remaining = append(remaining, importpath)
 		}
 		return nil, errorsx.Errorf("circular dependency detected: %v", remaining)
 	}
@@ -302,7 +308,7 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode,
 		gctx generators.Context
 	)
 
-	if gctx, err = generators.NewContext(t.buildContext, t.configName, node.Pkg, t.generatorOpts...); err != nil {
+	if gctx, err = generators.NewContext(t.buildcontext, t.configname, node.Pkg, t.generatoropts...); err != nil {
 		return errorsx.Wrapf(err, "failed to create generator context for %s", node.ImportPath)
 	}
 
@@ -327,36 +333,41 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode,
 	return nil
 }
 
-func AutoCompileGraph(ctx context.Context, configName string, bctx build.Context, rootPkg *build.Package, opts []generators.Option) (map[string]*bytes.Buffer, error) {
+func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context, rootpkg *build.Package, opts []generators.Option) (map[string]*bytes.Buffer, error) {
 	var (
 		err     error
-		rootDir string
+		rootdir string
 	)
 
-	if rootPkg.ImportPath == "" || rootPkg.ImportPath == "." {
+	if rootpkg.ImportPath == "" || rootpkg.ImportPath == "." {
 		var modpath string
-		if modpath, err = genieql.FindModulePath(rootPkg.Dir); err == nil && modpath != "" {
+		if modpath, err = genieql.FindModulePath(rootpkg.Dir); err == nil && modpath != "" {
 			var modroot string
-			if modroot, err = genieql.FindModuleRoot(rootPkg.Dir); err == nil {
+			if modroot, err = genieql.FindModuleRoot(rootpkg.Dir); err == nil {
 				var relpath string
-				if relpath, err = filepath.Rel(modroot, rootPkg.Dir); err == nil && relpath != "." {
-					rootPkg.ImportPath = filepath.Join(modpath, relpath)
+				if relpath, err = filepath.Rel(modroot, rootpkg.Dir); err == nil && relpath != "." {
+					rootpkg.ImportPath = filepath.Join(modpath, relpath)
 				} else {
-					rootPkg.ImportPath = modpath
+					rootpkg.ImportPath = modpath
 				}
 			}
 		}
 	}
 
-	rootDir = rootPkg.Root
-	if rootDir == "" {
-		rootDir = rootPkg.Dir
+	rootdir = rootpkg.Root
+	if rootdir == "" {
+		var modroot string
+		if modroot, err = genieql.FindModuleRoot(rootpkg.Dir); err == nil {
+			rootdir = modroot
+		} else {
+			rootdir = rootpkg.Dir
+		}
 	}
 
-	graph := newdependencygraph(bctx, rootDir, configName, opts)
+	graph := newdependencygraph(bctx, rootdir, configname, opts)
 
-	log.Println("discovering packages starting from:", rootPkg.ImportPath)
-	if err = graph.discoverpackages(ctx, rootPkg); err != nil {
+	log.Println("discovering packages starting from:", rootpkg.ImportPath)
+	if err = graph.discoverpackages(ctx, rootpkg); err != nil {
 		return nil, errorsx.Wrap(err, "failed to discover packages")
 	}
 
@@ -455,9 +466,9 @@ func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Contex
 
 	if len(results) > 1 {
 		log.Printf("compiled %d dependency packages:", len(results)-1)
-		for importPath := range results {
-			if importPath != bpkg.ImportPath {
-				log.Println("  -", importPath)
+		for importpath := range results {
+			if importpath != bpkg.ImportPath {
+				log.Println("  -", importpath)
 			}
 		}
 	}
