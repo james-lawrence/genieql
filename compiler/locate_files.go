@@ -14,7 +14,19 @@ import (
 )
 
 func AutoGenerate(ctx context.Context, cname string, bctx build.Context, bpkg *build.Package, dst io.Writer, options ...generators.Option) (err error) {
-	return AutoGenerateConcurrent(ctx, cname, bctx, bpkg, dst, options...)
+	var (
+		gctx generators.Context
+	)
+
+	if gctx, err = generators.NewContext(bctx, cname, bpkg, options...); err != nil {
+		return err
+	}
+
+	if err = Autocompile(ctx, gctx, dst); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Autocompile(ctx context.Context, cctx generators.Context, dst io.Writer) (err error) {
