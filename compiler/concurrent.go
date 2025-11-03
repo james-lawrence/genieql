@@ -85,9 +85,17 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 		return nil
 	}
 
-	pkgcopy := *pkg
-	pkgcopy.GoFiles = make([]string, len(pkg.GoFiles))
-	copy(pkgcopy.GoFiles, pkg.GoFiles)
+	var reloaded *build.Package
+	if reloaded, err = t.buildcontext.ImportDir(pkg.Dir, build.IgnoreVendor); err != nil {
+		return errorsx.Wrapf(err, "failed to reload package with build context: %s", pkg.Dir)
+	}
+	if reloaded.ImportPath == "." || reloaded.ImportPath == "" {
+		reloaded.ImportPath = pkg.ImportPath
+	}
+
+	pkgcopy := *reloaded
+	pkgcopy.GoFiles = make([]string, len(reloaded.GoFiles))
+	copy(pkgcopy.GoFiles, reloaded.GoFiles)
 	node := &packagenode{
 		ImportPath: pkg.ImportPath,
 		Dir:        pkg.Dir,
@@ -364,6 +372,7 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 		}
 	}
 
+	bctx.BuildTags = append(bctx.BuildTags, "genieql.ignore")
 	graph := newdependencygraph(bctx, rootdir, configname, opts)
 
 	log.Println("discovering packages starting from:", rootpkg.ImportPath)

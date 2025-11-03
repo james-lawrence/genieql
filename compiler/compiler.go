@@ -177,13 +177,7 @@ func (t Context) Compile(ctx context.Context, dst io.Writer, sources ...*ast.Fil
 		imports = astcodec.SearchImports(file, func(is *ast.ImportSpec) bool { return true })
 	}
 
-	var filtered []string
-	for _, f := range t.CurrentPackage.GoFiles {
-		if f != "genieql.gen.go" && !strings.HasPrefix(f, "genieql.tmp.") {
-			filtered = append(filtered, f)
-		}
-	}
-	t.CurrentPackage.GoFiles = append(filtered, filepath.Base(working.Name()))
+	t.CurrentPackage.GoFiles = append(t.CurrentPackage.GoFiles, filepath.Base(working.Name()))
 
 	if err = genieql.PrintPackage(printer, working, t.Context.FileSet, t.Context.CurrentPackage, t.Context.OSArgs, imports); err != nil {
 		return errorsx.Wrap(err, "unable to write header to scratch file")

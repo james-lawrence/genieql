@@ -1,3 +1,3 @@
 package autocompilegraph
 
-//go:generate genieql auto -o "genieql.gen.go"
+//go:generate genieql auto graph -o "genieql.gen.go"
