@@ -32,7 +32,7 @@ func TestAutocompileConcurrent_DiscoverAndCompilePackagesInDependencyOrder(t *te
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestAutocompileConcurrent_CompileDependenciesBeforeDependents(t *testing.T)
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestAutocompileConcurrent_CompileDependenciesBeforeDependents(t *testing.T)
 	}
 }
 
-func getKeys(m map[string][]byte) []string {
+func getKeys(m map[string]*bytes.Buffer) []string {
 	var keys []string
 	for k := range m {
 		keys = append(keys, k)
@@ -86,7 +86,7 @@ func TestAutocompileConcurrent_HandlesPackagesWithNoTaggedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestAutocompileConcurrent_HandlesSinglePackageWithNoDependencies(t *testing
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -113,39 +113,6 @@ func TestAutocompileConcurrent_HandlesSinglePackageWithNoDependencies(t *testing
 	}
 }
 
-func TestAutocompileConcurrent_CompilesMultipleIndependentPackagesConcurrently(t *testing.T) {
-	testctx, bctx, mroot := setupTest(t)
-	pkg, err := bctx.ImportDir(filepath.Join(mroot, "examples/postgresql/autocompile"), build.IgnoreVendor)
-	if err != nil {
-		t.Fatalf("failed to import dir: %v", err)
-	}
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	errors := []error{}
-	results := []map[string][]byte{}
-	concurrency := 3
-	for range concurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			r, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
-			mu.Lock()
-			defer mu.Unlock()
-			if err != nil {
-				errors = append(errors, err)
-			} else {
-				results = append(results, r)
-			}
-		}()
-	}
-	wg.Wait()
-	if len(errors) > 0 {
-		t.Errorf("expected no errors, got %v", errors)
-	}
-	if len(results) != concurrency {
-		t.Errorf("expected %d results, got %d", concurrency, len(results))
-	}
-}
 
 func TestAutocompileConcurrent_HandlesConcurrentAccessWithoutRaceConditions(t *testing.T) {
 	testctx, bctx, mroot := setupTest(t)
@@ -159,7 +126,7 @@ func TestAutocompileConcurrent_HandlesConcurrentAccessWithoutRaceConditions(t *t
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+			_, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 			if err == nil {
 				counter.Add(1)
 			}
@@ -177,7 +144,7 @@ func TestAutocompileConcurrent_ReturnsErrorForInvalidConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	_, err = compiler.AutocompileConcurrent(testctx, "nonexistent.config", bctx, pkg, nil)
+	_, err = compiler.AutoCompileGraph(testctx, "nonexistent.config", bctx, pkg, nil)
 	if err == nil {
 		t.Error("expected error for invalid config, got nil")
 	}
@@ -190,7 +157,7 @@ func TestAutocompileConcurrent_ReturnsErrorWhenPackageImportFails(t *testing.T) 
 		Dir:        "/nonexistent/path",
 		Root:       "/nonexistent",
 	}
-	_, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	_, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err == nil {
 		t.Error("expected error for invalid package, got nil")
 	}
@@ -204,7 +171,7 @@ func TestAutocompileConcurrent_StopsCompilationWhenContextIsCancelled(t *testing
 	}
 	cancelCtx, cancel := context.WithCancel(testctx)
 	cancel()
-	_, _ = compiler.AutocompileConcurrent(cancelCtx, "postgresql.test.config", bctx, pkg, nil)
+	_, _ = compiler.AutoCompileGraph(cancelCtx, "postgresql.test.config", bctx, pkg, nil)
 }
 
 func TestAutoGenerateConcurrent_GeneratesCodeToWriter(t *testing.T) {
@@ -326,7 +293,7 @@ func Normal() {}
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -341,7 +308,7 @@ func TestAutocompileConcurrent_HandlesMultipleDependencyLevels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -374,7 +341,7 @@ func Example() {}
 	if err != nil {
 		t.Fatalf("failed to import dir: %v", err)
 	}
-	results, err := compiler.AutocompileConcurrent(testctx, "postgresql.test.config", bctx, pkg, nil)
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, pkg, nil)
 	if err != nil {
 		t.Fatalf("AutocompileConcurrent failed: %v", err)
 	}
@@ -394,4 +361,46 @@ func containsat(s, substr string, start int) bool {
 		}
 	}
 	return false
+}
+
+func TestAutoCompileGraph_Integration_ThreeLevelDependencies(t *testing.T) {
+	ctx := context.Background()
+	bctx := build.Default
+	mroot, err := genieql.FindModuleRoot(".")
+	if err != nil {
+		t.Fatalf("failed to find module root: %v", err)
+	}
+	pkg, err := bctx.ImportDir(filepath.Join(mroot, "examples/postgresql/autocompilegraph"), build.IgnoreVendor)
+	if err != nil {
+		t.Fatalf("failed to import dir: %v", err)
+	}
+	results, err := compiler.AutoCompileGraph(ctx, "postgresql.test.config", bctx, pkg, nil)
+	if err != nil {
+		t.Fatalf("AutoCompileGraph failed: %v", err)
+	}
+	if len(results) != 5 {
+		t.Errorf("expected 5 compiled packages (pkga, pkgb, pkgc, pkgd, root), got %d", len(results))
+		for path := range results {
+			t.Logf("  - %s", path)
+		}
+	}
+	expectedPackages := []string{
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkga",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgb",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgc",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgd",
+	}
+	for _, expectedPkg := range expectedPackages {
+		if _, ok := results[expectedPkg]; !ok {
+			t.Errorf("expected results to contain package %s", expectedPkg)
+		}
+	}
+	for path, buf := range results {
+		if buf == nil {
+			t.Errorf("package %s has nil buffer", path)
+		} else if buf.Len() == 0 {
+			t.Errorf("package %s has empty buffer", path)
+		}
+	}
 }
