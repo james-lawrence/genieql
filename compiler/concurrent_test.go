@@ -62,8 +62,11 @@ func TestAutoCompileGraph_ParentDirectoryWithChildPackages(t *testing.T) {
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd",
 	}
 	for _, expectedPkg := range expectedPackages {
-		if _, ok := results[expectedPkg]; !ok {
+		pkgErr, ok := results[expectedPkg]
+		if !ok {
 			t.Errorf("expected results to contain package %s", expectedPkg)
+		} else if pkgErr != nil {
+			t.Errorf("package %s failed: %v", expectedPkg, pkgErr)
 		}
 	}
 	for _, expectedPkg := range expectedPackages {
@@ -90,17 +93,17 @@ func TestAutoCompileGraph_ThreeLevelDependencyOrdering(t *testing.T) {
 	if len(results) != 4 {
 		t.Fatalf("expected 4 packages, got %d", len(results))
 	}
-	if _, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"]; !ok {
-		t.Error("expected pkga to be compiled")
+	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"]; !ok || err != nil {
+		t.Error("expected pkga to be compiled successfully")
 	}
-	if _, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb"]; !ok {
-		t.Error("expected pkgb to be compiled")
+	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb"]; !ok || err != nil {
+		t.Error("expected pkgb to be compiled successfully")
 	}
-	if _, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc"]; !ok {
-		t.Error("expected pkgc to be compiled (depends on pkga and pkgb)")
+	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc"]; !ok || err != nil {
+		t.Error("expected pkgc to be compiled successfully (depends on pkga and pkgb)")
 	}
-	if _, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd"]; !ok {
-		t.Error("expected pkgd to be compiled (depends on pkgc)")
+	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd"]; !ok || err != nil {
+		t.Error("expected pkgd to be compiled successfully (depends on pkgc)")
 	}
 }
 
@@ -120,8 +123,8 @@ func TestAutoCompileGraph_SinglePackageWithNoDependencies(t *testing.T) {
 		t.Errorf("expected 1 result, got %d", len(results))
 	}
 	expectedPkg := "github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"
-	if _, ok := results[expectedPkg]; !ok {
-		t.Errorf("expected results to contain package %s", expectedPkg)
+	if err, ok := results[expectedPkg]; !ok || err != nil {
+		t.Errorf("expected package %s to compile successfully", expectedPkg)
 	}
 }
 
