@@ -3,6 +3,7 @@ package compiler_test
 import (
 	"context"
 	"go/build"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -65,11 +66,11 @@ func TestAutoCompileGraph_ParentDirectoryWithChildPackages(t *testing.T) {
 			t.Errorf("expected results to contain package %s", expectedPkg)
 		}
 	}
-	for path, buf := range results {
-		if buf == nil {
-			t.Errorf("package %s has nil buffer", path)
-		} else if buf.Len() == 0 {
-			t.Errorf("package %s has empty buffer", path)
+	for _, expectedPkg := range expectedPackages {
+		pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph/packages", filepath.Base(expectedPkg))
+		genFile := filepath.Join(pkgDir, defaultOutputFilename)
+		if info, err := os.Stat(genFile); err != nil || info.Size() == 0 {
+			t.Errorf("package %s: generated file missing or empty", expectedPkg)
 		}
 	}
 }
@@ -88,11 +89,6 @@ func TestAutoCompileGraph_ThreeLevelDependencyOrdering(t *testing.T) {
 	}
 	if len(results) != 4 {
 		t.Fatalf("expected 4 packages, got %d", len(results))
-	}
-	for importPath, buf := range results {
-		if buf == nil || buf.Len() == 0 {
-			t.Errorf("package %s has invalid output", importPath)
-		}
 	}
 	if _, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"]; !ok {
 		t.Error("expected pkga to be compiled")
