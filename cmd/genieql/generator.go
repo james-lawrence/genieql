@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"io"
 	"log"
+	"os"
 
 	"github.com/alecthomas/kingpin"
 
@@ -79,6 +80,10 @@ func (t *generator) executeGraph(*kingpin.ParseContext) (err error) {
 		bpkg  *build.Package
 		bctx  = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
 	)
+
+	if t.output != "" && t.output != "-" {
+		os.Remove(t.output)
+	}
 
 	if bpkg, err = astcodec.LocatePackage(pname, ".", bctx, genieql.StrictPackageImport(pname)); err != nil {
 		return errorsx.Wrap(err, "unable to locate package")

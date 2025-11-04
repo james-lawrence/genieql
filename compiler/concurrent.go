@@ -15,7 +15,6 @@ import (
 	"sync"
 
 	"github.com/james-lawrence/genieql"
-	"github.com/james-lawrence/genieql/buildx"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
@@ -67,8 +66,7 @@ func (t *dependencygraph) walkdirectories(ctx context.Context, dir string) error
 		return errorsx.Wrapf(err, "failed to read directory: %s", dir)
 	}
 
-	discoverybctx := buildx.Clone(t.buildcontext, buildx.Tags(genieql.BuildTagGenerate))
-	pkg, pkgerr := discoverybctx.ImportDir(dir, build.IgnoreVendor)
+	pkg, pkgerr := t.buildcontext.ImportDir(dir, build.IgnoreVendor)
 	if pkgerr == nil {
 		log.Printf("  checking package: %s (dir=%s)", pkg.ImportPath, pkg.Dir)
 		if err := t.visitpackage(ctx, pkg); err != nil {
@@ -123,8 +121,7 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 
 	t.processing[visitkey] = true
 
-	discoverybctx := buildx.Clone(t.buildcontext, buildx.Tags(genieql.BuildTagGenerate))
-	if tagged, err = FindTaggedFiles(discoverybctx, pkg.Dir, genieql.BuildTagGenerate); err != nil {
+	if tagged, err = FindTaggedFiles(t.buildcontext, pkg.Dir, genieql.BuildTagGenerate); err != nil {
 		return errorsx.Wrapf(err, "failed to find tagged files in %s", pkg.Dir)
 	}
 
@@ -180,9 +177,7 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 
 		for _, imp := range file.Imports {
 			importpath := imp.Path.Value[1 : len(imp.Path.Value)-1]
-			if !imports[importpath] {
-				imports[importpath] = true
-			}
+			imports[importpath] = imports[importpath] || true
 		}
 	}
 
@@ -199,26 +194,16 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 
 func (t *dependencygraph) topologicalsort() ([][]*packagenode, error) {
 	var (
-		levels   [][]*packagenode
-		indegree = make(map[string]int)
-		depcount = make(map[string]int)
+		levels     [][]*packagenode
+		depcount   = make(map[string]int)
+		dependents = make(map[string][]string)
 	)
 
 	for importpath, node := range t.nodes {
-		indegree[importpath] = 0
-		count := 0
 		for _, dep := range node.Deps {
 			if _, exists := t.nodes[dep]; exists {
-				count++
-			}
-		}
-		depcount[importpath] = count
-	}
-
-	for _, node := range t.nodes {
-		for _, dep := range node.Deps {
-			if _, exists := t.nodes[dep]; exists {
-				indegree[dep]++
+				depcount[importpath]++
+				dependents[dep] = append(dependents[dep], importpath)
 			}
 		}
 	}
@@ -239,22 +224,14 @@ func (t *dependencygraph) topologicalsort() ([][]*packagenode, error) {
 
 		for _, node := range current {
 			delete(t.nodes, node.ImportPath)
-			for _, dependent := range t.nodes {
-				for _, dep := range dependent.Deps {
-					if dep == node.ImportPath {
-						depcount[dependent.ImportPath]--
-					}
-				}
+			for _, dependent := range dependents[node.ImportPath] {
+				depcount[dependent]--
 			}
 		}
 	}
 
 	if len(t.nodes) > 0 {
-		var remaining []string
-		for importpath := range t.nodes {
-			remaining = append(remaining, importpath)
-		}
-		return nil, errorsx.Errorf("circular dependency detected: %v", remaining)
+		return nil, errorsx.Errorf("circular dependency detected: %v", t.nodes)
 	}
 
 	return levels, nil
@@ -354,7 +331,6 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 		}
 	}
 
-	bctx.BuildTags = append(bctx.BuildTags, "genieql.ignore")
 	graph := newdependencygraph(bctx, rootdir, configname, opts)
 
 	log.Println("discovering packages starting from:", rootpkg.ImportPath)
@@ -388,7 +364,7 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 		for _, node := range level {
 			if node.Err == nil && node.Output != nil {
 				var (
-					outpath = filepath.Join(node.Dir, "genieql.gen.go")
+					outpath = filepath.Join(node.Dir, genieql.DefaultOutputFilename)
 					outcopy = bytes.NewBuffer(node.Output.Bytes())
 					outfile *os.File
 				)
