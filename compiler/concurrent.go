@@ -19,13 +19,11 @@ import (
 )
 
 type packagenode struct {
-	ImportPath string
-	Dir        string
-	Pkg        *build.Package
-	FileSet    *token.FileSet
-	Deps       []string
-	Output     *bytes.Buffer
-	Err        error
+	Pkg     *build.Package
+	FileSet *token.FileSet
+	Deps    []string
+	Output  *bytes.Buffer
+	Err     error
 }
 
 type dependencygraph struct {
@@ -98,12 +96,10 @@ func (t *dependencygraph) visitpackage(pkg *build.Package) error {
 	log.Printf("  package %s has import path %s", pkg.Dir, pkg.ImportPath)
 
 	node := &packagenode{
-		ImportPath: pkg.ImportPath,
-		Dir:        pkg.Dir,
-		Pkg:        pkg,
-		FileSet:    token.NewFileSet(),
-		Deps:       slicesx.Filter(func(s string) bool { return strings.HasPrefix(s, t.module) }),
-		Output:     bytes.NewBuffer(nil),
+		Pkg:     pkg,
+		FileSet: token.NewFileSet(),
+		Deps:    slicesx.Filter(func(s string) bool { return strings.HasPrefix(s, t.module) }),
+		Output:  bytes.NewBuffer(nil),
 	}
 
 	t.nodes[pkg.ImportPath] = node
@@ -143,8 +139,8 @@ func (t *dependencygraph) topologicalsort(...*packages.Package) ([][]*packagenod
 		levels = append(levels, current)
 
 		for _, node := range current {
-			delete(t.nodes, node.ImportPath)
-			for _, dependent := range dependents[node.ImportPath] {
+			delete(t.nodes, node.Pkg.ImportPath)
+			for _, dependent := range dependents[node.Pkg.ImportPath] {
 				depcount[dependent]--
 			}
 		}
@@ -184,14 +180,14 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode)
 	)
 
 	if gctx, err = generators.NewContext(t.buildcontext, t.configname, node.Pkg, t.generatoropts...); err != nil {
-		return errorsx.Wrapf(err, "failed to create generator context for %s", node.ImportPath)
+		return errorsx.Wrapf(err, "failed to create generator context for %s", node.Pkg.ImportPath)
 	}
 	gctx.FileSet = node.FileSet
 
-	log.Println("compiling package:", node.ImportPath, "with", t.buildcontext.BuildTags)
+	log.Println("compiling package:", node.Pkg.ImportPath, "with", t.buildcontext.BuildTags)
 
 	if err = Autocompile(ctx, gctx, node.Output); err != nil {
-		return errorsx.Wrapf(err, "failed to compile package: %s", node.ImportPath)
+		return errorsx.Wrapf(err, "failed to compile package: %s", node.Pkg.ImportPath)
 	}
 
 	return nil
@@ -215,27 +211,27 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 	for i, level := range levels {
 		var pkgs []string
 		for _, node := range level {
-			pkgs = append(pkgs, node.ImportPath)
+			pkgs = append(pkgs, node.Pkg.ImportPath)
 		}
 		log.Printf("  level %d: %v", i, pkgs)
 	}
 
 	emit := func(node *packagenode) error {
 		var (
-			outpath = filepath.Join(node.Dir, output)
+			outpath = filepath.Join(node.Pkg.Dir, output)
 			outfile *os.File
 		)
 
 		if outfile, err = os.Create(outpath); err != nil {
-			return errorsx.Wrapf(err, "failed to create output file for %s", node.ImportPath)
+			return errorsx.Wrapf(err, "failed to create output file for %s", node.Pkg.ImportPath)
 		}
 		defer outfile.Close()
 
 		if err = genieql.NewCopyGenerator(node.Output).Generate(outfile); err != nil {
-			return errorsx.Wrapf(err, "failed to write output for %s", node.ImportPath)
+			return errorsx.Wrapf(err, "failed to write output for %s", node.Pkg.ImportPath)
 		}
 
-		log.Printf("  wrote output for %s", node.ImportPath)
+		log.Printf("  wrote output for %s", node.Pkg.ImportPath)
 		return nil
 	}
 
@@ -259,14 +255,14 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 				return nil, err
 			}
 
-			results[node.ImportPath] = node.Output
+			results[node.Pkg.ImportPath] = node.Output
 		}
 	}
 
 	for _, level := range levels {
 		for _, node := range level {
 			if node.Err != nil {
-				return nil, errorsx.Wrapf(node.Err, "compilation failed for package: %s", node.ImportPath)
+				return nil, errorsx.Wrapf(node.Err, "compilation failed for package: %s", node.Pkg.ImportPath)
 			}
 		}
 	}
