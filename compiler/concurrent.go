@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/buildx"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
@@ -52,9 +53,50 @@ func newdependencygraph(bctx build.Context, rootdir string, configname string, o
 	}
 }
 
-func (t *dependencygraph) discoverpackages(ctx context.Context, rootpkg *build.Package) error {
-	if err := t.visitpackage(ctx, rootpkg); err != nil {
+func (t *dependencygraph) discoverpackages(ctx context.Context, rootpkg *build.Package, scandir string) error {
+	if err := t.walkdirectories(ctx, scandir); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (t *dependencygraph) walkdirectories(ctx context.Context, dir string) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return errorsx.Wrapf(err, "failed to read directory: %s", dir)
+	}
+
+	discoverybctx := buildx.Clone(t.buildcontext, buildx.Tags(genieql.BuildTagGenerate))
+	pkg, pkgerr := discoverybctx.ImportDir(dir, build.IgnoreVendor)
+	if pkgerr == nil {
+		log.Printf("  checking package: %s (dir=%s)", pkg.ImportPath, pkg.Dir)
+		if err := t.visitpackage(ctx, pkg); err != nil {
+			return err
+		}
+	} else {
+		log.Printf("  skipping %s: failed to import: %v", dir, pkgerr)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+		if name == "vendor" || name == ".git" || name == "node_modules" || name == "testdata" || strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") {
+			continue
+		}
+
+		subdir := filepath.Join(dir, name)
+		rel, err := filepath.Rel(t.rootdir, subdir)
+		if err != nil || filepath.IsAbs(rel) {
+			continue
+		}
+
+		if err := t.walkdirectories(ctx, subdir); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -66,36 +108,53 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 		tagged TaggedFiles
 	)
 
-	if t.visited[pkg.ImportPath] {
+	visitkey := pkg.ImportPath
+	if visitkey == "." || visitkey == "" {
+		visitkey = pkg.Dir
+	}
+
+	if t.visited[visitkey] {
 		return nil
 	}
 
-	if t.processing[pkg.ImportPath] {
+	if t.processing[visitkey] {
 		return nil
 	}
 
-	t.processing[pkg.ImportPath] = true
+	t.processing[visitkey] = true
 
-	if tagged, err = FindTaggedFiles(t.buildcontext, pkg.Dir, genieql.BuildTagGenerate); err != nil {
+	discoverybctx := buildx.Clone(t.buildcontext, buildx.Tags(genieql.BuildTagGenerate))
+	if tagged, err = FindTaggedFiles(discoverybctx, pkg.Dir, genieql.BuildTagGenerate); err != nil {
 		return errorsx.Wrapf(err, "failed to find tagged files in %s", pkg.Dir)
 	}
 
+	log.Printf("  found %d tagged files in %s: %v", len(tagged.Files), pkg.Dir, tagged.Files)
+
 	if tagged.Empty() {
-		t.visited[pkg.ImportPath] = true
+		t.visited[visitkey] = true
 		return nil
 	}
 
-	var reloaded *build.Package
-	if reloaded, err = t.buildcontext.ImportDir(pkg.Dir, build.IgnoreVendor); err != nil {
-		return errorsx.Wrapf(err, "failed to reload package with build context: %s", pkg.Dir)
-	}
-	if reloaded.ImportPath == "." || reloaded.ImportPath == "" {
-		reloaded.ImportPath = pkg.ImportPath
+	if pkg.ImportPath == "." || pkg.ImportPath == "" {
+		var modpath string
+		var modroot string
+		if modpath, err = genieql.FindModulePath(pkg.Dir); err == nil && modpath != "" {
+			if modroot, err = genieql.FindModuleRoot(pkg.Dir); err == nil {
+				var relpath string
+				if relpath, err = filepath.Rel(modroot, pkg.Dir); err == nil && relpath != "." {
+					pkg.ImportPath = filepath.Join(modpath, relpath)
+				} else {
+					pkg.ImportPath = modpath
+				}
+			}
+		}
 	}
 
-	pkgcopy := *reloaded
-	pkgcopy.GoFiles = make([]string, len(reloaded.GoFiles))
-	copy(pkgcopy.GoFiles, reloaded.GoFiles)
+	log.Printf("  package %s has import path %s", pkg.Dir, pkg.ImportPath)
+
+	pkgcopy := *pkg
+	pkgcopy.GoFiles = make([]string, len(pkg.GoFiles))
+	copy(pkgcopy.GoFiles, pkg.GoFiles)
 	node := &packagenode{
 		ImportPath: pkg.ImportPath,
 		Dir:        pkg.Dir,
@@ -131,87 +190,10 @@ func (t *dependencygraph) visitpackage(ctx context.Context, pkg *build.Package) 
 	t.nodes[pkg.ImportPath] = node
 
 	for importpath := range imports {
-		var (
-			dep *build.Package
-		)
-
-		dep, err = t.buildcontext.Import(importpath, pkg.Dir, build.FindOnly|build.IgnoreVendor)
-		if err != nil {
-			parts := strings.Split(importpath, "/")
-			if len(parts) > 0 {
-				local := filepath.Join(pkg.Dir, parts[len(parts)-1])
-				if dep, err = t.buildcontext.ImportDir(local, build.IgnoreVendor); err == nil {
-					log.Printf("  found local subdirectory: %s -> %s", importpath, local)
-				}
-			}
-
-			if (err != nil || dep == nil) && pkg.ImportPath != "" && pkg.ImportPath != "." {
-				var pkgpathparts []string
-				if pkg.ImportPath == "." {
-					pkgpathparts = []string{}
-				} else {
-					pkgpathparts = strings.Split(pkg.ImportPath, "/")
-				}
-				importparts := strings.Split(importpath, "/")
-				commonprefix := 0
-				for i := 0; i < len(pkgpathparts) && i < len(importparts); i++ {
-					if pkgpathparts[i] == importparts[i] {
-						commonprefix++
-					} else {
-						break
-					}
-				}
-				if commonprefix > 0 {
-					relparts := importparts[commonprefix:]
-					if len(relparts) > 0 {
-						currentdir := pkg.Dir
-						for i := 0; i < len(pkgpathparts)-commonprefix; i++ {
-							currentdir = filepath.Dir(currentdir)
-						}
-						siblingpath := filepath.Join(currentdir, filepath.Join(relparts...))
-						if dep, err = t.buildcontext.ImportDir(siblingpath, build.IgnoreVendor); err == nil {
-							log.Printf("  found sibling package: %s -> %s", importpath, siblingpath)
-						}
-					}
-				}
-			}
-
-			if err != nil || dep == nil {
-				log.Printf("  skipping import %s: %v", importpath, err)
-				continue
-			}
-		}
-
-		var rel string
-		rel, err = filepath.Rel(t.rootdir, dep.Dir)
-		if err != nil || filepath.IsAbs(rel) || (len(rel) >= 2 && rel[0] == '.' && rel[1] == '.') {
-			log.Printf("  skipping import %s: outside root (rel=%s, err=%v)", importpath, rel, err)
-			continue
-		}
-
-		dep, err = t.buildcontext.ImportDir(dep.Dir, build.IgnoreVendor)
-		if err != nil {
-			log.Printf("  skipping import %s: failed to import dir: %v", importpath, err)
-			continue
-		}
-
-		if dep.ImportPath == "." || dep.ImportPath == "" {
-			if filepath.IsAbs(importpath) || strings.Contains(importpath, ".") {
-				dep.ImportPath = importpath
-			} else {
-				dep.ImportPath = pkg.ImportPath + "/" + importpath
-			}
-		}
-
-		log.Printf("  processing dependency: %s (dir=%s)", dep.ImportPath, dep.Dir)
-		node.Deps = append(node.Deps, dep.ImportPath)
-
-		if err = t.visitpackage(ctx, dep); err != nil {
-			return err
-		}
+		node.Deps = append(node.Deps, importpath)
 	}
 
-	t.visited[pkg.ImportPath] = true
+	t.visited[visitkey] = true
 	return nil
 }
 
@@ -376,7 +358,8 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 	graph := newdependencygraph(bctx, rootdir, configname, opts)
 
 	log.Println("discovering packages starting from:", rootpkg.ImportPath)
-	if err = graph.discoverpackages(ctx, rootpkg); err != nil {
+	log.Println("scanning directory tree:", rootpkg.Dir)
+	if err = graph.discoverpackages(ctx, rootpkg, rootpkg.Dir); err != nil {
 		return nil, errorsx.Wrap(err, "failed to discover packages")
 	}
 

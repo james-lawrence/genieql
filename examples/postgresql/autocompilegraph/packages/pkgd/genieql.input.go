@@ -3,7 +3,7 @@
 package pkgd
 
 import (
-	"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/pkgc"
+	"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc"
 	genieql "github.com/james-lawrence/genieql/ginterp"
 )
 

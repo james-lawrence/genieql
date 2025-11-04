@@ -5,6 +5,7 @@ import (
 	"context"
 	"go/build"
 	"io"
+	"log"
 
 	"github.com/alecthomas/kingpin"
 
@@ -89,6 +90,11 @@ func (t *generator) executeGraph(*kingpin.ParseContext) (err error) {
 
 	if err = compiler.AutoGenerateConcurrent(context.Background(), t.configName, bctx, bpkg, buf, generators.OptionVerbosity(t.Verbosity)); err != nil {
 		return err
+	}
+
+	if buf.Len() == 0 {
+		log.Println("no output to write")
+		return nil
 	}
 
 	if dst, err = cmd.StdoutOrFile(t.output, cmd.DefaultWriteFlags); err != nil {
