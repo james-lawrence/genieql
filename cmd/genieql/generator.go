@@ -5,10 +5,9 @@ import (
 	"context"
 	"go/build"
 	"io"
-	"log"
-	"os"
 
 	"github.com/alecthomas/kingpin"
+	"golang.org/x/tools/go/packages"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
@@ -74,41 +73,15 @@ func (t *generator) executePackage(*kingpin.ParseContext) (err error) {
 
 func (t *generator) executeGraph(*kingpin.ParseContext) (err error) {
 	var (
-		pname = t.BuildInfo.CurrentPackageImport()
-		dst   io.WriteCloser
-		buf   = bytes.NewBuffer(nil)
-		bpkg  *build.Package
-		bctx  = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
+		bctx = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
 	)
 
-	if t.output != "" && t.output != "-" {
-		os.Remove(t.output)
+	bctx.Dir = t.BuildInfo.WorkingDir
+
+	pkgs, err := packages.Load(astcodec.LocatePackages(), "./...")
+	if err != nil {
+		return errorsx.Wrap(err, "unable to load packages")
 	}
 
-	if bpkg, err = astcodec.LocatePackage(pname, ".", bctx, genieql.StrictPackageImport(pname)); err != nil {
-		return errorsx.Wrap(err, "unable to locate package")
-	}
-
-	if pname != bpkg.ImportPath {
-		return errorsx.Errorf("expected the current package to have the correct path %s != %s", pname, bpkg.ImportPath)
-	}
-
-	if err = compiler.AutoGenerateConcurrent(context.Background(), t.configName, bctx, bpkg, buf, generators.OptionVerbosity(t.Verbosity)); err != nil {
-		return err
-	}
-
-	if buf.Len() == 0 {
-		log.Println("no output to write")
-		return nil
-	}
-
-	if dst, err = cmd.StdoutOrFile(t.output, cmd.DefaultWriteFlags); err != nil {
-		return errorsx.Wrap(err, "unable to setup output")
-	}
-
-	if _, err = io.Copy(dst, buf); err != nil {
-		return errorsx.Wrap(err, "failed to write generated code")
-	}
-
-	return nil
+	return compiler.AutoGenerateConcurrent(context.Background(), t.configName, bctx, t.BuildInfo.Module, t.output, pkgs, generators.OptionVerbosity(t.Verbosity))
 }
