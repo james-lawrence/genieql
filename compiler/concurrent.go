@@ -202,7 +202,7 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 
 	log.Println("discovered", len(graph.nodes), "packages with genieql.generate tag")
 
-	levels, err := graph.topologicalsort()
+	levels, err := graph.topologicalsort(pkgs...)
 	if err != nil {
 		return nil, errorsx.Wrap(err, "failed to sort packages")
 	}

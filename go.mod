@@ -17,12 +17,12 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/pkg/errors v0.9.1
-	github.com/pressly/goose/v3 v3.24.3
+	github.com/pressly/goose/v3 v3.26.0
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/zieckey/goini v0.0.0-20240615065340-08ee21c836fb
-	golang.org/x/text v0.25.0
-	golang.org/x/tools v0.33.0
+	golang.org/x/text v0.27.0
+	golang.org/x/tools v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -56,8 +56,8 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 )
 
@@ -72,8 +72,8 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/profile v1.7.0
 	github.com/tetratelabs/wazero v1.9.1-0.20251028162228-4668182376ff
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/mod v0.24.0
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/mod v0.25.0
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )
