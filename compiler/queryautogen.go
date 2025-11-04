@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"log"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
 	"github.com/james-lawrence/genieql/internal/errorsx"

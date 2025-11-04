@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/james-lawrence/genieql/internal/contextx"
 	"github.com/james-lawrence/genieql/internal/envx"
 	"github.com/james-lawrence/genieql/internal/errorsx"

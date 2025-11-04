@@ -8,9 +8,9 @@ require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/dave/jennifer v1.7.1
 	github.com/davecgh/go-spew v1.1.1
-	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/jackc/pgtype v1.14.4
-	github.com/jackc/pgx/v5 v5.7.5
+	github.com/jackc/pgx/v5 v5.7.6
 	github.com/marcboeker/go-duckdb/v2 v2.3.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-sqlite3 v1.14.28
