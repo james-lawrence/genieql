@@ -219,7 +219,6 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 	emit := func(node *packagenode) error {
 		var (
 			outpath = filepath.Join(node.Pkg.Dir, output)
-			outcopy = bytes.NewBuffer(node.Output.Bytes())
 			outfile *os.File
 		)
 
@@ -228,7 +227,7 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 		}
 		defer outfile.Close()
 
-		if err = genieql.NewCopyGenerator(outcopy).Generate(outfile); err != nil {
+		if err = genieql.NewCopyGenerator(node.Output).Generate(outfile); err != nil {
 			return errorsx.Wrapf(err, "failed to write output for %s", node.Pkg.ImportPath)
 		}
 
