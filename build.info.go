@@ -39,6 +39,8 @@ func NewBuildInfo() (bi BuildInfo, err error) {
 	return BuildInfo{
 		Build:      build.Default,
 		WorkingDir: workingDir,
+		ModuleRoot: modroot,
+		Module:     modname,
 		CurrentPKG: currentPackage(build.Default, strings.Replace(workingDir, modroot, modname, -1), workingDir),
 	}, nil
 }
@@ -47,6 +49,8 @@ type BuildInfo struct {
 	Build      build.Context
 	Verbosity  int
 	WorkingDir string
+	ModuleRoot string
+	Module     string
 	CurrentPKG *build.Package
 }
 

@@ -16,7 +16,7 @@ func Remove[T any](remove func(T) bool, items ...T) []T {
 	return result
 }
 
-// Filter the element that do not return true
+// Filter the elements that do not return true
 func Filter[T any](match func(T) bool, items ...T) (results []T) {
 	results = make([]T, 0, len(items))
 

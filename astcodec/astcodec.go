@@ -30,6 +30,19 @@ func AutoFileSet(c *packages.Config) {
 	c.Fset = token.NewFileSet()
 }
 
+func LocatePackages(options ...LoadOpt) *packages.Config {
+	cfg := &packages.Config{
+		Fset: token.NewFileSet(),
+		Mode: packages.NeedName | packages.LoadImports,
+	}
+
+	for _, opt := range options {
+		opt(cfg)
+	}
+
+	return cfg
+}
+
 func DefaultPkgLoad(options ...LoadOpt) *packages.Config {
 	cfg := &packages.Config{
 		Fset: token.NewFileSet(),

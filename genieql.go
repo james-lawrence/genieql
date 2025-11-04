@@ -25,8 +25,6 @@ const (
 	BuildTagGenerate = "genieql.generate" // used to specify which files should be analyzed for directives using genieql.generate
 )
 
-const DefaultOutputFilename = "genieql.gen.go"
-
 // Preface text inserted at the top of all generated files.
 const Preface = `
 
