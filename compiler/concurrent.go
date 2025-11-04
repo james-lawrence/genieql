@@ -193,7 +193,8 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode)
 	return nil
 }
 
-func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context, module string, output string, pkgs []*packages.Package, opts ...generators.Option) (_ map[string]*bytes.Buffer, err error) {
+func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context, module string, output string, pkgs []*packages.Package, opts ...generators.Option) (map[string]error, error) {
+	var err error
 	graph := newdependencygraph(bctx, configname, module, opts)
 
 	if err = graph.discoverpackages(pkgs...); err != nil {
@@ -235,34 +236,34 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 		return nil
 	}
 
-	results := make(map[string]*bytes.Buffer)
+	results := make(map[string]error)
 	for i, level := range levels {
 		log.Printf("compiling level %d (%d packages)", i, len(level))
 		graph.compilelevel(ctx, level)
 
 		for _, node := range level {
 			if node.Err != nil {
-				log.Println("unable to process", node.Pkg.Name, node.Err)
+				results[node.Pkg.ImportPath] = node.Err
 				continue
 			}
 
 			if node.Output == nil {
-				log.Println("unable to process", node.Pkg.Name, "not output buffer")
+				results[node.Pkg.ImportPath] = errorsx.New("no output buffer")
 				continue
 			}
 
 			if err = emit(node); err != nil {
-				return nil, err
+				results[node.Pkg.ImportPath] = err
+			} else {
+				results[node.Pkg.ImportPath] = nil
 			}
-
-			results[node.Pkg.ImportPath] = node.Output
 		}
 	}
 
 	for _, level := range levels {
 		for _, node := range level {
 			if node.Err != nil {
-				return nil, errorsx.Wrapf(node.Err, "compilation failed for package: %s", node.Pkg.ImportPath)
+				return results, errorsx.Wrapf(node.Err, "compilation failed for package: %s", node.Pkg.ImportPath)
 			}
 		}
 	}
@@ -273,7 +274,7 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Context, module string, output string, pkgs []*packages.Package, options ...generators.Option) error {
 	var (
 		err     error
-		results map[string]*bytes.Buffer
+		results map[string]error
 	)
 
 	if results, err = AutoCompileGraph(ctx, cname, bctx, module, output, pkgs, options...); err != nil {
@@ -286,9 +287,11 @@ func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Contex
 	}
 
 	if len(results) > 1 {
-		log.Printf("compiled %d dependency packages:", len(results)-1)
-		for importpath := range results {
-			log.Println("  -", importpath)
+		log.Printf("compiled %d packages:", len(results))
+		for importpath, pkgErr := range results {
+			if pkgErr == nil {
+				log.Println("  -", importpath)
+			}
 		}
 	}
 
