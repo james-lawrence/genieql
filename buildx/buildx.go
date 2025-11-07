@@ -12,6 +12,12 @@ func Tags(tags ...string) Option {
 	}
 }
 
+func Dir(dir string) Option {
+	return func(ctx *build.Context) {
+		ctx.Dir = dir
+	}
+}
+
 func Clone(bctx build.Context, options ...Option) build.Context {
 	for _, opt := range options {
 		opt(&bctx)
