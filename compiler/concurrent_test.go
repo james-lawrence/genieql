@@ -240,3 +240,38 @@ func TestAutoGenerateConcurrent_HandlesPackageWithNoOutput(t *testing.T) {
 		t.Fatalf("AutoGenerateConcurrent failed: %v", err)
 	}
 }
+
+func TestAutoCompileGraph_WithBuildContextDirSet(t *testing.T) {
+	testctx, bctx, mroot := setupTest(t)
+	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
+	bctx.Dir = pkgDir
+	pkgs := loadPackages(t, pkgDir+"/...")
+	module, err := genieql.FindModulePath(pkgDir)
+	if err != nil {
+		t.Fatalf("failed to find module path: %v", err)
+	}
+	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
+	if err != nil {
+		if strings.Contains(err.Error(), "Dir is non-empty, so relative srcDir is not allowed") {
+			t.Fatalf("AutoCompileGraph failed with Dir/srcDir conflict: %v", err)
+		}
+		t.Fatalf("AutoCompileGraph failed: %v", err)
+	}
+	if len(results) != 4 {
+		t.Errorf("expected 4 compiled packages, got %d", len(results))
+	}
+	expectedPackages := []string{
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc",
+		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd",
+	}
+	for _, expectedPkg := range expectedPackages {
+		pkgErr, ok := results[expectedPkg]
+		if !ok {
+			t.Errorf("expected results to contain package %s", expectedPkg)
+		} else if pkgErr != nil {
+			t.Errorf("package %s failed: %v", expectedPkg, pkgErr)
+		}
+	}
+}
