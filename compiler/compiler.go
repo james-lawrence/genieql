@@ -353,7 +353,7 @@ func generate(ctx context.Context, cctx Context, tmpdir string, buf *bytes.Buffe
 			return 1
 		}
 
-		bctx := buildx.Clone(cctx.Build, buildx.Tags(tags...), buildx.Dir(""))
+		bctx := buildx.Clone(cctx.Build, buildx.Tags(tags...))
 		if pkg, err = astcodec.LocatePackage(ipath, srcdir, bctx, genieql.StrictPackageImport(ipath)); err != nil {
 			log.Println("unable to locate package", err)
 			return 1

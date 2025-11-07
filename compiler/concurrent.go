@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/buildx"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/slicesx"
@@ -179,7 +180,7 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode)
 		gctx generators.Context
 	)
 
-	if gctx, err = generators.NewContext(t.buildcontext, t.configname, node.Pkg, t.generatoropts...); err != nil {
+	if gctx, err = generators.NewContext(buildx.Clone(t.buildcontext, buildx.Dir("")), t.configname, node.Pkg, t.generatoropts...); err != nil {
 		return errorsx.Wrapf(err, "failed to create generator context for %s", node.Pkg.ImportPath)
 	}
 	gctx.FileSet = node.FileSet
