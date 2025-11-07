@@ -11,6 +11,7 @@ import (
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/compiler"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -22,18 +23,14 @@ func setupTest(t *testing.T) (context.Context, build.Context, string) {
 	bctx := build.Default
 	bctx.BuildTags = append(bctx.BuildTags, genieql.BuildTagIgnore, genieql.BuildTagGenerate)
 	mroot, err := genieql.FindModuleRoot(".")
-	if err != nil {
-		t.Fatalf("failed to find module root: %v", err)
-	}
+	require.NoError(t, err, "failed to find module root")
 	return ctx, bctx, mroot
 }
 
 func loadPackages(t *testing.T, pattern string) []*packages.Package {
 	t.Helper()
 	pkgs, err := packages.Load(astcodec.LocatePackages(), pattern)
-	if err != nil {
-		t.Fatalf("failed to load packages: %v", err)
-	}
+	require.NoError(t, err, "failed to load packages")
 	return pkgs
 }
 
@@ -42,19 +39,10 @@ func TestAutoCompileGraph_ParentDirectoryWithChildPackages(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoCompileGraph failed: %v", err)
-	}
-	if len(results) != 4 {
-		t.Errorf("expected 4 compiled packages (pkga, pkgb, pkgc, pkgd), got %d", len(results))
-		for path := range results {
-			t.Logf("  - %s", path)
-		}
-	}
+	require.NoError(t, err, "AutoCompileGraph failed")
+	require.Len(t, results, 4, "expected 4 compiled packages (pkga, pkgb, pkgc, pkgd)")
 	expectedPackages := []string{
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga",
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb",
@@ -63,18 +51,15 @@ func TestAutoCompileGraph_ParentDirectoryWithChildPackages(t *testing.T) {
 	}
 	for _, expectedPkg := range expectedPackages {
 		pkgErr, ok := results[expectedPkg]
-		if !ok {
-			t.Errorf("expected results to contain package %s", expectedPkg)
-		} else if pkgErr != nil {
-			t.Errorf("package %s failed: %v", expectedPkg, pkgErr)
-		}
+		require.True(t, ok, "expected results to contain package %s", expectedPkg)
+		require.NoError(t, pkgErr, "package %s failed", expectedPkg)
 	}
 	for _, expectedPkg := range expectedPackages {
 		pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph/packages", filepath.Base(expectedPkg))
 		genFile := filepath.Join(pkgDir, defaultOutputFilename)
-		if info, err := os.Stat(genFile); err != nil || info.Size() == 0 {
-			t.Errorf("package %s: generated file missing or empty", expectedPkg)
-		}
+		info, err := os.Stat(genFile)
+		require.NoError(t, err, "package %s: generated file missing", expectedPkg)
+		require.NotZero(t, info.Size(), "package %s: generated file is empty", expectedPkg)
 	}
 }
 
@@ -83,28 +68,22 @@ func TestAutoCompileGraph_ThreeLevelDependencyOrdering(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoCompileGraph failed: %v", err)
-	}
-	if len(results) != 4 {
-		t.Fatalf("expected 4 packages, got %d", len(results))
-	}
-	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"]; !ok || err != nil {
-		t.Error("expected pkga to be compiled successfully")
-	}
-	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb"]; !ok || err != nil {
-		t.Error("expected pkgb to be compiled successfully")
-	}
-	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc"]; !ok || err != nil {
-		t.Error("expected pkgc to be compiled successfully (depends on pkga and pkgb)")
-	}
-	if err, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd"]; !ok || err != nil {
-		t.Error("expected pkgd to be compiled successfully (depends on pkgc)")
-	}
+	require.NoError(t, err, "AutoCompileGraph failed")
+	require.Len(t, results, 4, "expected 4 packages")
+	pkgErr, ok := results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"]
+	require.True(t, ok, "expected pkga to be in results")
+	require.NoError(t, pkgErr, "expected pkga to be compiled successfully")
+	pkgErr, ok = results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb"]
+	require.True(t, ok, "expected pkgb to be in results")
+	require.NoError(t, pkgErr, "expected pkgb to be compiled successfully")
+	pkgErr, ok = results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgc"]
+	require.True(t, ok, "expected pkgc to be in results")
+	require.NoError(t, pkgErr, "expected pkgc to be compiled successfully (depends on pkga and pkgb)")
+	pkgErr, ok = results["github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgd"]
+	require.True(t, ok, "expected pkgd to be in results")
+	require.NoError(t, pkgErr, "expected pkgd to be compiled successfully (depends on pkgc)")
 }
 
 func TestAutoCompileGraph_SinglePackageWithNoDependencies(t *testing.T) {
@@ -112,20 +91,14 @@ func TestAutoCompileGraph_SinglePackageWithNoDependencies(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph/packages/pkga")
 	pkgs := loadPackages(t, pkgDir)
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoCompileGraph failed: %v", err)
-	}
-	if len(results) != 1 {
-		t.Errorf("expected 1 result, got %d", len(results))
-	}
+	require.NoError(t, err, "AutoCompileGraph failed")
+	require.Len(t, results, 1, "expected 1 result")
 	expectedPkg := "github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga"
-	if err, ok := results[expectedPkg]; !ok || err != nil {
-		t.Errorf("expected package %s to compile successfully", expectedPkg)
-	}
+	pkgErr, ok := results[expectedPkg]
+	require.True(t, ok, "expected package %s to be in results", expectedPkg)
+	require.NoError(t, pkgErr, "expected package %s to compile successfully", expectedPkg)
 }
 
 func TestAutoCompileGraph_HandlesPackagesWithNoTaggedFiles(t *testing.T) {
@@ -133,16 +106,10 @@ func TestAutoCompileGraph_HandlesPackagesWithNoTaggedFiles(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "compiler")
 	pkgs := loadPackages(t, pkgDir)
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoCompileGraph failed: %v", err)
-	}
-	if len(results) != 0 {
-		t.Errorf("expected empty results, got %d", len(results))
-	}
+	require.NoError(t, err, "AutoCompileGraph failed")
+	require.Empty(t, results, "expected empty results")
 }
 
 func TestAutoCompileGraph_ReturnsErrorForInvalidConfig(t *testing.T) {
@@ -150,13 +117,9 @@ func TestAutoCompileGraph_ReturnsErrorForInvalidConfig(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	_, err = compiler.AutoCompileGraph(testctx, "nonexistent.config", bctx, module, defaultOutputFilename, pkgs)
-	if err == nil {
-		t.Error("expected error for invalid config, got nil")
-	}
+	require.Error(t, err, "expected error for invalid config")
 }
 
 func TestAutoCompileGraph_StopsWhenContextIsCancelled(t *testing.T) {
@@ -164,9 +127,7 @@ func TestAutoCompileGraph_StopsWhenContextIsCancelled(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	cancelCtx, cancel := context.WithCancel(testctx)
 	cancel()
 	_, _ = compiler.AutoCompileGraph(cancelCtx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
@@ -177,13 +138,9 @@ func TestAutoGenerateConcurrent_GeneratesCodeForParentDirectory(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph")
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	err = compiler.AutoGenerateConcurrent(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoGenerateConcurrent failed: %v", err)
-	}
+	require.NoError(t, err, "AutoGenerateConcurrent failed")
 }
 
 func TestAutoGenerateConcurrent_GeneratesCodeForChildPackage(t *testing.T) {
@@ -191,22 +148,14 @@ func TestAutoGenerateConcurrent_GeneratesCodeForChildPackage(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph/packages/pkga")
 	pkgs := loadPackages(t, pkgDir)
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	err = compiler.AutoGenerateConcurrent(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoGenerateConcurrent failed: %v", err)
-	}
+	require.NoError(t, err, "AutoGenerateConcurrent failed")
 	pkgaDir := filepath.Join(mroot, "examples/postgresql/autocompilegraph/packages/pkga")
 	genFile := filepath.Join(pkgaDir, defaultOutputFilename)
 	genContent, err := packages.Load(astcodec.LocatePackages(), pkgaDir)
-	if err != nil {
-		t.Fatalf("failed to load generated package: %v", err)
-	}
-	if len(genContent) == 0 {
-		t.Error("expected generated file to exist and be loadable")
-	}
+	require.NoError(t, err, "failed to load generated package")
+	require.NotEmpty(t, genContent, "expected generated file to exist and be loadable")
 	content := ""
 	if len(genContent) > 0 && len(genContent[0].CompiledGoFiles) > 0 {
 		for _, f := range genContent[0].CompiledGoFiles {
@@ -232,13 +181,9 @@ func TestAutoGenerateConcurrent_HandlesPackageWithNoOutput(t *testing.T) {
 	pkgDir := filepath.Join(mroot, "compiler")
 	pkgs := loadPackages(t, pkgDir)
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	err = compiler.AutoGenerateConcurrent(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		t.Fatalf("AutoGenerateConcurrent failed: %v", err)
-	}
+	require.NoError(t, err, "AutoGenerateConcurrent failed")
 }
 
 func TestAutoCompileGraph_WithBuildContextDirSet(t *testing.T) {
@@ -247,19 +192,13 @@ func TestAutoCompileGraph_WithBuildContextDirSet(t *testing.T) {
 	bctx.Dir = pkgDir
 	pkgs := loadPackages(t, pkgDir+"/...")
 	module, err := genieql.FindModulePath(pkgDir)
-	if err != nil {
-		t.Fatalf("failed to find module path: %v", err)
-	}
+	require.NoError(t, err, "failed to find module path")
 	results, err := compiler.AutoCompileGraph(testctx, "postgresql.test.config", bctx, module, defaultOutputFilename, pkgs)
-	if err != nil {
-		if strings.Contains(err.Error(), "Dir is non-empty, so relative srcDir is not allowed") {
-			t.Fatalf("AutoCompileGraph failed with Dir/srcDir conflict: %v", err)
-		}
-		t.Fatalf("AutoCompileGraph failed: %v", err)
+	if err != nil && strings.Contains(err.Error(), "Dir is non-empty, so relative srcDir is not allowed") {
+		require.FailNow(t, "AutoCompileGraph failed with Dir/srcDir conflict", err.Error())
 	}
-	if len(results) != 4 {
-		t.Errorf("expected 4 compiled packages, got %d", len(results))
-	}
+	require.NoError(t, err, "AutoCompileGraph failed")
+	require.Len(t, results, 4, "expected 4 compiled packages")
 	expectedPackages := []string{
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkga",
 		"github.com/james-lawrence/genieql/examples/postgresql/autocompilegraph/packages/pkgb",
@@ -268,10 +207,7 @@ func TestAutoCompileGraph_WithBuildContextDirSet(t *testing.T) {
 	}
 	for _, expectedPkg := range expectedPackages {
 		pkgErr, ok := results[expectedPkg]
-		if !ok {
-			t.Errorf("expected results to contain package %s", expectedPkg)
-		} else if pkgErr != nil {
-			t.Errorf("package %s failed: %v", expectedPkg, pkgErr)
-		}
+		require.True(t, ok, "expected results to contain package %s", expectedPkg)
+		require.NoError(t, pkgErr, "package %s failed", expectedPkg)
 	}
 }
