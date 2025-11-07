@@ -29,7 +29,7 @@ func LocatePackage(importPath, srcDir string, context build.Context, matches fun
 			tagsptr, tagslen, tagssize,
 			unsafe.Pointer(&rlen), rptr,
 		),
-		errorsx.String("locatepackage failed"),
+		errorsx.String("locate package failed"),
 	)
 	if err != nil {
 		return nil, err
