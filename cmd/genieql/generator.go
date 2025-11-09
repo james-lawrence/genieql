@@ -23,10 +23,12 @@ type generator struct {
 	*genieql.BuildInfo
 	configName string
 	output     string
+	tags       []string
 }
 
 func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
 	cli := app.Command("auto", "generates code from files marked with the build tag `go:build genieql.generate`. see examples for usage")
+	cli.Flag("tags", "build tags to include").StringsVar(&t.tags)
 	cli.Flag("config", "name of the genieql configuration to use").Default(defaultConfigurationName).StringVar(&t.configName)
 	cli.Flag(
 		"output",
@@ -45,7 +47,8 @@ func (t *generator) executePackage(*kingpin.ParseContext) (err error) {
 		dst   io.WriteCloser
 		buf   = bytes.NewBuffer(nil)
 		bpkg  *build.Package
-		bctx  = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
+		tags  = append(t.tags, genieql.BuildTagIgnore, genieql.BuildTagGenerate)
+		bctx  = buildx.Clone(t.BuildInfo.Build, buildx.Tags(tags...))
 	)
 
 	if bpkg, err = astcodec.LocatePackage(pname, ".", bctx, genieql.StrictPackageImport(pname)); err != nil {
@@ -73,7 +76,8 @@ func (t *generator) executePackage(*kingpin.ParseContext) (err error) {
 
 func (t *generator) executeGraph(*kingpin.ParseContext) (err error) {
 	var (
-		bctx = buildx.Clone(t.BuildInfo.Build, buildx.Tags(genieql.BuildTagIgnore, genieql.BuildTagGenerate))
+		tags = append(t.tags, genieql.BuildTagIgnore, genieql.BuildTagGenerate)
+		bctx = buildx.Clone(t.BuildInfo.Build, buildx.Tags(tags...))
 	)
 
 	bctx.Dir = t.BuildInfo.WorkingDir
