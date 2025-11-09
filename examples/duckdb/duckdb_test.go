@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"time"
 
+	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/james-lawrence/genieql/internal/timex"
-	_ "github.com/marcboeker/go-duckdb/v2"
 )
 
 func ExampleExample1Insert() {

@@ -11,8 +11,8 @@ import (
 	"sync"
 
 	"github.com/alecthomas/kingpin"
+	_ "github.com/duckdb/duckdb-go/v2"
 	_ "github.com/jackc/pgx/v5"
-	_ "github.com/marcboeker/go-duckdb/v2"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/generators"

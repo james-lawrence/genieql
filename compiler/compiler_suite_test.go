@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/james-lawrence/genieql/internal/testx"
-	_ "github.com/marcboeker/go-duckdb/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

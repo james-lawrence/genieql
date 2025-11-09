@@ -4,23 +4,48 @@
 
 This repository wraps DuckDB's C API calls in Go native types and functions.
 
-Tested Go versions: 1.23, 1.24.
+Minimum Go version: 1.24.
 
-```diff
-+ Some type aliases and function wrappers are still missing.
-```
+#### 🚧 WORK IN PROGRESS 🚧
+
+> [!IMPORTANT]  
+> Some type aliases and function wrappers are still missing.
+> 
+> Breaking changes can happen.
 
 ## Releases
 
-This module's *first* official release contains DuckDB's v1.2.0 release.
+This module's *first* release contains DuckDB's v1.2.0 release.
 
 | duckdb version | main module | darwin amd | darwin arm | linux amd | linux arm | windows amd |
 |----------------|-------------|------------|------------|-----------|-----------|-------------|
+| v1.4.1         | v0.1.21     | v0.1.21    | v0.1.21    | v0.1.21   | v0.1.21   | v0.1.21     |
+| v1.4.0         | v0.1.19     | v0.1.19    | v0.1.19    | v0.1.19   | v0.1.19   | v0.1.19     |
+| v1.3.2         | v0.1.17     | v0.1.12    | v0.1.12    | v0.1.12   | v0.1.12   | v0.1.12     |
+| v1.3.1         | v0.1.16     | v0.1.11    | v0.1.11    | v0.1.11   | v0.1.11   | v0.1.11     |
+| v1.3.0         | v0.1.15     | v0.1.10    | v0.1.10    | v0.1.10   | v0.1.10   | v0.1.10     |
 | v1.2.2         | v0.1.14     | v0.1.9     | v0.1.9     | v0.1.9    | v0.1.9    | v0.1.9      |
 | v1.2.1         | v0.1.13     | v0.1.8     | v0.1.8     | v0.1.8    | v0.1.8    | v0.1.8      |
 | v1.2.0         | v0.1.10     | v0.1.5     | v0.1.5     | v0.1.5    | v0.1.5    | v0.1.5      |
 
 The main module (`github.com/duckdb/duckdb-go-bindings`) does not link any pre-built static library.
+
+## Releasing a new duckdb version
+
+1. Create a new branch and update the `DUCKDB_VERSION` in the `Makefile`.
+2. Invoke the `Fetch and Push Libs` workflow on the new branch.
+3. Update the `Releases` table in the `README.md`.
+4. If the header (`duckdb.h`) has changes (non-bugfix release), add all changes (new types, functions, etc.) to the bindings.
+5. Open a PR.
+6. Wait for all tests to pass.
+7. Merge the PR into `main`.
+8. Publish the tags by incrementing the latest tagged release for the main module, and for each OS+architecture combination.
+```
+git tag <tagname>
+git push origin <tagname>
+```
+
+Example PR: https://github.com/duckdb/duckdb-go-bindings/pull/19.
 
 ## Using a pre-built static library
 
