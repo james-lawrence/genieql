@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/dave/jennifer v1.7.1
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/duckdb/duckdb-go/v2 v2.5.0
+	github.com/duckdb/duckdb-go/v2 v2.5.1
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/jackc/pgtype v1.14.4
 	github.com/jackc/pgx/v5 v5.7.6
@@ -28,14 +28,14 @@ require (
 
 require (
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
-	github.com/duckdb/duckdb-go-bindings v0.1.21 // indirect
-	github.com/duckdb/duckdb-go-bindings/darwin-amd64 v0.1.21 // indirect
-	github.com/duckdb/duckdb-go-bindings/darwin-arm64 v0.1.21 // indirect
-	github.com/duckdb/duckdb-go-bindings/linux-amd64 v0.1.21 // indirect
-	github.com/duckdb/duckdb-go-bindings/linux-arm64 v0.1.21 // indirect
-	github.com/duckdb/duckdb-go-bindings/windows-amd64 v0.1.21 // indirect
-	github.com/duckdb/duckdb-go/arrowmapping v0.0.22 // indirect
-	github.com/duckdb/duckdb-go/mapping v0.0.22 // indirect
+	github.com/duckdb/duckdb-go-bindings v0.1.22 // indirect
+	github.com/duckdb/duckdb-go-bindings/darwin-amd64 v0.1.22 // indirect
+	github.com/duckdb/duckdb-go-bindings/darwin-arm64 v0.1.22 // indirect
+	github.com/duckdb/duckdb-go-bindings/linux-amd64 v0.1.22 // indirect
+	github.com/duckdb/duckdb-go-bindings/linux-arm64 v0.1.22 // indirect
+	github.com/duckdb/duckdb-go-bindings/windows-amd64 v0.1.22 // indirect
+	github.com/duckdb/duckdb-go/arrowmapping v0.0.24 // indirect
+	github.com/duckdb/duckdb-go/mapping v0.0.24 // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
