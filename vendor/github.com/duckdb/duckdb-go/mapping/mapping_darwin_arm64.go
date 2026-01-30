@@ -776,6 +776,12 @@ var (
 	TableDescriptionGetColumnName = bindings.TableDescriptionGetColumnName
 )
 
+// Result interface.
+
+var (
+	FetchChunk = bindings.FetchChunk
+)
+
 // Expression.
 
 var (
