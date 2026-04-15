@@ -42,6 +42,8 @@ var _ = Describe("postgresql", func() {
 					"deadlocks",
 					"idle_in_transaction_time",
 					"numbackends",
+					"parallel_workers_launched",
+					"parallel_workers_to_launch",
 					"session_time",
 					"sessions",
 					"sessions_abandoned",

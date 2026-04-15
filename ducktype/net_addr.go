@@ -25,7 +25,6 @@ func (n *NullNetAddr) Scan(src any) error {
 		n.V, n.Valid = netip.Addr{}, false
 		return nil
 	}
-
 	n.Valid = true
 	switch v := src.(type) {
 	case []byte:
@@ -43,10 +42,6 @@ func (n *NullNetAddr) Scan(src any) error {
 		n.V = addr
 		return nil
 	case map[string]any:
-		var mask uint16 = 32
-		if m, ok := v["mask"].(uint16); ok && m == 128 {
-			mask = m
-		}
 		switch _addr := v["address"].(type) {
 		case string:
 			addr, err := netip.ParseAddr(_addr)
@@ -56,20 +51,25 @@ func (n *NullNetAddr) Scan(src any) error {
 			n.V = addr
 			return nil
 		case *big.Int:
-			if len(_addr.Bytes()) == 0 {
-				switch mask {
-				case 128:
-					n.V = netip.IPv6Unspecified()
-					return nil
-				default:
-					n.V = netip.IPv4Unspecified()
-					return nil
-				}
+			const (
+				IPv6BitLen = 64
+				IPv4BitLen = 32
+			)
+			var (
+				decoded []byte
+				ip4buf  [4]byte
+				ip6buf  [16]byte
+			)
+
+			if _addr.BitLen() <= IPv4BitLen {
+				decoded = ip4buf[:]
+			} else {
+				decoded = ip6buf[:]
 			}
 
-			addr, ok := netip.AddrFromSlice(_addr.Bytes())
+			addr, ok := netip.AddrFromSlice(_addr.FillBytes(decoded))
 			if !ok {
-				return fmt.Errorf("NullNetAddr: failed to convert big.Int as netip.Addr: %v - %v", _addr, spew.Sdump(v))
+				return fmt.Errorf("NullNetAddr: failed to convert big.Int as netip.Addr: %v - %v - %v", _addr, _addr.BitLen(), spew.Sdump(v))
 			}
 			n.V = addr
 			return nil

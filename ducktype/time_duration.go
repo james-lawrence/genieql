@@ -2,9 +2,12 @@ package ducktype
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 type NullDuration struct {
@@ -13,6 +16,12 @@ type NullDuration struct {
 }
 
 func (n *NullDuration) Scan(src any) error {
+	type Interval struct {
+		Days   int32 `json:"days"`
+		Months int32 `json:"months"`
+		Micros int64 `json:"micros"`
+	}
+
 	if src == nil {
 		n.V, n.Valid = 0, false
 		return nil
@@ -40,10 +49,25 @@ func (n *NullDuration) Scan(src any) error {
 		n.V = parsed
 		return nil
 	// case duckdb.Interval:
-	// TODO
+	// TODO: we currently dont handle this type directly because it pulls in all the cgo dependencies.
 	default:
+		var (
+			decoded Interval
+		)
 		n.Valid = false
-		return fmt.Errorf("nullduration: cannot scan type %T into NullDuration", src)
+
+		encoded, err := json.Marshal(v)
+		if err != nil {
+			return errorsx.Wrapf(err, "nullduration: cannot scan type %T into NullDuration", src)
+		}
+
+		if err = json.Unmarshal(encoded, &decoded); err != nil {
+			return errorsx.Wrapf(err, "nullduration: cannot scan type %T into NullDuration", src)
+		}
+
+		n.Valid = true
+		n.V = time.Duration(decoded.Months)*24*30*time.Hour + time.Duration(decoded.Days)*24*time.Hour + time.Duration(decoded.Micros)*time.Microsecond
+		return nil
 	}
 }
 
