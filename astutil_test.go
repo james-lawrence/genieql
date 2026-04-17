@@ -7,6 +7,8 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
 
 	. "github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
@@ -16,6 +18,94 @@ import (
 )
 
 var _ = Describe("Astutil", func() {
+	Describe("FindTaggedFiles", func() {
+		var dir string
+
+		BeforeEach(func() {
+			var err error
+			dir, err = os.MkdirTemp("", "genieql-findtaggedfiles-*")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(dir)
+		})
+
+		writeFile := func(name, content string) {
+			Expect(os.WriteFile(filepath.Join(dir, name), []byte(content), 0600)).To(Succeed())
+		}
+
+		It("returns error for nonexistent directory", func() {
+			_, err := FindTaggedFiles(build.Default, "/nonexistent/path/that/does/not/exist", "foo")
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("returns empty for an empty directory", func() {
+			files, err := FindTaggedFiles(build.Default, dir, "foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("skips non-.go files", func() {
+			writeFile("readme.txt", "hello")
+			writeFile("data.json", "{}")
+			files, err := FindTaggedFiles(build.Default, dir, "foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("skips .go files with no build constraints", func() {
+			writeFile("plain.go", "package example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("returns a file that requires the single specified tag", func() {
+			writeFile("tagged.go", "//go:build foo\n\npackage example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(ConsistOf("tagged.go"))
+		})
+
+		It("does not return a file tagged with a different tag", func() {
+			writeFile("other.go", "//go:build bar\n\npackage example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("returns a file requiring all of multiple specified tags", func() {
+			writeFile("both.go", "//go:build foo && bar\n\npackage example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo", "bar")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(ConsistOf("both.go"))
+		})
+
+		It("does not return a file satisfiable by only one of the specified tags", func() {
+			writeFile("either.go", "//go:build foo || bar\n\npackage example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo", "bar")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("does not return a file requiring only one tag when multiple are specified", func() {
+			writeFile("single.go", "//go:build foo\n\npackage example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo", "bar")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(BeEmpty())
+		})
+
+		It("returns only files exclusively requiring all specified tags", func() {
+			writeFile("both.go", "//go:build foo && bar\n\npackage example\n")
+			writeFile("single.go", "//go:build foo\n\npackage example\n")
+			writeFile("plain.go", "package example\n")
+			files, err := FindTaggedFiles(build.Default, dir, "foo", "bar")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(files).To(ConsistOf("both.go"))
+		})
+	})
+
 	Describe("ExtractFields", func() {
 		It("should extract the fields from the provided ast.Spec", func() {
 			var err error

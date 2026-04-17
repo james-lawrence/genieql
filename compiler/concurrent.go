@@ -84,7 +84,14 @@ func (t *dependencygraph) visitpackage(pkg *build.Package) error {
 
 	t.processing[visitkey] = true
 
-	if tagged, err = FindTaggedFiles(t.buildcontext, pkg.Dir, genieql.BuildTagGenerate); err != nil {
+	tags := slicesx.Filter(
+		func(s string) bool {
+			return s != genieql.BuildTagIgnore
+		},
+		t.buildcontext.BuildTags...,
+	)
+
+	if tagged, err = FindTaggedFiles(t.buildcontext, pkg.Dir, tags...); err != nil {
 		return errorsx.Wrapf(err, "failed to find tagged files in %s", pkg.Dir)
 	}
 
