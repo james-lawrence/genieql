@@ -11,6 +11,7 @@ import (
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/generators"
+	"github.com/james-lawrence/genieql/internal/slicesx"
 )
 
 func AutoGenerate(ctx context.Context, cname string, bctx build.Context, bpkg *build.Package, dst io.Writer, options ...generators.Option) (err error) {
@@ -29,12 +30,20 @@ func AutoGenerate(ctx context.Context, cname string, bctx build.Context, bpkg *b
 	return nil
 }
 
+func autotags(tags ...string) []string {
+	return slicesx.Filter(
+		func(s string) bool {
+			return s != genieql.BuildTagIgnore
+		},
+		tags...,
+	)
+}
 func Autocompile(ctx context.Context, cctx generators.Context, dst io.Writer) (err error) {
 	var (
 		taggedFiles TaggedFiles
 	)
 
-	if taggedFiles, err = FindTaggedFiles(cctx.Build, cctx.CurrentPackage.Dir, genieql.BuildTagGenerate); err != nil {
+	if taggedFiles, err = FindTaggedFiles(cctx.Build, cctx.CurrentPackage.Dir, autotags(cctx.Build.BuildTags...)...); err != nil {
 		return err
 	}
 
