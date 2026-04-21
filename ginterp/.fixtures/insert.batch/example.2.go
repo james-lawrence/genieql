@@ -76,7 +76,7 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 	n := min(len(a), 2)
 	const queryPrefix = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES `
 	const querySuffix = ` RETURNING a,b,c,d,e,f,g,h`
-	valueTuples := [2]string{`($1,$2,$3,$4,$5,$6,$7,$8)`, `($8,$9,$10,$11,$12,$13,$14,$15)`}
+	valueTuples := [2]string{`($1,$2,$3,$4,$5,$6,$7,$8)`, `($9,$10,$11,$12,$13,$14,$15,$16)`}
 	query := queryPrefix + strings.Join(valueTuples[:n], `,`) + querySuffix
 	args := make([]any, 0, n*8)
 	for i := range n {

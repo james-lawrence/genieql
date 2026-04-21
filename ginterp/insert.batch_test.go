@@ -3,7 +3,6 @@ package ginterp_test
 import (
 	"go/ast"
 	"go/token"
-	"log"
 
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
@@ -42,8 +41,8 @@ var _ = Describe("Batch Insert", func() {
 			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 
 			output := testx.IOString(out)
-			log.Println(formatted.String())
-			log.Printf("%s\nexpected\n%s\n", formatted.String(), output)
+			// log.Println(formatted.String())
+			// log.Printf("%s\nexpected\n%s\n", formatted.String(), output)
 
 			Expect(formatted.String()).To(Equal(output))
 		},
@@ -96,7 +95,7 @@ var _ = Describe("Batch Insert", func() {
 				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
 				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("s")),
 				rowsScanner,
-			).Into("foo").Conflict("ON CONFLICT id = {s.A}").Batch(1),
+			).Into("foo").Conflict("ON CONFLICT id = {s.A}").Batch(2),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.4.go"))),
 		),
 	)

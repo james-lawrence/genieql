@@ -17,6 +17,8 @@ var _ = Describe("queries", func() {
 		Entry("example 3", 1, "MyTable2", "", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, `INSERT INTO MyTable2 ("col1","col2","col3","col4") VALUES (DEFAULT,$1,DEFAULT,$2) RETURNING "col1","col2","col3","col4"`),
 		Entry("example 4", 3, "MyTable2", "", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, `INSERT INTO MyTable2 ("col1","col2","col3","col4") VALUES (DEFAULT,$1,DEFAULT,$2),(DEFAULT,$3,DEFAULT,$4),(DEFAULT,$5,DEFAULT,$6) RETURNING "col1","col2","col3","col4"`),
 		Entry("example 5", 1, "MyTable2", "ON CONFLICT (id) DO UPDATE SET col1 = DEFAULT", []string{"col1", "col2", "col3", "col4"}, []string{"col1", "col3"}, `INSERT INTO MyTable2 ("col1","col2","col3","col4") VALUES (DEFAULT,$1,DEFAULT,$2) ON CONFLICT (id) DO UPDATE SET col1 = DEFAULT RETURNING "col1","col2","col3","col4"`),
+		Entry("example 6", 3, "MyTable1", "", []string{"col1", "col2", "col3"}, []string{},
+			`INSERT INTO MyTable1 ("col1","col2","col3") VALUES ($1,$2,$3),($4,$5,$6),($7,$8,$9) RETURNING "col1","col2","col3"`),
 	)
 
 	DescribeTable("Select",

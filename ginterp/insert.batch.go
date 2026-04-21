@@ -424,26 +424,25 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		return errorsx.Wrap(err, "failed to generate encoding function")
 	}
 
-	q1 := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(1, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
-	valuesIdx := strings.Index(q1, " VALUES ") + len(" VALUES ")
-	lastParen := strings.LastIndex(q1, ")")
-	queryPrefix := q1[:valuesIdx]
-	querySuffix := q1[lastParen+1:]
-
 	valueTupleExprs := make([]ast.Expr, t.n)
-	prevBody := ""
+
+	qi := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(t.n, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
+	queryPrefix, remaining, _ := strings.Cut(qi, "VALUES")
+	queryPrefix += "VALUES "
+	querySuffix := ""
+	tuples, suffix, ok := strings.Cut(remaining, " ON CONFLICT ")
+	if ok {
+		querySuffix = " ON CONFLICT " + suffix
+	}
+	tuples, suffix, ok = strings.Cut(tuples, " RETURNING ")
+	if ok {
+		querySuffix = " RETURNING " + suffix
+	}
+
+	tuples = strings.ReplaceAll(tuples, "),(", ")),((")
+	tuplesarr := strings.Split(tuples, "),(")
 	for i := range t.n {
-		qi := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(i+1, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
-		lastParenI := strings.LastIndex(qi, ")")
-		body := qi[valuesIdx : lastParenI+1]
-		var tuple string
-		if i == 0 {
-			tuple = body
-		} else {
-			tuple = body[len(prevBody)+1:]
-		}
-		valueTupleExprs[i] = astutil.StringLiteral(tuple)
-		prevBody = body
+		valueTupleExprs[i] = astutil.StringLiteral(strings.TrimSpace(tuplesarr[i]))
 	}
 
 	colIdents := astutil.MapFieldsToNameExpr(queryfields...)

@@ -24,7 +24,7 @@ func Insert(n int, offset int, table, conflict string, columns, projection, defa
 	insertions := strings.Join(quotedColumns(columns...), ",")
 	offset++
 	values := make([]string, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		p, newOffset := placeholders(offset, selectPlaceholder(columns, defaulted))
 		offset = newOffset
 		values = append(values, fmt.Sprintf("(%s)", strings.Join(p, ",")))
