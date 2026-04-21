@@ -63,6 +63,71 @@ func ExampleExample1Insert() {
 	// Output: uid true bigint true int true smallint true float true bool true text true uinteger true binary 0 ubigint true ip 0.0.0.0
 }
 
+func ExampleNewExample1BatchInsertWithDefaults() {
+	ctx, done := context.WithTimeout(context.Background(), 5*time.Second)
+	defer done()
+
+	db := errorsx.Must(sql.Open("duckdb", filepath.Join("..", "..", genieql.RelDir(), ".duckdb", "duck.db")))
+	defer db.Close()
+
+	records := []Example1{
+		{BigintField: 10, BoolField: true, UUIDField: uuid.Must(uuid.NewV7()).String(), IntField: 1, RealField: 1.1, SmallintField: 1, TextField: "batch record 1", UintegerField: 1, UbigintField: 1, ByteArrayField: []byte{0x1}, InetField: netip.IPv4Unspecified()},
+		{BigintField: 20, BoolField: false, UUIDField: uuid.Must(uuid.NewV7()).String(), IntField: 2, RealField: 2.2, SmallintField: 2, TextField: "batch record 2", UintegerField: 2, UbigintField: 2, ByteArrayField: []byte{0x2}, InetField: netip.IPv4Unspecified()},
+		{BigintField: 30, BoolField: true, UUIDField: uuid.Must(uuid.NewV7()).String(), IntField: 3, RealField: 3.3, SmallintField: 3, TextField: "batch record 3", UintegerField: 3, UbigintField: 3, ByteArrayField: []byte{0x3}, InetField: netip.IPv4Unspecified()},
+	}
+
+	scanner := NewExample1BatchInsertWithDefaults(ctx, db, records...)
+	defer scanner.Close()
+
+	var count int
+	for scanner.Next() {
+		var res Example1
+		errorsx.MaybePanic(scanner.Scan(&res))
+		fmt.Println("text", res.TextField, "bigint", res.BigintField)
+		count++
+	}
+	errorsx.MaybePanic(scanner.Err())
+	fmt.Println("count", count)
+	// Output:
+	// text batch record 1 bigint 10
+	// text batch record 2 bigint 20
+	// text batch record 3 bigint 30
+	// count 3
+}
+
+func ExampleNewExample1BatchInsertWithDefaults_multipleAdvances() {
+	ctx, done := context.WithTimeout(context.Background(), 5*time.Second)
+	defer done()
+
+	db := errorsx.Must(sql.Open("duckdb", filepath.Join("..", "..", genieql.RelDir(), ".duckdb", "duck.db")))
+	defer db.Close()
+
+	// 35 records spans two advance calls: first batch of 32, then a batch of 3.
+	records := make([]Example1, 35)
+	for i := range records {
+		records[i] = Example1{
+			BigintField:    int64(i),
+			UUIDField:      uuid.Must(uuid.NewV7()).String(),
+			TextField:      fmt.Sprintf("multi %d", i),
+			ByteArrayField: []byte{byte(i)},
+			InetField:      netip.IPv4Unspecified(),
+		}
+	}
+
+	scanner := NewExample1BatchInsertWithDefaults(ctx, db, records...)
+	defer scanner.Close()
+
+	var count int
+	for scanner.Next() {
+		var res Example1
+		errorsx.MaybePanic(scanner.Scan(&res))
+		count++
+	}
+	errorsx.MaybePanic(scanner.Err())
+	fmt.Println("inserted", count)
+	// Output: inserted 35
+}
+
 func ExampleExample1UpdateTime() {
 	var (
 		res Example1

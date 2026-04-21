@@ -32,6 +32,13 @@ func Example1Insert(
 	gql.Into("example1")
 }
 
+func Example1BatchInsertWithDefaults(
+	gql genieql.InsertBatch,
+	pattern func(ctx context.Context, q sqlx.Queryer, p Example1) NewExample1ScannerStatic,
+) {
+	gql.Into("example1").Batch(32)
+}
+
 func Example1FindByID(
 	gql genieql.Function,
 	pattern func(ctx context.Context, q sqlx.Queryer, id string) NewExample1ScannerStaticRow,

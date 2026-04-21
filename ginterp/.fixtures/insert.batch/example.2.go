@@ -69,53 +69,18 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		c7.Bool = *a.H
 		return c0, c1, c2, c3, c4, c5, c6, c7, nil
 	}
-	switch len(a) {
-	case 0:
+	if len(a) == 0 {
 		return nil, []StructA(nil), false
-	case 1:
-		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING a,b,c,d,e,f,g,h`
-		var (
-			r0c0 sql.NullInt64
-			r0c1 sql.NullInt64
-			r0c2 sql.NullInt64
-			r0c3 sql.NullBool
-			r0c4 sql.NullBool
-			r0c5 sql.NullBool
-			r0c6 sql.NullInt64
-			r0c7 sql.NullBool
-			err  error
-		)
-		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
-			return NewExampleScannerStatic(nil, err), []StructA(nil), false
-		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7)), a[1:], true
-	default:
-		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`
-		var (
-			r0c0 sql.NullInt64
-			r0c1 sql.NullInt64
-			r0c2 sql.NullInt64
-			r0c3 sql.NullBool
-			r0c4 sql.NullBool
-			r0c5 sql.NullBool
-			r0c6 sql.NullInt64
-			r0c7 sql.NullBool
-			r1c0 sql.NullInt64
-			r1c1 sql.NullInt64
-			r1c2 sql.NullInt64
-			r1c3 sql.NullBool
-			r1c4 sql.NullBool
-			r1c5 sql.NullBool
-			r1c6 sql.NullInt64
-			r1c7 sql.NullBool
-			err  error
-		)
-		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
-			return NewExampleScannerStatic(nil, err), []StructA(nil), false
-		}
-		if r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, err = transform(a[1]); err != nil {
-			return NewExampleScannerStatic(nil, err), []StructA(nil), false
-		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7)), []StructA(nil), false
 	}
+	n := min(len(a), 2)
+	queries := [2]string{`INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING a,b,c,d,e,f,g,h`, `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($8,$9,$10,$11,$12,$13,$14,$15) RETURNING a,b,c,d,e,f,g,h`}
+	args := make([]any, 0, n*8)
+	for i := range n {
+		c0, c1, c2, c3, c4, c5, c6, c7, err := transform(a[i])
+		if err != nil {
+			return NewExampleScannerStatic(nil, err), []StructA(nil), false
+		}
+		args = append(args, c0, c1, c2, c3, c4, c5, c6, c7)
+	}
+	return NewExampleScannerStatic(t.q.QueryContext(t.ctx, queries[n-1], args...)), a[n:], true
 }

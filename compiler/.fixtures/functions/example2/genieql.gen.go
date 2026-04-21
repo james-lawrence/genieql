@@ -10,7 +10,7 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/google/uuid/v5"
+	"github.com/google/uuid"
 	"github.com/james-lawrence/genieql/ducktype"
 	"github.com/james-lawrence/genieql/internal/sqlx"
 )

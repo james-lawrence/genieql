@@ -41,7 +41,7 @@ var _ = Describe("Batch Insert", func() {
 			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 
 			// log.Println(formatted.String())
-			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.ReadString(out))
+			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.IOString(out))
 
 			Expect(formatted.String()).To(Equal(testx.IOString(out)))
 		},

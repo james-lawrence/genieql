@@ -69,25 +69,18 @@ func (t *batchInsertExample1) advance(a ...StructA) (ExampleScanner, []StructA, 
 		c7.Bool = *a.H
 		return c0, c1, c2, c3, c4, c5, c6, c7, nil
 	}
-	switch len(a) {
-	case 0:
+	if len(a) == 0 {
 		return nil, []StructA(nil), false
-	default:
-		const query = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING a,b,c,d,e,f,g,h`
-		var (
-			r0c0 sql.NullInt64
-			r0c1 sql.NullInt64
-			r0c2 sql.NullInt64
-			r0c3 sql.NullBool
-			r0c4 sql.NullBool
-			r0c5 sql.NullBool
-			r0c6 sql.NullInt64
-			r0c7 sql.NullBool
-			err  error
-		)
-		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, err = transform(a[0]); err != nil {
+	}
+	n := min(len(a), 1)
+	queries := [1]string{`INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING a,b,c,d,e,f,g,h`}
+	args := make([]any, 0, n*8)
+	for i := range n {
+		c0, c1, c2, c3, c4, c5, c6, c7, err := transform(a[i])
+		if err != nil {
 			return NewExampleScannerStatic(nil, err), []StructA(nil), false
 		}
-		return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7)), []StructA(nil), false
+		args = append(args, c0, c1, c2, c3, c4, c5, c6, c7)
 	}
+	return NewExampleScannerStatic(t.q.QueryContext(t.ctx, queries[n-1], args...)), a[n:], true
 }
