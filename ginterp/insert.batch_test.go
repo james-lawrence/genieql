@@ -3,6 +3,7 @@ package ginterp_test
 import (
 	"go/ast"
 	"go/token"
+	"log"
 
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
@@ -40,10 +41,11 @@ var _ = Describe("Batch Insert", func() {
 			Expect(in.Generate(b)).To(Succeed())
 			Expect(astcodec.FormatOutput(formatted, b.Bytes())).To(Succeed())
 
-			// log.Println(formatted.String())
-			// log.Printf("%s\nexpected\n%s\n", formatted.String(), testx.IOString(out))
+			output := testx.IOString(out)
+			log.Println(formatted.String())
+			log.Printf("%s\nexpected\n%s\n", formatted.String(), output)
 
-			Expect(formatted.String()).To(Equal(testx.IOString(out)))
+			Expect(formatted.String()).To(Equal(output))
 		},
 		Entry(
 			"example 1 - batch insert",

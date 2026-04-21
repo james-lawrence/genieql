@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"strings"
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
@@ -423,10 +424,26 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 		return errorsx.Wrap(err, "failed to generate encoding function")
 	}
 
-	querystrings := make([]ast.Expr, t.n)
+	q1 := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(1, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
+	valuesIdx := strings.Index(q1, " VALUES ") + len(" VALUES ")
+	lastParen := strings.LastIndex(q1, ")")
+	queryPrefix := q1[:valuesIdx]
+	querySuffix := q1[lastParen+1:]
+
+	valueTupleExprs := make([]ast.Expr, t.n)
+	prevBody := ""
 	for i := range t.n {
-		qs := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(i+1, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
-		querystrings[i] = astutil.StringLiteral(qs)
+		qi := functions.QueryLiteralColumnMapReplacer(t.ctx, t.ctx.Dialect.Insert(i+1, 0, t.table, t.conflict, cset.ColumnNames(), cset.ColumnNames(), t.defaults), cmaps...)
+		lastParenI := strings.LastIndex(qi, ")")
+		body := qi[valuesIdx : lastParenI+1]
+		var tuple string
+		if i == 0 {
+			tuple = body
+		} else {
+			tuple = body[len(prevBody)+1:]
+		}
+		valueTupleExprs[i] = astutil.StringLiteral(tuple)
+		prevBody = body
 	}
 
 	colIdents := astutil.MapFieldsToNameExpr(queryfields...)
@@ -499,8 +516,10 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 				),
 			),
 		),
+		astutil.DeclStmt(genieql.QueryLiteral("queryPrefix", queryPrefix)),
+		astutil.DeclStmt(genieql.QueryLiteral("querySuffix", querySuffix)),
 		astutil.Assign(
-			astutil.ExprList(ast.NewIdent("queries")),
+			astutil.ExprList(ast.NewIdent("valueTuples")),
 			token.DEFINE,
 			astutil.ExprList(
 				&ast.CompositeLit{
@@ -508,8 +527,27 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 						Len: astutil.IntegerLiteral(t.n),
 						Elt: ast.NewIdent("string"),
 					},
-					Elts: querystrings,
+					Elts: valueTupleExprs,
 				},
+			),
+		),
+		astutil.Assign(
+			astutil.ExprList(ast.NewIdent("query")),
+			token.DEFINE,
+			astutil.ExprList(
+				astutil.BinaryExpr(
+					astutil.BinaryExpr(
+						ast.NewIdent("queryPrefix"),
+						token.ADD,
+						astutil.CallExpr(
+							&ast.SelectorExpr{X: ast.NewIdent("strings"), Sel: ast.NewIdent("Join")},
+							&ast.SliceExpr{X: ast.NewIdent("valueTuples"), High: ast.NewIdent("n")},
+							astutil.StringLiteral(","),
+						),
+					),
+					token.ADD,
+					ast.NewIdent("querySuffix"),
+				),
 			),
 		),
 		astutil.Assign(
@@ -544,10 +582,7 @@ func (t *batch) Generate(dst io.Writer) (err error) {
 						Sel: ast.NewIdent("QueryContext"),
 					},
 					ast.NewIdent("t.ctx"),
-					&ast.IndexListExpr{
-						X:       ast.NewIdent("queries"),
-						Indices: astutil.ExprList(astutil.BinaryExpr(ast.NewIdent("n"), token.SUB, astutil.IntegerLiteral(1))),
-					},
+					ast.NewIdent("query"),
 					ast.NewIdent("args"),
 				),
 			),

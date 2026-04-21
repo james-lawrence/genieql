@@ -3,6 +3,7 @@ package example
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/james-lawrence/genieql/internal/sqlx"
 )
@@ -73,7 +74,10 @@ func (t *batchInsertExample1) advance(s ...StructA) (ExampleScanner, []StructA, 
 		return nil, []StructA(nil), false
 	}
 	n := min(len(s), 1)
-	queries := [1]string{`INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT id = a RETURNING a,b,c,d,e,f,g,h`}
+	const queryPrefix = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES `
+	const querySuffix = ` ON CONFLICT id = a RETURNING a,b,c,d,e,f,g,h`
+	valueTuples := [1]string{`($1,$2,$3,$4,$5,$6,$7,$8)`}
+	query := queryPrefix + strings.Join(valueTuples[:n], `,`) + querySuffix
 	args := make([]any, 0, n*8)
 	for i := range n {
 		c0, c1, c2, c3, c4, c5, c6, c7, err := transform(s[i])
@@ -82,5 +86,5 @@ func (t *batchInsertExample1) advance(s ...StructA) (ExampleScanner, []StructA, 
 		}
 		args = append(args, c0, c1, c2, c3, c4, c5, c6, c7)
 	}
-	return NewExampleScannerStatic(t.q.QueryContext(t.ctx, queries[n-1], args...)), s[n:], true
+	return NewExampleScannerStatic(t.q.QueryContext(t.ctx, query, args...)), s[n:], true
 }
