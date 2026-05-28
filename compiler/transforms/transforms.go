@@ -3,6 +3,7 @@ package transforms
 import (
 	"bytes"
 	"context"
+	"errors"
 	"go/ast"
 	"go/parser"
 	"go/printer"
@@ -262,6 +263,12 @@ func CloneFile(dst string, src string) (err error) {
 func CloneFS(dstdir string, rootdir string, archive fs.FS) (err error) {
 	return fs.WalkDir(archive, rootdir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			// a directory may disappear mid-walk (e.g. a temp dir created by WriteMapper
+			// for an atomic rename is deleted before WalkDir can recurse into it).
+			if d.IsDir() && errors.Is(err, fs.ErrNotExist) {
+				return fs.SkipDir
+			}
+
 			return err
 		}
 
