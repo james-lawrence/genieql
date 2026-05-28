@@ -228,7 +228,7 @@ func WriteMapper(config Configuration, name string, m MappingConfig) error {
 		return err
 	}
 
-	tmp, err := os.MkdirTemp(filepath.Dir(path), "mkcache")
+	tmp, err := os.MkdirTemp(filepath.Dir(path), "mkcache.*")
 	if err != nil {
 		return err
 	}
