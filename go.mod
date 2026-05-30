@@ -1,8 +1,6 @@
 module github.com/james-lawrence/genieql
 
-go 1.24
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
@@ -21,7 +19,7 @@ require (
 	github.com/pressly/goose/v3 v3.27.0
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e
 	github.com/stretchr/testify v1.11.1
-	github.com/tetratelabs/wazero v1.11.0
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/zieckey/goini v0.0.0-20240615065340-08ee21c836fb
 	golang.org/x/mod v0.35.0
 	golang.org/x/text v0.36.0
@@ -75,6 +73,6 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260409153401-be6f6cb8b1fa // indirect
 )
