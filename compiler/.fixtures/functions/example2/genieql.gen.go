@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"math"
 	"net/netip"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -1438,76 +1439,23 @@ func (t *example1InsertBatch1) advance(a ...Example1) (Example1Scanner, []Exampl
 		c14.String = a.UUIDField
 		return c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, nil
 	}
-	switch len(a) {
-	case 0:
+	if len(a) == 0 {
 		return nil, []Example1(nil), false
-	case 1:
-		const query = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
-		var (
-			r0c0  sql.NullInt64
-			r0c1  sql.NullBool
-			r0c2  []byte
-			r0c3  sql.NullFloat64
-			r0c4  ducktype.NullNetAddr
-			r0c5  sql.NullInt16
-			r0c6  sql.NullInt32
-			r0c7  ducktype.NullDuration
-			r0c8  sql.NullFloat64
-			r0c9  sql.NullInt16
-			r0c10 sql.NullString
-			r0c11 ducktype.NullTime
-			r0c12 ducktype.NullUint64
-			r0c13 sql.NullInt64
-			r0c14 sql.NullString
-			err   error
-		)
-		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, err = transform(a[0]); err != nil {
-			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
-		}
-		return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14)), a[1:], true
-	default:
-		const query = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
-		var (
-			r0c0  sql.NullInt64
-			r0c1  sql.NullBool
-			r0c2  []byte
-			r0c3  sql.NullFloat64
-			r0c4  ducktype.NullNetAddr
-			r0c5  sql.NullInt16
-			r0c6  sql.NullInt32
-			r0c7  ducktype.NullDuration
-			r0c8  sql.NullFloat64
-			r0c9  sql.NullInt16
-			r0c10 sql.NullString
-			r0c11 ducktype.NullTime
-			r0c12 ducktype.NullUint64
-			r0c13 sql.NullInt64
-			r0c14 sql.NullString
-			r1c0  sql.NullInt64
-			r1c1  sql.NullBool
-			r1c2  []byte
-			r1c3  sql.NullFloat64
-			r1c4  ducktype.NullNetAddr
-			r1c5  sql.NullInt16
-			r1c6  sql.NullInt32
-			r1c7  ducktype.NullDuration
-			r1c8  sql.NullFloat64
-			r1c9  sql.NullInt16
-			r1c10 sql.NullString
-			r1c11 ducktype.NullTime
-			r1c12 ducktype.NullUint64
-			r1c13 sql.NullInt64
-			r1c14 sql.NullString
-			err   error
-		)
-		if r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, err = transform(a[0]); err != nil {
-			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
-		}
-		if r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r1c8, r1c9, r1c10, r1c11, r1c12, r1c13, r1c14, err = transform(a[1]); err != nil {
-			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
-		}
-		return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, r0c0, r0c1, r0c2, r0c3, r0c4, r0c5, r0c6, r0c7, r0c8, r0c9, r0c10, r0c11, r0c12, r0c13, r0c14, r1c0, r1c1, r1c2, r1c3, r1c4, r1c5, r1c6, r1c7, r1c8, r1c9, r1c10, r1c11, r1c12, r1c13, r1c14)), []Example1(nil), false
 	}
+	n := min(len(a), 2)
+	const queryPrefix = `INSERT INTO "example1" ("bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field") VALUES `
+	const querySuffix = ` RETURNING "bigint_field","bool_field","byte_array_field","double_precision_field","inet_field","int2_field","int_field","interval_field","real_field","smallint_field","text_field","timestamp_field","ubigint_field","uinteger_field","uuid_field"`
+	valueTuples := [2]string{`($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, `($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`}
+	query := queryPrefix + strings.Join(valueTuples[:n], `,`) + querySuffix
+	args := make([]any, 0, n*15)
+	for i := range n {
+		c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, err := transform(a[i])
+		if err != nil {
+			return NewExample1ScannerStatic(nil, err), []Example1(nil), false
+		}
+		args = append(args, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14)
+	}
+	return NewExample1ScannerStatic(t.q.QueryContext(t.ctx, query, args...)), a[n:], true
 }
 
 // Example1Update1 generated by genieql

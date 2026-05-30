@@ -80,8 +80,8 @@ func TestCloneFS(t *testing.T) {
 
 	t.Run(".cache directory is skipped", func(t *testing.T) {
 		src := fstest.MapFS{
-			"real.txt":         &fstest.MapFile{Data: []byte("yes")},
-			".cache/skip.txt":  &fstest.MapFile{Data: []byte("no")},
+			"real.txt":        &fstest.MapFile{Data: []byte("yes")},
+			".cache/skip.txt": &fstest.MapFile{Data: []byte("no")},
 		}
 
 		dst := t.TempDir()
