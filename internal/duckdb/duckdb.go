@@ -143,8 +143,8 @@ func columnInformation(d genieql.Driver, q queryer, query, table string) ([]geni
 
 		expr := totypeexpr(dataType)
 		if expr == nil {
-			log.Println("skipping column", name, "driver missing type", dataType, "please open an issue")
-			continue
+			log.Println("nonstandard column type", name, "unknown type identifier", dataType, "falling back to type name")
+			expr = astutil.Expr(dataType)
 		}
 
 		if columndef, err = d.LookupType(types.ExprString(expr)); err != nil {
