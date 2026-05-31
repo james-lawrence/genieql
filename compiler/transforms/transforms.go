@@ -280,6 +280,10 @@ func CloneFS(dstdir string, rootdir string, archive fs.FS) (err error) {
 			return filepath.SkipDir
 		}
 
+		if d.IsDir() && strings.HasPrefix(path, "mkcache.") {
+			return filepath.SkipDir
+		}
+
 		dst := filepath.Join(dstdir, strings.TrimPrefix(path, rootdir))
 		if rootdir == path {
 			dst = path

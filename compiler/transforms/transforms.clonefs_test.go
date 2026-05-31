@@ -106,6 +106,22 @@ func TestCloneFS(t *testing.T) {
 		require.ErrorIs(t, transforms.CloneFS(dst, ".", src), sentinel)
 	})
 
+	t.Run("mkcache directory is skipped", func(t *testing.T) {
+		src := fstest.MapFS{
+			"real.txt":               &fstest.MapFile{Data: []byte("yes")},
+			"mkcache.1234/file.yaml": &fstest.MapFile{Data: []byte("no")},
+		}
+
+		dst := t.TempDir()
+		require.NoError(t, transforms.CloneFS(dst, ".", src))
+
+		_, err := os.ReadFile(filepath.Join(dst, "real.txt"))
+		require.NoError(t, err)
+
+		_, err = os.Stat(filepath.Join(dst, "mkcache.1234"))
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
 	t.Run("vanishing directory", func(t *testing.T) {
 		src := vanishingDirFS{
 			MapFS: fstest.MapFS{
