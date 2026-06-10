@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -16,11 +18,13 @@ import (
 type duckdb struct {
 	database   string
 	migrations string
+	extensions []string
 }
 
 func (t *duckdb) configure(app *kingpin.Application) *kingpin.CmdClause {
 	cli := app.Command("duckdb", "duckdb migrations using goose").Action(t.execute)
 	cli.Flag("database", "name of the database file to create").Default("duck.db").StringVar(&t.database)
+	cli.Flag("extension", "duckdb extension to install and load prior to migrations").StringsVar(&t.extensions)
 	cli.Arg("migrations", "path to the migrations directory").Required().StringVar(&t.migrations)
 	return cli
 }
@@ -36,6 +40,13 @@ func (t *duckdb) execute(*kingpin.ParseContext) (err error) {
 		return err
 	}
 	defer db.Close()
+
+	for _, ext := range t.extensions {
+		log.Println("initializing extension", ext)
+		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)); err != nil {
+			return errorsx.Wrapf(err, "failed to load '%s' extension", ext)
+		}
+	}
 
 	mprov, err := goose.NewProvider("", db, os.DirFS(t.migrations), goose.WithStore(goosex.DuckdbStore{}))
 	if err != nil {
