@@ -181,8 +181,8 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("DOUBLE")
 	case "VARCHAR":
 		return astutil.Expr("VARCHAR")
-	// case "VARCHAR[]":
-	// 	return astutil.Expr("VARCHARARRAY")
+	case "VARCHAR[]":
+		return astutil.Expr("VARCHARARRAY")
 	case "BOOLEAN":
 		return astutil.Expr("BOOLEAN")
 	case "BIGINT":
@@ -197,8 +197,8 @@ func totypeexpr(id string) ast.Expr {
 		return astutil.Expr("INTEGER")
 	case "SMALLINT":
 		return astutil.Expr("SMALLINT")
-	// case "SMALLINT[]":
-	// 	return astutil.Expr("SMALLINTARRAY")
+	case "SMALLINT[]":
+		return astutil.Expr("SMALLINTARRAY")
 	case "TIMESTAMPZ", "TIMESTAMP WITH TIME ZONE":
 		return astutil.Expr("TIMESTAMPZ")
 	case "INTERVAL":

@@ -23,7 +23,17 @@ func Example2(gql genieql.Structure) {
 	)
 }
 
+// Example5 mirrors example1's mapped column types, but every column is
+// nullable. ensures nullable columns decode without compile errors.
+func Example5(gql genieql.Structure) {
+	gql.From(
+		gql.Table("example5"),
+	)
+}
+
 func Example1Scanner(genieql.Scanner, func(i Example1)) {}
+
+func Example5Scanner(genieql.Scanner, func(i Example5)) {}
 
 func ExampleComboScanner(
 	gql genieql.Scanner,

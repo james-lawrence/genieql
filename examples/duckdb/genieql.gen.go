@@ -130,7 +130,8 @@ func (t example1ScannerStatic) Scan(sp0 *Example1) error {
 	}
 
 	if c4.Valid {
-		sp0.InetField = c4.V
+		tmp := c4.V
+		sp0.InetField = tmp
 	}
 
 	if c5.Valid {
@@ -171,7 +172,8 @@ func (t example1ScannerStatic) Scan(sp0 *Example1) error {
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
 		sp0.TimestampField = tmp
 	default:
-		sp0.TimestampField = c11.Time
+		tmp := c11.Time
+		sp0.TimestampField = tmp
 	}
 
 	if c12.Valid {
@@ -188,7 +190,8 @@ func (t example1ScannerStatic) Scan(sp0 *Example1) error {
 		if uid, err := uuid.FromBytes([]byte(c14.String)); err != nil {
 			return err
 		} else {
-			sp0.UUIDField = uid.String()
+			tmp := uid.String()
+			sp0.UUIDField = tmp
 		}
 	}
 
@@ -273,7 +276,8 @@ func (t Example1ScannerStaticRow) Scan(sp0 *Example1) error {
 	}
 
 	if c4.Valid {
-		sp0.InetField = c4.V
+		tmp := c4.V
+		sp0.InetField = tmp
 	}
 
 	if c5.Valid {
@@ -314,7 +318,8 @@ func (t Example1ScannerStaticRow) Scan(sp0 *Example1) error {
 		tmp := time.Unix(math.MinInt64, math.MinInt64)
 		sp0.TimestampField = tmp
 	default:
-		sp0.TimestampField = c11.Time
+		tmp := c11.Time
+		sp0.TimestampField = tmp
 	}
 
 	if c12.Valid {
@@ -331,7 +336,8 @@ func (t Example1ScannerStaticRow) Scan(sp0 *Example1) error {
 		if uid, err := uuid.FromBytes([]byte(c14.String)); err != nil {
 			return err
 		} else {
-			sp0.UUIDField = uid.String()
+			tmp := uid.String()
+			sp0.UUIDField = tmp
 		}
 	}
 
@@ -474,7 +480,8 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 
 		case cn4:
 			if c4.Valid {
-				sp0.InetField = c4.V
+				tmp := c4.V
+				sp0.InetField = tmp
 			}
 
 		case cn5:
@@ -522,7 +529,8 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 				tmp := time.Unix(math.MinInt64, math.MinInt64)
 				sp0.TimestampField = tmp
 			default:
-				sp0.TimestampField = c11.Time
+				tmp := c11.Time
+				sp0.TimestampField = tmp
 			}
 
 		case cn12:
@@ -542,7 +550,8 @@ func (t example1ScannerDynamic) Scan(sp0 *Example1) error {
 				if uid, err := uuid.FromBytes([]byte(c14.String)); err != nil {
 					return err
 				} else {
-					sp0.UUIDField = uid.String()
+					tmp := uid.String()
+					sp0.UUIDField = tmp
 				}
 			}
 

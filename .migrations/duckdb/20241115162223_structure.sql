@@ -64,6 +64,28 @@ CREATE TABLE IF NOT EXISTS example4 (
   updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
 );
 
+-- mirrors example1's mapped column types, but every column is nullable.
+-- ensures nullable columns of every supported type decode without
+-- compile errors (e.g. uuid_field decoding into *string).
+CREATE TABLE IF NOT EXISTS example5 (
+  uuid_field uuid,
+  smallint_field smallint,
+  int_field integer,
+  int2_field int2,
+  bigint_field bigint,
+  ubigint_field ubigint,
+  real_field real,
+  uinteger_field uinteger,
+  double_precision_field double precision,
+  byte_array_field bytea,
+  interval_field interval,
+  inet_field inet,
+  text_field text,
+  bool_field boolean,
+  timestamp_field timestamptz
+);
+
+-- ensure complex table names are handled correctly
 CREATE TABLE IF NOT EXISTS "example.foo.bar" (
   id uuid PRIMARY KEY NOT NULL
 );
@@ -77,4 +99,5 @@ DROP TABLE IF EXISTS example2;
 DROP TABLE IF EXISTS example3;
 DROP TABLE IF EXISTS example4;
 DROP TABLE IF EXISTS "example.foo.bar";
+DROP TABLE IF EXISTS example5;
 -- +goose StatementEnd

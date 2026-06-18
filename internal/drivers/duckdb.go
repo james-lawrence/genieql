@@ -23,7 +23,8 @@ const (
 			if uid, err := uuid.FromBytes([]byte({{ .From | expr }}.String)); err != nil {
 				return err
 			} else {
-				{{ .To | autodereference | expr }} = uid.String()
+				tmp := uid.String()
+				{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 			}
 		}
 	}`
@@ -49,7 +50,8 @@ const (
 			tmp := time.Unix(math.MinInt64, math.MinInt64)
 			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 		default:
-			{{ .To | autodereference | expr }} = {{ .From | localident | expr }}.Time
+			tmp := {{ .From | localident | expr }}.Time
+			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
 		}
 	}`
 
