@@ -37,7 +37,7 @@ func main() {
 	ctx, done := context.WithTimeout(context.Background(), egenv.TTL())
 	defer done()
 
-	c1 := eg.Container("genieql.ubuntu.24.04")
+	c1 := eg.Container("genieql.ubuntu")
 
 	err := eg.Perform(
 		ctx,

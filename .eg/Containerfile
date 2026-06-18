@@ -8,20 +8,16 @@ RUN add-apt-repository -n ppa:longsleep/golang-backports
 RUN add-apt-repository -n ppa:egdaemon/eg
 RUN add-apt-repository -n ppa:egdaemon/duckdb
 
-RUN apt-get update && apt-get -y install eg egbootstrap
+RUN apt-get update && apt-get -y install egworkload duckdb
 RUN sh /usr/share/eg/install/postgresql.sh
 
 RUN apt-get update
 RUN apt-get install -y dput devscripts dh-make dput git uidmap dbus-user-session fuse-overlayfs
-RUN apt-get install -y golang-1.25 podman rsync vim dpkg tree pinentry-tty
+RUN apt-get install -y golang-1.26 podman rsync vim dpkg tree pinentry-tty
 RUN apt-get install -y libpq5 postgresql-18 postgresql-client-18 postgresql-contrib-18 postgresql-client-common
 
-RUN ln -s /usr/lib/go-1.25/bin/go /usr/local/bin/go
+RUN ln -s /usr/lib/go-1.26/bin/go /usr/local/bin/go
 
 RUN systemctl enable postgresql
-
-RUN systemd-sysusers
-RUN systemd-tmpfiles --create
-RUN update-alternatives --set sudo /usr/bin/sudo.ws
 
 CMD /usr/sbin/init
