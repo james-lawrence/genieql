@@ -497,5 +497,3 @@ func (t PackageCScannerStaticRow) Err(err error) PackageCScannerStaticRow {
 	t.err = err
 	return t
 }
-
-

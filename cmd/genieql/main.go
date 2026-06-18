@@ -70,11 +70,9 @@ func main() {
 
 	app := kingpin.New("genieql", "query language genie - a tool for interfacing with databases")
 	app.Flag("profile", "enable profiler with the specified mode: trace,heap,mem,alloc,block,cpu").Short('p').Action(func(pc *kingpin.ParseContext) error {
-		bg.Add(1)
-		go func() {
-			defer bg.Done()
+		bg.Go(func() {
 			done(errorsx.Wrap(debugx.Profile(ctx, envx.String(pmode, "GENIEQL_PROFILING_STRATEGY")), "profiling failed"))
-		}()
+		})
 		return nil
 	}).StringVar(&pmode)
 

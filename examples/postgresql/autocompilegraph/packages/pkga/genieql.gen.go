@@ -40,5 +40,3 @@ type PackageAExample struct {
 	UUIDArray            []string
 	UUIDField            string
 }
-
-

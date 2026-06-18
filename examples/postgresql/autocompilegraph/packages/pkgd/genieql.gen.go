@@ -221,5 +221,3 @@ func (t packageDScannerDynamic) Close() error {
 func (t packageDScannerDynamic) Next() bool {
 	return t.Rows.Next()
 }
-
-
