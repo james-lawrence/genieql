@@ -1,0 +1,129 @@
+package:
+    name: example
+    dir: .fixtures
+    importpath: ""
+type: StructureExample1
+transformations:
+    - camelcase
+renamemap: {}
+columns:
+    - definition:
+        type: int
+        native: int
+        database_type_name: ""
+        column_type: sql.NullInt64
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            		if {{ .From | expr }}.Valid {
+            			tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+            			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+            		}
+            	}
+        encode: |-
+            func() {
+            		{{ .To | expr }}.Valid = true
+            		{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+            	}
+      name: a
+    - definition:
+        type: int
+        native: int
+        database_type_name: ""
+        column_type: sql.NullInt64
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            		if {{ .From | expr }}.Valid {
+            			tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+            			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+            		}
+            	}
+        encode: |-
+            func() {
+            		{{ .To | expr }}.Valid = true
+            		{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+            	}
+      name: b
+    - definition:
+        type: int
+        native: int
+        database_type_name: ""
+        column_type: sql.NullInt64
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            		if {{ .From | expr }}.Valid {
+            			tmp := {{ .Type | expr }}({{ .From | expr }}.Int64)
+            			{{ .To | autodereference | expr }} = {{ if .Column.Definition.Nullable }}&tmp{{ else }}tmp{{ end }}
+            		}
+            	}
+        encode: |-
+            func() {
+            		{{ .To | expr }}.Valid = true
+            		{{ .To | expr }}.Int64 = int64({{ .From | expr }})
+            	}
+      name: c
+    - definition:
+        type: bool
+        native: bool
+        database_type_name: ""
+        column_type: sql.NullBool
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            			if {{ .From | expr }}.Valid {
+            				tmp := {{ .From | expr }}.Bool
+            				{{ .To | autodereference | expr }} = tmp
+            			}
+            		}
+        encode: |-
+            func() {
+            			{{ .To | expr }}.Valid = true
+            			{{ .To | expr }}.Bool = {{ .From | expr }}
+            		}
+      name: d
+    - definition:
+        type: bool
+        native: bool
+        database_type_name: ""
+        column_type: sql.NullBool
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            			if {{ .From | expr }}.Valid {
+            				tmp := {{ .From | expr }}.Bool
+            				{{ .To | autodereference | expr }} = tmp
+            			}
+            		}
+        encode: |-
+            func() {
+            			{{ .To | expr }}.Valid = true
+            			{{ .To | expr }}.Bool = {{ .From | expr }}
+            		}
+      name: e
+    - definition:
+        type: bool
+        native: bool
+        database_type_name: ""
+        column_type: sql.NullBool
+        nullable: false
+        primarykey: false
+        decode: |-
+            func() {
+            			if {{ .From | expr }}.Valid {
+            				tmp := {{ .From | expr }}.Bool
+            				{{ .To | autodereference | expr }} = tmp
+            			}
+            		}
+        encode: |-
+            func() {
+            			{{ .To | expr }}.Valid = true
+            			{{ .To | expr }}.Bool = {{ .From | expr }}
+            		}
+      name: f
