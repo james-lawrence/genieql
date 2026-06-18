@@ -10,7 +10,6 @@ import (
 
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
-	"github.com/james-lawrence/genieql/dialects"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/drivers"
 	"github.com/james-lawrence/genieql/internal/testx"
@@ -37,7 +36,6 @@ var _ = Describe("Scanner", func() {
 	)
 
 	driver := testx.Must(genieql.LookupDriver(drivers.PGX))
-	dialect := dialects.MustLookupDialect(config)
 
 	DescribeTable("should build scanners with only the specified outputs",
 		func(definition, fixture string, options ...generators.ScannerOption) {
@@ -51,7 +49,7 @@ var _ = Describe("Scanner", func() {
 			soc := generators.ScannerOptionContext(generators.Context{
 				Configuration:  config,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect,
+				Dialect:        NewDialect(DB),
 				Driver:         driver,
 				CurrentPackage: pkg,
 			})

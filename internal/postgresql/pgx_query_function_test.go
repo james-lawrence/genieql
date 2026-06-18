@@ -11,7 +11,6 @@ import (
 	"github.com/james-lawrence/genieql"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
-	"github.com/james-lawrence/genieql/dialects"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/drivers"
 	"github.com/james-lawrence/genieql/internal/testx"
@@ -39,7 +38,6 @@ var _ = Describe("Scanner", func() {
 	)
 
 	driver := testx.Must(genieql.LookupDriver(drivers.PGX))
-	dialect := dialects.MustLookupDialect(config)
 
 	exampleScanner := &ast.FuncDecl{
 		Name: ast.NewIdent("StaticExampleScanner"),
@@ -78,7 +76,7 @@ var _ = Describe("Scanner", func() {
 				Configuration:  config,
 				CurrentPackage: pkg,
 				FileSet:        token.NewFileSet(),
-				Dialect:        dialect,
+				Dialect:        NewDialect(DB),
 				Driver:         driver,
 			}
 			buffer.WriteString("package example\n\n")

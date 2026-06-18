@@ -10,9 +10,8 @@ import (
 
 	_ "github.com/jackc/pgx/v5"
 	"github.com/james-lawrence/genieql/astcodec"
-	"github.com/james-lawrence/genieql/dialects"
 	_ "github.com/james-lawrence/genieql/internal/drivers"
-	_ "github.com/james-lawrence/genieql/internal/postgresql"
+	"github.com/james-lawrence/genieql/internal/postgresql"
 	"github.com/james-lawrence/genieql/internal/testx"
 
 	. "github.com/james-lawrence/genieql/generators"
@@ -37,7 +36,6 @@ var _ = ginkgo.Describe("Structure", func() {
 	)
 
 	driver := testx.Must(genieql.LookupDriver(config.Driver))
-	dialect := dialects.MustLookupDialect(config)
 
 	ginkgo.DescribeTable("build a structure based on the definition file",
 		func(fixture string, options ...StructOption) {
@@ -45,6 +43,12 @@ var _ = ginkgo.Describe("Structure", func() {
 			formatted := bytes.NewBuffer([]byte{})
 
 			buffer.WriteString("package example\n\n")
+			options = append(options, StructOptionContext(Context{
+				Configuration:  config,
+				Dialect:        postgresql.NewDialect(DB),
+				CurrentPackage: pkg,
+				Driver:         driver,
+			}))
 			g := NewStructure(options...)
 			Expect(g.Generate(buffer)).ToNot(HaveOccurred())
 			buffer.WriteString("\n")
@@ -60,12 +64,6 @@ var _ = ginkgo.Describe("Structure", func() {
 			".fixtures/structures/type1.go",
 			StructOptionTableStrategy("type1"),
 			StructOptionName("MyStruct"),
-			StructOptionContext(Context{
-				Configuration:  config,
-				Dialect:        dialect,
-				CurrentPackage: pkg,
-				Driver:         driver,
-			}),
 		),
 		ginkgo.Entry(
 			"type1 structure with configuration",
@@ -76,12 +74,6 @@ var _ = ginkgo.Describe("Structure", func() {
 				"field1": "CustomName",
 			}),
 			StructOptionAliasStrategy(genieql.MCOTransformations("lowercase")),
-			StructOptionContext(Context{
-				Configuration:  config,
-				Dialect:        dialect,
-				CurrentPackage: pkg,
-				Driver:         driver,
-			}),
 		),
 	)
 })
