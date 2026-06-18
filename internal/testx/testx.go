@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"testing"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/james-lawrence/genieql/internal/errorsx"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
 )
 
 func TempDir() string {
@@ -36,6 +38,15 @@ func ReadString(path ...string) string {
 func Must[T any](v T, err error) T {
 	gomega.Expect(err).To(gomega.BeNil())
 	return v
+}
+
+// Must is a small language extension for panicing on the common
+// value, error return pattern. only used in tests.
+func MustT[T any](v T, err error) func(t testing.TB) T {
+	return func(t testing.TB) T {
+		require.NoError(t, err)
+		return v
+	}
 }
 
 // Tempenvvar temporarily set the environment variable.

@@ -5,11 +5,16 @@ import (
 	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
-const DuckDB = "github.com/marcboeker/go-duckdb"
+const (
+	DuckDBDeprecated = "github.com/marcboeker/go-duckdb"
+	DuckDB           = "github.com/duckdb/duckdb-go"
+)
 
-// implements the duckdb driver https://github.com/marcboeker/go-duckdb
+// implements the duckdb driver for https://github.com/duckdb/duckdb-go
+// includes the original for backwards compat https://github.com/marcboeker/go-duckdb
 func init() {
 	errorsx.MaybePanic(genieql.RegisterDriver(DuckDB, NewDriver(DuckDB, ddb...)))
+	errorsx.MaybePanic(genieql.RegisterDriver(DuckDBDeprecated, NewDriver(DuckDBDeprecated, ddb...)))
 }
 
 const (

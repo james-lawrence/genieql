@@ -63,6 +63,10 @@ CREATE TABLE IF NOT EXISTS example4 (
   created timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
   updated timestamp WITH TIME ZONE NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS "example.foo.bar" (
+  id uuid PRIMARY KEY NOT NULL
+);
 -- +goose StatementEnd
 
 -- +goose Down
@@ -72,4 +76,5 @@ DROP TABLE IF EXISTS example1;
 DROP TABLE IF EXISTS example2;
 DROP TABLE IF EXISTS example3;
 DROP TABLE IF EXISTS example4;
+DROP TABLE IF EXISTS "example.foo.bar";
 -- +goose StatementEnd
