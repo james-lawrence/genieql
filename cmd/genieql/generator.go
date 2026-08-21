@@ -24,6 +24,7 @@ type generator struct {
 	configName string
 	output     string
 	tags       []string
+	ignore     []string
 }
 
 func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
@@ -36,7 +37,10 @@ func (t *generator) configure(app *kingpin.Application) *kingpin.CmdClause {
 	).Short('o').Default("").StringVar(&t.output)
 
 	cli.Command("package", "generate code for a single package (default)").Default().Action(t.executePackage)
-	cli.Command("graph", "generate code for a package and its dependencies concurrently").Action(t.executeGraph)
+
+	graph := cli.Command("graph", "generate code for a package and its dependencies concurrently")
+	graph.Flag("ignore", "ignore a package (import path) or directory (relative to working directory); also ignores nested sub-packages/directories; can be repeated").StringsVar(&t.ignore)
+	graph.Action(t.executeGraph)
 
 	return cli
 }
@@ -87,5 +91,5 @@ func (t *generator) executeGraph(*kingpin.ParseContext) (err error) {
 		return errorsx.Wrap(err, "unable to load packages")
 	}
 
-	return compiler.AutoGenerateConcurrent(context.Background(), t.configName, bctx, t.BuildInfo.Module, t.output, pkgs, generators.OptionVerbosity(t.Verbosity))
+	return compiler.AutoGenerateConcurrent(context.Background(), t.configName, bctx, t.BuildInfo.Module, t.output, pkgs, t.ignore, generators.OptionVerbosity(t.Verbosity))
 }

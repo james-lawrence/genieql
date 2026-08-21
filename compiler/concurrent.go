@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/james-lawrence/genieql"
+	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/buildx"
 	"github.com/james-lawrence/genieql/generators"
 	"github.com/james-lawrence/genieql/internal/errorsx"
@@ -34,10 +35,11 @@ type dependencygraph struct {
 	buildcontext  build.Context
 	module        string
 	configname    string
+	ignore        []string
 	generatoropts []generators.Option
 }
 
-func newdependencygraph(bctx build.Context, configname string, module string, opts []generators.Option) *dependencygraph {
+func newdependencygraph(bctx build.Context, configname string, module string, ignore []string, opts []generators.Option) *dependencygraph {
 	return &dependencygraph{
 		nodes:         make(map[string]*packagenode),
 		visited:       make(map[string]bool),
@@ -45,12 +47,17 @@ func newdependencygraph(bctx build.Context, configname string, module string, op
 		buildcontext:  bctx,
 		module:        module,
 		configname:    configname,
+		ignore:        ignore,
 		generatoropts: opts,
 	}
 }
 
 func (t *dependencygraph) discoverpackages(pkgs ...*packages.Package) error {
 	for _, _pkg := range pkgs {
+		if astcodec.Ignored(t.buildcontext.Dir, t.ignore, _pkg) {
+			continue
+		}
+
 		pkg, err := t.buildcontext.ImportDir(_pkg.Dir, build.IgnoreVendor)
 		if err != nil {
 			return err
@@ -194,9 +201,9 @@ func (t *dependencygraph) compilepackage(ctx context.Context, node *packagenode)
 	return nil
 }
 
-func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context, module string, output string, pkgs []*packages.Package, opts ...generators.Option) (map[string]error, error) {
+func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context, module string, output string, pkgs []*packages.Package, ignore []string, opts ...generators.Option) (map[string]error, error) {
 	var err error
-	graph := newdependencygraph(bctx, configname, module, opts)
+	graph := newdependencygraph(bctx, configname, module, ignore, opts)
 
 	if err = graph.discoverpackages(pkgs...); err != nil {
 		return nil, errorsx.Wrap(err, "failed to discover packages")
@@ -272,13 +279,13 @@ func AutoCompileGraph(ctx context.Context, configname string, bctx build.Context
 	return results, nil
 }
 
-func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Context, module string, output string, pkgs []*packages.Package, options ...generators.Option) error {
+func AutoGenerateConcurrent(ctx context.Context, cname string, bctx build.Context, module string, output string, pkgs []*packages.Package, ignore []string, options ...generators.Option) error {
 	var (
 		err     error
 		results map[string]error
 	)
 
-	if results, err = AutoCompileGraph(ctx, cname, bctx, module, output, pkgs, options...); err != nil {
+	if results, err = AutoCompileGraph(ctx, cname, bctx, module, output, pkgs, ignore, options...); err != nil {
 		return err
 	}
 

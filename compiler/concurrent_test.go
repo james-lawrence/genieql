@@ -79,7 +79,7 @@ func TestAutoCompileGraph(t *testing.T) {
 
 	t.Run("parent directory with child packages", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", true)
-		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		require.Len(t, results, 4)
 		requirePackagesSucceeded(t, results, expectedPackages...)
@@ -88,15 +88,44 @@ func TestAutoCompileGraph(t *testing.T) {
 
 	t.Run("three level dependency ordering", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", true)
-		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		require.Len(t, results, 4)
 		requirePackagesSucceeded(t, results, expectedPackages...)
 	})
 
+	t.Run("ignores specified package by import path", func(t *testing.T) {
+		setup := setupPackages(t, autocompileGraphDir+"/...", true)
+		ignored := expectedPackages[3] // pkgd: a leaf with no dependents, safe to drop without affecting the rest
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, []string{ignored})
+		require.NoError(t, err)
+		require.Len(t, results, 3)
+		require.NotContains(t, results, ignored)
+		requirePackagesSucceeded(t, results, expectedPackages[:3]...)
+	})
+
+	t.Run("ignores specified package by directory", func(t *testing.T) {
+		setup := setupPackages(t, autocompileGraphDir+"/...", true)
+		ignored := expectedPackages[3]
+
+		var ignoreDir string
+		for _, pkg := range setup.pkgs {
+			if pkg.PkgPath == ignored {
+				ignoreDir = pkg.Dir
+			}
+		}
+		require.NotEmpty(t, ignoreDir)
+
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, []string{ignoreDir})
+		require.NoError(t, err)
+		require.Len(t, results, 3)
+		require.NotContains(t, results, ignored)
+		requirePackagesSucceeded(t, results, expectedPackages[:3]...)
+	})
+
 	t.Run("single package with no dependencies", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/packages/pkga", true)
-		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		require.Len(t, results, 1)
 		requirePackagesSucceeded(t, results, expectedPackages[0])
@@ -104,14 +133,14 @@ func TestAutoCompileGraph(t *testing.T) {
 
 	t.Run("handles packages with no tagged files", func(t *testing.T) {
 		setup := setupPackages(t, ".", false)
-		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		require.Empty(t, results)
 	})
 
 	t.Run("returns error for invalid config", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", false)
-		_, err := compiler.AutoCompileGraph(t.Context(), "nonexistent.config", setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		_, err := compiler.AutoCompileGraph(t.Context(), "nonexistent.config", setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.Error(t, err)
 	})
 
@@ -119,12 +148,12 @@ func TestAutoCompileGraph(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", false)
 		cancelCtx, cancel := context.WithCancel(t.Context())
 		cancel()
-		_, _ = compiler.AutoCompileGraph(cancelCtx, defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		_, _ = compiler.AutoCompileGraph(cancelCtx, defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 	})
 
 	t.Run("with build context dir set", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", true)
-		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		results, err := compiler.AutoCompileGraph(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		require.Len(t, results, 4)
 		requirePackagesSucceeded(t, results, expectedPackages...)
@@ -156,13 +185,13 @@ func TestAutoGenerateConcurrent(t *testing.T) {
 
 	t.Run("generates code for parent directory", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/...", true)
-		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 	})
 
 	t.Run("generates code for child package", func(t *testing.T) {
 		setup := setupPackages(t, autocompileGraphDir+"/packages/pkga", true)
-		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 		genFile := filepath.Join(autocompileGraphDir, "packages/pkga", defaultOutputFilename)
 		info, err := os.Stat(genFile)
@@ -172,7 +201,7 @@ func TestAutoGenerateConcurrent(t *testing.T) {
 
 	t.Run("handles package with no output", func(t *testing.T) {
 		setup := setupPackages(t, ".", false)
-		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs)
+		err := compiler.AutoGenerateConcurrent(t.Context(), defaultConfig, setup.bctx, setup.module, defaultOutputFilename, setup.pkgs, nil)
 		require.NoError(t, err)
 	})
 }
