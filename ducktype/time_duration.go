@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/james-lawrence/genieql/internal/errorsx"
 )
 
 type NullDuration struct {
@@ -58,11 +56,11 @@ func (n *NullDuration) Scan(src any) error {
 
 		encoded, err := json.Marshal(v)
 		if err != nil {
-			return errorsx.Wrapf(err, "nullduration: cannot scan type %T into NullDuration", src)
+			return fmt.Errorf("nullduration: cannot scan type %T into NullDuration: %w", src, err)
 		}
 
 		if err = json.Unmarshal(encoded, &decoded); err != nil {
-			return errorsx.Wrapf(err, "nullduration: cannot scan type %T into NullDuration", src)
+			return fmt.Errorf("nullduration: cannot scan type %T into NullDuration: %w", src, err)
 		}
 
 		n.Valid = true

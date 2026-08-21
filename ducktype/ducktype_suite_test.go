@@ -7,13 +7,11 @@ import (
 	"testing"
 
 	_ "github.com/duckdb/duckdb-go/v2"
-	"github.com/james-lawrence/genieql/internal/testx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	testx.Logging()
 	os.Exit(m.Run())
 }
 
