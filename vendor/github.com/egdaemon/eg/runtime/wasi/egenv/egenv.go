@@ -104,6 +104,16 @@ func String(fallback string, keys ...string) string {
 	return envx.String(fallback, keys...)
 }
 
+// Base64 read value as a standard base64 encoded string
+func Base64(fallback []byte, keys ...string) []byte {
+	return envx.Base64(fallback, keys...)
+}
+
+// Base64URL read value as a url base64 encoded string
+func Base64URL(fallback []byte, keys ...string) []byte {
+	return envx.Base64URL(fallback, keys...)
+}
+
 // Int retrieve a integer flag from the environment, checks each key in order
 // first to parse successfully is returned.
 func Int(fallback int, keys ...string) int {

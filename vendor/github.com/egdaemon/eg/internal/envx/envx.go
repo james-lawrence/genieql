@@ -87,6 +87,10 @@ func Base64(fallback []byte, keys ...string) []byte {
 	return NewEnviron(os.Getenv).Base64(fallback, keys...)
 }
 
+func Base64URL(fallback []byte, keys ...string) []byte {
+	return NewEnviron(os.Getenv).Base64URL(fallback, keys...)
+}
+
 func URL(fallback string, keys ...string) *url.URL {
 	return NewEnviron(os.Getenv).URL(fallback, keys...)
 }
@@ -244,7 +248,16 @@ func (t environ) Hex(fallback []byte, keys ...string) []byte {
 
 // Base64 read value as a base64 encoded string
 func (t environ) Base64(fallback []byte, keys ...string) []byte {
-	enc := base64.RawStdEncoding.WithPadding('=')
+	return t.base64(base64.RawStdEncoding.WithPadding('='), fallback, keys...)
+}
+
+// Base64URL read value as a url base64 encoded string
+func (t environ) Base64URL(fallback []byte, keys ...string) []byte {
+	return t.base64(base64.URLEncoding, fallback, keys...)
+}
+
+// Base64 read value as a base64 encoded string
+func (t environ) base64(enc *base64.Encoding, fallback []byte, keys ...string) []byte {
 	return envval(fallback, t.m, func(s string) ([]byte, error) {
 		decoded, err := enc.DecodeString(s)
 		return decoded, errorsx.Wrapf(err, "invalid base64 encoded data '%s'", s)
@@ -407,6 +420,31 @@ func (t *Builder) FromReader(r io.Reader) *Builder {
 func (t *Builder) FromEnviron(environ ...string) *Builder {
 	t.environ = append(t.environ, environ...)
 	return t
+}
+
+// AutoEnviron resolves a list of keys or explicit key=value strings into a
+// []string suitable for use as os.Environ.
+//
+// Arguments that contain an '=' are treated as explicit key=value pairs and
+// passed through verbatim. Arguments without '=' are treated as bare key names;
+// the value is looked up from the current process environment via
+// os.LookupEnv. Keys that are not set are silently omitted.
+func AutoEnviron(keysOrEnviron ...string) (environ []string) {
+	environ = make([]string, 0, len(keysOrEnviron))
+
+	for _, k := range keysOrEnviron {
+		_k, v, ok := strings.Cut(k, "=")
+		if ok && len(v) > 0 {
+			environ = append(environ, k)
+			continue
+		}
+
+		if v, ok := os.LookupEnv(_k); ok {
+			environ = append(environ, Format(_k, v, FormatOptionTransforms(allowAll)))
+		}
+	}
+
+	return environ
 }
 
 // extract the key/value pairs from the os.Environ.

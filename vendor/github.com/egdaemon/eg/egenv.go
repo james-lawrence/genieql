@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/egdaemon/eg/internal/errorsx"
 	"github.com/egdaemon/eg/internal/slicesx"
@@ -78,6 +79,7 @@ const (
 	EnvComputeRuntimeDirectory   = "EG_COMPUTE_RUNTIME_DIRECTORY"               // runtime directory for workloads
 	EnvComputeWorkspaceDirectory = "EG_COMPUTE_WORKSPACE_DIRECTORY"             // workspace directory for workloads
 	EnvComputeWorkloadCapacity   = "EG_COMPUTE_WORKLOAD_CAPACITY"               // upper bound for the maximum number of workloads that can be run concurrently
+	EnvComputeCompileCapacity    = "EG_COMPUTE_COMPILE_CAPACITY"                // upper bound for the maximum number of workloads that can be compiled concurrently
 	EnvComputeWorkloadTargetLoad = "EG_COMPUTE_WORKLOAD_TARGET_LOAD"            // upper bound for the maximum cpu load to target.
 	EnvScheduleMaximumDelay      = "EG_COMPUTE_SCHEDULER_MAXIMUM_DELAY"         // maximum delay between checks for workloads.
 	EnvScheduleSystemLoadFreq    = "EG_COMPUTE_SCHEDULER_SYSTEM_LOAD_FREQUENCY" // how frequently we measure system load, small enough we can saturate, high enough its not a burden.
@@ -85,8 +87,11 @@ const (
 	EnvComputeBin                = "EG_COMPUTE_BIN"                             // hotswap the binary, used for development testing
 	EnvComputeBinAlt             = "EG_COMPUTE_BIN_ALTERNATE"                   // absolute path to an alternate binary to inject into the host environment when hotswapping.
 	EnvComputeContainerImpure    = "EG_COMPUTE_C8S_IMPURE"                      // informs the container runner that the container depends on the repository being present.
+	EnvComputeGPU                = "EG_COMPUTE_GPU"                             // enable gpu support for the compute workload, propagated to nested module containers.
 	EnvComputeModuleSocket       = "EG_COMPUTE_MODULE_SOCKET"                   // socket providing functionality that is scoped to an individual module. primarily command execution.
 	EnvComputeDefaultGroup       = "EG_COMPUTE_DEFAULT_GROUP"                   // override the group assigned to the user. mainly used by baremetal.
+	EnvComputeAPIEnabled         = "EG_COMPUTE_API_ENABLED"                     // gates the runner's push HTTP surface (POST /b/upload, POST /c/enqueue); default-disabled stopgap ahead of real request authentication.
+	EnvComputeProfileMode        = "EG_COMPUTE_PROFILE_MODE"                    // profile mode (cpu,heap,mem,allocs,block) for module runs.
 )
 
 const (
@@ -105,6 +110,29 @@ const (
 	EnvGitAuthHTTPUsername    = "EG_GIT_AUTH_HTTP_USERNAME"
 )
 
+// IsDefaultBranchBuild reports whether the head and base commits recorded in
+// environ are identical, which only happens for default-branch builds (see
+// vcsevents push-event handling, where Head and Base are built from the same
+// Reference) and local runs performed directly on the base branch.
+//
+// implemented without internal/envx to avoid an import cycle -- envx itself
+// depends on this package.
+func IsDefaultBranchBuild(environ ...string) bool {
+	lookup := func(key string) string {
+		prefix := key + "="
+		for _, kv := range environ {
+			if v, ok := strings.CutPrefix(kv, prefix); ok {
+				return v
+			}
+		}
+		return ""
+	}
+
+	head := lookup(EnvGitHeadCommit)
+	base := lookup(EnvGitBaseCommit)
+	return head != "" && head == base
+}
+
 const (
 	EnvUnsafeCacheID         = "EG_UNSAFE_CACHE_ID"
 	EnvUnsafeGitCloneEnabled = "EG_UNSAFE_GIT_CLONE_ENABLED"
@@ -113,6 +141,7 @@ const (
 )
 
 const (
+	DefaultUsername    = "egd" // workload username
 	WorkingDirectory   = "eg"
 	MountDirectory     = "eg.mnt"
 	WorkloadDirectory  = ".eg.workload"
@@ -202,5 +231,5 @@ func PrepareRootContainer(cpath string) (err error) {
 const (
 	EnvExperimentalDisableHostNetwork = "EG_EXPERIMENTAL_DISABLE_HOST_NETWORK"
 	EnvExperimentalBaremetal          = "EG_EXPERIMENTAL_BAREMETAL"
-	EnvExperimentalBindFsEntryTimeout = "EG_EXPERIMENTAL_BINDFS_ENTRY_TIMEOUT" // enable/disable entry timeout.
+	EnvExperimentalBindMount          = "EG_EXPERIMENTAL_BIND_MOUNT"
 )

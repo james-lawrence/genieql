@@ -71,14 +71,27 @@ func Trust(v ...netip.Prefix) eg.OpFn {
 	}
 }
 
+// TrustHost configures postgresql's hba.conf to trust connections from the
+// host machine as well as all IPv4 and IPv6 networks. This is intended for
+// exposing a sandboxed postgresql instance to the host machine during local
+// development and should not be used in environments reachable beyond the
+// host.
+func TrustHost() eg.OpFn {
+	return Trust(append(
+		egunsafe.HostPrefixes(),
+		netip.PrefixFrom(netip.IPv4Unspecified(), 0),
+		netip.PrefixFrom(netip.IPv6Unspecified(), 0),
+	)...)
+}
+
 // command to restart postgresql
 func Restart(cmd string) eg.OpFn {
 	return func(ctx context.Context, _ eg.Op) (err error) {
-		runtime := shell.Runtime().As("postgres").Timeout(5*time.Second).Environ("PAGER", "")
+		runtime := shell.Runtime().As("postgres").Timeout(time.Minute).Environ("PAGER", "")
 		return shell.Run(
 			ctx,
 			runtime.New(cmd).Privileged(),
-			runtime.New("pg_isready").Attempts(15), // 15 attempts = ~3seconds
+			runtime.New("pg_isready").Attempts(300), // 5 attempts = ~1 second
 		)
 	}
 }
