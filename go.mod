@@ -10,6 +10,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/jackc/pgtype v1.14.4
 	github.com/jackc/pgx/v5 v5.9.1
+	github.com/james-lawrence/genieql/ducktype v0.0.0-20260821133042-4731052f0796
 	github.com/mattn/go-isatty v0.0.21
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/onsi/ginkgo/v2 v2.28.1
@@ -75,7 +76,6 @@ require (
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/james-lawrence/genieql/ducktype v0.0.0
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
@@ -84,5 +84,3 @@ require (
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260409153401-be6f6cb8b1fa // indirect
 )
-
-replace github.com/james-lawrence/genieql/ducktype => ./ducktype
