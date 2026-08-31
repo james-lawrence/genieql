@@ -29,6 +29,25 @@ func (t *duckdb) configure(app *kingpin.Application) *kingpin.CmdClause {
 	return cli
 }
 
+// duckdbExtensionState reports whether the named extension is installed and/or
+// loaded in the given database, using duckdb's own extension introspection.
+func duckdbExtensionState(db *sql.DB, ext string) (installed bool, loaded bool, err error) {
+	row := db.QueryRowContext(
+		context.Background(),
+		"SELECT installed, loaded FROM duckdb_extensions() WHERE extension_name = ?",
+		ext,
+	)
+
+	if err := row.Scan(&installed, &loaded); err != nil {
+		if err == sql.ErrNoRows {
+			return false, false, nil
+		}
+		return false, false, err
+	}
+
+	return installed, loaded, nil
+}
+
 func (t *duckdb) execute(*kingpin.ParseContext) (err error) {
 	dbpath := filepath.Join(genieql.ConfigurationDirectory(), ".duckdb", t.database)
 	if err = os.MkdirAll(filepath.Dir(dbpath), 0700); err != nil {
@@ -42,8 +61,32 @@ func (t *duckdb) execute(*kingpin.ParseContext) (err error) {
 	defer db.Close()
 
 	for _, ext := range t.extensions {
-		log.Println("initializing extension", ext)
-		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)); err != nil {
+		installed, loaded, err := duckdbExtensionState(db, ext)
+		if err != nil {
+			return errorsx.Wrapf(err, "failed to determine state of '%s' extension", ext)
+		}
+
+		if loaded {
+			log.Println("extension already loaded", ext)
+			continue
+		}
+
+		if !installed {
+			log.Println("installing extension", ext)
+			if _, err := db.ExecContext(context.Background(), fmt.Sprintf("INSTALL %s;", ext)); err != nil {
+				// DuckDB may fail to reach the extension repository even though the
+				// extension is already present locally from a prior install; only
+				// treat this as fatal when the extension truly isn't installed.
+				stillInstalled, _, serr := duckdbExtensionState(db, ext)
+				if serr != nil || !stillInstalled {
+					return errorsx.Wrapf(err, "failed to install '%s' extension", ext)
+				}
+				log.Println("warning: failed to refresh extension, using existing install", ext, err)
+			}
+		}
+
+		log.Println("loading extension", ext)
+		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("LOAD %s;", ext)); err != nil {
 			return errorsx.Wrapf(err, "failed to load '%s' extension", ext)
 		}
 	}
