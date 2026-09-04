@@ -6,12 +6,12 @@ import (
 	"crypto/rand"
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/parser"
-	"go/token"
+	"go/types"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -25,6 +25,8 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
+const ginterppath = "github.com/james-lawrence/genieql/ginterp"
+
 func nodeInfo(ctx Context, n ast.Node) string {
 	pos := ctx.FileSet.PositionFor(n.Pos(), true).String()
 	switch n := n.(type) {
@@ -35,17 +37,21 @@ func nodeInfo(ctx Context, n ast.Node) string {
 	}
 }
 
-func genmod(_ Context, pos *ast.FuncDecl, content *jen.File, decls []ast.Decl, imports ...*ast.ImportSpec) func(ctx context.Context, scratchpath string) (*generedmodule, error) {
-	return func(ctx context.Context, scratchpad string) (m *generedmodule, err error) {
-		if m, err = genmodule(ctx, pos, content, decls, imports...); err != nil {
-			return nil, errorsx.Wrap(err, "unable to generate module directory")
-		}
+func genmod(cctx Context, pos *ast.FuncDecl, ginttype string, decls []ast.Decl) modgenfn {
+	return func(context.Context) (*generedmodule, error) {
+		var (
+			consts = constants(pos.Body)
+		)
 
-		return m, nil
+		return &generedmodule{
+			block:   genmain(cctx, pos, ginttype, consts),
+			consts:  consts,
+			fndecls: decls,
+		}, nil
 	}
 }
 
-func runmod(cctx Context) func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
+func runmod(cctx Context, sources []string) func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
 	return func(ctx context.Context, tmpdir string, dst io.Writer, runtime wazero.Runtime, mpath string, compileonly bool, modules ...module) (err error) {
 		var (
 			c   wazero.CompiledModule
@@ -79,7 +85,7 @@ func runmod(cctx Context) func(ctx context.Context, tmpdir string, dst io.Writer
 			WithName(cctx.CurrentPackage.Name)
 
 		mcfg = wasienv(cctx, mcfg)
-		mcfg = fndeclenv(cctx, mcfg, tmpdir)
+		mcfg = fndeclenv(mcfg, sources)
 
 		if err = run(ctx, mcfg, runtime, c); err != nil {
 			return errorsx.Wrapf(err, "unable to run module: %s", tmpdir)
@@ -93,25 +99,31 @@ func runmod(cctx Context) func(ctx context.Context, tmpdir string, dst io.Writer
 	}
 }
 
-func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
+// fatal generates a log.Fatalln of err wrapped with the message.
+func fatal(msg string) jen.Code {
+	return jen.Id("log").Dot("Fatalln").Call(
+		jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit(msg)),
+	)
+}
+
+// genpreamble generates the statements that load the source files, create the
+// generation context and the scratch shared by every generator in the module.
+func genpreamble(cfgname string) jen.Statement {
 	return jen.Statement{
 		jen.Var().Defs(
-			jen.Id("tree").Id("*ast.File"),
+			jen.Id("trees").Id("map[string]*ast.File"),
 			jen.Id("fset").Id("*token.FileSet"),
 			jen.Id("err").Error(),
 			jen.Id("gctx").Id("generators.Context"),
+			jen.Id("scratch").Op("*").Qual(ginterppath, "Scratch"),
 		),
 		jen.Qual("log", "SetFlags").Call(jen.Qual("log", "LstdFlags").Op("|").Qual("log", "Lshortfile")),
 		jen.If(
 			jen.List(
-				jen.Id("tree"), jen.Id("fset"), jen.Id("err"),
-			).Op("=").Qual("github.com/james-lawrence/genieql/ginterp", "LoadFile").Call(),
+				jen.Id("trees"), jen.Id("fset"), jen.Id("err"),
+			).Op("=").Qual(ginterppath, "LoadFiles").Call(),
 			jen.Id("err").Op("!=").Id("nil"),
-		).Block(
-			jen.Id("log").Dot("Fatalln").Call(
-				jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to load file ast")),
-			),
-		),
+		).Block(fatal("unable to load file ast")),
 		jen.If(
 			jen.List(jen.Id("gctx"), jen.Id("err")).Op("=").Id("generators").Dot("NewContext").Call(
 				jen.Id("buildx").Dot("Clone").Call(
@@ -122,16 +134,86 @@ func genpreamble(cfgname string, pkg *build.Package) jen.Statement {
 					),
 				),
 				jen.Lit(cfgname),
-				jen.Qual("github.com/james-lawrence/genieql/ginterp", "WasiPackage").Call(),
+				jen.Qual(ginterppath, "WasiPackage").Call(),
 				jen.Id("generators").Dot("OptionFileSet").Call(jen.Id("fset")),
 			),
 			jen.Id("err").Op("!=").Id("nil"),
-		).Block(
-			jen.Id("log").Dot("Fatalln").Call(
-				jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to create generation context")),
-			),
-		),
+		).Block(fatal("unable to create generation context")),
+		jen.Id("scratch").Op("=").Qual(ginterppath, "NewScratch").Call(jen.Id("gctx")),
 	}
+}
+
+// genpublish generates the statement making the code generated so far visible
+// to the generators that follow it.
+func genpublish() jen.Code {
+	return jen.If(
+		jen.Id("err").Op("=").Id("scratch").Dot("Publish").Call(),
+		jen.Id("err").Op("!=").Id("nil"),
+	).Block(fatal("unable to publish generated code"))
+}
+
+// genmain generates the block that resolves the constants referenced by the
+// generator function, configures the generator with it and runs it.
+func genmain(cctx Context, pos *ast.FuncDecl, ginttype string, consts []string) *jen.Statement {
+	var (
+		name   = pos.Name.String()
+		source = filepath.Base(cctx.FileSet.PositionFor(pos.Pos(), true).Filename)
+		stmts  []jen.Code
+	)
+
+	for _, c := range consts {
+		stmts = append(stmts, jen.If(
+			jen.List(jen.Id(c), jen.Id("err")).Op("=").Qual(ginterppath, "Const").Call(jen.Id("gctx"), jen.Lit(c)),
+			jen.Id("err").Op("!=").Id("nil"),
+		).Block(fatal("unable to resolve "+c)))
+	}
+
+	return jen.Block(append(stmts,
+		jen.Var().Id("gen").Qual(ginterppath, ginttype),
+		jen.If(
+			jen.List(jen.Id("gen"), jen.Id("err")).Op("=").Qual(ginterppath, ginttype+"FromFile").Call(
+				jen.Id("gctx"),
+				jen.Lit(name),
+				jen.Id("trees").Index(jen.Lit(source)),
+			),
+			jen.Id("err").Op("!=").Id("nil"),
+		).Block(fatal("failed to create generator")),
+		jen.Id(name).Call(jen.Id("gen")),
+		jen.If(
+			jen.Id("err").Op("=").Id("scratch").Dot("Generate").Call(jen.Id("gen")),
+			jen.Id("err").Op("!=").Id("nil"),
+		).Block(fatal("unable to generate output")),
+	)...)
+}
+
+// constants referenced by the body that are declared outside of its file. the
+// module resolves them from the package at runtime because declarations
+// generated by earlier phases do not exist when the module is compiled.
+func constants(body *ast.BlockStmt) []string {
+	var (
+		seen = map[string]struct{}{}
+		walk func(n ast.Node) bool
+	)
+
+	walk = func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.SelectorExpr:
+			if _, ok := x.X.(*ast.Ident); !ok {
+				ast.Inspect(x.X, walk)
+			}
+			return false
+		case *ast.Ident:
+			if x.Obj == nil && types.Universe.Lookup(x.Name) == nil {
+				seen[x.Name] = struct{}{}
+			}
+		}
+
+		return true
+	}
+
+	ast.Inspect(body, walk)
+
+	return slices.Sorted(maps.Keys(seen))
 }
 
 func normalizeFnDecl(src *ast.File) *ast.File {
@@ -202,55 +284,6 @@ func wasienv(cctx Context, cfg wazero.ModuleConfig) wazero.ModuleConfig {
 	)
 }
 
-func fndeclenv(cctx Context, cfg wazero.ModuleConfig, tmpdir string) wazero.ModuleConfig {
-	return cfg.WithEnv(
-		"GENIEQL_WASI_FILEPATH", strings.TrimPrefix(filepath.Join(tmpdir, "input.go"), cctx.ModuleRoot),
-	)
-}
-
-func mergescratch(tree *ast.File, p string) (formatted string, err error) {
-	fset := token.NewFileSet()
-	otree, err := parser.ParseFile(fset, "scratch.go", p, parser.SkipObjectResolution)
-	if err != nil {
-		return "", err
-	}
-
-	tree.Imports = append(tree.Imports, otree.Imports...)
-	tree.Decls = append(tree.Decls, astcodec.SearchFileDecls(otree, func(d ast.Decl) bool { return !astcodec.FilterImports(d) })...)
-
-	return astcodec.FormatAST(fset, tree)
-}
-
-func genmain(cfgname string, pkg *build.Package, name, gintpkg, gintfn string) *jen.File {
-	content := jen.NewFile("main")
-	content.PackageComment("//go:build genieql.generate")
-
-	content.Func().Id("main").Params().Block(
-		append(
-			genpreamble(cfgname, pkg),
-			jen.List(jen.Id("gen"), jen.Id("err").Op(":=").Id(gintpkg).Dot(gintfn).Call(
-				jen.Id("gctx"),
-				jen.Lit(name),
-				jen.Id("tree"),
-			)),
-			jen.If(
-				jen.Id("err").Op("!=").Id("nil"),
-			).Block(
-				jen.Id("log").Dot("Fatalln").Call(
-					jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("failed to create generator")),
-				),
-			),
-			jen.Id(name).Call(jen.Id("gen")),
-			jen.If(
-				jen.List(jen.Id("err").Op(":=").Id("gen").Dot("Generate").Call(jen.Id("os").Dot("Stdout"))),
-				jen.Id("err").Op("!=").Id("nil"),
-			).Block(
-				jen.Id("log").Dot("Fatalln").Call(
-					jen.Qual("github.com/pkg/errors", "Wrap").Call(jen.Id("err"), jen.Lit("unable to generate output")),
-				),
-			),
-			jen.Id("fmt").Dot("Fprintln").Call(jen.Id("os").Dot("Stdout")),
-		)...,
-	)
-	return content
+func fndeclenv(cfg wazero.ModuleConfig, sources []string) wazero.ModuleConfig {
+	return cfg.WithEnv("GENIEQL_WASI_FILEPATH", strings.Join(sources, ","))
 }

@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"log"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/james-lawrence/genieql/astcodec"
 	"github.com/james-lawrence/genieql/astutil"
 	"github.com/james-lawrence/genieql/internal/errorsx"
@@ -34,15 +33,10 @@ func Scanner(cctx Context, src *ast.File, pos *ast.FuncDecl) (r Result, err erro
 
 	log.Printf("genieql.Scanner identified %s\n", nodeInfo(cctx, pos))
 
-	uid := errorsx.Must(uuid.NewV4()).String()
-	content := genmain(cctx.Name, cctx.CurrentPackage, pos.Name.String(), "ginterp", "ScannerFromFile")
-	// printjen(content)
 	fndecls := astcodec.SearchFileDecls(normalizeFnDecl(src), astcodec.FindFunctions, astcodec.FilterFunctionsByName("main"))
 
 	return Result{
-		Bid:      uid,
-		Ident:    pos.Name.Name,
-		Mod:      modgenfn(genmod(cctx, pos, content, fndecls, src.Imports...)),
+		Mod:      genmod(cctx, pos, "Scanner", fndecls),
 		Priority: PriorityScanners,
 	}, nil
 }
