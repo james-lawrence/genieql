@@ -21,7 +21,7 @@ func TestQueries(t *testing.T) {
 			{
 				name:     "example 1",
 				n:        1,
-				table:    "MyTable1",
+				table:    "\"MyTable1\"",
 				columns:  []string{"col1", "col2", "col3"},
 				defaults: []string{},
 				expected: "INSERT INTO \"MyTable1\" (\"col1\",\"col2\",\"col3\") VALUES ($1,$2,$3) RETURNING \"col1\",\"col2\",\"col3\"",
@@ -29,7 +29,7 @@ func TestQueries(t *testing.T) {
 			{
 				name:     "example 2",
 				n:        1,
-				table:    "MyTable2",
+				table:    "\"MyTable2\"",
 				columns:  []string{"col1", "col2", "col3", "col4"},
 				defaults: []string{"col4"},
 				expected: "INSERT INTO \"MyTable2\" (\"col1\",\"col2\",\"col3\",\"col4\") VALUES ($1,$2,$3,DEFAULT) RETURNING \"col1\",\"col2\",\"col3\",\"col4\"",
@@ -37,7 +37,7 @@ func TestQueries(t *testing.T) {
 			{
 				name:     "example 3",
 				n:        1,
-				table:    "MyTable2",
+				table:    "\"MyTable2\"",
 				columns:  []string{"col1", "col2", "col3", "col4"},
 				defaults: []string{"col1", "col3"},
 				expected: "INSERT INTO \"MyTable2\" (\"col1\",\"col2\",\"col3\",\"col4\") VALUES (DEFAULT,$1,DEFAULT,$2) RETURNING \"col1\",\"col2\",\"col3\",\"col4\"",
@@ -45,7 +45,7 @@ func TestQueries(t *testing.T) {
 			{
 				name:     "example 4",
 				n:        3,
-				table:    "MyTable2",
+				table:    "\"MyTable2\"",
 				columns:  []string{"col1", "col2", "col3", "col4"},
 				defaults: []string{"col1", "col3"},
 				expected: "INSERT INTO \"MyTable2\" (\"col1\",\"col2\",\"col3\",\"col4\") VALUES (DEFAULT,$1,DEFAULT,$2),(DEFAULT,$3,DEFAULT,$4),(DEFAULT,$5,DEFAULT,$6) RETURNING \"col1\",\"col2\",\"col3\",\"col4\"",
@@ -53,10 +53,18 @@ func TestQueries(t *testing.T) {
 			{
 				name:     "example 5",
 				n:        3,
-				table:    "MyTable1",
+				table:    "\"MyTable1\"",
 				columns:  []string{"col1", "col2", "col3"},
 				defaults: []string{},
 				expected: "INSERT INTO \"MyTable1\" (\"col1\",\"col2\",\"col3\") VALUES ($1,$2,$3),($4,$5,$6),($7,$8,$9) RETURNING \"col1\",\"col2\",\"col3\"",
+			},
+			{
+				name:     "schema-qualified",
+				n:        1,
+				table:    "\"cache\".\"library_known_media\"",
+				columns:  []string{"col1"},
+				defaults: []string{},
+				expected: "INSERT INTO \"cache\".\"library_known_media\" (\"col1\") VALUES ($1) RETURNING \"col1\"",
 			},
 		}
 
@@ -77,17 +85,24 @@ func TestQueries(t *testing.T) {
 		}{
 			{
 				name:       "example 1",
-				table:      "MyTable1",
+				table:      "\"MyTable1\"",
 				columns:    []string{"col1", "col2", "col3"},
 				predicates: []string{"col1"},
 				expected:   "SELECT \"col1\",\"col2\",\"col3\" FROM \"MyTable1\" WHERE \"col1\" = $1",
 			},
 			{
 				name:       "example 2",
-				table:      "MyTable2",
+				table:      "\"MyTable2\"",
 				columns:    []string{"col1", "col2", "col3", "col4"},
 				predicates: []string{"col1", "col2"},
 				expected:   "SELECT \"col1\",\"col2\",\"col3\",\"col4\" FROM \"MyTable2\" WHERE \"col1\" = $1 AND \"col2\" = $2",
+			},
+			{
+				name:       "schema-qualified",
+				table:      "\"cache\".\"library_known_media\"",
+				columns:    []string{"col1"},
+				predicates: []string{"col1"},
+				expected:   "SELECT \"col1\" FROM \"cache\".\"library_known_media\" WHERE \"col1\" = $1",
 			},
 		}
 
@@ -108,24 +123,31 @@ func TestQueries(t *testing.T) {
 		}{
 			{
 				name:       "example 1",
-				table:      "MyTable1",
+				table:      "\"MyTable1\"",
 				columns:    []string{"col1", "col2", "col3"},
 				predicates: []string{"col1"},
 				expected:   "UPDATE \"MyTable1\" SET \"col1\" = $1, \"col2\" = $2, \"col3\" = $3 WHERE \"col1\" = $4 RETURNING \"col1\",\"col2\",\"col3\"",
 			},
 			{
 				name:       "example 2",
-				table:      "MyTable2",
+				table:      "\"MyTable2\"",
 				columns:    []string{"col1", "col2", "col3", "col4"},
 				predicates: []string{"col1", "col2"},
 				expected:   "UPDATE \"MyTable2\" SET \"col1\" = $1, \"col2\" = $2, \"col3\" = $3, \"col4\" = $4 WHERE \"col1\" = $5 AND \"col2\" = $6 RETURNING \"col1\",\"col2\",\"col3\",\"col4\"",
 			},
 			{
 				name:       "example 3",
-				table:      "MyTable2",
+				table:      "\"MyTable2\"",
 				columns:    []string{"col1", "col2", "col3", "col4"},
 				predicates: []string{},
 				expected:   "UPDATE \"MyTable2\" SET \"col1\" = $1, \"col2\" = $2, \"col3\" = $3, \"col4\" = $4 WHERE TRUE RETURNING \"col1\",\"col2\",\"col3\",\"col4\"",
+			},
+			{
+				name:       "schema-qualified",
+				table:      "\"cache\".\"library_known_media\"",
+				columns:    []string{"col1"},
+				predicates: []string{"col1"},
+				expected:   "UPDATE \"cache\".\"library_known_media\" SET \"col1\" = $1 WHERE \"col1\" = $2 RETURNING \"col1\"",
 			},
 		}
 
@@ -146,17 +168,24 @@ func TestQueries(t *testing.T) {
 		}{
 			{
 				name:       "example 1",
-				table:      "MyTable1",
+				table:      "\"MyTable1\"",
 				columns:    []string{"col1", "col2", "col3"},
 				predicates: []string{"col1"},
 				expected:   "DELETE FROM \"MyTable1\" WHERE \"col1\" = $1",
 			},
 			{
 				name:       "example 2",
-				table:      "MyTable2",
+				table:      "\"MyTable2\"",
 				columns:    []string{"col1", "col2", "col3", "col4"},
 				predicates: []string{"col1", "col2"},
 				expected:   "DELETE FROM \"MyTable2\" WHERE \"col1\" = $1 AND \"col2\" = $2",
+			},
+			{
+				name:       "schema-qualified",
+				table:      "\"cache\".\"library_known_media\"",
+				columns:    []string{"col1"},
+				predicates: []string{"col1"},
+				expected:   "DELETE FROM \"cache\".\"library_known_media\" WHERE \"col1\" = $1",
 			},
 		}
 

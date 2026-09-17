@@ -13,7 +13,7 @@ import (
 )
 
 func Setup(ctx context.Context, id eg.Op) error {
-	runtime := eggolang.Runtime()
+	runtime := eggolang.Runtime().Debug()
 
 	return shell.Run(
 		ctx,
@@ -64,7 +64,7 @@ func main() {
 						eggolang.BuildOption.Tags("genieql.duckdb"),
 					),
 				),
-				// eggolang.TestOption.Verbose(true),
+				eggolang.TestOption.Verbose(true),
 			),
 		),
 	)

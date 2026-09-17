@@ -63,6 +63,47 @@ var _ = Describe("postgresql", func() {
 			)
 		})
 
+		It("should support schema-qualified table names", func() {
+			info, err := NewDialect(DB).ColumnInformationForTable(driver, `"pg_catalog"."pg_stat_database"`)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(
+				genieql.ColumnInfoSet(info).ColumnNames(),
+			).To(
+				Equal([]string{
+					"active_time",
+					"blk_read_time",
+					"blk_write_time",
+					"blks_hit",
+					"blks_read",
+					"checksum_failures",
+					"checksum_last_failure",
+					"conflicts",
+					"datid",
+					"datname",
+					"deadlocks",
+					"idle_in_transaction_time",
+					"numbackends",
+					"parallel_workers_launched",
+					"parallel_workers_to_launch",
+					"session_time",
+					"sessions",
+					"sessions_abandoned",
+					"sessions_fatal",
+					"sessions_killed",
+					"stats_reset",
+					"temp_bytes",
+					"temp_files",
+					"tup_deleted",
+					"tup_fetched",
+					"tup_inserted",
+					"tup_returned",
+					"tup_updated",
+					"xact_commit",
+					"xact_rollback",
+				}),
+			)
+		})
+
 		It("should support insert queries", func() {
 			q := NewDialect(DB).Insert(1, 0, "table", "", []string{"c1", "c2", "c2"}, []string{"c1", "c2", "c2"}, []string{"c1"})
 			Expect(q).To(Equal(`INSERT INTO table ("c1","c2","c2") VALUES (DEFAULT,$1,$2) RETURNING "c1","c2","c2"`))

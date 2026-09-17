@@ -79,7 +79,7 @@ func (t DialectFn) ColumnNameTransformer(transforms ...transform.Transformer) ge
 }
 
 func (t DialectFn) ColumnInformationForTable(d genieql.Driver, table string) ([]genieql.ColumnInfo, error) {
-	const columnInformationQuery = `DESCRIBE "%s"`
+	const columnInformationQuery = `DESCRIBE %s`
 	return columnInformation(d, t.db, columnInformationQuery, table)
 }
 

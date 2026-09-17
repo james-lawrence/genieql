@@ -130,5 +130,23 @@ var _ = Describe("Insert", func() {
 			).Into("foo").Ignore("a").Default("b").Conflict("ON CONFLICT id = {id} AND c = {a.C}"),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.6.go"))),
 		),
+		Entry(
+			"example 7 - schema-qualified table",
+			NewInsert(
+				ctx,
+				"InsertExample7",
+				&ast.CommentGroup{
+					List: []*ast.Comment{
+						{Text: "// Schema-qualified Insert Example"},
+					},
+				},
+				rowsScanner,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+			).Into("schema", "foo"),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/inserts/example.7.go"))),
+		),
 	)
 })

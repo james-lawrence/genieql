@@ -29,16 +29,44 @@ func TestDialect(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		info, err := NewDialect(DB).ColumnInformationForTable(driver, "example.foo.bar")
+		info, err := NewDialect(DB).ColumnInformationForTable(driver, "\"example.foo.bar\"")
 		require.NoError(t, err)
 		require.Equal(t, []string{"id"}, genieql.ColumnInfoSet(info).ColumnNames())
+	})
+
+	t.Run("should support schema-qualified table names", func(t *testing.T) {
+		TX = testx.MustT(DB.Begin())(t)
+		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
+
+		info, err := NewDialect(DB).ColumnInformationForTable(driver, "\"main\".\"duckdb_columns\"")
+		require.NoError(t, err)
+		require.Equal(t, []string{
+			"character_maximum_length",
+			"column_default",
+			"column_index",
+			"column_name",
+			"comment",
+			"data_type",
+			"data_type_id",
+			"database_name",
+			"database_oid",
+			"internal",
+			"is_nullable",
+			"numeric_precision",
+			"numeric_precision_radix",
+			"numeric_scale",
+			"schema_name",
+			"schema_oid",
+			"table_name",
+			"table_oid",
+		}, genieql.ColumnInfoSet(info).ColumnNames())
 	})
 
 	t.Run("should return the columns in the table in the sorted order", func(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		info, err := NewDialect(DB).ColumnInformationForTable(driver, "duckdb_columns")
+		info, err := NewDialect(DB).ColumnInformationForTable(driver, "\"duckdb_columns\"")
 		require.NoError(t, err)
 		require.Equal(t, []string{
 			"character_maximum_length",
@@ -66,31 +94,63 @@ func TestDialect(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		q := NewDialect(DB).Insert(1, 0, "table", "", []string{"c1", "c2", "c2"}, []string{"c1", "c2", "c2"}, []string{"c1"})
+		q := NewDialect(DB).Insert(1, 0, "\"table\"", "", []string{"c1", "c2", "c2"}, []string{"c1", "c2", "c2"}, []string{"c1"})
 		require.Equal(t, "INSERT INTO \"table\" (\"c1\",\"c2\",\"c2\") VALUES (DEFAULT,$1,$2) RETURNING \"c1\",\"c2\",\"c2\"", q)
+	})
+
+	t.Run("should support insert queries against a schema-qualified table", func(t *testing.T) {
+		TX = testx.MustT(DB.Begin())(t)
+		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
+
+		q := NewDialect(DB).Insert(1, 0, "\"main\".\"table\"", "", []string{"c1", "c2", "c2"}, []string{"c1", "c2", "c2"}, []string{"c1"})
+		require.Equal(t, "INSERT INTO \"main\".\"table\" (\"c1\",\"c2\",\"c2\") VALUES (DEFAULT,$1,$2) RETURNING \"c1\",\"c2\",\"c2\"", q)
 	})
 
 	t.Run("should support select queries", func(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		q := NewDialect(DB).Select("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+		q := NewDialect(DB).Select("\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"})
 		require.Equal(t, "SELECT \"c1\",\"c2\",\"c2\" FROM \"table\" WHERE \"c1\" = $1", q)
+	})
+
+	t.Run("should support select queries against a schema-qualified table", func(t *testing.T) {
+		TX = testx.MustT(DB.Begin())(t)
+		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
+
+		q := NewDialect(DB).Select("\"main\".\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"})
+		require.Equal(t, "SELECT \"c1\",\"c2\",\"c2\" FROM \"main\".\"table\" WHERE \"c1\" = $1", q)
 	})
 
 	t.Run("should support update queries", func(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		q := NewDialect(DB).Update("table", []string{"c1", "c2", "c2"}, []string{"c1"}, []string{"c1", "c2", "c2"})
+		q := NewDialect(DB).Update("\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"}, []string{"c1", "c2", "c2"})
 		require.Equal(t, "UPDATE \"table\" SET \"c1\" = $1, \"c2\" = $2, \"c2\" = $3 WHERE \"c1\" = $4 RETURNING \"c1\",\"c2\",\"c2\"", q)
+	})
+
+	t.Run("should support update queries against a schema-qualified table", func(t *testing.T) {
+		TX = testx.MustT(DB.Begin())(t)
+		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
+
+		q := NewDialect(DB).Update("\"main\".\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"}, []string{"c1", "c2", "c2"})
+		require.Equal(t, "UPDATE \"main\".\"table\" SET \"c1\" = $1, \"c2\" = $2, \"c2\" = $3 WHERE \"c1\" = $4 RETURNING \"c1\",\"c2\",\"c2\"", q)
 	})
 
 	t.Run("should support delete queries", func(t *testing.T) {
 		TX = testx.MustT(DB.Begin())(t)
 		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
 
-		q := NewDialect(DB).Delete("table", []string{"c1", "c2", "c2"}, []string{"c1"})
+		q := NewDialect(DB).Delete("\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"})
 		require.Equal(t, "DELETE FROM \"table\" WHERE \"c1\" = $1", q)
+	})
+
+	t.Run("should support delete queries against a schema-qualified table", func(t *testing.T) {
+		TX = testx.MustT(DB.Begin())(t)
+		t.Cleanup(func() { require.NoError(t, TX.Rollback()) })
+
+		q := NewDialect(DB).Delete("\"main\".\"table\"", []string{"c1", "c2", "c2"}, []string{"c1"})
+		require.Equal(t, "DELETE FROM \"main\".\"table\" WHERE \"c1\" = $1", q)
 	})
 }

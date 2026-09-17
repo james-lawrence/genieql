@@ -31,7 +31,7 @@ func Insert(n int, offset int, table, conflict string, columns, projection, defa
 	}
 
 	replacements := strings.NewReplacer(
-		":gql.insert.tablename:", quotedString(table),
+		":gql.insert.tablename:", table,
 		":gql.insert.columns:", insertions,
 		":gql.insert.values:", strings.Join(values, ","),
 		":gql.insert.conflict:", stringsx.DefaultIfBlank(" "+conflict, ""),
@@ -43,7 +43,7 @@ func Insert(n int, offset int, table, conflict string, columns, projection, defa
 
 // Update generates an update query.
 func Update(table string, columns, predicates, returning []string) string {
-	const updateTmpl = "UPDATE \"%s\" SET %s WHERE %s RETURNING %s"
+	const updateTmpl = "UPDATE %s SET %s WHERE %s RETURNING %s"
 	updates, offset := predicate(1, columns...)
 	clauses, _ := predicate(offset, predicates...)
 	return fmt.Sprintf(updateTmpl, table, strings.Join(updates, ", "), strings.Join(clauses, " AND "),
@@ -54,13 +54,13 @@ func Update(table string, columns, predicates, returning []string) string {
 func Select(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
 	columnOrder := strings.Join(quotedColumns(columns...), ",")
-	return fmt.Sprintf(selectByFieldTmpl, columnOrder, quotedString(table), strings.Join(clauses, " AND "))
+	return fmt.Sprintf(selectByFieldTmpl, columnOrder, table, strings.Join(clauses, " AND "))
 }
 
 // Delete generates a delete query.
 func Delete(table string, columns, predicates []string) string {
 	clauses, _ := predicate(1, predicates...)
-	return fmt.Sprintf(deleteTmpl, quotedString(table), strings.Join(clauses, " AND "))
+	return fmt.Sprintf(deleteTmpl, table, strings.Join(clauses, " AND "))
 }
 
 // predicate formats WHERE clauses with placeholders.

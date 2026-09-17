@@ -51,5 +51,14 @@ var _ = Describe("Structure", func() {
 			}(),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/structures/example.2.go"))),
 		),
+		Entry(
+			"example 3 - schema-qualified table",
+			func() Structure {
+				s := NewStructure(ctx, "StructureExample3", nil)
+				s.From(s.Table("schema", "struct_a"))
+				return s
+			}(),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/structures/example.3.go"))),
+		),
 	)
 })

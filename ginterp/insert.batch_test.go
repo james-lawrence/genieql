@@ -98,5 +98,18 @@ var _ = Describe("Batch Insert", func() {
 			).Into("foo").Conflict("ON CONFLICT id = {s.A}").Batch(2),
 			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.4.go"))),
 		),
+		Entry(
+			"example 5 - schema-qualified table",
+			NewBatchInsert(
+				ctx,
+				"BatchInsertExample1",
+				nil,
+				astutil.Field(astutil.Expr("context.Context"), ast.NewIdent("ctx")),
+				astutil.Field(astutil.Expr("sqlx.Queryer"), ast.NewIdent("q")),
+				astutil.Field(ast.NewIdent("StructA"), ast.NewIdent("a")),
+				rowsScanner,
+			).Into("schema", "foo"),
+			io.Reader(membufx.NewMemBuffer(testx.Fixture(".fixtures/insert.batch/example.5.go"))),
+		),
 	)
 })

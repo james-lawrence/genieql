@@ -74,7 +74,7 @@ func (t *batchInsertExample1) advance(s ...StructA) (ExampleScanner, []StructA, 
 		return nil, []StructA(nil), false
 	}
 	n := min(len(s), 2)
-	const queryPrefix = `INSERT INTO foo (a,b,c,d,e,f,g,h) VALUES `
+	const queryPrefix = `INSERT INTO "foo" (a,b,c,d,e,f,g,h) VALUES `
 	const querySuffix = ` ON CONFLICT id = a RETURNING a,b,c,d,e,f,g,h`
 	valueTuples := [2]string{`($1,$2,$3,$4,$5,$6,$7,$8)`, `($9,$10,$11,$12,$13,$14,$15,$16)`}
 	query := queryPrefix + strings.Join(valueTuples[:n], `,`) + querySuffix
