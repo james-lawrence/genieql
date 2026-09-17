@@ -103,6 +103,6 @@ func Example1FindByBigintField(
 	pattern func(ctx context.Context, q sqlx.Queryer, p Example1) NewExample1ScannerStatic,
 ) {
 	gql = gql.Query(
-		`SELECT ` + Example1ScannerStaticColumns + ` FROM example1 WHERE "id" = {p.IntField} AND "id" = {p.BigintField}`,
+		`SELECT ` + Example1ScannerStaticColumns + ` FROM "example1" WHERE "id" = {p.IntField} AND "id" = {p.BigintField}`,
 	)
 }

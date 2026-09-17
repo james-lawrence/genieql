@@ -57,7 +57,7 @@ func TestDuckdb(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := testx.ReadString(resultpath)
-		errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
+		// errorsx.MaybePanic(os.WriteFile(resultpath, []byte(formatted), 0600))
 		require.EqualValues(t, expected, formatted)
 	}
 
